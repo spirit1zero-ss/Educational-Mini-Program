@@ -1,0 +1,95 @@
+<?php
+
+return [
+    'enable_coupon' => false,
+    'enable_bargain' => false,
+    'enable_combination' => false,
+    'enable_seckill' => false,
+    'enable_points' => false,
+    'enable_recharge' => false,
+    'enable_member_level' => false,
+    'enable_live' => false,
+    'enable_page_diy' => false,
+    'enable_complex_logistics' => false,
+    'enable_invoice' => false,
+    'enable_multi_terminal_diy' => false,
+    'enable_distribution' => true,
+    'enable_wechat_pay' => true,
+    'enable_training_camp_product' => true,
+
+    'admin_menu_hidden_patterns' => [
+        'enable_coupon' => [
+            'store_coupon',
+            'coupon',
+        ],
+        'enable_bargain' => [
+            'store_bargain',
+            'bargain',
+        ],
+        'enable_combination' => [
+            'store_combination',
+            'combination',
+        ],
+        'enable_seckill' => [
+            'store_seckill',
+            'seckill',
+        ],
+        'enable_points' => [
+            'store_integral',
+            'user_point',
+            'integral',
+            'sign',
+        ],
+        'enable_recharge' => [
+            'user_recharge',
+            'recharge_config',
+            'finance/recharge',
+            'marketing/recharge',
+            'user-user-recharge',
+            'finance-user-recharge',
+        ],
+        'enable_member_level' => [
+            'user_level',
+            'user/level',
+            'user-user-level',
+            'user/grade',
+            'user-user-grade',
+            'member_config',
+            'member_right',
+            'member_card',
+            'member-type',
+            'member-record',
+        ],
+        'enable_live' => [
+            'live/',
+            'live_',
+            'live-room',
+            'live-goods',
+        ],
+        'enable_page_diy' => [
+            'pages',
+            'diy',
+        ],
+        'enable_complex_logistics' => [
+            'system_config_logistics',
+            'freight/',
+            'shipping_templates',
+            'delivery_service',
+            'delivery-service',
+            'freight-express',
+            'system-city',
+        ],
+        'enable_invoice' => [
+            'invoice',
+            'elec_invoice',
+        ],
+        'enable_multi_terminal_diy' => [
+            'theme',
+            'micro_page',
+            'theme_style',
+            'my_theme',
+            'mall_theme',
+            'edit_theme',
+        ],
+    ],
+];
