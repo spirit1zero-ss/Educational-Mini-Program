@@ -292,7 +292,7 @@ import authorize from "@/components/Authorize";
 import { TOKENNAME } from "@/config/app.js";
 // #endif
 import { HTTP_REQUEST_URL } from "@/config/app";
-import { isMvpEnabled } from "@/config/mvp.js";
+import { isMvpEnabled, isMvpTrainingCampProduct } from "@/config/mvp.js";
 let app = getApp();
 import colors from "@/mixins/color";
 import { sharePoster } from "@/mixins/sharePoster";
@@ -873,6 +873,17 @@ export default {
         .then((res) => {
           uni.hideLoading();
           let storeInfo = res.data.storeInfo;
+          if (this.isMvpMode && !isMvpTrainingCampProduct(storeInfo)) {
+            return that.$util.Tips(
+              {
+                title: that.$t(`商品暂不可查看`),
+              },
+              {
+                tab: 5,
+                url: "/pages/goods/goods_list/index",
+              }
+            );
+          }
           if (this.isMvpMode) {
             storeInfo = {
               ...storeInfo,

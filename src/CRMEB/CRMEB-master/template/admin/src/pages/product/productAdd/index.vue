@@ -111,6 +111,7 @@
           :manyBrokerageTwo.sync="manyBrokerageTwo"
           :manyVipPrice.sync="manyVipPrice"
           :manyVipDiscount.sync="manyVipDiscount"
+          :isMvpMode="isMvpMode"
           @checkAllGroupChange="checkAllGroupChange"
           @changeVipPrice="changeVipPrice"
           @changeDiscount="changeDiscount"
@@ -124,6 +125,7 @@
           :couponName="couponName"
           :dataLabel="dataLabel"
           :activity="activity"
+          :isMvpMode="isMvpMode"
           @handleClose="handleClose"
           @addCoupon="addCoupon"
           @openLabel="openLabel"
@@ -372,6 +374,7 @@ import PriceCommission from './components/PriceCommission.vue';
 import MarketingSetting from './components/MarketingSetting.vue';
 import OtherSetting from './components/OtherSetting.vue';
 import { formatRichText } from '@/utils/editorImg';
+import { isMvpEnabled } from '@/config/mvp';
 
 export default {
   name: 'ProductAdd',
@@ -655,6 +658,9 @@ export default {
   },
   computed: {
     ...mapState('media', ['isMobile']),
+    isMvpMode() {
+      return isMvpEnabled();
+    },
     labelWidth() {
       return this.isMobile ? undefined : '120px';
     },
@@ -728,6 +734,7 @@ export default {
             }
 
             this.formValidate = data;
+            this.applyMvpProductMarketingDefaults();
             this.dataLabel = data.label_id;
             this.formValidate.coupon_ids = ids;
             this.updateIds = ids;
@@ -771,6 +778,7 @@ export default {
                 },
               ];
             }
+            this.applyMvpProductMarketingDefaults();
             this.watchActivity();
             this.spinShow = false;
           }
@@ -848,7 +856,7 @@ export default {
     virtualbtn(index, type) {
       if (type != 1) {
         if (this.$route.params.id) return this.$message.error('编辑商品不支持切换商品类型');
-        this.formValidate.is_sub = [];
+        this.formValidate.is_sub = this.normalizeMvpSubSettings([]);
         let id = this.$route.params.id;
         if (id) {
           checkActivityApi(id)
@@ -908,6 +916,7 @@ export default {
           this.headTab = virtualHeadTabs;
           break;
       }
+      this.applyMvpProductMarketingDefaults();
     },
     // 新增分类
     addCate() {
@@ -986,6 +995,7 @@ export default {
         ids.push(item.id);
       });
       this.formValidate = data;
+      this.applyMvpProductMarketingDefaults();
       this.seletVideo = data.seletVideo;
       this.contents = data.description;
       this.couponName = data.coupons;
@@ -1043,8 +1053,9 @@ export default {
         this.manyFormValidate = [...this.oneFormBatch, ...data.attrs];
       }
 
+      this.applyMvpProductMarketingDefaults();
       setTimeout((e) => {
-        this.checkAllGroup(data.is_sub);
+        this.checkAllGroup(this.formValidate.is_sub);
       }, 1000);
       this.watchActivity();
     },
@@ -1063,9 +1074,11 @@ export default {
     },
     // 单独设置会员设置
     checkAllGroupChange(data) {
-      this.checkAllGroup(data);
+      this.formValidate.is_sub = this.normalizeMvpSubSettings(data);
+      this.checkAllGroup(this.formValidate.is_sub);
     },
     checkAllGroup(data) {
+      data = this.normalizeMvpSubSettings(data || []);
       let endLength = this.attrs.length + 3;
       if (this.formValidate.spec_type === 0) {
         if (data.length === 2) {
@@ -1091,6 +1104,30 @@ export default {
           this.columnsInstal2 = this.columnsInstalM.slice(0, endLength);
         }
       }
+    },
+    normalizeMvpSubSettings(data = []) {
+      if (!this.isMvpMode) return data;
+      return data.filter((item) => item !== 0);
+    },
+    applyMvpProductMarketingDefaults() {
+      if (!this.isMvpMode || !this.formValidate) return;
+      this.formValidate.vip_product = 0;
+      this.formValidate.vip_product_type = 0;
+      this.formValidate.give_integral = 0;
+      this.formValidate.coupon_ids = [];
+      this.formValidate.activity = ['默认'];
+      this.formValidate.is_sub = this.normalizeMvpSubSettings(this.formValidate.is_sub || []);
+      this.couponName = [];
+      this.updateIds = [];
+      this.updateName = [];
+      const resetVip = (item) => {
+        if (!item) return;
+        item.vip_price = 0;
+        item.vip_proportion = 0;
+      };
+      this.oneFormValidate.forEach(resetVip);
+      this.manyFormValidate.forEach(resetVip);
+      this.oneFormBatch.forEach(resetVip);
     },
     // 添加优惠券
     addCoupon() {
@@ -1952,6 +1989,7 @@ export default {
     handleSubmit(name) {
       this.$refs[name].validate((valid) => {
         if (valid) {
+          this.applyMvpProductMarketingDefaults();
           this.formValidate.type = this.type;
           let arr = this.formValidate.spec_type === 0 ? this.oneFormValidate : this.manyFormValidate;
           let item = JSON.parse(JSON.stringify(arr));

@@ -1,5 +1,7 @@
 node_modules/
 dist/
+.wechat-local-data/
+src/CRMEB/CRMEB-master/template/uni-app/.npm-cache/
 .env
 .env.*
 *.local

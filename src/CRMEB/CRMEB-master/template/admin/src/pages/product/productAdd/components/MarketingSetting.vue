@@ -1,7 +1,7 @@
 <template>
   <!-- 营销设置 -->
   <el-row>
-    <el-col :span="24">
+    <el-col v-if="!isMvpMode" :span="24">
       <el-form-item label="购买送积分：" prop="give_integral">
         <el-input-number
           :controls="false"
@@ -14,7 +14,7 @@
         />
       </el-form-item>
     </el-col>
-    <el-col :span="24">
+    <el-col v-if="!isMvpMode" :span="24">
       <el-form-item label="购买送优惠券：">
         <div v-if="couponName.length" class="mb10">
           <el-tag class="mr10" closable v-for="(item, index) in couponName" :key="index" @close="handleClose(item)">{{
@@ -114,7 +114,7 @@
         </el-switch>
       </el-form-item>
     </el-col>
-    <el-col :span="24" v-if="formValidate.presale">
+    <el-col :span="24" v-if="!isMvpMode && formValidate.presale">
       <el-form-item label="预售活动时间：" prop="presale_time">
         <div class="acea-row row-middle">
           <el-date-picker
@@ -133,7 +133,7 @@
         <div class="tips-info">设置活动开启结束时间，用户可以在设置时间内发起参与预售</div>
       </el-form-item>
     </el-col>
-    <el-col :span="24" v-if="formValidate.presale">
+    <el-col :span="24" v-if="!isMvpMode && formValidate.presale">
       <el-form-item label="发货时间：" prop="presale_day">
         <div class="acea-row row-middle">
           <span class="mr10">预售活动结束后</span>
@@ -150,7 +150,7 @@
         </div>
       </el-form-item>
     </el-col>
-    <el-col :span="24">
+    <el-col v-if="!isMvpMode" :span="24">
       <div class="line"></div>
     </el-col>
     <el-col :span="24">
@@ -246,6 +246,10 @@ export default {
     activity: {
       type: Object,
       default: () => ({}),
+    },
+    isMvpMode: {
+      type: Boolean,
+      default: false,
     },
   },
   methods: {

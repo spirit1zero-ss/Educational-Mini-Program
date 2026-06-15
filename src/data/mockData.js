@@ -1,3 +1,5 @@
+// TODO: Persist education-specific data through CRMEB education_* APIs in the next backend phase.
+// The assessment, archive, and camp progress records below intentionally remain local demo data for now.
 export const heartTypes = [
   {
     id: 'a',
@@ -130,4 +132,18 @@ export const commissionRecords = [
   { title: '好友加入训练营', amount: '+¥128', date: '2026-06-01' },
   { title: '二级好友奖励', amount: '+¥36', date: '2026-05-28' },
   { title: '邀请成长奖励', amount: '+¥68', date: '2026-05-21' }
+];
+
+export const trainingProducts = [
+  {
+    id: 101,
+    title: '自主学习训练营 21 天成长营',
+    price: '¥699',
+    rawPrice: 699,
+    image: '',
+    sales: 128,
+    startTime: '2026-07-01',
+    endTime: '2026-07-21',
+    deliveryType: 'online'
+  }
 ];

@@ -89,15 +89,21 @@ export function filterMvpFooterNavigation(data = {}) {
 export function applyMvpTrainingCampFilter(where = {}) {
   if (!MVP_ENABLED) return where;
   const next = { ...where };
-  if (MVP_TRAINING_CAMP_CATEGORY_ID && !next.cid) {
-    next.cid = MVP_TRAINING_CAMP_CATEGORY_ID;
-  }
-  if (MVP_TRAINING_CAMP_PRODUCT_IDS.length && !next.productId) {
+  if (MVP_TRAINING_CAMP_PRODUCT_IDS.length) {
     next.productId = MVP_TRAINING_CAMP_PRODUCT_IDS.join(",");
+    next.cid = 0;
+    next.keyword = "";
+    return next;
   }
-  if (!next.cid && !next.productId && !next.keyword) {
-    next.keyword = MVP_TRAINING_CAMP_KEYWORD;
+  if (MVP_TRAINING_CAMP_CATEGORY_ID) {
+    next.cid = MVP_TRAINING_CAMP_CATEGORY_ID;
+    next.productId = "";
+    next.keyword = "";
+    return next;
   }
+  next.cid = 0;
+  next.productId = "";
+  next.keyword = MVP_TRAINING_CAMP_KEYWORD;
   return next;
 }
 
@@ -109,8 +115,28 @@ export function disableMvpOrderMarketing(payload = {}) {
     useIntegral: 0,
     bargainId: 0,
     combinationId: 0,
+    discountId: 0,
+    advanceId: 0,
+    pinkId: 0,
     seckill_id: 0,
   };
+}
+
+export function isMvpTrainingCampProduct(product = {}) {
+  if (!MVP_ENABLED) return true;
+  const productId = String(product.id || product.product_id || "");
+  if (MVP_TRAINING_CAMP_PRODUCT_IDS.length) {
+    return MVP_TRAINING_CAMP_PRODUCT_IDS.map(String).includes(productId);
+  }
+  if (MVP_TRAINING_CAMP_CATEGORY_ID) {
+    const cateIds = Array.isArray(product.cate_id)
+      ? product.cate_id
+      : String(product.cate_id || product.cid || "")
+          .split(",")
+          .filter(Boolean);
+    return cateIds.map(String).includes(String(MVP_TRAINING_CAMP_CATEGORY_ID));
+  }
+  return String(product.store_name || product.title || "").indexOf(MVP_TRAINING_CAMP_KEYWORD) !== -1;
 }
 
 export const MVP_HOME_ENTRIES = [
