@@ -368,6 +368,10 @@ Route::group(function () {
     })->option(['mark' => 'user', 'mark_name' => '用户']);
 
     Route::group(function () {
+        Route::post('education/assessment_records', 'v1.education.AssessmentRecordController/save')->name('educationAssessmentRecordSave')->option(['real_name' => '提交测评记录']);
+    })->option(['mark' => 'education', 'mark_name' => '教育模块']);
+
+    Route::group(function () {
         /** 分销员申请 */
         Route::get('user/spread/apply/info', 'v1.user.SpreadApplyController/applyInfo')->name('申请信息');//申请信息
         Route::post('user/spread/apply/:id', 'v1.user.SpreadApplyController/applyPromoter')->name('申请分销员');//申请分销员

@@ -24,6 +24,7 @@ import LayoutMain from '@/layout';
 import statistic from './modules/statistic';
 import frameOut from './modules/frameOut';
 import division from './modules/division';
+import education from './modules/education';
 import settings from '@/setting';
 import crud from './modules/crud';
 
@@ -170,6 +171,7 @@ const frameIn = [
   app,
   statistic,
   division,
+  education,
   ...routers,
   crud,
 ];

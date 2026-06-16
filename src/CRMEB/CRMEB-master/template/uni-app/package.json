@@ -2,8 +2,9 @@
   "name": "uni-app",
   "version": "1.0.0",
   "scripts": {
-    "build:mp-weixin": "cross-env NODE_ENV=production UNI_PLATFORM=mp-weixin vue-cli-service uni-build",
-    "dev:mp-weixin": "cross-env NODE_ENV=development UNI_PLATFORM=mp-weixin vue-cli-service uni-build --watch"
+    "postinstall": "node scripts/patch-uni-loader.cjs",
+    "build:mp-weixin": "cross-env NODE_ENV=production UNI_PLATFORM=mp-weixin UNI_INPUT_DIR=. UNI_CLI_CONTEXT=. vue-cli-service uni-build && node scripts/write-mp-weixin-project-config.cjs",
+    "dev:mp-weixin": "cross-env NODE_ENV=development UNI_PLATFORM=mp-weixin UNI_INPUT_DIR=. UNI_CLI_CONTEXT=. vue-cli-service uni-build --watch"
   },
   "dependencies": {
     "@dcloudio/uni-mp-weixin": "2.0.2-5000720260410001",
