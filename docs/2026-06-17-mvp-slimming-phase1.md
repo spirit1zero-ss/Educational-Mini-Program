@@ -168,7 +168,20 @@ curl http://127.0.0.1:8080/adminapi/member_config
 | `/adminapi/marketing/sign/rewards` | `{"status":401,"msg":"登录已过期,请重新登录","data":[]}` |
 | `/adminapi/marketing/integral` | `{"status":401,"msg":"登录已过期,请重新登录","data":[]}` |
 
+已修复并确认恢复：
+
+| 路径 | 结果 |
+| --- | --- |
+| `/api/index` | `{"status":200,"msg":"success",...}` |
+| `/api/products` | `{"status":200,"msg":"success",...}` |
+| `/api/category` | `{"status":200,"msg":"success",...}` |
+
+修复说明：
+
+- `/api/index` 和 `/api/products` 超时来自商品列表仍在查询已禁用的营销活动和优惠券标记。
+- MVP 模式下，当优惠券、砍价、拼团、秒杀均禁用时，商品服务跳过这些活动标记查询，只返回普通商品数据。
+- 该修复不影响商品详情、订单、支付、签到、会员、测评、分销佣金链路。
+
 仍需后续排查：
 
-- `/api/index`、`/api/products`、`/api/category` 在当前本地 Docker 环境仍会超时；这些路径未命中 MVP 拦截，疑似业务查询或本地数据/服务状态问题。
 - `/api/education/assessment_records` 已用 `POST` 确认进入原鉴权；完整保存仍需携带登录态和测评 payload 回归。

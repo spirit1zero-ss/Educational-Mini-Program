@@ -447,6 +447,23 @@ class StoreProductServices extends BaseServices
     }
 
     /**
+     * Skip disabled marketing lookups in MVP mode for public product lists.
+     *
+     * @return bool
+     */
+    protected function shouldSkipMvpActivityLookups(): bool
+    {
+        if (!function_exists('mvp_enabled')) {
+            return false;
+        }
+
+        return !mvp_enabled('enable_coupon', true)
+            && !mvp_enabled('enable_bargain', true)
+            && !mvp_enabled('enable_combination', true)
+            && !mvp_enabled('enable_seckill', true);
+    }
+
+    /**
      * 获取运费模板列表
      * @return array
      */
@@ -1343,6 +1360,13 @@ class StoreProductServices extends BaseServices
             $productIds = [$list['id']];
             $list = [$list];
         }
+        if ($this->shouldSkipMvpActivityLookups()) {
+            foreach ($list as &$item) {
+                $item['activity'] = [];
+                $item['checkCoupon'] = false;
+            }
+            return $status ? $list : [];
+        }
         if ($seckillIdsList === false) {
             /** @var StoreSeckillServices $storeSeckillService */
             $storeSeckillService = app()->make(StoreSeckillServices::class);
@@ -1961,7 +1985,7 @@ class StoreProductServices extends BaseServices
             $memberCardService = app()->make(MemberCardServices::class);
             $vipStatus = $memberCardService->isOpenMemberCard('vip_price');
             $seckillIdsList = $pinkIdsList = $bargrainIdsList = false;
-            if (count($fields) > 1) {
+            if (count($fields) > 1 && !$this->shouldSkipMvpActivityLookups()) {
                 /** @var StoreSeckillServices $storeSeckillService */
                 $storeSeckillService = app()->make(StoreSeckillServices::class);
                 $seckillIdsList = $storeSeckillService->getSeckillIdsArray([], ['id', 'time_id', 'product_id']);
