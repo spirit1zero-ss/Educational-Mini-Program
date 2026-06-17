@@ -182,6 +182,27 @@ curl http://127.0.0.1:8080/adminapi/member_config
 - MVP 模式下，当优惠券、砍价、拼团、秒杀均禁用时，商品服务跳过这些活动标记查询，只返回普通商品数据。
 - 该修复不影响商品详情、订单、支付、签到、会员、测评、分销佣金链路。
 
+## 2026-06-17 暴露面复测补充
+
+继续审计 P1 暴露面后，补齐以下拦截：
+
+| 路径 | 结果 |
+| --- | --- |
+| `/api/article/category/list` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/api/theme/article` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/api/user/activity` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/api/v2/diy/color_change/red` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/adminapi/finance/recharge` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/adminapi/export/bargain_list` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/adminapi/export/combination_list` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/adminapi/export/seckill_list` | `{"status":400,"msg":"MVP module disabled"}` |
+
+保留链路未误伤：
+
+| 路径 | 结果 |
+| --- | --- |
+| `/adminapi/export/userCommission` | `{"status":401,"msg":"登录已过期,请重新登录","data":[]}` |
+
 仍需后续排查：
 
 - `/api/education/assessment_records` 已用 `POST` 确认进入原鉴权；完整保存仍需携带登录态和测评 payload 回归。

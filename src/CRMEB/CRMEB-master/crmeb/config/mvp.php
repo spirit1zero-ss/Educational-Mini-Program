@@ -11,6 +11,7 @@ return [
     'enable_member_level' => true,
     'enable_live' => false,
     'enable_lottery' => false,
+    'enable_activity_status' => false,
     'enable_customer_service' => false,
     'enable_cms' => false,
     'enable_app_admin' => false,
@@ -104,12 +105,15 @@ return [
         ],
         'enable_bargain' => [
             'marketing/bargain',
+            'export/bargain_list',
         ],
         'enable_combination' => [
             'marketing/combination',
+            'export/combination_list',
         ],
         'enable_seckill' => [
             'marketing/seckill',
+            'export/seckill_list',
         ],
         'enable_presell' => [
             'marketing/presell',
@@ -121,6 +125,8 @@ return [
         ],
         'enable_recharge' => [
             'marketing/recharge',
+            'finance/recharge',
+            'export/userRecharge',
         ],
         'enable_live' => [
             'live/',
@@ -193,6 +199,13 @@ return [
         ],
         'enable_lottery' => [
             'lottery',
+        ],
+        'enable_activity_status' => [
+            'user/activity',
+        ],
+        'enable_cms' => [
+            'article/',
+            'theme/article',
         ],
         'enable_customer_service' => [
             'user/service/',

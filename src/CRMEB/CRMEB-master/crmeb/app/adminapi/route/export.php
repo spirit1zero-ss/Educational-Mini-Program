@@ -44,6 +44,7 @@ Route::group('export', function () {
     Route::get('verify_order', 'v1.export.ExportExcel/verifyOrder')->option(['real_name' => '核销订单']);
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
+    \app\adminapi\middleware\MvpRouteBlockMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class
