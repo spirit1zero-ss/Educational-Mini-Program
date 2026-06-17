@@ -125,6 +125,9 @@ return [
         'enable_live' => [
             'live/',
         ],
+        'enable_lottery' => [
+            'marketing/lottery',
+        ],
         'enable_cms' => [
             'cms/',
         ],

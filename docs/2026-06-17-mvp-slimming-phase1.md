@@ -140,3 +140,35 @@ curl http://127.0.0.1:8080/adminapi/member_config
 - 积分商城玩法已禁用，但签到依赖积分账户、积分流水、积分展示，后续不能直接删除积分底层能力。
 - 分销不能整体删除，只能拆分基础二级分销/佣金与高级代理商/事业部。
 - 当前仍是第一阶段轻瘦身，真正物理删除文件前必须重新跑完整 MVP 验收清单。
+
+## 2026-06-17 运行时复测补充
+
+容器 `crmeb-local` 后续恢复到稳定运行状态，MySQL 进程已可持续运行。清理 ThinkPHP 缓存后复测如下：
+
+已确认被 MVP 拦截：
+
+| 路径 | 结果 |
+| --- | --- |
+| `/api/coupons` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/api/v2/coupons` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/api/v2/lottery/record` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/adminapi/marketing/coupon/released` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/adminapi/marketing/bargain` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/adminapi/marketing/lottery/list` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/adminapi/diy/get_list` | `{"status":400,"msg":"MVP module disabled"}` |
+| `/adminapi/cms/cms` | `{"status":400,"msg":"MVP module disabled"}` |
+
+已确认未被 MVP 拦截，进入原鉴权逻辑：
+
+| 路径 | 结果 |
+| --- | --- |
+| `/api/sign/config` | `{"status":401,"msg":"请登录"}` |
+| `/api/user/member/card/index` | `{"status":401,"msg":"请登录"}` |
+| `POST /api/education/assessment_records` | `{"status":401,"msg":"请登录"}` |
+| `/adminapi/marketing/sign/rewards` | `{"status":401,"msg":"登录已过期,请重新登录","data":[]}` |
+| `/adminapi/marketing/integral` | `{"status":401,"msg":"登录已过期,请重新登录","data":[]}` |
+
+仍需后续排查：
+
+- `/api/index`、`/api/products`、`/api/category` 在当前本地 Docker 环境仍会超时；这些路径未命中 MVP 拦截，疑似业务查询或本地数据/服务状态问题。
+- `/api/education/assessment_records` 已用 `POST` 确认进入原鉴权；完整保存仍需携带登录态和测评 payload 回归。
