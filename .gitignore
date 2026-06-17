@@ -13,6 +13,7 @@ yarn-error.log*
 pnpm-debug.log*
 .DS_Store
 Thumbs.db
+agent-orchestrator.yaml
 
 # CRMEB local/runtime artifacts
 src/CRMEB/CRMEB-master/crmeb/.constant
