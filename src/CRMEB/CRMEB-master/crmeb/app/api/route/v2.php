@@ -94,7 +94,7 @@ Route::group('v2', function () {
         //获取分销等级任务列表
         Route::get('agent/level_task_list', 'v2.agent.AgentLevel/levelTaskList')->name('agentLevelTaskList')->option(['real_name' => '获取分销等级任务列表']);
 
-    })->middleware(\app\api\middleware\AuthTokenMiddleware::class, true);
+    })->middleware(\app\api\middleware\MvpRouteBlockMiddleware::class)->middleware(\app\api\middleware\AuthTokenMiddleware::class, true);
 
     //授权不通过,不会抛出异常继续执行
     Route::group(function () {
@@ -104,7 +104,7 @@ Route::group('v2', function () {
         Route::get('index', 'v2.PublicController/index')->name('index')->option(['real_name' => '首页']);//首页
         Route::get('coupons', 'v2.store.StoreCouponsController/lst')->name('couponsList')->option(['real_name' => '可领取优惠券列表']); //可领取优惠券列表
         Route::get('diy/sign', 'v2.PublicController/getDiySign')->name('getDiySign')->option(['real_name' => '获取Diy签到']);
-    })->middleware(\app\api\middleware\AuthTokenMiddleware::class, false)
+    })->middleware(\app\api\middleware\MvpRouteBlockMiddleware::class)->middleware(\app\api\middleware\AuthTokenMiddleware::class, false)
         ->option(['mark' => 'common', 'mark_name' => '公共接口']);
 
 })->middleware(\app\http\middleware\AllowOriginMiddleware::class)->middleware(\app\api\middleware\StationOpenMiddleware::class);

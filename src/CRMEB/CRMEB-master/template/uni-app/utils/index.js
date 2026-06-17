@@ -12,6 +12,7 @@ import { spread } from "@/api/user";
 import Cache from "@/utils/cache";
 import { getCustomerType } from "@/api/api.js";
 import { getWorkermanUrl } from "@/api/kefu.js";
+import { isMvpEnabled, isMvpHiddenLink } from "@/config/mvp.js";
 import store from "@/store";
 /**
  * 绑定用户授权
@@ -58,11 +59,15 @@ export function isWeixin() {
 }
 
 export function getCustomer(url) {
+  const customerUrl = url || "/pages/extension/customer_list/chat";
+  if (isMvpEnabled() && isMvpHiddenLink(customerUrl)) {
+    return;
+  }
   getCustomerType().then((res) => {
     let type = res.data.customer_type;
     if (type == "0") {
       uni.navigateTo({
-        url: url || "/pages/extension/customer_list/chat",
+        url: customerUrl,
       });
     } else if (type == "1") {
       uni.makePhoneCall({

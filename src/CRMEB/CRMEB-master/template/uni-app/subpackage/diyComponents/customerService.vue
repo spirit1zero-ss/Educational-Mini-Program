@@ -1,6 +1,6 @@
 <template>
   <!-- 在线客服 -->
-  <view class="custmer" v-show="!isSortType">
+  <view class="custmer" v-show="!isSortType && !mvpEnabled">
     <!-- #ifdef H5 || APP-PLUS -->
     <view
       class="customerService"
@@ -44,6 +44,7 @@
 <script>
 import { mapGetters } from "vuex";
 import { getCustomer } from "@/utils/index.js";
+import { isMvpEnabled } from "@/config/mvp.js";
 export default {
   name: "customerService",
   computed: mapGetters(["userInfo"]),
@@ -67,6 +68,7 @@ export default {
           : this.dataConfig.marginConfig.val + "%"
         : "30%",
       positions: this.dataConfig.locationConfig.tabVal,
+      mvpEnabled: isMvpEnabled(),
     };
   },
   created() {},

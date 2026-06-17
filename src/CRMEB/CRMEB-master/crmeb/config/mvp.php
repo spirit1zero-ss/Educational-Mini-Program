@@ -5,10 +5,15 @@ return [
     'enable_bargain' => false,
     'enable_combination' => false,
     'enable_seckill' => false,
+    'enable_presell' => false,
     'enable_points' => false,
     'enable_recharge' => false,
-    'enable_member_level' => false,
+    'enable_member_level' => true,
     'enable_live' => false,
+    'enable_lottery' => false,
+    'enable_customer_service' => false,
+    'enable_cms' => false,
+    'enable_app_admin' => false,
     'enable_page_diy' => false,
     'enable_complex_logistics' => false,
     'enable_invoice' => false,
@@ -34,11 +39,12 @@ return [
             'store_seckill',
             'seckill',
         ],
+        'enable_presell' => [
+            'presell',
+            'advance',
+        ],
         'enable_points' => [
             'store_integral',
-            'user_point',
-            'integral',
-            'sign',
         ],
         'enable_recharge' => [
             'user_recharge',
@@ -48,18 +54,7 @@ return [
             'user-user-recharge',
             'finance-user-recharge',
         ],
-        'enable_member_level' => [
-            'user_level',
-            'user/level',
-            'user-user-level',
-            'user/grade',
-            'user-user-grade',
-            'member_config',
-            'member_right',
-            'member_card',
-            'member-type',
-            'member-record',
-        ],
+        'enable_member_level' => [],
         'enable_live' => [
             'live/',
             'live_',
@@ -90,6 +85,125 @@ return [
             'my_theme',
             'mall_theme',
             'edit_theme',
+        ],
+    ],
+
+    'admin_route_allow_patterns' => [
+        'marketing/sign',
+        'marketing/integral$',
+        'marketing/integral/statistics$',
+        'marketing/integral_config',
+        'marketing/point_record',
+        'marketing/point/',
+        'member_config',
+    ],
+
+    'admin_route_block_patterns' => [
+        'enable_coupon' => [
+            'marketing/coupon',
+        ],
+        'enable_bargain' => [
+            'marketing/bargain',
+        ],
+        'enable_combination' => [
+            'marketing/combination',
+        ],
+        'enable_seckill' => [
+            'marketing/seckill',
+        ],
+        'enable_presell' => [
+            'marketing/presell',
+        ],
+        'enable_points' => [
+            'marketing/integral_product',
+            'marketing/integral/',
+            'marketing/integral/order',
+        ],
+        'enable_recharge' => [
+            'marketing/recharge',
+        ],
+        'enable_live' => [
+            'live/',
+        ],
+        'enable_cms' => [
+            'cms/',
+        ],
+        'enable_app_admin' => [
+            'app/',
+        ],
+        'enable_page_diy' => [
+            'diy/',
+            'diy_pro/',
+            'theme/',
+            'theme_module/',
+        ],
+    ],
+
+    'api_route_allow_patterns' => [
+        'pay/notify',
+        'order/create',
+        'order/pay',
+        'order/detail',
+        'order/list',
+        'order/take',
+        'product/detail',
+        'products',
+        'sign/',
+        'integral/list',
+        'user/member/',
+        'user/level/',
+        'commission',
+        'spread/',
+        'education/assessment_records',
+        'diy/sign',
+    ],
+
+    'api_route_block_patterns' => [
+        'enable_coupon' => [
+            'coupon/',
+            'coupons',
+            'new_coupon',
+            'get_today_coupon',
+            'order/product_coupon',
+            'theme/coupon',
+        ],
+        'enable_bargain' => [
+            'bargain/',
+        ],
+        'enable_combination' => [
+            'combination/',
+        ],
+        'enable_seckill' => [
+            'seckill/',
+        ],
+        'enable_presell' => [
+            'advance/',
+        ],
+        'enable_points' => [
+            'store_integral/',
+        ],
+        'enable_recharge' => [
+            'recharge/',
+        ],
+        'enable_live' => [
+            'wechat/live',
+        ],
+        'enable_lottery' => [
+            'lottery',
+        ],
+        'enable_customer_service' => [
+            'user/service/',
+            'get_customer_type',
+            'get_workerman_url',
+        ],
+        'enable_invoice' => [
+            'invoice',
+            'order/invoice',
+            'order/make_up_invoice',
+            'order/down_invoice',
+        ],
+        'enable_page_diy' => [
+            'diy/color_change',
         ],
     ],
 ];

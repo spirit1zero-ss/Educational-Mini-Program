@@ -52,6 +52,7 @@ Route::group('diy', function () {
     Route::delete('link/del/:id', 'v1.diy.PageLink/getLinkDel')->option(['real_name' => '链接删除']);
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
+    \app\adminapi\middleware\MvpRouteBlockMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class
@@ -72,6 +73,7 @@ Route::group('diy_pro', function () {
     Route::get('text/field', 'v1.diy.DiyPro/textField')->option(['real_name' => '文本字段']);
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
+    \app\adminapi\middleware\MvpRouteBlockMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class
@@ -101,6 +103,7 @@ Route::group('theme', function () {
     Route::get('micro_page', 'v1.diy.Theme/getMicroPageList')->option(['real_name' => '微页面列表']);
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
+    \app\adminapi\middleware\MvpRouteBlockMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class
@@ -115,6 +118,7 @@ Route::group('theme_module', function () {
     Route::delete('del/:id', 'v1.diy.ThemeModule/delete')->option(['real_name' => '删除主题组件']);
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
+    \app\adminapi\middleware\MvpRouteBlockMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class

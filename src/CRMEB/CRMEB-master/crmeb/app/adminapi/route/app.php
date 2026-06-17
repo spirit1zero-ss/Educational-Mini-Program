@@ -166,6 +166,7 @@ Route::group('app', function () {
 
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
+    \app\adminapi\middleware\MvpRouteBlockMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class

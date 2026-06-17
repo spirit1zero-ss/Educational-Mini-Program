@@ -14,12 +14,23 @@ let routePre = setting.routePre;
 
 const pre = 'marketing_';
 
-export default {
+const MVP_MARKETING_ROUTE_NAMES = [
+  `${pre}integral`,
+  `${pre}model`,
+  `${pre}userPoint`,
+  `${pre}point_record`,
+  `${pre}point_statistic`,
+  `${pre}sign`,
+  `${pre}sign_rewards`,
+  `${pre}member_config`,
+];
+
+const marketingRouter = {
   path: routePre + '/marketing',
   name: 'marketing',
   header: 'marketing',
   redirect: {
-    name: `${pre}storeCouponIssue`,
+    name: `${pre}sign`,
   },
   component: LayoutMain,
   children: [
@@ -470,3 +481,7 @@ export default {
     },
   ],
 };
+
+marketingRouter.children = marketingRouter.children.filter((route) => MVP_MARKETING_ROUTE_NAMES.includes(route.name));
+
+export default marketingRouter;

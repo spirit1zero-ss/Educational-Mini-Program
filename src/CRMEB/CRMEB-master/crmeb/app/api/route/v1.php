@@ -377,7 +377,7 @@ Route::group(function () {
         Route::post('user/spread/apply/:id', 'v1.user.SpreadApplyController/applyPromoter')->name('申请分销员');//申请分销员
     })->option(['mark' => 'spread', 'mark_name' => '分销员申请']);
 
-})->middleware(\app\http\middleware\AllowOriginMiddleware::class)->middleware(\app\api\middleware\StationOpenMiddleware::class)->middleware(\app\api\middleware\AuthTokenMiddleware::class, true);
+})->middleware(\app\http\middleware\AllowOriginMiddleware::class)->middleware(\app\api\middleware\StationOpenMiddleware::class)->middleware(\app\api\middleware\MvpRouteBlockMiddleware::class)->middleware(\app\api\middleware\AuthTokenMiddleware::class, true);
 //未授权接口
 Route::group(function () {
     Route::group(function () {
@@ -573,6 +573,7 @@ Route::group(function () {
 
 })->middleware(\app\http\middleware\AllowOriginMiddleware::class)
     ->middleware(\app\api\middleware\StationOpenMiddleware::class)
+    ->middleware(\app\api\middleware\MvpRouteBlockMiddleware::class)
     ->middleware(\app\api\middleware\AuthTokenMiddleware::class, false);
 
 Route::miss(function () {

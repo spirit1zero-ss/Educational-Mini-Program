@@ -366,6 +366,7 @@
 <script>
 import commonWrapper from "./commonWrapper.vue";
 import { getCustomer } from "@/utils/index.js";
+import { isMvpHiddenLink } from "@/config/mvp.js";
 import { toLogin } from "@/libs/login.js";
 import { mapGetters } from "vuex";
 
@@ -409,7 +410,8 @@ export default {
       let list = this.dataConfig.menuConfig.list || [];
       let menuList = [];
       list.forEach((item) => {
-        if (item.show) {
+        const url = item && item.info && item.info[1] ? item.info[1].value : "";
+        if (item.show && !isMvpHiddenLink(url)) {
           menuList.push(item);
         }
       });
@@ -646,6 +648,7 @@ export default {
       this.$util.JumpPath(url);
     },
     goMenuPage(url) {
+      if (isMvpHiddenLink(url)) return;
       if (this.isLogin) {
         if (url.indexOf("http") === -1) {
           if (url== "/kefu/mobile_list") {
