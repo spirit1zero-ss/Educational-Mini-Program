@@ -125,6 +125,15 @@ class StoreOrderTakeServices extends BaseServices
         $orderInfoServices = app()->make(StoreOrderCartInfoServices::class);
         $storeName = $orderInfoServices->getCarIdByProductTitle((int)$order['id']);
         $storeTitle = Str::substrUTf8($storeName, 20, 'UTF-8', '');
+        Log::info('mvp_order_take_brokerage_start', [
+            'id' => $order['id'] ?? 0,
+            'order_id' => $order['order_id'] ?? '',
+            'uid' => $order['uid'] ?? 0,
+            'spread_uid' => $order['spread_uid'] ?? 0,
+            'spread_two_uid' => $order['spread_two_uid'] ?? 0,
+            'one_brokerage' => $order['one_brokerage'] ?? 0,
+            'two_brokerage' => $order['two_brokerage'] ?? 0,
+        ]);
 
         $res = $this->transaction(function () use ($order, $userInfo, $storeTitle) {
             //赠送积分
@@ -441,6 +450,8 @@ class StoreOrderTakeServices extends BaseServices
         // 上级推广员返佣之后的金额
         $balance = bcadd($spreadPrice, $brokeragePrice, 2);
         // 添加用户佣金
+        $frozen_time = 0;
+        $type = '';
         $res1 = $userServices->bcInc($one_spread_uid, 'brokerage_price', $brokeragePrice, 'uid');
         if ($res1) {
             //冻结时间
@@ -461,6 +472,17 @@ class StoreOrderTakeServices extends BaseServices
             $this->sendBackOrderBrokerage($orderInfo, $one_spread_uid, $brokeragePrice);
         }
         // 一级返佣成功 跳转二级返佣
+        Log::info('mvp_order_brokerage_income_one', [
+            'id' => $orderInfo['id'] ?? 0,
+            'order_id' => $orderInfo['order_id'] ?? '',
+            'uid' => $orderInfo['uid'] ?? 0,
+            'spread_uid' => $one_spread_uid,
+            'brokerage' => $brokeragePrice,
+            'balance' => $balance,
+            'type' => $type ?? '',
+            'frozen_time' => $frozen_time,
+            'result' => (bool)$res1,
+        ]);
         return $res1 && $this->backOrderBrokerageTwo($orderInfo, $userInfo, $isSelfBrokerage, $frozen_time);
     }
 
@@ -521,6 +543,16 @@ class StoreOrderTakeServices extends BaseServices
             'number' => floatval($brokeragePrice),
             'frozen_time' => $frozenTime
         ], $balance, $orderInfo['id']);
+        Log::info('mvp_order_brokerage_income_two', [
+            'id' => $orderInfo['id'] ?? 0,
+            'order_id' => $orderInfo['order_id'] ?? '',
+            'uid' => $orderInfo['uid'] ?? 0,
+            'spread_two_uid' => $spread_two_uid,
+            'brokerage' => $brokeragePrice,
+            'balance' => $balance,
+            'frozen_time' => $frozenTime,
+            'record_saved' => (bool)$res1,
+        ]);
 
         // 添加用户余额
         $res2 = $userServices->bcInc($spread_two_uid, 'brokerage_price', $brokeragePrice, 'uid');
