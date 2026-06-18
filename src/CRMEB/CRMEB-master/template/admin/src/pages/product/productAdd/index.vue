@@ -23,7 +23,7 @@
           v-show="currentTab === '1'"
           :isCai="type"
           :formValidate="formValidate"
-          :goodsType="goodsType"
+          :goodsType="mvpGoodsType"
           :treeSelect="treeSelect"
           :tileLabelList="tileLabelList"
           :progress="progress"
@@ -55,6 +55,7 @@
           :oneFormBatch="oneFormBatch"
           :formDynamic="formDynamic"
           :canSel="canSel"
+          :isMvpMode="isMvpMode"
           @changeSpec="changeSpec"
           @confirm="confirm"
           @onMoveSpec="onMoveSpec"
@@ -270,13 +271,14 @@
     ></freightTemplate>
     <add-attr ref="addattr" @getList="userSearchs"></add-attr>
     <coupon-list
+      v-if="!isMvpMode"
       ref="couponTemplates"
       @nameId="nameId"
       :couponids="formValidate.coupon_ids"
       :updateIds="updateIds"
       :updateName="updateName"
     ></coupon-list>
-    <coupon-list ref="goodsCoupon" many="one" :luckDraw="true" @getCouponId="goodsCouponId"></coupon-list>
+    <coupon-list v-if="!isMvpMode" ref="goodsCoupon" many="one" :luckDraw="true" @getCouponId="goodsCouponId"></coupon-list>
     <!-- 生成淘宝京东表单-->
     <el-dialog
       :visible.sync="modals"
@@ -661,6 +663,10 @@ export default {
     isMvpMode() {
       return isMvpEnabled();
     },
+    mvpGoodsType() {
+      if (!this.isMvpMode) return this.goodsType;
+      return this.goodsType.filter((item) => Number(item.id) !== 2);
+    },
     labelWidth() {
       return this.isMobile ? undefined : '120px';
     },
@@ -854,6 +860,10 @@ export default {
     },
     // 类型选择/填入内容判断
     virtualbtn(index, type) {
+      if (this.isMvpMode && Number(index) === 2) {
+        this.$message.warning('MVP 模式下已禁用优惠券商品');
+        return;
+      }
       if (type != 1) {
         if (this.$route.params.id) return this.$message.error('编辑商品不支持切换商品类型');
         this.formValidate.is_sub = this.normalizeMvpSubSettings([]);
@@ -1131,6 +1141,10 @@ export default {
     },
     // 添加优惠券
     addCoupon() {
+      if (this.isMvpMode) {
+        this.$message.warning('MVP 模式下已禁用优惠券玩法');
+        return;
+      }
       this.$refs.couponTemplates.isTemplate = true;
       this.$refs.couponTemplates.tableList();
     },
@@ -1150,6 +1164,10 @@ export default {
         }
         this.addVirtualModel = true;
       } else {
+        if (this.isMvpMode) {
+          this.$message.warning('MVP 模式下已禁用优惠券商品');
+          return;
+        }
         this.$refs.goodsCoupon.isTemplate = true;
         this.$refs.goodsCoupon.tableList(3);
       }
@@ -1166,6 +1184,10 @@ export default {
     },
     // 添加优惠券
     addGoodsCoupon(index, name) {
+      if (this.isMvpMode) {
+        this.$message.warning('MVP 模式下已禁用优惠券商品');
+        return;
+      }
       this.tabIndex = index;
       this.tabName = name;
       this.$refs.goodsCoupon.isTemplate = true;

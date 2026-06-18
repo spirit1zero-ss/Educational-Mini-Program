@@ -342,14 +342,14 @@
                   </template>
                   <template v-else-if="item.slot === 'fictitious'">
                     <el-button
-                      v-if="!manyFormValidate[scope.$index].coupon_id && formValidate.virtual_type == 2"
+                      v-if="!isMvpMode && !manyFormValidate[scope.$index].coupon_id && formValidate.virtual_type == 2"
                       v-db-click
                       @click="addGoodsCoupon(scope.$index, 'manyFormValidate')"
                       >选择优惠券</el-button
                     >
                     <span
                       class="see"
-                      v-else-if="manyFormValidate[scope.$index].coupon_id && formValidate.virtual_type == 2"
+                      v-else-if="!isMvpMode && manyFormValidate[scope.$index].coupon_id && formValidate.virtual_type == 2"
                       v-db-click
                       @click="see(manyFormValidate[scope.$index], 'manyFormValidate', scope.$index)"
                       >{{ manyFormValidate[scope.$index].coupon_name }}</span
@@ -513,17 +513,17 @@
       <el-col :span="24">
         <el-form-item
           :label="formValidate.virtual_type == 1 ? '添加卡密/网盘：' : '选择优惠券：'"
-          v-if="formValidate.virtual_type == 1 || formValidate.virtual_type == 2"
+          v-if="formValidate.virtual_type == 1 || (!isMvpMode && formValidate.virtual_type == 2)"
         >
           <el-button
-            v-if="!oneFormValidate[0].coupon_id && formValidate.virtual_type == 2"
+            v-if="!isMvpMode && !oneFormValidate[0].coupon_id && formValidate.virtual_type == 2"
             v-db-click
             @click="addGoodsCoupon(0, 'oneFormValidate')"
             >选择优惠券</el-button
           >
           <span
             class="see"
-            v-else-if="oneFormValidate[0].coupon_id && formValidate.virtual_type == 2"
+            v-else-if="!isMvpMode && oneFormValidate[0].coupon_id && formValidate.virtual_type == 2"
             v-db-click
             @click="see(oneFormValidate[0], 'oneFormValidate', 0)"
             >{{ oneFormValidate[0].coupon_name }}</span
@@ -596,6 +596,10 @@ export default {
     oneFormBatch: {
       type: Array,
       required: true,
+    },
+    isMvpMode: {
+      type: Boolean,
+      default: false,
     },
   },
   data() {

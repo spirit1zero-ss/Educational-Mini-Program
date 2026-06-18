@@ -70,14 +70,14 @@
               </template>
               <template v-else-if="item.slot === 'fictitious'">
                 <el-button
-                  v-if="!row.coupon_id && formValidate.virtual_type == 2"
+                  v-if="!isMvpMode && !row.coupon_id && formValidate.virtual_type == 2"
                   v-db-click
                   @click="addGoodsCoupon(scope.$index, 'oneFormValidate')"
                   >选择优惠券</el-button
                 >
                 <span
                   class="see"
-                  v-else-if="row.coupon_id && formValidate.virtual_type == 2"
+                  v-else-if="!isMvpMode && row.coupon_id && formValidate.virtual_type == 2"
                   v-db-click
                   @click="see(row, 'manyFormValidate', scope.$index)"
                   >{{ row.coupon_name }}</span
@@ -238,14 +238,14 @@
               </template>
               <template v-else-if="item.slot === 'fictitious'">
                 <el-button
-                  v-if="!row.coupon_id && formValidate.virtual_type == 2"
+                  v-if="!isMvpMode && !row.coupon_id && formValidate.virtual_type == 2"
                   v-db-click
                   @click="addGoodsCoupon(scope.$index + 1, 'manyFormValidate')"
                   >选择优惠券</el-button
                 >
                 <span
                   class="see"
-                  v-else-if="row.coupon_id && formValidate.virtual_type == 2"
+                  v-else-if="!isMvpMode && row.coupon_id && formValidate.virtual_type == 2"
                   v-db-click
                   @click="see(row, 'manyFormValidate', scope.$index + 1)"
                   >{{ row.coupon_name }}</span
