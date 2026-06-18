@@ -59,7 +59,7 @@
           <template v-if="dataConfig.styleConfig.tabVal == 1">
             <view
               class="item"
-              v-if="checkType.indexOf(1) > -1"
+              v-if="isMvpMenuVisible(1)"
               @click.stop="handleMenu(1)"
             >
               <view class="num">{{ diyInfo.integral || 0 }}</view>
@@ -67,7 +67,7 @@
             </view>
             <view
               class="item"
-              v-if="checkType.indexOf(2) > -1"
+              v-if="isMvpMenuVisible(2)"
               @click.stop="handleMenu(2)"
             >
               <view class="num">{{ diyInfo.now_money || 0 }}</view>
@@ -75,7 +75,7 @@
             </view>
             <view
               class="item"
-              v-if="checkType.indexOf(0) > -1"
+              v-if="isMvpMenuVisible(0)"
               @click.stop="handleMenu(0)"
             >
               <view class="num">{{ diyInfo.couponCount || 0 }}</view>
@@ -83,7 +83,7 @@
             </view>
             <view
               class="item"
-              v-if="checkType.indexOf(4) > -1"
+              v-if="isMvpMenuVisible(4)"
               @click.stop="handleMenu(4)"
             >
               <view class="num">{{ diyInfo.collectCount || 0 }}</view>
@@ -91,7 +91,7 @@
             </view>
             <view
               class="item"
-              v-if="checkType.indexOf(5) > -1"
+              v-if="isMvpMenuVisible(5)"
               @click.stop="handleMenu(5)"
             >
               <view class="num">{{ diyInfo.visit_num || 0 }}</view>
@@ -105,7 +105,7 @@
         class="bottom acea-row row-middle"
       >
         <view
-          v-if="checkType.indexOf(1) != -1"
+          v-if="isMvpMenuVisible(1)"
           class="item"
           @click.stop="handleMenu(1)"
         >
@@ -113,7 +113,7 @@
           <view>{{ $t(`积分`) }}</view>
         </view>
         <view
-          v-if="checkType.indexOf(2) != -1"
+          v-if="isMvpMenuVisible(2)"
           class="item"
           @click.stop="handleMenu(2)"
         >
@@ -121,7 +121,7 @@
           <view>{{ $t(`余额`) }}</view>
         </view>
         <view
-          v-if="checkType.indexOf(0) != -1"
+          v-if="isMvpMenuVisible(0)"
           class="item"
           @click.stop="handleMenu(0)"
         >
@@ -129,7 +129,7 @@
           <view>{{ $t(`优惠券`) }}</view>
         </view>
         <view
-          v-if="checkType.indexOf(4) != -1"
+          v-if="isMvpMenuVisible(4)"
           class="item"
           @click.stop="handleMenu(4)"
         >
@@ -137,7 +137,7 @@
           <view>{{ $t(`收藏`) }}</view>
         </view>
         <view
-          v-if="checkType.indexOf(5) != -1"
+          v-if="isMvpMenuVisible(5)"
           class="item"
           @click.stop="handleMenu(5)"
         >
@@ -171,6 +171,7 @@ import commonWrapper from "./commonWrapper.vue";
 import colors from "@/mixins/color";
 import { getlevelInfo, getRandCode, getUserInfo } from "@/api/user.js";
 import { mapGetters } from "vuex";
+import { isMvpHiddenLink } from "@/config/mvp.js";
 export default {
   components: { commonWrapper },
   computed: {
@@ -385,25 +386,29 @@ export default {
         this.config.qrc.code = code;
       }
     },
-    handleMenu(type) {
-      let url = "";
+    getMenuUrl(type) {
       switch (type) {
         case 0:
-          url = "/pages/users/user_coupon/index";
-          break;
+          return "/pages/users/user_coupon/index";
         case 1:
-          url = "/pages/users/user_integral/index";
-          break;
+          return "/pages/users/user_integral/index";
         case 2:
-          url = "/pages/users/user_money/index";
-          break;
+          return "/pages/users/user_money/index";
         case 4:
-          url = "/pages/users/user_goods_collection/index";
-          break;
+          return "/pages/users/user_goods_collection/index";
         case 5:
-          url = "/pages/users/visit_list/index";
-          break;
+          return "/pages/users/visit_list/index";
+        default:
+          return "";
       }
+    },
+    isMvpMenuVisible(type) {
+      if (this.checkType.indexOf(type) === -1) return false;
+      return !isMvpHiddenLink(this.getMenuUrl(type));
+    },
+    handleMenu(type) {
+      let url = this.getMenuUrl(type);
+      if (isMvpHiddenLink(url)) return;
       if (url) {
         uni.navigateTo({
           url: url,
