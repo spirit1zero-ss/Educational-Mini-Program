@@ -251,6 +251,7 @@ import html2canvas from 'html2canvas';
 import theme from '@/mixins/theme';
 import Setting from '@/setting';
 import QRCode from 'qrcodejs2';
+import { isMvpCouponEnabled } from '@/config/mvp';
 
 export default {
   inject: ['reload', 'setDirty'],
@@ -403,6 +404,7 @@ export default {
     },
   },
   methods: {
+    isMvpCouponEnabled,
     exportView() {
       let that = this;
       this.loading = true;
@@ -718,6 +720,9 @@ export default {
     objToArr(data) {
       let obj = Object.keys(data);
       let m = obj.map((key) => data[key]);
+      if (!this.isMvpCouponEnabled()) {
+        m = m.filter((item) => item.defaultName !== 'coupon' && item.name !== 'home_coupon');
+      }
       return m;
     },
     log(evt) {
@@ -1285,6 +1290,7 @@ export default {
       }
     },
     getBadgeText(val) {
+      if (!this.isMvpCouponEnabled() && val === 'coupon') return '';
       const map = {
         user: '用户',
         article: '文章',
