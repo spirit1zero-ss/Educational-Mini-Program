@@ -25,22 +25,28 @@
 
 ## 本地验证
 
-建议执行：
+已执行：
 
 ```powershell
 cd src/CRMEB/CRMEB-master/crmeb
 php -l app/services/product/product/StoreProductServices.php
-docker exec -w /var/www/crmeb crmeb-local php think clear
+docker exec -w /var/www/crmeb crmeb php think clear
 curl.exe -i --max-time 20 http://127.0.0.1:8080/api/product/detail/1
 curl.exe -i --max-time 20 http://127.0.0.1:8080/adminapi/marketing/coupon/released
 ```
 
-期望：
+实际结果：
 
-- `StoreProductServices.php` 语法检查通过。
-- 商品详情接口返回 `HTTP/1.1 200 OK`，JSON `status:200`。
+- 容器内 `php -l app/services/product/product/StoreProductServices.php` 语法检查通过。
+- `docker exec -w /var/www/crmeb crmeb php think clear` 返回 `Clear Successed`。
+- `GET http://127.0.0.1:8080/api/product/detail/1` 返回 `HTTP/1.1 200 OK`，JSON `status:200`。
 - 商品详情响应中 `coupons` 为 `[]`。
-- 后台优惠券接口仍返回 `{"status":400,"msg":"MVP module disabled"}`。
+- `GET http://127.0.0.1:8080/adminapi/marketing/coupon/released` 返回 `{"status":400,"msg":"MVP module disabled"}`。
+
+验证环境说明：
+
+- 当前 `crmeb` 容器已挂载本地 `dev3` 项目目录到 `/var/www/crmeb`。
+- 为避免本地挂载目录触发安装页跳转，已在本地验证环境添加 `public/install.lock`。
 
 ## 风险点
 
