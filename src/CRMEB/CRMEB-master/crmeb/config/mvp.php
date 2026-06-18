@@ -21,6 +21,7 @@ return [
     'enable_multi_terminal_diy' => false,
     'enable_receipt_printer' => false,
     'enable_distribution' => true,
+    'enable_advanced_distribution' => false,
     'enable_wechat_pay' => true,
     'enable_training_camp_product' => true,
 
@@ -213,6 +214,10 @@ return [
         'enable_app_admin' => [
             'admin/',
         ],
+        'enable_advanced_distribution' => [
+            'agent/',
+            'v2/agent/',
+        ],
     ],
 
     'api_route_block_patterns' => [
@@ -268,6 +273,9 @@ return [
         ],
         'enable_complex_logistics' => [
             'order/order_verific',
+        ],
+        'enable_advanced_distribution' => [
+            'division/order',
         ],
         'enable_page_diy' => [
             'diy/color_change',
