@@ -264,4 +264,20 @@ return [
             'diy/color_change',
         ],
     ],
+
+    'kefuapi_route_block_patterns' => [
+        'enable_customer_service' => [
+            'login$',
+            'key$',
+            'scan/',
+            'config$',
+            'wechat$',
+            'upload$',
+            'user/',
+            'order/',
+            'product/',
+            'service/',
+            'tourist/',
+        ],
+    ],
 ];

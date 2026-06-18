@@ -10,6 +10,7 @@
 // +----------------------------------------------------------------------
 use app\http\middleware\AllowOriginMiddleware;
 use app\kefuapi\middleware\KefuAuthTokenMiddleware;
+use app\kefuapi\middleware\MvpRouteBlockMiddleware;
 use think\facade\Config;
 use think\facade\Route;
 use think\Response;
@@ -102,7 +103,8 @@ Route::group(function () {
         Route::post('upload', 'Common/upload')->name('upload')->option(['real_name' => '图片上传']);//图片上传
     })->option(['mark' => 'tourist', 'mark_name' => '游客客服']);
 
-})->middleware(AllowOriginMiddleware::class);
+})->middleware(AllowOriginMiddleware::class)
+    ->middleware(MvpRouteBlockMiddleware::class);
 
 Route::miss(function () {
     if (app()->request->isOptions()) {
