@@ -146,6 +146,18 @@ return [
             'theme/',
             'theme_module/',
         ],
+        'enable_invoice' => [
+            'order/invoice',
+            'order/invoice_order_info',
+            'order/invoice_issuance_url',
+            'order/save_invoice_info',
+            'order/invoice_category',
+            'order/invoice_issuance',
+            'order/invoice_info',
+            'order/red_invoice_issuance',
+            'order/down_invoice',
+            'order/elec_invoice_config',
+        ],
     ],
 
     'api_route_allow_patterns' => [

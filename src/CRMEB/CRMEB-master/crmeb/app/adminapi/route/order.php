@@ -136,6 +136,7 @@ Route::group('order', function () {
     Route::post('edit_address/:id', 'v1.order.StoreOrder/editAddress')->option(['real_name' => '未发货的订单修改发货地址']);
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
+    \app\adminapi\middleware\MvpRouteBlockMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class
