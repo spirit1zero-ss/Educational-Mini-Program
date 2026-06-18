@@ -19,6 +19,7 @@ return [
     'enable_complex_logistics' => false,
     'enable_invoice' => false,
     'enable_multi_terminal_diy' => false,
+    'enable_receipt_printer' => false,
     'enable_distribution' => true,
     'enable_wechat_pay' => true,
     'enable_training_camp_product' => true,
@@ -87,6 +88,9 @@ return [
             'mall_theme',
             'edit_theme',
         ],
+        'enable_receipt_printer' => [
+            'ticket',
+        ],
     ],
 
     'admin_route_allow_patterns' => [
@@ -139,6 +143,8 @@ return [
         ],
         'enable_app_admin' => [
             'app/',
+            'setting/system_out_account',
+            'setting/system_out_interface',
         ],
         'enable_page_diy' => [
             'diy/',
@@ -147,6 +153,7 @@ return [
             'theme_module/',
         ],
         'enable_invoice' => [
+            'setting/elec_invoice',
             'order/invoice',
             'order/invoice_order_info',
             'order/invoice_issuance_url',
@@ -162,6 +169,9 @@ return [
             'freight/',
             'setting/city/',
             'setting/shipping_templates',
+        ],
+        'enable_receipt_printer' => [
+            'system/ticket',
         ],
     ],
 
