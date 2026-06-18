@@ -50,7 +50,7 @@
         </router-link>
       </el-card>
     </el-col>
-    <el-col v-bind="grid" class="ivu-mb" v-auth="['cms-article-index']">
+    <el-col v-if="isMvpAdminLinkVisible('/cms/article/index')" v-bind="grid" class="ivu-mb" v-auth="['cms-article-index']">
       <el-card shadow="never">
         <router-link :to="{ path: $routeProStr + '/cms/article/index' }">
           <div class="icon">
@@ -70,7 +70,7 @@
         </router-link>
       </el-card>
     </el-col>
-    <el-col v-bind="grid" class="ivu-mb" v-auth="['marketing-store_coupon-index']">
+    <el-col v-if="isMvpAdminLinkVisible('/marketing/store_coupon_issue/index')" v-bind="grid" class="ivu-mb" v-auth="['marketing-store_coupon-index']">
       <el-card shadow="never">
         <router-link :to="{ path: $routeProStr + '/marketing/store_coupon_issue/index' }">
           <div class="icon">
@@ -83,6 +83,8 @@
   </el-row>
 </template>
 <script>
+import { isMvpAdminLinkVisible } from '@/config/mvp';
+
 export default {
   data() {
     return {
@@ -94,6 +96,9 @@ export default {
         xs: 12,
       },
     };
+  },
+  methods: {
+    isMvpAdminLinkVisible,
   },
 };
 </script>

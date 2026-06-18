@@ -25,6 +25,7 @@ import division from './modules/division';
 import education from './modules/education';
 import settings from '@/setting';
 import crud from './modules/crud';
+import { isMvpEnabled } from '@/config/mvp';
 
 const modulesFiles = require.context('./modules/crud', true, /\.js$/);
 
@@ -166,7 +167,7 @@ const frameIn = [
   setting,
   system,
   statistic,
-  division,
+  ...(isMvpEnabled() ? [] : [division]),
   education,
   ...routers,
   crud,

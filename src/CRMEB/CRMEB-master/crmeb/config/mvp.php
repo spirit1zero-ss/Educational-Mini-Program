@@ -103,6 +103,10 @@ return [
         'enable_receipt_printer' => [
             'ticket',
         ],
+        'enable_advanced_distribution' => [
+            'division',
+            'agent-division',
+        ],
     ],
 
     'admin_route_allow_patterns' => [
@@ -191,6 +195,9 @@ return [
         ],
         'enable_receipt_printer' => [
             'system/ticket',
+        ],
+        'enable_advanced_distribution' => [
+            'agent/division',
         ],
     ],
 
