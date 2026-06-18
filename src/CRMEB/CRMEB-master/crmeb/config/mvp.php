@@ -63,6 +63,14 @@ return [
             'live-room',
             'live-goods',
         ],
+        'enable_customer_service' => [
+            'kefu',
+            'customer_service',
+            'store_service',
+            'speechcraft',
+            'feedback',
+            'auto_reply',
+        ],
         'enable_page_diy' => [
             'pages',
             'diy',
@@ -140,6 +148,13 @@ return [
         ],
         'enable_cms' => [
             'cms/',
+        ],
+        'enable_customer_service' => [
+            'app/feedback',
+            'app/wechat/speechcraft',
+            'app/wechat/speechcraftcate',
+            'app/wechat/kefu',
+            'app/kefu/auto_reply',
         ],
         'enable_app_admin' => [
             'app/',
