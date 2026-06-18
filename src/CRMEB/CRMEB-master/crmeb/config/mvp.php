@@ -67,6 +67,15 @@ return [
             'live-room',
             'live-goods',
         ],
+        'enable_lottery' => [
+            'lottery',
+        ],
+        'enable_cms' => [
+            'cms/',
+            'article',
+            'special',
+            'news',
+        ],
         'enable_customer_service' => [
             'kefu',
             'customer_service',
@@ -74,6 +83,12 @@ return [
             'speechcraft',
             'feedback',
             'auto_reply',
+        ],
+        'enable_app_admin' => [
+            'app/',
+            'wechat/',
+            'system_out_account',
+            'system_out_interface',
         ],
         'enable_page_diy' => [
             'pages',
@@ -91,6 +106,19 @@ return [
         'enable_invoice' => [
             'invoice',
             'elec_invoice',
+        ],
+        'enable_offline_payment' => [
+            'offline',
+            'offline_payment',
+            'offline-pay',
+        ],
+        'enable_store_pickup' => [
+            'store_pickup',
+            'self_pick',
+            'self-pick',
+            'verify_order',
+            'system_store',
+            'store-staff',
         ],
         'enable_multi_terminal_diy' => [
             'theme',
