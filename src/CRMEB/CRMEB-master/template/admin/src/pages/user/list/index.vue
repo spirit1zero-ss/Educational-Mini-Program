@@ -284,7 +284,7 @@
           <el-button v-auth="['admin-user-save']" type="primary" v-db-click @click="edit({ uid: 0 })"
             >添加用户</el-button
           >
-          <el-button v-auth="['admin-user-coupon']" v-db-click @click="onSend">发送优惠券</el-button>
+          <el-button v-if="isMvpCouponEnabled()" v-auth="['admin-user-coupon']" v-db-click @click="onSend">发送优惠券</el-button>
           <el-button
             v-auth="['admin-wechat-news']"
             class="greens mr10"
@@ -429,7 +429,7 @@
     <!-- 编辑表单 积分余额-->
     <edit-from ref="edits" :FromData="FromData" @submitFail="submitFail"></edit-from>
     <!-- 发送优惠券-->
-    <send-from ref="sends" :userIds="ids.toString()"></send-from>
+    <send-from v-if="isMvpCouponEnabled()" ref="sends" :userIds="ids.toString()"></send-from>
     <!-- 会员详情-->
     <user-details ref="userDetails"></user-details>
     <!--发送图文消息 -->
@@ -547,6 +547,7 @@ import newsCategory from '@/components/newsCategory/index';
 import customerInfo from '@/components/customerInfo';
 import { cityList } from '@/api/app';
 import { membershipDataListApi } from '@/api/membershipLevel';
+import { isMvpCouponEnabled } from '@/config/mvp';
 
 export default {
   name: 'user_list',
@@ -679,6 +680,7 @@ export default {
     // this.groupLists();
   },
   methods: {
+    isMvpCouponEnabled,
     getCityList() {
       cityList().then((res) => {
         this.addresData = res.data;
@@ -1216,6 +1218,10 @@ export default {
     },
     // 点击发送优惠券
     onSend() {
+      if (!this.isMvpCouponEnabled()) {
+        this.$message.warning('MVP 模式下已禁用优惠券玩法');
+        return;
+      }
       if (this.ids.length === 0) {
         this.$message.warning('请选择要发送优惠券的用户');
       } else {

@@ -10,7 +10,18 @@ const HIDDEN_DASHBOARD_LINK_KEYWORDS = [
   '/marketing/coupon',
 ];
 
+const DISABLED_MARKETING_ACTIVITIES = ['bargain', 'combination', 'seckill'];
+
 export function isMvpAdminLinkVisible(link = '') {
   if (!MVP_ENABLED || !link) return true;
   return !HIDDEN_DASHBOARD_LINK_KEYWORDS.some((keyword) => link.indexOf(keyword) !== -1);
+}
+
+export function isMvpCouponEnabled() {
+  return !MVP_ENABLED;
+}
+
+export function isMvpMarketingActivityEnabled(type = '') {
+  if (!MVP_ENABLED) return true;
+  return !DISABLED_MARKETING_ACTIVITIES.includes(type);
 }
