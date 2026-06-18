@@ -158,6 +158,11 @@ return [
             'order/down_invoice',
             'order/elec_invoice_config',
         ],
+        'enable_complex_logistics' => [
+            'freight/',
+            'setting/city/',
+            'setting/shipping_templates',
+        ],
     ],
 
     'api_route_allow_patterns' => [
