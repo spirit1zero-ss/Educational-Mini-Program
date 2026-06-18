@@ -37,6 +37,9 @@
 	import {
 		getLiveList
 	} from '@/api/api.js';
+	import {
+		isMvpEnabled
+	} from '@/config/mvp.js';
 	export default {
 		name: 'liveBroadcast',
 		props: {
@@ -57,11 +60,13 @@
 		},
 		created() {},
 		mounted() {
+			if (isMvpEnabled()) return;
 			this.custom_params= encodeURIComponent(JSON.stringify({spid:this.$store.state.app.uid}))
 			this.getLiveList();
 		},
 		methods: {
 			getLiveList: function() {
+				if (isMvpEnabled()) return;
 				let limit = this.$config.LIMIT;
 				if (!this.isScroll) return
 				getLiveList(this.page, this.limit)
@@ -74,7 +79,7 @@
 			}
 		},
 		onReachBottom() {
-
+			if (isMvpEnabled()) return;
 			this.getLiveList()
 		}
 	};

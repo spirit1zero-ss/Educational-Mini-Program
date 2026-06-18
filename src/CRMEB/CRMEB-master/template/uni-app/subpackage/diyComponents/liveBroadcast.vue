@@ -301,9 +301,9 @@
 import commonWrapper from "./commonWrapper.vue";
 import { mapGetters } from "vuex";
 import { getLiveList } from "@/api/api.js";
+import { isMvpEnabled } from "@/config/mvp.js";
 export default {
   components: { commonWrapper },
-  computed: mapGetters(["uid"]),
   name: "liveBroadcast",
   props: {
     dataConfig: {
@@ -329,6 +329,7 @@ export default {
     };
   },
   computed: {
+    ...mapGetters(["uid"]),
     imgStyle() {
       let borderRadius = `${this.dataConfig.filletImg.val * 2}rpx`;
       if (this.dataConfig.filletImg.type) {
@@ -448,6 +449,7 @@ export default {
   },
   created() {},
   mounted() {
+    if (isMvpEnabled()) return;
     this.getLiveList();
   },
   methods: {
@@ -459,6 +461,7 @@ export default {
       );
     },
     getLiveList: function () {
+      if (isMvpEnabled()) return;
       let limit = this.$config.LIMIT;
       getLiveList(
         1,
