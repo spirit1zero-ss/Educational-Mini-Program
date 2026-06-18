@@ -216,6 +216,17 @@ return [
             'order/down_invoice',
             'order/elec_invoice_config',
         ],
+        'enable_offline_payment' => [
+            'order/pay_offline',
+            'order/offline_scan',
+            'order/scan_list',
+        ],
+        'enable_store_pickup' => [
+            'merchant/store',
+            'merchant/store_staff',
+            'merchant/verify',
+            'export/verify_order',
+        ],
         'enable_complex_logistics' => [
             'freight/',
             'setting/city/',
