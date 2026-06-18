@@ -578,6 +578,7 @@
 <script>
 import commonWrapper from "./commonWrapper.vue";
 import { mapGetters } from "vuex";
+import { isMvpHiddenLink } from "@/config/mvp.js";
 
 export default {
   components: { commonWrapper },
@@ -1090,6 +1091,7 @@ export default {
       ];
       return list
         .filter((item) => this.checkType.indexOf(item.id) != -1)
+        .filter((item) => !isMvpHiddenLink(this.getDataNavigationUrl(item.id)))
         .map((item) => ({ ...item, val: this.getDataValue(item.key) }));
     },
   },
@@ -1133,34 +1135,30 @@ export default {
       }
       uni.navigateTo({ url: "/pages/users/user_info/index" });
     },
-    handleDataNavigation(item) {
-      let url = "";
-      switch (item.id) {
+    getDataNavigationUrl(id) {
+      switch (id) {
         case 1:
-          url = "/pages/users/user_money/index";
-          break;
+          return "/pages/users/user_money/index";
         case 3:
-          url = "/pages/users/user_coupon/index";
-          break;
+          return "/pages/users/user_coupon/index";
         case 2:
-          url = "/pages/users/user_integral/index";
-          break;
+          return "/pages/users/user_integral/index";
         case 5:
-          url = "/pages/users/user_goods_collection/index";
-          break;
+          return "/pages/users/user_goods_collection/index";
         case 6:
-          url = "/pages/users/visit_list/index";
-          break;
+          return "/pages/users/visit_list/index";
         case 8:
-          url = "/pages/users/user_spread_money/index?type=2";
-          break;
+          return "/pages/users/user_spread_money/index?type=2";
         case 9:
-          url = "/pages/users/promoter-list/index";
-          break;
+          return "/pages/users/promoter-list/index";
         case 10:
-          url = "/pages/users/promoter-order/index";
-          break;
+          return "/pages/users/promoter-order/index";
+        default:
+          return "";
       }
+    },
+    handleDataNavigation(item) {
+      let url = this.getDataNavigationUrl(item.id);
       if (url) {
         this.goLink(url);
       }

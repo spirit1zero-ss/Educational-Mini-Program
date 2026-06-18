@@ -789,7 +789,10 @@
 					payType: this.payType
 				}
 				data = disableMvpOrderMarketing(data);
-				if (this.is_gift) data.is_gift = this.is_gift
+				if (this.isMvpMode) {
+					data.payType = 'weixin';
+					data.is_gift = 0;
+				} else if (this.is_gift) data.is_gift = this.is_gift
 				postOrderComputed(this.orderKey, data).then(res => {
 					let result = res.data.result;
 					if (result) {
@@ -963,7 +966,9 @@
 					addressId: that.addressId,
 					shipping_type: that.shippingType + 1
 				}
-				if (that.is_gift) data.is_gift = that.is_gift
+				if (that.isMvpMode) {
+					data.is_gift = 0;
+				} else if (that.is_gift) data.is_gift = that.is_gift
 				orderConfirm(data).then(res => {
 					that.$set(that, 'userInfo', res.data.userInfo);
 					that.$set(that, 'confirm', res.data.custom_form || []);
@@ -1019,6 +1024,12 @@
 					}
 					//好友代付是否开启
 					that.cartArr[4].payStatus = res.data.friend_pay_status || 0;
+					if (that.isMvpMode) {
+						that.cartArr[1].payStatus = 0;
+						that.cartArr[2].payStatus = 0;
+						that.cartArr[3].payStatus = 0;
+						that.cartArr[4].payStatus = 0;
+					}
 					// that.$set(that, 'cartArr', that.cartArr);
 					that.$set(that, 'ChangePrice', that.totalPrice);
 					that.getBargainId();
@@ -1297,7 +1308,10 @@
 					// #endif
 				};
 				data = disableMvpOrderMarketing(data);
-				if (that.is_gift) data.is_gift = that.is_gift
+				if (that.isMvpMode) {
+					data.payType = 'weixin';
+					data.is_gift = 0;
+				} else if (that.is_gift) data.is_gift = that.is_gift
 				if (data.payType == 'yue' && parseFloat(that.userInfo.now_money) < parseFloat(that.totalPrice))
 					return that.$util.Tips({
 						title: that.$t(`余额不足`)
@@ -1315,6 +1329,11 @@
 				// #endif
 			},
 			receiveGift() {
+				if (this.isMvpMode) {
+					return this.$util.Tips({
+						title: 'MVP does not support gift orders'
+					});
+				}
 				let data = {
 					gift_key: this.giftData.gift_key,
 					shipping_type: this.$util.$h.Add(this.shippingType, 1),

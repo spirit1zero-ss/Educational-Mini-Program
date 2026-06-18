@@ -39,7 +39,17 @@ const HIDDEN_LINK_KEYWORDS = [
   "user_coupon",
   "user_get_coupon",
   "user_integral",
+  "user_goods_collection",
+  "user_invoice",
+  "user_money",
   "user_payment",
+  "visit_list",
+  "message_center",
+  "message_system",
+  "payment_on_behalf",
+  "receive_gift",
+  "receive_gifts_status",
+  "user_cancellation",
 ];
 
 const HOME_ALLOWED_DDIY_COMPONENTS = [

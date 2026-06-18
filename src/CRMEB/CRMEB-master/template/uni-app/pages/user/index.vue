@@ -71,7 +71,7 @@ import Loading from "@/components/Loading/index.vue";
 import { getCrmebCopyRight } from "@/api/api.js";
 import { goShopDetail } from "@/libs/order.js";
 import PageDesign from "@/subpackage/diyComponents/pageDesign.vue";
-import { isMvpHiddenLink } from "@/config/mvp.js";
+import { isMvpEnabled, isMvpHiddenLink } from "@/config/mvp.js";
 
 export default {
   components: {
@@ -372,6 +372,7 @@ export default {
     },
     // 记录会员访问
     setVisit() {
+      if (isMvpEnabled()) return;
       setVisit({
         url: "/pages/user/index",
       }).then((res) => {});
