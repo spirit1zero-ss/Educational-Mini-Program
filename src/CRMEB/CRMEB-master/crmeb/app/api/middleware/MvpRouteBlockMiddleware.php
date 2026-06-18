@@ -31,13 +31,22 @@ class MvpRouteBlockMiddleware implements MiddlewareInterface
     {
         $path = $this->normalizePath($request->pathinfo());
 
+        if ($this->isBlockedByRules($path, 'api_route_force_block_patterns')) {
+            return true;
+        }
+
         foreach ($this->patterns('api_route_allow_patterns') as $pattern) {
             if ($this->matches($path, $pattern)) {
                 return false;
             }
         }
 
-        $rules = function_exists('mvp_config') ? mvp_config('api_route_block_patterns', []) : [];
+        return $this->isBlockedByRules($path, 'api_route_block_patterns');
+    }
+
+    protected function isBlockedByRules(string $path, string $configName): bool
+    {
+        $rules = function_exists('mvp_config') ? mvp_config($configName, []) : [];
         if (!is_array($rules)) {
             return false;
         }
@@ -54,6 +63,7 @@ class MvpRouteBlockMiddleware implements MiddlewareInterface
                         'path' => $path,
                         'switch' => $switch,
                         'pattern' => (string)$pattern,
+                        'config' => $configName,
                     ]));
                     return true;
                 }

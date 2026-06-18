@@ -209,6 +209,12 @@ return [
         'diy/sign',
     ],
 
+    'api_route_force_block_patterns' => [
+        'enable_app_admin' => [
+            'admin/',
+        ],
+    ],
+
     'api_route_block_patterns' => [
         'enable_coupon' => [
             'coupon/',
@@ -259,6 +265,9 @@ return [
             'order/invoice',
             'order/make_up_invoice',
             'order/down_invoice',
+        ],
+        'enable_complex_logistics' => [
+            'order/order_verific',
         ],
         'enable_page_diy' => [
             'diy/color_change',

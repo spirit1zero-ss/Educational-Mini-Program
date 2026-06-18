@@ -114,6 +114,7 @@ Route::group(function () {
 
 })->middleware(\app\http\middleware\AllowOriginMiddleware::class)
     ->middleware(\app\api\middleware\StationOpenMiddleware::class)
+    ->middleware(\app\api\middleware\MvpRouteBlockMiddleware::class)
     ->middleware(\app\api\middleware\AuthTokenMiddleware::class, true)
     ->middleware(\app\api\middleware\CustomerMiddleware::class)
     ->option(['mark' => 'admin', 'mark_name' => '移动端订单管理']);;
