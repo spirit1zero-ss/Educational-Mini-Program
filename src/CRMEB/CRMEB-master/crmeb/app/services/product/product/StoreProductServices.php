@@ -1667,9 +1667,13 @@ class StoreProductServices extends BaseServices
         $data['mapKey'] = sys_config('tengxun_map_key');
         $data['store_self_mention'] = (int)sys_config('store_self_mention') ?? 0; //门店自提是否开启
         $data['activity'] = $this->getActivityList($data['storeInfo'], false);
-        /** @var StoreCouponIssueServices $couponService */
-        $couponService = app()->make(StoreCouponIssueServices::class);
-        $data['coupons'] = $couponService->getIssueCouponList($uid, ['product_id' => $id, 'type' => -1])['list'];
+        if (function_exists('mvp_enabled') && !mvp_enabled('enable_coupon', true)) {
+            $data['coupons'] = [];
+        } else {
+            /** @var StoreCouponIssueServices $couponService */
+            $couponService = app()->make(StoreCouponIssueServices::class);
+            $data['coupons'] = $couponService->getIssueCouponList($uid, ['product_id' => $id, 'type' => -1])['list'];
+        }
         $data['routine_contact_type'] = sys_config('routine_contact_type', 0);
         //浏览记录
         ProductLogJob::dispatch(['visit', ['uid' => $uid, 'product_id' => $id]]);
