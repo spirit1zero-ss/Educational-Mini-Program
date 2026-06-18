@@ -1,23 +1,23 @@
 <template>
 	<view :style="colorStyle">
 		<view class='order-submission'>
-			<view class="allAddress" :style="store_self_mention && is_shipping ? '':'padding-top:10rpx'"
+			<view class="allAddress" :style="!isMvpMode && store_self_mention && is_shipping ? '':'padding-top:10rpx'"
 				v-if="!virtual_type && (!is_gift || is_gift == 2)">
 				<view class="nav acea-row">
 					<view class="item font-num" :class="shippingType == 0 ? 'on' : 'on2'" @tap="addressType(0)"
-						v-if='store_self_mention && is_shipping'>
+						v-if='!isMvpMode && store_self_mention && is_shipping'>
 						<view class="before">
 							{{$t(`快递配送`)}}
 						</view>
 					</view>
 					<view class="item font-num" :class="shippingType == 1 ? 'on' : 'on2'" @tap="addressType(1)"
-						v-if='store_self_mention && is_shipping'>
+						v-if='!isMvpMode && store_self_mention && is_shipping'>
 						<view class="before">
 							{{$t(`到店自提`)}}
 						</view>
 					</view>
 				</view>
-				<view class="add-title acea-row row-between-wrapper" v-if="!store_self_mention || !is_shipping"
+				<view class="add-title acea-row row-between-wrapper" v-if="isMvpMode || !store_self_mention || !is_shipping"
 					@click.prevent="openList">
 					<view class="acea-row row-middle">
 						<view class="icon" :class="shippingType==1?'orange':'red'">
@@ -44,7 +44,7 @@
 					<view class='addressCon' v-else>
 						<view class='setaddress'>{{$t(`设置收货地址`)}}</view>
 					</view>
-					<view v-if="store_self_mention && is_shipping" class='iconfont icon-jiantou'></view>
+					<view v-if="!isMvpMode && store_self_mention && is_shipping" class='iconfont icon-jiantou'></view>
 				</view>
 				<view class='address acea-row row-between-wrapper' v-else @tap="showStoreList">
 					<block v-if="storeList.length>0">
@@ -126,7 +126,7 @@
 						</checkbox-group>
 					</view>
 				</view>
-				<view v-if="invoice_func || special_invoice" class='item acea-row row-between-wrapper' @tap="goInvoice">
+				<view v-if="!isMvpMode && (invoice_func || special_invoice)" class='item acea-row row-between-wrapper' @tap="goInvoice">
 					<view>{{$t(`开具发票`)}}</view>
 					<view class='discount'>
 						{{invTitle}}
@@ -528,6 +528,9 @@
 			if(options.is_gift){
 				this.is_gift = Number(options.is_gift);
 			}
+			if (this.isMvpMode) {
+				this.is_gift = 0;
+			}
 			this.couponId = this.isMvpMode ? 0 : (options.couponId || 0);
 			this.noCoupon = this.isMvpMode ? 1 : (Number(options.noCoupon) || 0);
 			this.pinkId = options.pinkId ? parseInt(options.pinkId) : 0;
@@ -536,10 +539,10 @@
 			this.orderId = options.order_id || 0
 			this.is_address = options.is_address ? true : false;
 			this.news = !options.new || options.new === '0' ? 0 : 1;
-			this.invChecked = options.invoice_id || '';
+			this.invChecked = this.isMvpMode ? '' : (options.invoice_id || '');
 			this.header_type = options.header_type || '1';
 			this.couponTitle = this.isMvpMode ? this.$t(`请选择`) : (options.couponTitle || this.$t(`请选择`))
-			if (options.invoice_id) {
+			if (!this.isMvpMode && options.invoice_id) {
 				let name = ''
 				name += options.header_type == 1 ? this.$t(`个人`) : this.$t(`企业`);
 				name += options.invoice_type == 1 ? this.$t(`普通`) : this.$t(`专用`);
@@ -615,6 +618,16 @@
 			},
 			checkShipping() {
 				let that = this;
+				if (that.isMvpMode) {
+					that.is_shipping = false;
+					that.shippingType = 0;
+					this.getaddressInfo();
+					this.getConfirm();
+					this.$nextTick(function() {
+						this.$refs.addressWindow.getAddressList();
+					})
+					return;
+				}
 				checkShipping(that.cartId, that.news).then(res => {
 					if (res.data.type == 0) {
 						that.is_shipping = true;
@@ -670,6 +683,7 @@
 				if (this.shippingType == 0) {
 					this.onAddress()
 				} else {
+					if (this.isMvpMode) return;
 					this.showStoreList()
 				}
 			},
@@ -679,6 +693,7 @@
 				this.getInvoiceList()
 			},
 			getInvoiceList() {
+				if (this.isMvpMode) return;
 				uni.showLoading({
 					title: this.$t(`正在加载中`)
 				})
@@ -707,6 +722,7 @@
 			 * 开发票
 			 */
 			goInvoice: function() {
+				if (this.isMvpMode) return;
 				this.getInvoiceList()
 				this.invShow = true;
 				this.urlQuery =
@@ -746,6 +762,7 @@
 			 * 获取门店列表数据
 			 */
 			getList: function() {
+				if (this.isMvpMode) return;
 				let longitude = uni.getStorageSync("user_longitude") || ''; //经度
 				let latitude = uni.getStorageSync("user_latitude") || ''; //纬度
 				let data = {
@@ -768,6 +785,7 @@
 			 * 跳转门店列表
 			 */
 			showStoreList: function() {
+				if (this.isMvpMode) return;
 				let _this = this
 				if (this.storeList.length > 0) {
 					uni.navigateTo({
@@ -792,6 +810,7 @@
 				if (this.isMvpMode) {
 					data.payType = 'weixin';
 					data.is_gift = 0;
+					data.shipping_type = 1;
 				} else if (this.is_gift) data.is_gift = this.is_gift
 				postOrderComputed(this.orderKey, data).then(res => {
 					let result = res.data.result;
@@ -808,6 +827,7 @@
 			addressType(e) {
 				let index = e;
 				let that = this;
+				if (that.isMvpMode && parseInt(index) == 1) return;
 				if (this.shippingType == parseInt(index)) return
 				this.shippingType = parseInt(index);
 				if (index == 1) {
@@ -1000,9 +1020,15 @@
 					that.$set(that, 'allPrice', that.$util.$h.Add(parseFloat(priceGroup.totalPrice),
 						parseFloat(priceGroup.vipPrice)).toFixed(2));
 					that.$set(that, 'seckillId', parseInt(res.data.seckill_id));
-					that.$set(that, 'invoice_func', res.data.invoice_func);
-					that.$set(that, 'special_invoice', res.data.special_invoice);
-					that.$set(that, 'store_self_mention', res.data.store_self_mention);
+					that.$set(that, 'invoice_func', that.isMvpMode ? false : res.data.invoice_func);
+					that.$set(that, 'special_invoice', that.isMvpMode ? false : res.data.special_invoice);
+					that.$set(that, 'store_self_mention', that.isMvpMode ? 0 : res.data.store_self_mention);
+					if (that.isMvpMode) {
+						that.shippingType = 0;
+						that.invChecked = '';
+						that.invTitle = that.$t(`不开发票`);
+						that.system_store = {};
+					}
 					that.$set(that, 'virtual_type', res.data.virtual_type || 0);
 					that.$set(that, 'integral_open', that.isMvpMode ? false : res.data.integral_open);
 					uni.hideLoading()
@@ -1311,6 +1337,9 @@
 				if (that.isMvpMode) {
 					data.payType = 'weixin';
 					data.is_gift = 0;
+					data.shipping_type = 1;
+					data.store_id = 0;
+					data.invoice_id = '';
 				} else if (that.is_gift) data.is_gift = that.is_gift
 				if (data.payType == 'yue' && parseFloat(that.userInfo.now_money) < parseFloat(that.totalPrice))
 					return that.$util.Tips({

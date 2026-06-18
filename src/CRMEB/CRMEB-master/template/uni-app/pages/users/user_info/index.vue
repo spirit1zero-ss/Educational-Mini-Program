@@ -110,13 +110,13 @@
 							{{$t(`点击前往`)}}<text class="iconfont icon-xiangyou"></text>
 						</navigator>
 					</view>
-					<view class="item acea-row row-between-wrapper" v-if="userInfo.invioce_func">
+					<view class="item acea-row row-between-wrapper" v-if="!isMvpMode && userInfo.invioce_func">
 						<view>{{$t(`发票管理`)}}</view>
 						<navigator url="/pages/users/user_invoice_list/index" hover-class="none" class="input">
 							{{$t(`点击前往`)}}<text class="iconfont icon-xiangyou"></text>
 						</navigator>
 					</view>
-					<view class="item acea-row row-between-wrapper">
+					<view class="item acea-row row-between-wrapper" v-if="!isMvpMode">
 						<view>{{$t(`账号注销`)}}</view>
 						<navigator url="/pages/users/user_cancellation/index" hover-class="none" class="input">
 							{{$t(`注销后无法恢复`)}}<text class="iconfont icon-xiangyou"></text>
@@ -181,6 +181,7 @@
 	import Cache from '@/utils/cache';
 	import colors from '@/mixins/color.js';
 	import appUpdate from "@/components/update/app-update.vue";
+	import { isMvpEnabled } from "@/config/mvp.js";
 	export default {
 		components: {
 			// #ifdef APP-PLUS
@@ -209,7 +210,12 @@
 				mp_is_new: this.$Cache.get('MP_VERSION_ISNEW') || false
 			};
 		},
-		computed: mapGetters(['isLogin']),
+		computed: {
+			...mapGetters(['isLogin']),
+			isMvpMode() {
+				return isMvpEnabled();
+			}
+		},
 		watch: {
 			isLogin: {
 				handler: function(newV, oldV) {
