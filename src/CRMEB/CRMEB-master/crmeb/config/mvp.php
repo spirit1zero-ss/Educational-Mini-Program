@@ -18,6 +18,8 @@ return [
     'enable_page_diy' => false,
     'enable_complex_logistics' => false,
     'enable_invoice' => false,
+    'enable_offline_payment' => false,
+    'enable_store_pickup' => false,
     'enable_multi_terminal_diy' => false,
     'enable_receipt_printer' => false,
     'enable_distribution' => true,
@@ -273,6 +275,12 @@ return [
         ],
         'enable_complex_logistics' => [
             'order/order_verific',
+        ],
+        'enable_offline_payment' => [
+            'order/offline/',
+        ],
+        'enable_store_pickup' => [
+            'store_list',
         ],
         'enable_advanced_distribution' => [
             'division/order',
