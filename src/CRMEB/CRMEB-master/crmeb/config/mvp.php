@@ -20,6 +20,7 @@ return [
     'enable_invoice' => false,
     'enable_offline_payment' => false,
     'enable_store_pickup' => false,
+    'enable_optional_user_features' => false,
     'enable_multi_terminal_diy' => false,
     'enable_receipt_printer' => false,
     'enable_distribution' => true,
@@ -281,6 +282,18 @@ return [
         ],
         'enable_store_pickup' => [
             'store_list',
+        ],
+        'enable_optional_user_features' => [
+            'collect/',
+            'user/visit',
+            'user/set_visit',
+            'user/share',
+            'user/message_system',
+            'user_cancel',
+            'order/friend_detail',
+            'order/receive_gift',
+            'order/gift_detail',
+            'user/balance',
         ],
         'enable_advanced_distribution' => [
             'division/order',
