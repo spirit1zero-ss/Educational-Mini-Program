@@ -262,6 +262,9 @@ return [
         ],
         'enable_page_diy' => [
             'diy/color_change',
+            'diy/get_diy',
+            'diy/get_version',
+            'diy/get_store_status',
         ],
     ],
 
