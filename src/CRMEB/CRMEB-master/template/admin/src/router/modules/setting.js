@@ -10,6 +10,7 @@
 
 import LayoutMain from '@/layout';
 import setting from '@/setting';
+import { isMvpEnabled } from '@/config/mvp';
 let routePre = setting.routePre;
 
 const meta = {
@@ -18,7 +19,35 @@ const meta = {
 
 const pre = 'setting_';
 
-export default {
+const MVP_SETTING_BLOCKED_PATHS = [
+  'system_config_logistics',
+  'elec_invoice',
+  'freight/express',
+  'freight/city',
+  'freight/shipping_templates',
+  'delivery_service',
+  'theme_style',
+  'theme/micro_page',
+  'pages',
+  'my_theme',
+  'mall_theme',
+  'edit_theme',
+  'store_service',
+  'store-service',
+  'system_out',
+  'system-out',
+  'ticket',
+];
+
+function isBlockedInMvp(route) {
+  const path = String(route.path || '').toLowerCase();
+  const auth = Array.isArray(route.meta && route.meta.auth) ? route.meta.auth.join(',').toLowerCase() : '';
+  const marker = `${path},${auth}`;
+
+  return MVP_SETTING_BLOCKED_PATHS.some((pattern) => marker.includes(pattern));
+}
+
+const settingRouter = {
   path: routePre + '/setting',
   name: 'setting',
   header: 'setting',
@@ -823,3 +852,9 @@ export default {
     },
   ],
 };
+
+if (isMvpEnabled()) {
+  settingRouter.children = settingRouter.children.filter((route) => !isBlockedInMvp(route));
+}
+
+export default settingRouter;
