@@ -229,6 +229,9 @@ return [
         ],
         'enable_optional_user_features' => [
             'export/userFinance',
+            'user/cancel_list',
+            'user/cancel/',
+            'user/new_gift',
         ],
         'enable_complex_logistics' => [
             'freight/',
