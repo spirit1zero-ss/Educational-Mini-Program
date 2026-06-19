@@ -230,41 +230,6 @@ export function setReplyApi(data, id) {
     data,
   });
 }
-
-/**
- * @description 获取复制商品配置
- */
-export function copyConfigApi() {
-  return request({
-    url: `product/copy_config`,
-    method: 'get',
-  });
-}
-
-/**
- * @description 商品管理 -- 获取京东、淘宝商品数据
- * @param {Object} param data {Object} 传值参数
- */
-export function crawlFromApi(data) {
-  return request({
-    url: `product/copy`,
-    method: 'POST',
-    data,
-  });
-}
-
-/**
- * @description 商品管理 -- 京东、淘宝商品数据提交
- * @param {Object} param data {Object} 传值参数
- */
-export function crawlSaveApi(data) {
-  return request({
-    url: `product/crawl/save`,
-    method: 'POST',
-    data,
-  });
-}
-
 /**
  * @description 商品管理 -- 生成属性
  * @param {Object} param data {Object} 传值参数

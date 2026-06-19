@@ -63,13 +63,13 @@
 
 ## 当前残留状态
 
-以下文件已不再由商品主页面静态导入，进入后续删除映射观察范围：
+以下文件已不再由商品主页面静态导入，并已在后续小批次中物理删除：
 
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productAdd/taoBao.vue`
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productList/taoBao.vue`
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productList/components/goodsImport.vue`
 
-以下 API wrapper 仍保留在源码中，等待下一轮确认无保留路径后删除：
+以下 API wrapper 已确认无保留路径引用，并已在后续小批次中物理删除：
 
 - `copyConfigApi`
 - `crawlFromApi`

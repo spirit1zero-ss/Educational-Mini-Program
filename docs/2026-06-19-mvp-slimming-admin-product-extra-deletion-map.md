@@ -6,7 +6,7 @@
 
 ## 已从商品主流程摘除的前端依赖
 
-以下组件文件仍保留，但已不再由商品列表或商品编辑主页面静态导入：
+以下组件文件已不再由商品列表或商品编辑主页面静态导入，并已在前端小批次中物理删除：
 
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productAdd/taoBao.vue`
   - 原用途：新增商品页通过 `?type=-1` 打开采集弹窗。
@@ -18,9 +18,9 @@
   - 原用途：商品迁移导入。
   - 当前状态：商品列表页不再导入、不再挂载。
 
-## 待删除前端 API wrapper
+## 已删除前端 API wrapper
 
-下一轮可继续确认并删除：
+以下 wrapper 已确认无保留路径引用，并已删除：
 
 - `src/CRMEB/CRMEB-master/template/admin/src/api/product.js`
   - `copyConfigApi`
@@ -70,5 +70,5 @@
 
 下一轮优先做两件事：
 
-- 搜索并删除已脱离主流程的前端采集/迁移组件文件，配套删除只服务这些组件的 API wrapper。
+- 进入后端删除映射，处理商品采集、商品迁移、卡密导入、视频密钥、运费模板对应的后端实现和权限记录。
 - 再单独评估 `productGetTemplateApi` 与 `productGetTempKeysApi` 的跨模块引用，避免误删仍被通用上传组件或已禁用营销模块间接引用的代码。
