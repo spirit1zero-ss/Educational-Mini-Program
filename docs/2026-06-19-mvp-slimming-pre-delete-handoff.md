@@ -101,6 +101,8 @@ These are hidden from menus, frontend routes, DIY components, or page entry poin
   - Receipt printer/ticket routes.
   - External app/open API account and interface configuration.
   - Complex logistics configuration such as freight, city-data, shipping-template settings.
+- Product extras:
+  - 后台商品采集、商品迁移、虚拟卡密导入、视频上传密钥、运费模板接口已在 MVP 模式下隐藏或拦截。
 - Invoice:
   - Mobile invoice routes.
   - Admin invoice and electronic-invoice configuration routes.
@@ -127,6 +129,10 @@ Admin route blocks:
   - Freight, city settings, shipping templates, receipt printer tickets, external interface/account settings.
 - Advanced distribution:
   - `agent/division`.
+- Product extras:
+  - `product/product/get_template`, `product/product/get_temp_keys`, `product/product/import_card`.
+  - `product/product_export`, `product/product_import`.
+  - `product/crawl`, `product/copy_config`, `product/copy`.
 
 API and PC route blocks:
 
@@ -321,3 +327,4 @@ This handoff summarizes the soft-slimming rounds recorded in:
 - `docs/2026-06-19-mvp-slimming-pc-cms-route-audit.md`
 - `docs/2026-06-19-mvp-slimming-admin-public-customer-service-audit.md`
 - `docs/2026-06-19-mvp-slimming-admin-product-activity-api-audit.md`
+- `docs/2026-06-19-mvp-slimming-admin-product-extra-api-audit.md`

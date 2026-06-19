@@ -27,6 +27,7 @@ return [
     'enable_advanced_distribution' => false,
     'enable_wechat_pay' => true,
     'enable_training_camp_product' => true,
+    'enable_product_extras' => false,
 
     'admin_menu_hidden_patterns' => [
         'enable_coupon' => [
@@ -134,6 +135,16 @@ return [
         'enable_advanced_distribution' => [
             'division',
             'agent-division',
+        ],
+        'enable_product_extras' => [
+            'product-crawl',
+            'product-copy',
+            'product-copy_config',
+            'product-product-get_template',
+            'product-product-get_temp_keys',
+            'product-product-import_card',
+            'product-product_export',
+            'product-product_import',
         ],
     ],
 
@@ -244,6 +255,16 @@ return [
         ],
         'enable_advanced_distribution' => [
             'agent/division',
+        ],
+        'enable_product_extras' => [
+            'product/product/get_template',
+            'product/product/get_temp_keys',
+            'product/product/import_card',
+            'product/product_export',
+            'product/product_import',
+            'product/crawl',
+            'product/copy_config',
+            'product/copy',
         ],
     ],
 
