@@ -227,6 +227,9 @@ return [
             'merchant/verify',
             'export/verify_order',
         ],
+        'enable_optional_user_features' => [
+            'export/userFinance',
+        ],
         'enable_complex_logistics' => [
             'freight/',
             'setting/city/',
