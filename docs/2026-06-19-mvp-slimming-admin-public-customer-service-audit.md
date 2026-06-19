@@ -1,63 +1,65 @@
-# 2026-06-19 MVP slimming: admin public customer-service route coverage
+# 2026-06-19 MVP 瘦身：后台公共客服接口收口审计
 
-## Scope
+## 范围
 
-Continue MVP soft-slimming without deleting files, route definitions, controllers, services, models, database tables, or frontend pages.
+继续执行 MVP 软瘦身，不删除文件、路由定义、控制器、服务、模型、数据库表或前端页面。
 
-This round closes a backend public admin route residue for disabled customer-service capability:
+本轮只收口一个后台公共接口残留：
 
 - `GET /adminapi/get_workerman_url`
 
-## Change
+该接口用于获取客服长连接相关数据。当前 MVP 模式下客服能力已禁用，因此该接口也应进入统一拦截范围。
 
-Updated:
+## 本次调整
+
+调整文件：
 
 - `src/CRMEB/CRMEB-master/crmeb/config/mvp.php`
 - `src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/route.php`
 
-Details:
+调整内容：
 
-- Added `get_workerman_url` to `enable_customer_service` admin route block patterns.
-- Added `MvpRouteBlockMiddleware` to the unauthenticated admin route group.
+- 在 `enable_customer_service` 的后台路由拦截规则中增加 `get_workerman_url`。
+- 给后台未登录公共路由组增加 `MvpRouteBlockMiddleware`。
 
-The middleware is pattern based, so retained public admin routes such as login, login info, captcha, scan upload, and custom admin JS remain available unless explicitly matched by a disabled MVP rule.
+该中间件按配置规则匹配路径，因此后台登录、登录信息、验证码、扫码上传、后台自定义 JS 等公共基础入口不会被拦截；只有命中已禁用 MVP 模块规则的接口会返回 `MVP module disabled`。
 
-## Retained
+## 保留能力
 
-This round does not change:
+本轮不影响：
 
-- Admin login.
-- Admin captcha and login info.
-- Admin menu loading.
-- Product, order, payment, education, sign-in, member, and basic distribution flows.
-- Existing customer-service source files, controllers, pages, and kefu API files.
+- 后台登录。
+- 后台验证码和登录信息。
+- 后台菜单加载。
+- 商品、订单、支付、教育、签到、会员和基础分销链路。
+- 现有客服源码、控制器、页面和 kefu API 文件。
 
-## Verification
+## 验证记录
 
-Local syntax checks:
+已执行本地语法检查：
 
 ```powershell
 php -l src/CRMEB/CRMEB-master/crmeb/config/mvp.php
 php -l src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/route.php
 ```
 
-Result:
+结果：
 
-- No syntax errors detected in `config/mvp.php`.
-- No syntax errors detected in `app/adminapi/route/route.php`.
+- `config/mvp.php` 未发现语法错误。
+- `app/adminapi/route/route.php` 未发现语法错误。
 
-Recommended backend smoke check when the CRMEB container is running:
+CRMEB 容器运行后建议补充接口抽测：
 
 ```powershell
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/login/info
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/get_workerman_url
 ```
 
-Expected:
+预期：
 
-- `GET /adminapi/login/info` should remain reachable.
-- `GET /adminapi/get_workerman_url` should return `MVP module disabled` while `enable_customer_service=false`.
+- `GET /adminapi/login/info` 仍可访问。
+- `GET /adminapi/get_workerman_url` 在 `enable_customer_service=false` 时返回 `MVP module disabled`。
 
-## Notes
+## 后续备注
 
-The broader `serve` route group still contains one-stop platform, SMS, and electronic-waybill related endpoints. It was not changed in this round because SMS/config paths may be operationally retained and need a separate route-by-route decision before blocking.
+更大的 `serve` 路由组仍包含一号通、短信和电子面单相关接口。本轮没有处理它，因为其中短信配置可能属于运营保留能力，需要单独逐条判断后再决定是否拦截。

@@ -75,7 +75,7 @@ These are hidden from menus, frontend routes, DIY components, or page entry poin
 - Customer service:
   - Mini-program/H5 customer-service floating entries and DIY components.
   - Admin customer-service menu patterns.
-  - Admin public `get_workerman_url` is route-blocked.
+  - 后台公共接口 `get_workerman_url` 已纳入路由拦截。
   - Kefu API surface is guarded.
 - Live and short video:
   - Mini-program live/video DIY components and direct live-list request guards.
