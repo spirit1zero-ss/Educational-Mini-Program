@@ -72,6 +72,7 @@ These are hidden from menus, frontend routes, DIY components, or page entry poin
 - Marketing activities:
   - Bargain, combination, seckill, presell, lottery.
   - Admin marketing routes outside the retained sign-in, point-record, and member-config routes.
+  - 后台商品活动检测接口 `product/product/check_activity` 已纳入路由拦截。
 - Customer service:
   - Mini-program/H5 customer-service floating entries and DIY components.
   - Admin customer-service menu patterns.
@@ -319,3 +320,4 @@ This handoff summarizes the soft-slimming rounds recorded in:
 - `docs/2026-06-19-mvp-slimming-admin-user-frontend-route-audit.md`
 - `docs/2026-06-19-mvp-slimming-pc-cms-route-audit.md`
 - `docs/2026-06-19-mvp-slimming-admin-public-customer-service-audit.md`
+- `docs/2026-06-19-mvp-slimming-admin-product-activity-api-audit.md`

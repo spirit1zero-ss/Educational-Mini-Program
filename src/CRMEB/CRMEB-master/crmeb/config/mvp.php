@@ -311,6 +311,7 @@ return [
         ],
         'enable_activity_status' => [
             'user/activity',
+            'product/product/check_activity',
         ],
         'enable_cms' => [
             'article/',
