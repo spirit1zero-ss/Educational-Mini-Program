@@ -492,43 +492,6 @@ class StoreProduct extends AuthController
     }
 
     /**
-     * 商品迁移导出
-     * @return \think\Response
-     * @author wuhaotian
-     * @email 442384644@qq.com
-     * @date 2024/10/9
-     */
-    public function productExport()
-    {
-        $where = $this->request->getMore([
-            ['store_name', ''],
-            ['cate_id', ''],
-            ['type', 1],
-            ['sales', 'normal']
-        ]);
-        $where['virtual_type'] = 0;
-        return app('json')->success($this->service->productExportList($where));
-    }
-
-    /**
-     * 商品迁移导入
-     * @return \think\Response
-     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
-     * @author wuhaotian
-     * @email 442384644@qq.com
-     * @date 2024/10/9
-     */
-    public function productImport()
-    {
-        [$file] = $this->request->getMore([
-            ['file', ""]
-        ], true);
-        if (!$file) return app('json')->fail('请上传文件');
-        $res = $this->service->productImport($file);
-        return app('json')->success('导入成功', $res);
-    }
-
-    /**
      * 回收站商品彻底删除
      * @param $id
      * @return \think\Response

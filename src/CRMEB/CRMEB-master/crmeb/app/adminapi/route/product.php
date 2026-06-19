@@ -91,10 +91,6 @@ Route::group('product', function () {
         Route::post('batch/setting', 'v1.product.StoreProduct/batchSetting')->option(['real_name' => '商品批量设置']);
         //商品类型接口
         Route::get('product_type_config', 'v1.product.StoreProduct/productTypeConfig')->option(['real_name' => '商品类型接口']);
-        //商品迁移导出
-        Route::get('product_export', 'v1.product.StoreProduct/productExport')->option(['real_name' => '商品迁移导出']);
-        //商品迁移导入
-        Route::post('product_import', 'v1.product.StoreProduct/productImport')->option(['real_name' => '商品迁移导出']);
         //回收站商品彻底删除
         Route::delete('full_del/:id', 'v1.product.StoreProduct/fullDel')->option(['real_name' => '回收站商品彻底删除']);
 
@@ -120,18 +116,6 @@ Route::group('product', function () {
         //批量审核商品评论
         Route::post('reply/batch_set_status', 'v1.product.StoreProductReply/batch_set_status')->option(['real_name' => '批量审核商品评论']);
     })->option(['parent' => 'product', 'cate_name' => '商品评论']);
-
-    /** 商品采集 */
-    Route::group(function () {
-        //获取商品数据
-        Route::post('crawl', 'v1.product.CopyTaobao/get_request_contents')->option(['real_name' => '获取采集商品数据']);
-        //获取复制商品配置
-        Route::get('copy_config', 'v1.product.CopyTaobao/getConfig')->option(['real_name' => '获取复制商品配置']);
-        //复制其他平台商品
-        Route::post('copy', 'v1.product.CopyTaobao/copyProduct')->option(['real_name' => '复制其他平台商品']);
-        //保存商品数据
-        Route::post('crawl/save', 'v1.product.CopyTaobao/save_product')->option(['real_name' => '保存采集商品数据']);
-    })->option(['parent' => 'product', 'cate_name' => '商品采集']);
 
     /** 商品标签 */
     Route::group(function () {

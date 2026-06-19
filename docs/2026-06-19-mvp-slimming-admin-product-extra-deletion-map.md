@@ -50,25 +50,20 @@
 
 ## 待删除后端实现
 
-后续进入后端物理删除时再处理：
+本轮已完成商品采集和商品迁移的后端物理删除，仍保留需要跨模块确认的工具类和权限记录：
 
-- `app/adminapi/controller/v1/product/CopyTaobao.php`
-- `app/services/product/product/CopyTaobaoServices.php`
-- `app/adminapi/controller/v1/product/StoreProduct.php`
-  - `get_template`
-  - `getTempKeys`
-  - `import_card`
-  - `productExport`
-  - `productImport`
-- `app/services/product/product/StoreProductServices.php`
-  - `productExportList`
-  - `productImport`
-- `app/adminapi/route/product.php`
-  - 对应商品采集、迁移、卡密导入、视频密钥、运费模板路由定义。
+- 已删除 `app/adminapi/controller/v1/product/CopyTaobao.php`
+- 已删除 `app/adminapi/controller/v1/product/StoreProduct.php` 中的 `productExport`、`productImport`
+- 已删除 `app/services/product/product/CopyTaobaoServices.php` 中的 `copyProduct`
+- 已删除 `app/services/product/product/StoreProductServices.php` 中的 `productExportList`、`productImport`
+- 已删除 `app/adminapi/route/product.php` 中商品采集和商品迁移路由
+- 仍待评估 `get_template`、`getTempKeys`、`import_card`
+- `CopyTaobaoServices` 文件仍保留，用于远程图片下载复用
 
 ## 下一轮建议
 
 下一轮优先做两件事：
 
-- 进入后端删除映射，处理商品采集、商品迁移、卡密导入、视频密钥、运费模板对应的后端实现和权限记录。
+- 清理商品采集、商品迁移相关权限和升级记录。
+- 继续评估卡密导入、视频密钥、运费模板对应的后端实现和权限记录。
 - 再单独评估 `productGetTemplateApi` 与 `productGetTempKeysApi` 的跨模块引用，避免误删仍被通用上传组件或已禁用营销模块间接引用的代码。

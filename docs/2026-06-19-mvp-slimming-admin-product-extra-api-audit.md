@@ -4,23 +4,23 @@
 
 本轮继续采用软瘦身策略，不删除路由定义、控制器、服务、模型、数据表或前端文件，只在 MVP 模式下收口后台商品模块中不属于当前最小产品范围的扩展能力。
 
-## 已纳入拦截的后台商品扩展能力
+## 后台商品扩展能力状态
 
-统一由 `config/mvp.php` 中的 `enable_product_extras=false` 控制：
+当前由 `config/mvp.php` 中的 `enable_product_extras=false` 继续控制仍保留的扩展接口；商品采集和商品迁移已进入物理删除阶段。
 
-- 商品采集：
+- 商品采集已物理删除：
   - `POST /adminapi/product/crawl`
   - `GET /adminapi/product/copy_config`
   - `POST /adminapi/product/copy`
   - `POST /adminapi/product/crawl/save`
-- 商品迁移：
+- 商品迁移已物理删除：
   - `GET /adminapi/product/product_export`
   - `POST /adminapi/product/product_import`
-- 虚拟卡密导入：
+- 虚拟卡密导入仍由 MVP 路由拦截：
   - `GET /adminapi/product/product/import_card`
-- 视频上传密钥：
+- 视频上传密钥仍由 MVP 路由拦截：
   - `GET /adminapi/product/product/get_temp_keys`
-- 运费模板：
+- 运费模板仍由 MVP 路由拦截：
   - `GET /adminapi/product/product/get_template`
 
 ## 保留边界
@@ -34,7 +34,8 @@
 
 ## 影响说明
 
-- 后台商品路由组已经接入 `MvpRouteBlockMiddleware`，本轮通过新增配置模式完成拦截。
+- 后台商品路由组已经接入 `MvpRouteBlockMiddleware`，未删除的扩展接口继续通过配置模式完成拦截。
+- 商品采集和商品迁移路由、控制器动作和专用服务方法已在后续小批次中物理删除。
 - 菜单侧同步加入商品扩展隐藏匹配，减少后台入口暴露。
 - 商品核心接口未整组禁用，避免影响后台商品列表和编辑页的主流程。
 
@@ -59,7 +60,8 @@ Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/c
 预期结果：
 
 - `product/product` 这类核心商品列表接口不应因为本轮配置被 MVP 拦截。
-- `product/product/get_template`、`product/product_import`、`product/crawl` 等商品扩展接口应返回 MVP 禁用提示或等价拦截结果。
+- `product/product/get_template` 等仍保留的商品扩展接口应返回 MVP 禁用提示或等价拦截结果。
+- `product/product_import`、`product/crawl` 等已删除接口不再作为可调用后台能力存在。
 
 ## 后续删除提示
 

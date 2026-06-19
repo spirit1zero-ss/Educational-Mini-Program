@@ -109,6 +109,7 @@ MVP 模式下以下能力已从菜单、前端路由、DIY 组件、页面入口
   - 后台商品编辑页 MVP 模式下不再自动请求运费模板，不再展示视频上传入口，不再调用视频上传密钥或卡密导入接口。
   - 商品采集弹窗和商品迁移导入组件已从商品列表/商品编辑主页面静态依赖中摘除，文件暂留在删除映射中。
   - 商品采集弹窗、商品迁移导入组件，以及只服务它们的前端 API wrapper 已完成第一批前端物理删除。
+  - 商品采集和商品迁移的后台路由、控制器动作和专用服务方法已完成第一批后端物理删除。
 
 ## 后端软拦截清单
 
@@ -186,7 +187,8 @@ Kefu API 拦截：
 - 物流扩展：
   - 运费模板、城市数据设置、配送模板设置、小票打印。
 - 商品扩展：
-  - 后端商品采集/复制、商品迁移导入导出、虚拟卡密导入、视频上传密钥、运费模板接口仍暂留并由 MVP 路由拦截保护。
+  - 后端商品采集/复制、商品迁移导入导出已完成第一批物理删除。
+  - 虚拟卡密导入、视频上传密钥、运费模板接口仍暂留并由 MVP 路由拦截保护。
   - 前端商品采集弹窗、商品迁移导入组件和专用 API wrapper 已完成第一批物理删除。
 - 高级分销：
   - 事业部/代理/员工高级分销，基础二级分销继续保留。
@@ -351,3 +353,4 @@ Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/c
 - `docs/2026-06-19-mvp-slimming-admin-product-extra-frontend-audit.md`
 - `docs/2026-06-19-mvp-slimming-admin-product-extra-deletion-map.md`
 - `docs/2026-06-19-mvp-slimming-admin-product-extra-frontend-delete.md`
+- `docs/2026-06-19-mvp-slimming-admin-product-extra-backend-delete.md`

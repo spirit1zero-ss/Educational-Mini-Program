@@ -143,8 +143,6 @@ return [
             'product-product-get_template',
             'product-product-get_temp_keys',
             'product-product-import_card',
-            'product-product_export',
-            'product-product_import',
         ],
     ],
 
@@ -260,11 +258,6 @@ return [
             'product/product/get_template',
             'product/product/get_temp_keys',
             'product/product/import_card',
-            'product/product_export',
-            'product/product_import',
-            'product/crawl',
-            'product/copy_config',
-            'product/copy',
         ],
     ],
 

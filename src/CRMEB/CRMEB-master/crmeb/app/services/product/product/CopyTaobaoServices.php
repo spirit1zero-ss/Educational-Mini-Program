@@ -13,7 +13,6 @@ declare (strict_types=1);
 namespace app\services\product\product;
 
 use app\services\BaseServices;
-use app\services\serve\ServeServices;
 use app\services\system\attachment\SystemAttachmentCategoryServices;
 use app\services\system\attachment\SystemAttachmentServices;
 use crmeb\exceptions\AdminException;
@@ -42,127 +41,6 @@ class CopyTaobaoServices extends BaseServices
      */
     protected $host = ['taobao', 'tmall', 'jd', 'pinduoduo', 'suning', 'yangkeduo', '1688'];
 
-    /**
-     * @param $type
-     * @param $id
-     * @param $shopid
-     * @param $url
-     * @return array
-     */
-    public function copyProduct($type, $id, $shopid, $url)
-    {
-        $result = [];
-        switch ((int)sys_config('system_product_copy_type')) {
-            case 1://平台
-                /** @var ServeServices $services */
-                $services = app()->make(ServeServices::class);
-                $resultData = $services->copy('copy')->goods($url);
-                if (isset($resultData['description_image']) && is_string($resultData['description_image'])) {
-                    $resultData['description_image'] = json_decode($resultData['description_image'], true);
-                }
-                if (isset($resultData['slider_image']) && is_string($resultData['slider_image'])) {
-                    $resultData['slider_image'] = json_decode($resultData['slider_image'], true);
-                }
-                $result['status'] = 200;
-                $result['data'] = $resultData;
-                break;
-            case 2://99API
-                $apikey = sys_config('copy_product_apikey');
-                if (!$apikey) throw new AdminException('请先配置接口密钥');
-                /** @var ServeServices $services */
-                $services = app()->make(ServeServices::class);
-                $result = $services->copy('copy99api')->goods($url, [
-                    'apikey' => $apikey,
-                ]);
-                break;
-        }
-        if (isset($result['status']) && $result['status']) {
-
-            /** @var StoreProductServices $ProductServices */
-            $ProductServices = app()->make(StoreProductServices::class);
-            /** @var StoreCategoryServices $storeCatecoryService */
-            $storeCatecoryService = app()->make(StoreCategoryServices::class);
-            $data = [];
-            $productInfo = $result['data'];
-            if (count($productInfo['slider_image'])) {
-                $productInfo['slider_image'] = array_map(function ($item) {
-                    $item = str_replace('\\', '/', $item);
-                    return $item;
-                }, $productInfo['slider_image']);
-            }
-            $data['tempList'] = $ProductServices->getTemp();
-            $menus = [];
-            foreach ($storeCatecoryService->getTierList(1) as $menu) {
-                $menus[] = ['value' => $menu['id'], 'label' => $menu['html'] . $menu['cate_name'], 'disabled' => $menu['pid'] == 0 ? 0 : 1];//,'disabled'=>$menu['pid']== 0];
-            }
-            $data['cateList'] = $menus;
-            $productInfo['attrs'] = $result['data']['info']['value'];
-            foreach ($productInfo['attrs'] as $attrs_k => $attrs_v) {
-                $productInfo['attrs'][$attrs_k]['attr_arr'] = array_values($attrs_v['detail']);
-                $productInfo['attrs'][$attrs_k]['is_show'] = 1;
-            }
-            $productInfo['activity'] = ['默认', '秒杀', '砍价', '拼团'];
-            $productInfo['bar_code'] = '';
-            $productInfo['browse'] = 0;
-            $productInfo['cate_id'] = [];
-            $productInfo['code_path'] = '';
-            $productInfo['command_word'] = '';
-            $productInfo['coupons'] = [];
-            $productInfo['is_bargain'] = '';
-            $productInfo['is_benefit'] = 0;
-            $productInfo['is_best'] = 0;
-            $productInfo['is_del'] = 0;
-            $productInfo['is_good'] = 0;
-            $productInfo['is_hot'] = 0;
-            $productInfo['is_new'] = 0;
-            $productInfo['is_postage'] = 0;
-            $productInfo['is_seckill'] = 0;
-            $productInfo['is_show'] = 0;
-            $productInfo['is_sub'] = [];
-            $productInfo['is_vip'] = 0;
-            $productInfo['label_id'] = [];
-            $productInfo['mer_id'] = 0;
-            $productInfo['mer_use'] = 0;
-            $productInfo['recommend_image'] = '';
-            $productInfo['sales'] = '';
-            $productInfo['sort'] = 0;
-            $productInfo['spec_type'] = 1;
-            $productInfo['is_virtual'] = 0;
-            $productInfo['virtual_type'] = 0;
-            $productInfo['spu'] = '';
-            $productInfo['id'] = 0;
-            $productInfo['temp_id'] = 1;
-            $productInfo['freight'] = 3;
-            $productInfo['recommend'] = [];
-            $productInfo['logistics'] = ['1', '2'];
-            $productInfo['params_list'] = [];
-            $productInfo['label_list'] = [];
-            $productInfo['protection_list'] = [];
-            foreach ($productInfo['items'] as &$items) {
-                $details = [];
-                foreach ($items['detail'] as $detail) {
-                    $details[] = [
-                        'value' => $detail,
-                        'pic' => '',
-                    ];
-                }
-                $items['detail'] = $details;
-                $items['add_pic'] = 0;
-            }
-            $data['productInfo'] = $productInfo;
-            return $data;
-        } else {
-            throw new AdminException($result['msg']);
-        }
-    }
-
-    /**
-     * 下载商品详情图片
-     * @param int $id
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\DbException
-     * @throws \think\db\exception\ModelNotFoundException
-     */
     public function uploadDescriptionImage(int $id)
     {
         //查询附件分类
