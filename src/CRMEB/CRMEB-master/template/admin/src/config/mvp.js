@@ -11,6 +11,7 @@ const HIDDEN_DASHBOARD_LINK_KEYWORDS = [
 ];
 
 const DISABLED_MARKETING_ACTIVITIES = ['bargain', 'combination', 'seckill'];
+const PRODUCT_EXTRAS_ENABLED = false;
 
 export function isMvpAdminLinkVisible(link = '') {
   if (!MVP_ENABLED || !link) return true;
@@ -24,4 +25,9 @@ export function isMvpCouponEnabled() {
 export function isMvpMarketingActivityEnabled(type = '') {
   if (!MVP_ENABLED) return true;
   return !DISABLED_MARKETING_ACTIVITIES.includes(type);
+}
+
+export function isMvpProductExtrasEnabled() {
+  if (!MVP_ENABLED) return true;
+  return PRODUCT_EXTRAS_ENABLED;
 }

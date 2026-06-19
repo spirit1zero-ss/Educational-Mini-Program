@@ -168,7 +168,13 @@
         <router-link v-auth="['product-product-save']" :to="$routeProStr + '/product/add_product'"
           ><el-button type="primary" class="mr14">添加商品</el-button></router-link
         >
-        <el-button v-auth="['product-crawl-save']" type="success" class="mr14" v-db-click @click="onCopy"
+        <el-button
+          v-if="isMvpProductExtrasEnabled()"
+          v-auth="['product-crawl-save']"
+          type="success"
+          class="mr14"
+          v-db-click
+          @click="onCopy"
           >商品采集</el-button
         >
         <el-dropdown class="bnt mr14" @command="batchSelect">
@@ -195,7 +201,7 @@
             >
           </el-dropdown-menu>
         </el-dropdown>
-        <el-dropdown class="bnt mr14" @command="goodsMove">
+        <el-dropdown v-if="isMvpProductExtrasEnabled()" class="bnt mr14" @command="goodsMove">
           <el-button>商品迁移<i class="el-icon-arrow-down el-icon--right"></i></el-button>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item :command="1">商品导入</el-dropdown-item>
@@ -418,7 +424,7 @@
               <el-radio-group v-model="batchFormData.freight">
                 <!-- <el-radio :label="1">包邮</el-radio> -->
                 <el-radio :label="2">固定邮费</el-radio>
-                <el-radio :label="3">运费模板</el-radio>
+                <el-radio v-if="isMvpProductExtrasEnabled()" :label="3">运费模板</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item label="" v-if="batchFormData.freight == 2">
@@ -613,7 +619,7 @@ import {
 import userLabel from '@/components/labelList';
 import storeLabelList from '@/components/storeLabelList';
 import goodsLabel from '@/components/goodsLabel';
-import { isMvpCouponEnabled, isMvpMarketingActivityEnabled } from '@/config/mvp';
+import { isMvpCouponEnabled, isMvpMarketingActivityEnabled, isMvpProductExtrasEnabled } from '@/config/mvp';
 
 export default {
   name: 'product_productList',
@@ -726,6 +732,7 @@ export default {
   methods: {
     isMvpCouponEnabled,
     isMvpMarketingActivityEnabled,
+    isMvpProductExtrasEnabled,
     // 具体日期
     onchangeTime(e) {
       this.timeVal = e;
@@ -852,6 +859,11 @@ export default {
         this.$message.warning('请选择要修改的商品');
       } else if (type === 4 && !this.isMvpCouponEnabled()) {
         this.$message.warning('MVP 模式下已禁用优惠券玩法');
+      } else if (type === 2 && !this.isMvpProductExtrasEnabled()) {
+        this.batchType = type;
+        this.batchFormData.freight = 2;
+        this.batchFormData.temp_id = null;
+        this.batchModal = true;
       } else if (type === 7) {
         this.onDismount();
       } else if (type === 8) {
@@ -866,7 +878,9 @@ export default {
       } else {
         this.batchType = type;
         this.batchModal = true;
-        this.productGetTemplate();
+        if (type === 2) {
+          this.productGetTemplate();
+        }
       }
     },
     batchGoodsSetting(tit, type) {
@@ -891,6 +905,10 @@ export default {
         });
     },
     goodsMove(type) {
+      if (!this.isMvpProductExtrasEnabled()) {
+        this.$message.warning('MVP 模式下已禁用商品迁移');
+        return;
+      }
       if (type === 1) {
         this.onImport();
       } else {
@@ -917,6 +935,10 @@ export default {
     },
     // 获取运费模板；
     productGetTemplate() {
+      if (!this.isMvpProductExtrasEnabled()) {
+        this.templateList = [];
+        return;
+      }
       productGetTemplateApi().then((res) => {
         this.templateList = res.data;
       });
@@ -964,10 +986,18 @@ export default {
       this.getDataList();
     },
     onImport() {
+      if (!this.isMvpProductExtrasEnabled()) {
+        this.$message.warning('MVP 模式下已禁用商品迁移');
+        return;
+      }
       this.importShow = true;
     },
     // 导出
     async onExports(type) {
+      if (type && !this.isMvpProductExtrasEnabled()) {
+        this.$message.warning('MVP 模式下已禁用商品迁移');
+        return;
+      }
       let [th, filekey, data, fileName] = [[], [], [], ''];
       let excelData = JSON.parse(JSON.stringify(this.artFrom));
       excelData.page = 1;
@@ -1071,6 +1101,10 @@ export default {
     },
     // 复制淘宝
     onCopy() {
+      if (!this.isMvpProductExtrasEnabled()) {
+        this.$message.warning('MVP 模式下已禁用商品采集');
+        return;
+      }
       this.$router.push({
         path: this.$routeProStr + '/product/add_product',
         query: { type: -1 },

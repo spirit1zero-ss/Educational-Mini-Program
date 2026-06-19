@@ -29,6 +29,7 @@
           :progress="progress"
           :upload="upload"
           :videoIng="videoIng"
+          :product-extras-enabled="isProductExtrasEnabled"
           @virtualbtn="virtualbtn"
           @handleDragStart="handleDragStart"
           @handleDragOver="handleDragOver"
@@ -244,6 +245,7 @@
               <div class="add-more" v-if="disk_type == 2">
                 <el-button class="h-33" type="primary" v-db-click @click="handleAdd">新增</el-button>
                 <el-upload
+                  v-if="isProductExtrasEnabled"
                   class="ml10"
                   :action="cardUrl"
                   :data="uploadData"
@@ -376,7 +378,7 @@ import PriceCommission from './components/PriceCommission.vue';
 import MarketingSetting from './components/MarketingSetting.vue';
 import OtherSetting from './components/OtherSetting.vue';
 import { formatRichText } from '@/utils/editorImg';
-import { isMvpEnabled } from '@/config/mvp';
+import { isMvpEnabled, isMvpProductExtrasEnabled } from '@/config/mvp';
 
 export default {
   name: 'ProductAdd',
@@ -663,6 +665,9 @@ export default {
     isMvpMode() {
       return isMvpEnabled();
     },
+    isProductExtrasEnabled() {
+      return isMvpProductExtrasEnabled();
+    },
     mvpGoodsType() {
       if (!this.isMvpMode) return this.goodsType;
       return this.goodsType.filter((item) => Number(item.id) !== 2);
@@ -705,7 +710,7 @@ export default {
     } else {
       this.getproductLabelUseListApi();
     }
-    if (this.$route.query.type) {
+    if (this.$route.query.type && this.isProductExtrasEnabled) {
       this.modals = true;
       this.type = this.$route.query.type;
     } else {
@@ -985,6 +990,10 @@ export default {
     },
     // 导入卡密
     upFile(res) {
+      if (!this.isProductExtrasEnabled) {
+        this.$message.warning('MVP 模式下已禁用卡密导入');
+        return;
+      }
       importCard({ file: res.data.src }).then((res) => {
         this.virtualList = this.virtualList.concat(res.data);
       });
@@ -1278,9 +1287,17 @@ export default {
     },
     // 添加运费模板
     addTemp() {
+      if (!this.isProductExtrasEnabled) {
+        this.$message.warning('MVP 模式下已禁用运费模板');
+        return;
+      }
       this.$refs.templates.isTemplate = true;
     },
     addVideo() {
+      if (!this.isProductExtrasEnabled) {
+        this.$message.warning('MVP 模式下已禁用视频上传');
+        return;
+      }
       this.$videoModal((e) => {
         this.formValidate.video_link = e;
       });
@@ -1301,6 +1318,10 @@ export default {
     },
     // 上传视频
     zh_uploadFile_change(evfile) {
+      if (!this.isProductExtrasEnabled) {
+        this.$message.warning('MVP 模式下已禁用视频上传');
+        return;
+      }
       let suffix = evfile.target.files[0].name.substr(evfile.target.files[0].name.indexOf('.'));
       if (suffix.indexOf('.mp4') === -1) {
         return this.$message.error('只能上传MP4文件');
@@ -1454,6 +1475,10 @@ export default {
     },
     // 获取运费模板；
     productGetTemplate() {
+      if (!this.isProductExtrasEnabled) {
+        this.templateList = [];
+        return;
+      }
       productGetTemplateApi().then((res) => {
         this.templateList = res.data;
       });
