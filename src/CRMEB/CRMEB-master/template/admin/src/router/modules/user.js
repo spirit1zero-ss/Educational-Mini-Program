@@ -10,6 +10,7 @@
 
 import LayoutMain from '@/layout';
 import setting from '@/setting';
+import { isMvpEnabled } from '@/config/mvp';
 let routePre = setting.routePre;
 
 const meta = {
@@ -18,7 +19,7 @@ const meta = {
 
 const pre = 'user_';
 
-export default {
+const userRouter = {
   path: routePre + '/user',
   name: 'user',
   header: 'user',
@@ -149,3 +150,9 @@ export default {
     },
   ],
 };
+
+if (isMvpEnabled()) {
+  userRouter.children = userRouter.children.filter((route) => route.name !== `${pre}cancel`);
+}
+
+export default userRouter;
