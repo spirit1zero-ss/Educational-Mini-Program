@@ -314,6 +314,7 @@ return [
         'enable_cms' => [
             'article/',
             'theme/article',
+            'get_news_',
         ],
         'enable_customer_service' => [
             'user/service/',

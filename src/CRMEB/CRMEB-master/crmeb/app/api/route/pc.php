@@ -42,6 +42,7 @@ Route::group('pc', function () {
         Route::get('get_news_detail/:id', 'pc.PublicController/getNewsDetail')->name('getNewsDetail')->option(['real_name' => '获取文章详情']);//获取文章详情
     })->middleware(\app\http\middleware\AllowOriginMiddleware::class)
         ->middleware(\app\api\middleware\StationOpenMiddleware::class)
+        ->middleware(\app\api\middleware\MvpRouteBlockMiddleware::class)
         ->middleware(\app\api\middleware\AuthTokenMiddleware::class, false)
         ->option(['parent' => 'PC', 'cate_name' => '用户未授权接口']);
 
