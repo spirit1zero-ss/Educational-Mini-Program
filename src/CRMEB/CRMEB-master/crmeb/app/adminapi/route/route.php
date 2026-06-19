@@ -12,6 +12,7 @@ use think\facade\Route;
 use think\facade\Config;
 use think\Response;
 use app\http\middleware\AllowOriginMiddleware;
+use app\adminapi\middleware\MvpRouteBlockMiddleware;
 
 /**
  * 无需授权的接口
@@ -38,7 +39,7 @@ Route::group(function () {
     Route::post('image/scan_upload', 'PublicController/scanUpload')->option(['real_name' => '扫码上传图片']);
     Route::get('custom_admin_js', 'PublicController/customAdminJs')->option(['real_name' => '测试地址']);
 
-})->middleware(AllowOriginMiddleware::class)->option(['mark' => 'login', 'mark_name' => '登录相关']);
+})->middleware(AllowOriginMiddleware::class)->middleware(MvpRouteBlockMiddleware::class)->option(['mark' => 'login', 'mark_name' => '登录相关']);
 
 
 /**

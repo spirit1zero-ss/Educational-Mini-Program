@@ -75,6 +75,7 @@ These are hidden from menus, frontend routes, DIY components, or page entry poin
 - Customer service:
   - Mini-program/H5 customer-service floating entries and DIY components.
   - Admin customer-service menu patterns.
+  - Admin public `get_workerman_url` is route-blocked.
   - Kefu API surface is guarded.
 - Live and short video:
   - Mini-program live/video DIY components and direct live-list request guards.
@@ -317,3 +318,4 @@ This handoff summarizes the soft-slimming rounds recorded in:
 - `docs/2026-06-19-mvp-slimming-admin-user-optional-route-audit.md`
 - `docs/2026-06-19-mvp-slimming-admin-user-frontend-route-audit.md`
 - `docs/2026-06-19-mvp-slimming-pc-cms-route-audit.md`
+- `docs/2026-06-19-mvp-slimming-admin-public-customer-service-audit.md`

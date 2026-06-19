@@ -186,6 +186,7 @@ return [
             'cms/',
         ],
         'enable_customer_service' => [
+            'get_workerman_url',
             'app/feedback',
             'app/wechat/speechcraft',
             'app/wechat/speechcraftcate',
