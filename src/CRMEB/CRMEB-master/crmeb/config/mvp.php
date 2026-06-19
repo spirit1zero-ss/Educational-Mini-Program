@@ -334,6 +334,8 @@ return [
         ],
         'enable_optional_user_features' => [
             'collect/',
+            'get_collect_list',
+            'get_balance_record',
             'user/visit',
             'user/set_visit',
             'user/share',

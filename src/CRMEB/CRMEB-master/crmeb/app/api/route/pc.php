@@ -54,6 +54,7 @@ Route::group('pc', function () {
         Route::get('get_collect_list', 'pc.UserController/getCollectList')->name('getCollectList')->option(['real_name' => '收藏列表']);//收藏列表
     })->middleware(\app\http\middleware\AllowOriginMiddleware::class)
         ->middleware(\app\api\middleware\StationOpenMiddleware::class)
+        ->middleware(\app\api\middleware\MvpRouteBlockMiddleware::class)
         ->middleware(\app\api\middleware\AuthTokenMiddleware::class, true)
         ->option(['parent' => 'PC', 'cate_name' => '用户授权接口']);
 
