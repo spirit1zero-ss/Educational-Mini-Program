@@ -107,6 +107,7 @@ MVP 模式下以下能力已从菜单、前端路由、DIY 组件、页面入口
   - 后台商品采集、商品迁移、虚拟卡密导入、视频上传密钥、运费模板接口已在 MVP 模式下拦截。
   - 后台商品列表页已隐藏商品采集和商品迁移入口。
   - 后台商品编辑页 MVP 模式下不再自动请求运费模板，不再展示视频上传入口，不再调用视频上传密钥或卡密导入接口。
+  - 商品采集弹窗和商品迁移导入组件已从商品列表/商品编辑主页面静态依赖中摘除，文件暂留在删除映射中。
 
 ## 后端软拦截清单
 
@@ -346,3 +347,4 @@ Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/c
 - `docs/2026-06-19-mvp-slimming-admin-product-activity-api-audit.md`
 - `docs/2026-06-19-mvp-slimming-admin-product-extra-api-audit.md`
 - `docs/2026-06-19-mvp-slimming-admin-product-extra-frontend-audit.md`
+- `docs/2026-06-19-mvp-slimming-admin-product-extra-deletion-map.md`

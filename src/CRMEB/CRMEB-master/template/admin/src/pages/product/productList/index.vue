@@ -367,16 +367,6 @@
       </div>
       <attribute :attrTemplate="attrTemplate" v-on:changeTemplate="changeTemplate"></attribute>
     </el-card>
-    <!-- 生成淘宝京东表单-->
-    <el-dialog
-      :visible.sync="modals"
-      class="Box"
-      title="复制淘宝、天猫、京东、苏宁、1688"
-      :close-on-click-modal="false"
-      width="720px"
-    >
-      <tao-bao ref="taobaos" v-if="modals" @on-close="onClose"></tao-bao>
-    </el-dialog>
     <el-dialog
       :visible.sync="batchModal"
       class="batch-box"
@@ -566,16 +556,6 @@
       <goodsDetail :goodsId="goodsId"></goodsDetail>
     </div>
     <coupon-list v-if="isMvpCouponEnabled()" ref="couponTemplates" @nameId="nameId" :couponids="batchFormData.coupon_ids"></coupon-list>
-    <!-- 商品导入 -->
-    <el-dialog
-      :visible.sync="importShow"
-      title="商品导入"
-      width="900px"
-      :show-close="true"
-      :close-on-click-modal="false"
-    >
-      <goodsImport v-if="importShow" @close="importShow = false"></goodsImport>
-    </el-dialog>
     <brokerageSet ref="brokerageSet" :productId="productId"></brokerageSet>
     <vipPriceSet ref="vipPriceSet" :productId="productId"></vipPriceSet>
     <!-- 商品标签 -->
@@ -595,12 +575,10 @@ import expandRow from './tableExpand.vue';
 import attribute from './attribute';
 import toExcel from '../../../utils/Excel.js';
 import { mapState } from 'vuex';
-import taoBao from './taoBao';
 import goodsDetail from './components/goodsDetail.vue';
 import couponList from '@/components/couponList';
-import { exportProductList, exportProductExport } from '@/api/export';
+import { exportProductList } from '@/api/export';
 import settings from '@/setting';
-import goodsImport from './components/goodsImport.vue';
 import brokerageSet from '../components/brokerageSet.vue';
 import vipPriceSet from '../components/vipPriceSet.vue';
 import {
@@ -626,11 +604,9 @@ export default {
   components: {
     expandRow,
     attribute,
-    taoBao,
     goodsDetail,
     userLabel,
     couponList,
-    goodsImport,
     brokerageSet,
     vipPriceSet,
     storeLabelList,
@@ -644,8 +620,6 @@ export default {
       routePre: settings.routePre,
       pickerOptions: this.$timeOptions,
       template: false,
-      modals: false,
-      importShow: false,
       batchModal: false,
       labelShow: false,
       batchType: 1, // 批量设置类型
@@ -990,7 +964,6 @@ export default {
         this.$message.warning('MVP 模式下已禁用商品迁移');
         return;
       }
-      this.importShow = true;
     },
     // 导出
     async onExports(type) {
@@ -1020,9 +993,8 @@ export default {
       }
     },
     getExcelData(excelData, type) {
-      let fun = type ? exportProductExport : exportProductList;
       return new Promise((resolve, reject) => {
-        fun(excelData).then((res) => {
+        exportProductList(excelData).then((res) => {
           resolve(res.data);
         });
       });
@@ -1095,10 +1067,6 @@ export default {
       this.ids = ids;
       this.multipleSelection = uniqueArr;
     },
-    // 添加淘宝商品成功
-    onClose() {
-      this.modals = false;
-    },
     // 复制淘宝
     onCopy() {
       if (!this.isMvpProductExtrasEnabled()) {
@@ -1109,7 +1077,6 @@ export default {
         path: this.$routeProStr + '/product/add_product',
         query: { type: -1 },
       });
-      // this.modals = true
     },
     // tab选择
     onClickTab() {

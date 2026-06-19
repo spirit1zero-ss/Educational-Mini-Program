@@ -12,6 +12,7 @@
   - 隐藏“商品采集”按钮。
   - 隐藏“商品迁移”下拉入口。
   - MVP 模式下商品迁移导入/导出方法增加短路提示。
+  - 已从商品列表主页面移除采集弹窗 `taoBao.vue` 和迁移导入组件 `goodsImport.vue` 的静态依赖。
 - 批量物流设置：
   - MVP 模式下不展示“运费模板”选项。
   - MVP 模式下不再请求 `product/product/get_template`。
@@ -22,6 +23,7 @@
   - MVP 模式下不展示新视频上传入口；已有视频仍可展示和删除。
   - MVP 模式下视频云上传逻辑不再请求 `product/product/get_temp_keys`。
   - MVP 模式下隐藏“导入卡密”上传按钮，并在导入回调中增加短路保护。
+  - 已从商品编辑主页面移除采集弹窗 `taoBao.vue` 的静态依赖。
 
 ## 保留边界
 
@@ -58,3 +60,19 @@
 - 商品迁移导入组件 `goodsImport.vue` 是否可以整体删除。
 - `api/product.js` 和 `api/export.js` 中商品扩展 wrapper 是否还有非 MVP 路径引用。
 - 后台菜单表、权限表中的商品采集和迁移权限是否要进入删除映射。
+
+## 当前残留状态
+
+以下文件已不再由商品主页面静态导入，进入后续删除映射观察范围：
+
+- `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productAdd/taoBao.vue`
+- `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productList/taoBao.vue`
+- `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productList/components/goodsImport.vue`
+
+以下 API wrapper 仍保留在源码中，等待下一轮确认无保留路径后删除：
+
+- `copyConfigApi`
+- `crawlFromApi`
+- `crawlSaveApi`
+- `exportProductExport`
+- `importProductImport`

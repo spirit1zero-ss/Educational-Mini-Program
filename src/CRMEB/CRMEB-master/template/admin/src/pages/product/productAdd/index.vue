@@ -281,17 +281,6 @@
       :updateName="updateName"
     ></coupon-list>
     <coupon-list v-if="!isMvpMode" ref="goodsCoupon" many="one" :luckDraw="true" @getCouponId="goodsCouponId"></coupon-list>
-    <!-- 生成淘宝京东表单-->
-    <el-dialog
-      :visible.sync="modals"
-      @closed="cancel"
-      class="Box"
-      title="复制淘宝、天猫、京东、苏宁、1688"
-      :close-on-click-modal="false"
-      width="720px"
-    >
-      <tao-bao ref="taobaos" v-if="modals" @on-close="onClose"></tao-bao>
-    </el-dialog>
     <el-dialog :visible.sync="goods_modals" title="商品列表" footerHide class="paymentFooter" scrollable width="1000px">
       <goods-list v-if="goods_modals" ref="goodslist" :ischeckbox="true" @getProductId="getProductId"></goods-list>
     </el-dialog>
@@ -333,7 +322,6 @@ import freightTemplate from '@/components/freightTemplate';
 import couponList from '@/components/couponList';
 import addAttr from '../productAttr/addAttr';
 import goodsList from '@/components/goodsList/index';
-import taoBao from './taoBao';
 import { userLabelAddApi } from '@/api/user';
 import {
   productInfoApi,
@@ -387,7 +375,6 @@ export default {
     freightTemplate,
     addAttr,
     couponList,
-    taoBao,
     goodsList,
     userLabel,
     goodsLabel,
@@ -431,7 +418,6 @@ export default {
       uploadData: {}, // 上传参数
       header: {},
       type: 0,
-      modals: false,
       goods_modals: false,
       spinShow: false,
       openSubimit: false,
@@ -710,12 +696,7 @@ export default {
     } else {
       this.getproductLabelUseListApi();
     }
-    if (this.$route.query.type && this.isProductExtrasEnabled) {
-      this.modals = true;
-      this.type = this.$route.query.type;
-    } else {
-      this.type = 0;
-    }
+    this.type = 0;
     this.goodsCategory();
     this.productGetRule();
     this.productGetTemplate();
@@ -981,9 +962,6 @@ export default {
     getEditorContent(data) {
       this.content = data;
     },
-    cancel() {
-      this.modals = false;
-    },
     // 上传头部token
     getToken() {
       this.header['Authori-zation'] = 'Bearer ' + getCookies('token');
@@ -1078,12 +1056,6 @@ export default {
       }, 1000);
       this.watchActivity();
     },
-    //关闭淘宝弹窗并生成数据；
-    onClose(data) {
-      this.modals = false;
-      this.infoData(data, 1);
-    },
-
     checkMove(evt) {
       this.moveIndex = evt.draggedContext.index;
     },
