@@ -38,12 +38,12 @@
 
 - Source check confirms `admin_route_block_patterns.enable_optional_user_features` includes `export/userFinance`.
 - Source check confirms `export/userCommission` and `export/userPoint` were not added to the MVP block list.
-- Docker/API verification was not run in this round because Docker Desktop was not running:
-  - Docker API returned `failed to connect to the docker API`.
-  - `http://127.0.0.1:8080` was not reachable.
-- Local PHP syntax check was not run because the host shell does not have `php` on PATH.
-- Follow-up verification when Docker is available:
-  - `php -l config/mvp.php` should pass.
-  - `GET /adminapi/export/userFinance` should return `{"status":400,"msg":"MVP module disabled"}`.
-  - `GET /adminapi/export/userCommission` should not return `MVP module disabled`; without auth it should return the original login-expired response.
-  - `GET /api/product/detail/1` should still return business success with `"coupons":[]`.
+- Follow-up Docker verification was completed after Docker Desktop was available:
+  - `docker exec -w /var/www/crmeb crmeb php -l config/mvp.php`
+    - Result: no syntax errors.
+  - `docker exec -w /var/www/crmeb crmeb php think clear`
+    - Result: `Clear Successed`.
+  - `GET /adminapi/export/userFinance`
+    - Result: HTTP 200 wrapper with `{"status":400,"msg":"MVP module disabled"}`.
+  - `GET /adminapi/export/userCommission`
+    - Result: HTTP 200 wrapper with `{"status":401,"msg":"登录已过期,请重新登录","data":[]}`; not `MVP module disabled`.
