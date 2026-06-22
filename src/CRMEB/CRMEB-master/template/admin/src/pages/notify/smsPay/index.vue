@@ -12,7 +12,6 @@
     <el-card :bordered="false" shadow="never" class="ivu-mt">
       <el-tabs v-model="isChecked" @tab-click="onChangeType">
         <el-tab-pane label="短信" name="sms"></el-tab-pane>
-        <el-tab-pane label="商品采集" name="copy"></el-tab-pane>
         <el-tab-pane label="物流查询" name="expr_query"></el-tab-pane>
         <el-tab-pane label="电子面单打印" name="expr_dump"></el-tab-pane>
       </el-tabs>
@@ -92,7 +91,7 @@ export default {
   name: 'smsPay',
   data() {
     return {
-      all: { sms: '短信', copy: '商品采集', expr_query: '物流查询', expr_dump: '电子面单打印' },
+      all: { sms: '短信', expr_query: '物流查询', expr_dump: '电子面单打印' },
       isChecked: 'sms',
       numbers: '',
       account: '',
@@ -104,7 +103,11 @@ export default {
     };
   },
   created() {
-    this.isChecked = this.$route.query.type;
+    const allowedTypes = ['sms', 'expr_query', 'expr_dump'];
+    this.isChecked = this.$route.query.type || 'sms';
+    if (!allowedTypes.includes(this.isChecked)) {
+      this.isChecked = 'sms';
+    }
     this.onIsLogin();
   },
   methods: {
@@ -139,9 +142,6 @@ export default {
           switch (this.isChecked) {
             case 'sms':
               this.numbers = data.sms.num;
-              break;
-            case 'copy':
-              this.numbers = data.copy.num;
               break;
             case 'expr_dump':
               this.numbers = data.dump.num;

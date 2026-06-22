@@ -1,26 +1,26 @@
-# 2026-06-19 MVP 后台商品扩展删除映射
+# 2026-06-19 MVP backend product extension delete mapping
 
-## 目的
+## Purpose
 
-本文只做删除映射，不在本轮物理删除文件。当前目标是确认商品扩展能力已经从后台商品主流程脱离，为下一轮按小批次删除组件、API wrapper、权限记录和后端实现做准备。
+This article only deletes mapping and does not physically delete files in this round. The current goal is to confirm that the product expansion capability has been separated from the main back-end product process, and to prepare for the next round of deleting components, API wrappers, permission records and back-end implementation in small batches.
 
-## 已从商品主流程摘除的前端依赖
+## Front-end dependencies that have been removed from the product main process
 
-以下组件文件已不再由商品列表或商品编辑主页面静态导入，并已在前端小批次中物理删除：
+The following component files are no longer statically imported by the product list or product editing main page, and have been physically deleted in the front-end mini-batch:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productAdd/taoBao.vue`
-  - 原用途：新增商品页通过 `?type=-1` 打开采集弹窗。
-  - 当前状态：商品编辑页不再导入、不再挂载、不再通过 query 打开。
+  - Original purpose: Open the collection pop-up window through `:type=-1` on the new product page.
+  - Current status: The product editing page is no longer imported, mounted, or opened through query.
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productList/taoBao.vue`
-  - 原用途：商品列表页商品采集弹窗。
-  - 当前状态：商品列表页不再导入、不再挂载。
+  - Original purpose: Product collection pop-up window on product list page.
+  - Current status: The product list page is no longer imported or mounted.
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productList/components/goodsImport.vue`
-  - 原用途：商品迁移导入。
-  - 当前状态：商品列表页不再导入、不再挂载。
+  - Original purpose: product migration and import.
+  - Current status: The product list page is no longer imported or mounted.
 
-## 已删除前端 API wrapper
+## Frontend API wrapper removed
 
-以下 wrapper 已确认无保留路径引用，并已删除：
+The following wrappers have confirmed no preserved path references and have been removed:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/api/product.js`
   - `copyConfigApi`
@@ -30,11 +30,11 @@
   - `exportProductExport`
   - `importProductImport`
 
-注意：`productGetTemplateApi` 和 `productGetTempKeysApi` 仍被其他已禁用模块或通用上传组件引用，本轮暂不列入直接删除项，应先完成跨模块确认。
+Note: `productGetTemplateApi` and `productGetTempKeysApi` are still referenced by other disabled modules or universal upload components. They are not included in the direct deletion items in this round. Cross-module confirmation should be completed first.
 
-## 待删除后台权限和菜单记录
+## Background permissions and menu records to be deleted
 
-后续删除 SQL 或菜单权限前，需要定位并处理以下权限标识：
+Before subsequently deleting SQL or menu permissions, you need to locate and process the following permission identifiers:
 
 - `product-crawl`
 - `product-copy_config`
@@ -46,24 +46,24 @@
 - `product-product_export`
 - `product-product_import`
 
-当前这些标识已通过 MVP 菜单隐藏和路由拦截收口。
+Currently these identities are closed via MVP menu hiding and routing interception.
 
-## 待删除后端实现
+## Backend implementation to be deleted
 
-本轮已完成商品采集和商品迁移的后端物理删除，仍保留需要跨模块确认的工具类和权限记录：
+This round of back-end physical deletion of product collection and product migration has been completed, and tool classes and permission records that require cross-module confirmation are still retained:
 
-- 已删除 `app/adminapi/controller/v1/product/CopyTaobao.php`
-- 已删除 `app/adminapi/controller/v1/product/StoreProduct.php` 中的 `productExport`、`productImport`
-- 已删除 `app/services/product/product/CopyTaobaoServices.php` 中的 `copyProduct`
-- 已删除 `app/services/product/product/StoreProductServices.php` 中的 `productExportList`、`productImport`
-- 已删除 `app/adminapi/route/product.php` 中商品采集和商品迁移路由
-- 仍待评估 `get_template`、`getTempKeys`、`import_card`
-- `CopyTaobaoServices` 文件仍保留，用于远程图片下载复用
+- Deleted `app/adminapi/controller/v1/product/CopyTaobao.php`
+- Removed `productExport`, `productImport` in `app/adminapi/controller/v1/product/StoreProduct.php`
+- Removed `copyProduct` in `app/services/product/product/CopyTaobaoServices.php`
+- Removed `productExportList`, `productImport` in `app/services/product/product/StoreProductServices.php`
+- Product collection and product migration routes in `app/adminapi/route/product.php` have been deleted
+- Still to be evaluated `get_template`, `getTempKeys`, `import_card`
+- The `CopyTaobaoServices` file is still retained for remote image download and reuse.
 
-## 下一轮建议
+## Next round of suggestions
 
-下一轮优先做两件事：
+Two things should be done first in the next round:
 
-- 清理商品采集、商品迁移相关权限和升级记录。
-- 继续评估卡密导入、视频密钥、运费模板对应的后端实现和权限记录。
-- 再单独评估 `productGetTemplateApi` 与 `productGetTempKeysApi` 的跨模块引用，避免误删仍被通用上传组件或已禁用营销模块间接引用的代码。
+- Clean up product collection, product migration related permissions and upgrade records.
+- Continue to evaluate the back-end implementation and permission records corresponding to card secret import, video keys, and freight templates.
+- Then evaluate the cross-module references of `productGetTemplateApi` and `productGetTempKeysApi` separately to avoid accidentally deleting code that is still indirectly referenced by the universal upload component or the disabled marketing module.

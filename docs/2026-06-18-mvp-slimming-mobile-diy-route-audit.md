@@ -1,49 +1,49 @@
-# 2026-06-18 MVP 移动端 DIY 公共接口瘦身审计
+# 2026-06-18 MVP mobile terminal DIY public interface slimming audit
 
-## 本次目标
+## This time's goal
 
-补齐移动端公共 DIY 数据接口的 MVP 禁用防护。当前阶段不删除 DIY 代码、不删除路由文件、不改小程序页面结构，只在 `enable_page_diy=false` 时拦截非 MVP 的首页装修接口。
+Complete the MVP disabling protection of the public DIY data interface on the mobile terminal. At the current stage, DIY code, routing files, and mini program page structures are not deleted, and non-MVP homepage decoration interfaces are only intercepted at `enable_page_diy=false`.
 
-## 定位结果
+## Positioning results
 
-| 项目 | 位置 | 结论 |
+| Project | Location | Conclusion |
 | --- | --- | --- |
-| v1 DIY 公共接口 | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | 存在 `diy/get_diy/[:id]` |
-| v2 DIY 公共接口 | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v2.php` | 存在 `diy/get_diy/[:name]`、`diy/get_version/[:name]`、`diy/get_store_status`、`diy/color_change/:name` |
-| MVP API 防护 | `src/CRMEB/CRMEB-master/crmeb/app/api/middleware/MvpRouteBlockMiddleware.php` | 已挂载在 v1/v2 API 路由组 |
-| MVP 配置 | `src/CRMEB/CRMEB-master/crmeb/config/mvp.php` | `enable_page_diy=false`，本次补齐公共 DIY 数据接口规则 |
+| v1 DIY public interface | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | Exists `diy/get_diy/[:id]` |
+| v2 DIY public interface | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v2.php` | Exists `diy/get_diy/[:name]`, `diy/get_version/[:name]`, `diy/get_store_status`, `diy/color_change/:name` |
+| MVP API protection | `src/CRMEB/CRMEB-master/crmeb/app/api/middleware/MvpRouteBlockMiddleware.php` | Mounted in v1/v2 API routing group |
+| MVP configuration | `src/CRMEB/CRMEB-master/crmeb/config/mvp.php` | `enable_page_diy=false`, this time the public DIY data interface rules are completed |
 
-## 本次变更
+## This change
 
-在 `api_route_block_patterns.enable_page_diy` 中补充：
+Added in `api_route_block_patterns.enable_page_diy`:
 
 - `diy/get_diy`
 - `diy/get_version`
 - `diy/get_store_status`
 
-原有 `diy/color_change` 保持不变。
+The original `diy/color_change` remains unchanged.
 
-## 保留边界
+## preserve boundaries
 
-以下能力不受本次变更影响：
+The following capabilities are not affected by this change:
 
-- H5 MVP 首页固定入口。
-- 训练营商品、商品详情、下单、微信支付、支付回调。
-- 二级分销关系和佣金记录。
-- 测评记录。
-- 签到入口和签到展示：`diy/sign` 已在 API 白名单中保留。
-- 会员中心、会员状态、会员权益。
+- H5 MVP homepage fixed entrance.
+- Training camp products, product details, ordering, WeChat payment, and payment callbacks.
+- Secondary distribution relationships and commission records.
+- Evaluation records.
+- Check-in entrance and check-in display: `diy/sign` has been reserved in the API whitelist.
+- Member center, member status, member rights.
 
-## Docker 验证
+## Docker verification
 
-PHP 语法检查：
+PHP syntax check:
 
 ```bash
 docker exec -w /var/www/crmeb crmeb-local php -l config/mvp.php
 docker exec -w /var/www/crmeb crmeb-local php think clear
 ```
 
-禁用接口抽测：
+Disable interface spot testing:
 
 ```bash
 curl -i http://127.0.0.1:8080/api/diy/get_diy
@@ -53,13 +53,13 @@ curl -i http://127.0.0.1:8080/api/v2/diy/get_store_status
 curl -i http://127.0.0.1:8080/api/v2/diy/color_change/red
 ```
 
-期望结果：
+Expected results:
 
 ```json
 {"status":400,"msg":"MVP module disabled"}
 ```
 
-保留接口抽测：
+Keep interface sampling:
 
 ```bash
 curl -i http://127.0.0.1:8080/api/v2/diy/sign
@@ -67,13 +67,13 @@ curl -i http://127.0.0.1:8080/api/sign/config
 curl -i http://127.0.0.1:8080/api/user/member/card/index
 ```
 
-期望结果：
+Expected results:
 
-- 不返回 `MVP module disabled`。
-- 未登录环境下可以返回 CRMEB 原有登录态错误。
+- Does not return `MVP module disabled`.
+- In the non-login environment, the original login state error of CRMEB can be returned.
 
-## 风险点
+## Risk point
 
-- 如果旧版小程序首页仍强依赖 `diy/get_diy`，禁用后会返回 MVP 拦截结果；当前 MVP 目标是固定入口，不再依赖 DIY 装修首页。
-- `diy/sign` 必须继续保留，因为签到页面可能依赖该接口。
-- 真正删除 DIY 模块前，还需要排查 `template/uni-app/subpackage/diyComponents`、后台 `diy` 页面、主题模块和数据库装修数据。
+- If the home page of the old version of the mini program still relies heavily on `diy/get_diy`, it will return MVP interception results after disabling it; the current MVP target is a fixed entrance and no longer relies on DIY decoration home page.
+- `diy/sign` must continue to be retained because the check-in page may rely on this interface.
+- Before actually deleting the DIY module, you need to check the `template/uni-app/subpackage/diyComponents`, background `diy` page, theme module and database decoration data.

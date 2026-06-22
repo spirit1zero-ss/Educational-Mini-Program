@@ -1,94 +1,94 @@
-# 2026-06-17 CRMEB MVP 瘦身第一阶段执行记录
+﻿# 2026-06-17 CRMEB MVP first phase of weight loss execution record
 
-## 目标
+## Target
 
-在不删除业务代码、不改支付、不破坏订单状态机的前提下，先完成 MVP 第一阶段瘦身：
+Without deleting the business code, changing the payment, or destroying the order state machine, first complete the first phase of MVP slimming down:
 
-- 保留用户、商品、订单、微信支付、支付回调、二级分销、佣金、测评、签到、会员。
-- 隐藏 H5/小程序和后台中非 MVP 的 P1 入口。
-- 对已禁用模块的后台和移动端接口增加轻量拦截。
-- 增加日志，方便本地排查误触发的禁用模块接口。
+- Retain users, products, orders, WeChat payment, payment callbacks, secondary distribution, commissions, evaluations, check-ins, and members.
+- Hide the P1 entrance of non-MVP in H5/mini program and backend.
+- Add lightweight interception to the backend and mobile interfaces of disabled modules.
+- Add a log to facilitate local troubleshooting of accidentally triggered disabled module interfaces.
 
-## 本阶段不做
+## Not done at this stage
 
-- 不物理删除 PHP 控制器、服务、模型、数据库表。
-- 不删除 CRMEB 官方 vendor、install、upgrade 和核心框架目录。
-- 不重写支付网关、支付回调或订单状态机。
-- 不把签到、会员、积分基础流水、二级分销和佣金链路列入删除范围。
+- No physical deletion of PHP controllers, services, models, database tables.
+- Do not delete the official vendor, install, upgrade and core framework directories of CRMEB.
+- No rewriting of payment gateways, payment callbacks, or order state machines.
+- Check-in, membership, points basic flow, secondary distribution and commission links are not included in the scope of deletion.
 
-## 保留清单
+## keep list
 
-| 模块 | 当前动作 | 说明 |
+| Module | Current Action | Description |
 | --- | --- | --- |
-| 微信登录 | 保留 | 小程序登录链路继续走 CRMEB 原逻辑。 |
-| 商品/商品详情 | 保留 | 训练营商品、商品详情、商品列表接口不拦截。 |
-| 订单/支付/支付回调 | 保留 | 不改订单创建、支付发起、`pay/notify` 回调。 |
-| 二级分销/佣金 | 保留 | 基础 spread、commission、后台佣金查看保留。 |
-| 测评记录 | 保留 | `education/assessment_records` 保留。 |
-| 签到 | 保留 | 签到入口、签到接口、积分基础记录保留。 |
-| 会员 | 保留 | 会员中心、会员状态、会员权益相关入口和接口保留。 |
+| WeChat login | Reserved | The mini program login link continues to follow the original logic of CRMEB. |
+| Product/Product Details | Reserved | Training camp products, product details, and product list interfaces are not blocked. |
+| Order/Payment/Payment Callback | Reserved | Do not change order creation, payment initiation, `pay/notify` callback. |
+| Secondary Distribution/Commission | Retention | Basic spread, commission, backend commission view retention. |
+| Evaluation records | Reserved | `education/assessment_records` Reserved. |
+| Sign-in | Retention | Sign-in entrance, sign-in interface, and points basic record retention. |
+| Member | Retention | Member center, member status, member rights-related entrances and interfaces are retained. |
 
-## 前端入口隐藏
+## Front-end entrance hidden
 
-| 子系统 | 文件 | 动作 |
+| Subsystem | File | Action |
 | --- | --- | --- |
-| 小程序/H5 MVP 配置 | `src/CRMEB/CRMEB-master/template/uni-app/config/mvp.js` | 隐藏优惠券、预售、抽奖、客服、CMS/文章、短视频等 P1 链接和 DIY 组件；签到、会员加入保留组件。 |
-| 小程序/H5 菜单组件 | `src/CRMEB/CRMEB-master/template/uni-app/subpackage/diyComponents/menus.vue` | 菜单渲染和点击跳转前过滤 MVP 禁用链接。 |
-| 小程序/H5 客服入口 | `components/kefuIcon/index.vue`、`subpackage/diyComponents/customerService.vue`、`utils/index.js` | MVP 模式隐藏客服浮窗、客服组件，并阻止客服跳转。 |
-| 后台营销路由 | `src/CRMEB/CRMEB-master/template/admin/src/router/modules/marketing.js` | 只保留签到、会员配置、积分基础记录相关路由。 |
-| 后台外部页面 | `src/CRMEB/CRMEB-master/template/admin/src/router/routers.js` | 隐藏客服相关 frameOut 路由，保留登录和订单打印。 |
+| Mini program/H5 MVP configuration | `src/CRMEB/CRMEB-master/template/uni-app/config/mvp.js` | Hide P1 links and DIY components such as coupons, pre-sales, lottery draws, customer service, CMS/articles, short videos, etc.; sign-in, membership retention components. |
+| Mini Program/H5 Menu Component | `src/CRMEB/CRMEB-master/template/uni-app/subpackage/diyComponents/menus.vue` | Filter MVP disabled links before menu rendering and click jump. |
+| Mini Program/H5 Customer Service Portal | `components/kefuIcon/index.vue`, `subpackage/diyComponents/customerService.vue`, `utils/index.js` | MVP mode hides customer service pop-up windows and customer service components, and prevents customer service from jumping. |
+| Backend marketing routing | `src/CRMEB/CRMEB-master/template/admin/src/router/modules/marketing.js` | Only the routes related to sign-in, member configuration, and points basic records are retained. |
+| Backend external page | `src/CRMEB/CRMEB-master/template/admin/src/router/routers.js` | Hide customer service related frameOut routing, retain login and order printing. |
 
-## 后端接口拦截
+## Backend interface interception
 
-| 子系统 | 文件 | 动作 |
+| Subsystem | File | Action |
 | --- | --- | --- |
-| MVP 配置 | `src/CRMEB/CRMEB-master/crmeb/config/mvp.php` | 增加 `admin_route_allow_patterns`、`admin_route_block_patterns`、`api_route_allow_patterns`、`api_route_block_patterns`。 |
-| 后台拦截 | `src/CRMEB/CRMEB-master/crmeb/app/adminapi/middleware/MvpRouteBlockMiddleware.php` | 禁用模块后台接口返回 `MVP module disabled`。 |
-| 移动端拦截 | `src/CRMEB/CRMEB-master/crmeb/app/api/middleware/MvpRouteBlockMiddleware.php` | 禁用模块移动端接口返回 `MVP module disabled`。 |
-| 后台路由挂载 | `adminapi/route/app.php`、`cms.php`、`diy.php`、`live.php`、`marketing.php` | 在鉴权前挂载 MVP 拦截中间件，便于无 token 本地排查。 |
-| 移动端路由挂载 | `app/api/route/v1.php`、`v2.php` | 在授权大组中、鉴权前挂载 MVP 拦截中间件。 |
+| MVP Configuration | `src/CRMEB/CRMEB-master/crmeb/config/mvp.php` | Added `admin_route_allow_patterns`, `admin_route_block_patterns`, `api_route_allow_patterns`, `api_route_block_patterns`. |
+| Background interception | `src/CRMEB/CRMEB-master/crmeb/app/adminapi/middleware/MvpRouteBlockMiddleware.php` | Disable module background interface returns `MVP module disabled`. |
+| Mobile interception | `src/CRMEB/CRMEB-master/crmeb/app/api/middleware/MvpRouteBlockMiddleware.php` | Disable the module mobile interface to return `MVP module disabled`. |
+| Background route mounting | `adminapi/route/app.php`, `cms.php`, `diy.php`, `live.php`, `marketing.php` | Mount MVP interception middleware before authentication to facilitate local troubleshooting without token. |
+| Mobile terminal routing mounting | `app/api/route/v1.php`, `v2.php` | Mount MVP interception middleware in the authorization group before authentication. |
 
-## 当前禁用开关
+## Currently disabled switch
 
-| 开关 | 默认值 | 覆盖模块 |
+| switches | defaults | override modules |
 | --- | --- | --- |
-| `enable_coupon` | `false` | 优惠券领取、列表、订单优惠券。 |
-| `enable_bargain` | `false` | 砍价。 |
-| `enable_combination` | `false` | 拼团。 |
-| `enable_seckill` | `false` | 秒杀。 |
-| `enable_presell` | `false` | 预售/advance。 |
-| `enable_points` | `false` | 积分商城玩法，不包含签到积分基础流水。 |
-| `enable_recharge` | `false` | 充值。 |
-| `enable_live` | `false` | 小程序直播。 |
-| `enable_lottery` | `false` | 抽奖。 |
-| `enable_customer_service` | `false` | 客服。 |
-| `enable_cms` | `false` | CMS/文章后台。 |
-| `enable_app_admin` | `false` | 应用后台管理。 |
-| `enable_page_diy` | `false` | 后台 DIY 页面和移动端换色接口。 |
-| `enable_invoice` | `false` | 发票。 |
+| `enable_coupon` | `false` | Coupon collection, list, order coupons. |
+| `enable_bargain` | `false` | Bargain. |
+| `enable_combination` | `false` | Group-building. |
+| `enable_seckill` | `false` | Flash sale. |
+| `enable_presell` | `false` | Presale/advance. |
+| `enable_points` | `false` | Points mall gameplay, does not include basic turnover of sign-in points. |
+| `enable_recharge` | `false` | Recharge. |
+| `enable_live` | `false` | Mini program live broadcast. |
+| `enable_lottery` | `false` | Lottery. |
+| `enable_customer_service` | `false` | Customer Service. |
+| `enable_cms` | `false` | CMS/article backend. |
+| `enable_app_admin` | `false` | Application background management. |
+| `enable_page_diy` | `false` | Backend DIY page and mobile color changing interface. |
+| `enable_invoice` | `false` | Invoice. |
 
-## 日志
+## log
 
-命中禁用接口时写入 ThinkPHP 日志：
+Write to the ThinkPHP log when a disabled interface is hit:
 
-- 后台：`[MVP] blocked admin route`
-- 移动端：`[MVP] blocked api route`
+- Backend: `[MVP] blocked admin route`
+- Mobile terminal: `[MVP] blocked api route`
 
-日志字段包含：
+Log fields include:
 
 - `path`
 - `switch`
 - `pattern`
 
-## 本地验证命令
+## Local verification command
 
-已执行或建议执行：
+Executed or recommended:
 
 ```bash
 git diff --check
 ```
 
-Docker PHP 语法检查：
+Docker PHP syntax check:
 
 ```bash
 docker exec -w /var/www/crmeb crmeb-local php -l config/mvp.php
@@ -99,7 +99,7 @@ docker exec -w /var/www/crmeb crmeb-local php -l app/api/route/v2.php
 docker exec -w /var/www/crmeb crmeb-local php think clear
 ```
 
-前端构建：
+Front-end build:
 
 ```bash
 npm run build
@@ -109,11 +109,11 @@ cd ../uni-app
 npm run build:mp-weixin
 ```
 
-## HTTP 抽测路径
+## HTTP spot test path
 
-Docker 服务稳定后，用以下路径抽测：
+After the Docker service is stable, use the following path for random testing:
 
-应被拦截：
+Should be intercepted:
 
 ```bash
 curl http://127.0.0.1:8080/api/coupons
@@ -123,7 +123,7 @@ curl http://127.0.0.1:8080/adminapi/marketing/coupon
 curl http://127.0.0.1:8080/adminapi/cms/article
 ```
 
-应继续可达或进入原有鉴权/业务逻辑：
+Should continue to be reachable or enter the original authentication/business logic:
 
 ```bash
 curl http://127.0.0.1:8080/api/sign/config
@@ -133,21 +133,21 @@ curl http://127.0.0.1:8080/adminapi/marketing/sign/rewards
 curl http://127.0.0.1:8080/adminapi/member_config
 ```
 
-## 当前风险
+## Current risks
 
-- 本地 `crmeb-local` 容器内 MySQL 反复退出重启，HTTP 接口抽测出现超时；需要先恢复 Docker/MySQL 稳定性后才能确认运行时行为。
-- `api_route_block_patterns` 是 path pattern 拦截，后续如果发现误伤，可以优先在 `api_route_allow_patterns` 加白名单。
-- 积分商城玩法已禁用，但签到依赖积分账户、积分流水、积分展示，后续不能直接删除积分底层能力。
-- 分销不能整体删除，只能拆分基础二级分销/佣金与高级代理商/事业部。
-- 当前仍是第一阶段轻瘦身，真正物理删除文件前必须重新跑完整 MVP 验收清单。
+- MySQL in the local `crmeb-local` container repeatedly exits and restarts, and the HTTP interface sampling test times out; the runtime behavior needs to be confirmed after restoring the stability of Docker/MySQL.
+- `api_route_block_patterns` is intercepted by path pattern. If accidental damage is found later, you can add whitelist to `api_route_allow_patterns` first.
+- The points mall gameplay has been disabled, but check-in depends on the points account, points flow, and points display. The underlying ability of points cannot be deleted directly in the future.
+- Distribution cannot be deleted as a whole, only basic second-level distribution/commission and advanced agent/business department can be split.
+- It is still the first stage of downsizing, and the complete MVP acceptance checklist must be re-run before the files are actually physically deleted.
 
-## 2026-06-17 运行时复测补充
+## 2026-06-17 Runtime retest supplement
 
-容器 `crmeb-local` 后续恢复到稳定运行状态，MySQL 进程已可持续运行。清理 ThinkPHP 缓存后复测如下：
+The container `crmeb-local` subsequently returned to a stable operating state, and the MySQL process has continued to run. After clearing the ThinkPHP cache, retest as follows:
 
-已确认被 MVP 拦截：
+Confirmed to be intercepted by MVP:
 
-| 路径 | 结果 |
+| Path | Result |
 | --- | --- |
 | `/api/coupons` | `{"status":400,"msg":"MVP module disabled"}` |
 | `/api/v2/coupons` | `{"status":400,"msg":"MVP module disabled"}` |
@@ -158,35 +158,30 @@ curl http://127.0.0.1:8080/adminapi/member_config
 | `/adminapi/diy/get_list` | `{"status":400,"msg":"MVP module disabled"}` |
 | `/adminapi/cms/cms` | `{"status":400,"msg":"MVP module disabled"}` |
 
-已确认未被 MVP 拦截，进入原鉴权逻辑：
+It has been confirmed that it has not been intercepted by MVP and the original authentication logic is entered:
 
-| 路径 | 结果 |
+| Path | Result |
 | --- | --- |
-| `/api/sign/config` | `{"status":401,"msg":"请登录"}` |
-| `/api/user/member/card/index` | `{"status":401,"msg":"请登录"}` |
-| `POST /api/education/assessment_records` | `{"status":401,"msg":"请登录"}` |
-| `/adminapi/marketing/sign/rewards` | `{"status":401,"msg":"登录已过期,请重新登录","data":[]}` |
-| `/adminapi/marketing/integral` | `{"status":401,"msg":"登录已过期,请重新登录","data":[]}` |
+| `/api/sign/config` | `{"status":401,"msg":"please log in"}` || `/api/user/member/card/index` | `{"status":401,"msg":"please log in"}` || `POST /api/education/assessment_records` | `{"status":401,"msg":"please log in"}` || `/adminapi/marketing/sign/rewards` | `{"status":401,"msg":"login expired, please log in again","data":[]}` || `/adminapi/marketing/integral` | `{"status":401,"msg":"login expired, please log in again","data":[]}` |
+Fixed and confirmed recovery:
 
-已修复并确认恢复：
-
-| 路径 | 结果 |
+| Path | Result |
 | --- | --- |
 | `/api/index` | `{"status":200,"msg":"success",...}` |
 | `/api/products` | `{"status":200,"msg":"success",...}` |
 | `/api/category` | `{"status":200,"msg":"success",...}` |
 
-修复说明：
+Repair instructions:
 
-- `/api/index` 和 `/api/products` 超时来自商品列表仍在查询已禁用的营销活动和优惠券标记。
-- MVP 模式下，当优惠券、砍价、拼团、秒杀均禁用时，商品服务跳过这些活动标记查询，只返回普通商品数据。
-- 该修复不影响商品详情、订单、支付、签到、会员、测评、分销佣金链路。
+- `/api/index` and `/api/products` timeouts from product lists still querying disabled campaign and coupon tags.
+- In MVP mode, when coupons, price bargaining, group buying, and flash sales are all disabled, the product service skips these activity tag queries and only returns ordinary product data.
+- This fix does not affect product details, orders, payments, check-ins, memberships, reviews, and distribution commission links.
 
-## 2026-06-17 暴露面复测补充
+## 2026-06-17 Exposed surface retest supplement
 
-继续审计 P1 暴露面后，补齐以下拦截：
+After continuing to audit the P1 exposure surface, complete the following interceptions:
 
-| 路径 | 结果 |
+| Path | Result |
 | --- | --- |
 | `/api/article/category/list` | `{"status":400,"msg":"MVP module disabled"}` |
 | `/api/theme/article` | `{"status":400,"msg":"MVP module disabled"}` |
@@ -197,12 +192,11 @@ curl http://127.0.0.1:8080/adminapi/member_config
 | `/adminapi/export/combination_list` | `{"status":400,"msg":"MVP module disabled"}` |
 | `/adminapi/export/seckill_list` | `{"status":400,"msg":"MVP module disabled"}` |
 
-保留链路未误伤：
+Keep the link intact:
 
-| 路径 | 结果 |
+| Path | Result |
 | --- | --- |
-| `/adminapi/export/userCommission` | `{"status":401,"msg":"登录已过期,请重新登录","data":[]}` |
+| `/adminapi/export/userCommission` | `{"status":401,"msg":"login expired, please log in again","data":[]}` |
+Still need follow-up investigation:
 
-仍需后续排查：
-
-- `/api/education/assessment_records` 已用 `POST` 确认进入原鉴权；完整保存仍需携带登录态和测评 payload 回归。
+- `/api/education/assessment_records` has been used to confirm entry into the original authentication; the complete save still needs to return with the login status and evaluation payload.

@@ -1,49 +1,34 @@
-# 2026-06-18 MVP admin setting route audit
-
-## Scope
-
-This note records the admin frontend setting-route cleanup for MVP slimming. It hides disabled setting entries in the admin SPA router; it does not delete backend code, change menus in the database, change payment, or change order behavior.
-
+# 2026-06-18 MVP background settings routing audit
+## scope
+This article records the cleanup of backend and frontend routing settings during MVP slimming. In this round, the disabled setting entrance is hidden in the background SPA routing, and the back-end code is not deleted, the database menu is not modified, the payment is not modified, and the order behavior is not modified.
 ## Change
-
 - `src/CRMEB/CRMEB-master/template/admin/src/router/modules/setting.js`
-  - Imports the existing MVP switch helper.
-  - Converts the router object to `settingRouter`.
-  - Filters disabled MVP setting children when `MVP_ENABLED=true`.
-
-## Hidden Admin Setting Entries
-
-The filter hides routes related to:
-
+  - Introduce existing MVP switch helper.
+  - Change routing object to `settingRouter`.
+  - Filter disabled MVP settings subroutes when `MVP_ENABLED=true`.
+## Hidden background settings entrance
+Filter rules hide the following routes:
 - Logistics configuration and freight templates.
-- City-data maintenance used by freight templates.
+- City data maintenance used by freight templates.
 - Electronic invoice configuration.
-- Page DIY and theme/micro-page tooling.
-- Customer-service configuration pages.
-- External API/account pages.
-- Receipt printer pages.
-
-## Preserved
-
-The filter keeps core admin setting routes and MVP-required routes, including:
-
-- System configuration basics.
-- Member and membership configuration.
-- Sign-in configuration.
-- Core user, product, order, assessment, distribution, and commission modules.
-
-## Validation
-
-Admin build:
-
+- Page DIY and theme/micro page tools.
+- Customer service configuration page.
+- External API/account page.
+- Receipt printer page.
+## Reserved content
+Filter rules preserve backend core settings routes and MVP required routes, including:
+- Basic system configuration.
+- Configuration of members and member rights.
+- Check-in configuration.
+- Core user, product, order, evaluation, distribution and commission modules.
+## verify
+Background build:
 ```bash
 cd src/CRMEB/CRMEB-master/template/admin
 npm run build
 ```
 
-Result: build passed. Existing CSS order and asset-size warnings remain.
-
-## Risk Notes
-
-- The filter is path/auth-pattern based, so future setting routes should be reviewed before adding broad blocked patterns.
-- Backend route blocking remains the source of truth for disabled APIs; this frontend filter only removes visible SPA entries.
+Result: Build passed. Existing CSS order and resource size warnings still exist.
+## Risk Statement
+- Filtering rules are based on paths and permission identifiers. You should review them before adding new routes to avoid adding excessively broad interception rules.
+- Backend route interception is still the de facto source of disabled APIs; this frontend filtering only removes visible SPA entries.

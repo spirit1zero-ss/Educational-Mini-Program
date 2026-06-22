@@ -1,110 +1,110 @@
-# CRMEB MVP 瘦身：后台首页与高级分销入口收口审计
+# CRMEB MVP slimming down: backend home page and advanced distribution entrance closing audit
 
-日期：2026-06-18
+Date: 2026-06-18
 
-## 目标
+## Target
 
-继续执行 MVP 软瘦身，不删除代码、不重写路由体系、不影响基础二级分销和佣金查看。
+Continue to implement MVP soft slimming without deleting code, rewriting the routing system, or affecting basic secondary distribution and commission viewing.
 
-本阶段聚焦后台前端仍可见的非 MVP 入口：
+This stage focuses on the non-MVP entrances that are still visible in the backend and front-end:
 
-- 后台首页快捷入口中的 CMS/文章
-- 后台首页快捷入口中的优惠券
-- 后台静态路由中的事业部/代理商高级分销模块
+- CMS/articles in the quick entry on the backend home page
+- Coupons in the quick entry on the backend home page
+- Business unit/agent advanced distribution module in background static routing
 
-## 本次调整
+## This adjustment
 
-### 后台 MVP 配置
+### Backend MVP configuration
 
-位置：
+Location:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/config/mvp.js`
 
-处理：
+deal with:
 
-- 新增 `isMvpAdminLinkVisible(link)`。
-- MVP 模式下隐藏后台首页快捷入口里的：
+- Added `isMvpAdminLinkVisible(link)`.
+- In MVP mode, hide the shortcut entry on the backend homepage:
   - `/cms/`
   - `/marketing/store_coupon`
   - `/marketing/coupon`
 
-### 后台首页快捷入口
+### Backstage homepage quick entrance
 
-位置：
+Location:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/index/components/gridMenu.vue`
 
-处理：
+deal with:
 
-- CMS/文章快捷入口按 MVP 规则隐藏。
-- 优惠券快捷入口按 MVP 规则隐藏。
-- 用户、系统设置、商品、订单、基础分销入口保留。
+- CMS/article quick entry is hidden according to MVP rules.
+- The coupon quick entry is hidden according to MVP rules.
+- Users, system settings, products, orders, and basic distribution entrances are reserved.
 
-### 后台静态路由
+### Background static routing
 
-位置：
+Location:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/router/routers.js`
 
-处理：
+deal with:
 
-- MVP 模式下不挂载 `division` 静态路由。
-- `agent` 基础分销路由保留，避免影响二级分销和佣金查看。
+- The `division` static route is not mounted in MVP mode.
+- `agent` The basic distribution route is retained to avoid affecting secondary distribution and commission viewing.
 
-### 后端 MVP 配置补齐
+### Backend MVP configuration completion
 
-位置：
+Location:
 
 - `src/CRMEB/CRMEB-master/crmeb/config/mvp.php`
 - `src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/agent.php`
 
-处理：
+deal with:
 
-- 后台菜单隐藏规则补充 `enable_advanced_distribution`：
+- Backend menu hiding rule supplement `enable_advanced_distribution`:
   - `division`
   - `agent-division`
-- 后台接口拦截规则补充：
+- Supplementary background interface interception rules:
   - `agent/division`
-- 后台 `agent` 路由组接入现有 `MvpRouteBlockMiddleware`，只拦截 `agent/division` 高级分销接口，保留基础二级分销接口。
+- The background `agent` routing group is connected to the existing `MvpRouteBlockMiddleware`, only intercepts the `agent/division` high-level distribution interface, and retains the basic secondary distribution interface.
 
-## 保留能力
+## retain ability
 
-本次不影响：
+This time it does not affect:
 
-- 后台用户查看
-- 后台商品查看
-- 后台订单查看
-- 基础二级分销
-- 佣金记录查看
-- 签到
-- 会员
-- 微信支付和支付回调
+- View by background users
+- Backend product view
+- Backend order viewing
+- Basic secondary distribution
+- View commission records
+- Sign in
+- member
+- WeChat payment and payment callback
 
-## 本地验证路径
+## local verification path
 
-后台构建：
+Background build:
 
 ```bash
 cd src/CRMEB/CRMEB-master/template/admin
 npm run build
 ```
 
-Docker 后端抽测：
+Docker backend sampling test:
 
 ```bash
 docker exec -w /var/www/crmeb crmeb-local php think clear
 curl.exe -i --max-time 20 http://127.0.0.1:8080/adminapi/agent/division/list
 ```
 
-后台浏览器路径：
+Backend browser path:
 
 - `http://127.0.0.1:8080/admin`
-- 登录后查看后台首页快捷入口
-- 确认 CMS/文章、优惠券快捷入口不显示
-- 确认用户、商品、订单、基础分销入口仍保留
+- After logging in, view the quick entrance to the backend homepage
+- Confirm that the quick entry to CMS/articles and coupons is not displayed
+- Confirm that users, products, orders, and basic distribution entrances are still retained
 
-## 风险点
+## Risk point
 
-- 基础分销与高级事业部/代理商共享 `agent` 命名空间，不能整体删除 `agent`。
-- 真正物理删除前，需要继续拆分基础二级分销接口和 `agent/division` 高级分销接口。
-- 后台菜单还可能由后端权限菜单动态返回，因此本次同时补了前端静态路由和后端 MVP 菜单/接口规则。
+- Basic distribution shares the `agent` namespace with advanced business units/agents, and `agent` cannot be deleted as a whole.
+- Before actual physical deletion, you need to continue to split the basic secondary distribution interface and `agent/division` advanced distribution interface.
+- The backend menu may also be dynamically returned by the backend permission menu, so this time we also added frontend static routing and backend MVP menu/interface rules.

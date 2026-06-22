@@ -59,6 +59,12 @@ class Serve extends AuthController
      */
     public function mealList(string $type)
     {
+        if ($type === 'copy' && function_exists('mvp_enabled') && !mvp_enabled('enable_product_copy', false)) {
+            return app('json')->fail('MVP module disabled');
+        }
+        if (function_exists('mvp_enabled') && !mvp_enabled('enable_serve_purchase', false)) {
+            return app('json')->fail('MVP module disabled');
+        }
         $res = $this->services->user()->mealList($type);
         if ($res) {
             return app('json')->success($res);
@@ -73,6 +79,7 @@ class Serve extends AuthController
      */
     public function payMeal()
     {
+        $jsonData = json_decode($this->request->getContent() ?: '[]', true);
         $data = $this->request->postMore([
             ['meal_id', ''],
             ['price', ''],
@@ -80,6 +87,17 @@ class Serve extends AuthController
             ['type', ''],
             ['pay_type', ''],
         ]);
+        $mealType = $data['type'] ?: $this->request->param('type', '');
+        if (!$mealType && is_array($jsonData)) {
+            $mealType = $jsonData['type'] ?? '';
+        }
+        $data['type'] = $mealType;
+        if ($mealType === 'copy' && function_exists('mvp_enabled') && !mvp_enabled('enable_product_copy', false)) {
+            return app('json')->fail('MVP module disabled');
+        }
+        if (function_exists('mvp_enabled') && !mvp_enabled('enable_serve_purchase', false)) {
+            return app('json')->fail('MVP module disabled');
+        }
         $openInfo = $this->services->user()->getUser();
         if (!$openInfo) app('json')->fail('获取支付码失败');
         switch ($data['type']) {
@@ -93,8 +111,7 @@ class Serve extends AuthController
                 if (!$openInfo['dump']['open']) return app('json')->fail('请先开通电子面单打印服务');
                 break;
             case "copy" :
-                if (!$openInfo['copy']['open']) return app('json')->fail('请先开通商品采集服务');
-                break;
+                return app('json')->fail('MVP module disabled');
         }
         $this->validate($data, MealValidata::class);
 
@@ -152,6 +169,10 @@ class Serve extends AuthController
             [['type', 'd'], 0],
         ], true);
 
+        if ((int)$type === 4 && function_exists('mvp_enabled') && !mvp_enabled('enable_product_copy', false)) {
+            return app('json')->fail('MVP module disabled');
+        }
+
         return app('json')->success($this->services->user()->record($page, $limit, $type));
     }
 
@@ -163,7 +184,7 @@ class Serve extends AuthController
     public function openServe($type = 0)
     {
         if ($type) {
-            $this->services->copy()->open();
+            return app('json')->fail('MVP module disabled');
         } else {
             $this->services->express()->open();
         }

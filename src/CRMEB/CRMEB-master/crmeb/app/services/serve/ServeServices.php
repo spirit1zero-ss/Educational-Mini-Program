@@ -13,7 +13,6 @@ namespace app\services\serve;
 
 
 use app\services\BaseServices;
-use crmeb\services\copyproduct\CopyProduct;
 use crmeb\services\express\Express;
 use crmeb\services\FormBuilder;
 use crmeb\services\invoice\Invoice;
@@ -90,17 +89,6 @@ class ServeServices extends BaseServices
     public function sms(string $type = null, array $config = [])
     {
         return app()->make(Sms::class, [$type, $this->getTypeConfig($type, $config)]);
-    }
-
-    /**
-     * 复制商品
-     * @param string|null $type
-     * @param array $config
-     * @return CopyProduct
-     */
-    public function copy(string $type = null, array $config = [])
-    {
-        return app()->make(CopyProduct::class, [$type, $this->getConfig($config)]);
     }
 
     /**

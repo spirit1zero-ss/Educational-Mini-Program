@@ -1,12 +1,12 @@
-# 2026-06-18 MVP slimming: admin menu hidden-pattern coverage
+# 2026-06-18 MVP backend menu hidden rule coverage audit
 
-## Scope
+## scope
 
-- Round scope: backend admin menu output filtering for disabled MVP modules.
-- Strategy: add missing hidden-menu patterns only. No route, controller, database, or frontend deletion.
-- Branch target: `dev3`.
+- Scope of this round: Filtering disabled MVP modules in backend menu output.
+- Strategy: Only add missing menu hiding rules; do not delete routes, controllers, databases or front-end files.
+- Target branch: `dev3`.
 
-## Existing mechanism reviewed
+## Checked mechanism
 
 - `app/services/system/SystemMenusServices.php`
   - `/setting/menus/unique` returns the current admin menu tree and permission identifiers through `getMenusList()`.
@@ -17,32 +17,32 @@
 - `app/common.php`
   - `mvp_admin_hidden_menu_patterns()` collects patterns only for switches that are disabled.
 
-## Changes made in this round
+## Changes in this round
 
 - `config/mvp.php`
-  - Added hidden-menu patterns for `enable_lottery=false`.
-  - Added hidden-menu patterns for `enable_cms=false`.
-  - Added hidden-menu patterns for `enable_app_admin=false`.
-  - Added hidden-menu patterns for `enable_offline_payment=false`.
-  - Added hidden-menu patterns for `enable_store_pickup=false`.
+  - Supplement menu hiding rules for `enable_lottery=false`.
+  - Supplement menu hiding rules for `enable_cms=false`.
+  - Supplement menu hiding rules for `enable_app_admin=false`.
+  - Supplement menu hiding rules for `enable_offline_payment=false`.
+  - Supplement menu hiding rules for `enable_store_pickup=false`.
 
-## Explicitly not changed
+## Clearly unchanged
 
-- Did not delete admin menu rows from the database.
-- Did not delete CRMEB route files, controllers, services, models, or tables.
-- Did not change login, users, products, orders, WeChat pay, pay callback, second-level distribution, commissions, sign-in, assessment, or member features.
-- Did not run the full mini-program build in this soft-slimming round.
+- Backend menu records are not deleted from the database.
+- CRMEB routing files, controllers, services, models, or data tables were not deleted.
+- The login, user, product, order, WeChat payment, payment callback, secondary distribution, commission, check-in, evaluation or membership functions have not been modified.
+- This round of soft slimming did not implement complete mini program construction.
 
-## Verification notes
+## Verify records
 
 - `docker exec -w /var/www/crmeb crmeb php -l config/mvp.php`
-  - Result: no syntax errors.
+  - Result: No syntax errors.
 - `docker exec -w /var/www/crmeb crmeb php think clear`
   - Result: `Clear Successed`.
 - `mvp_admin_hidden_menu_patterns()` was checked inside the mounted Docker container.
-  - Result includes `lottery`, `cms/`, `article`, `special`, `news`, `app/`, `wechat/`, `offline`, `offline_payment`, `store_pickup`, `verify_order`, `system_store`, and `store-staff`.
+  - Results include `lottery`, `cms/`, `article`, `special`, `news`, `app/`, `wechat/`, `offline`, `offline_payment`, `store_pickup`, `verify_order`, `system_store`, and `store-staff`.
 - `GET /api/wechat/live?page=1&limit=10`
-  - Result: HTTP 200 wrapper with `{"status":400,"msg":"MVP module disabled"}`.
+  - Result: HTTP 200 wrapped response with content `{"status":400,"msg":"MVP module disabled"}`.
 - `GET /api/product/detail/1`
-  - Result: HTTP 200 business success with `"coupons":[]`.
-- Existing route middleware remains the backend enforcement layer; this round only improves admin menu visibility coverage.
+  - Result: HTTP 200 business response successfully, with `"coupons":[]`.
+- The existing routing middleware is still the backend mandatory interception layer; this round only improves the visibility coverage of the background menu.

@@ -1,41 +1,41 @@
-# 2026-06-18 MVP customer-service route audit
+# 2026-06-18 MVP Customer Service Routing Audit
 
-## Scope
+## scope
 
-This note records the customer-service route alignment for MVP slimming. It does not delete code, change payment, change order behavior, or change member/sign-in behavior.
+This article records the alignment of customer service routing in MVP slimming. In this round, codes will not be deleted, payments will not be modified, order behavior will not be modified, and membership or check-in functions will not be affected.
 
-## Change
+## change
 
 - `src/CRMEB/CRMEB-master/crmeb/config/mvp.php`
-  - Added explicit admin menu hide patterns under `enable_customer_service`.
-  - Added explicit admin route block patterns under `enable_customer_service`.
+  - Add clear background menu hiding rules under `enable_customer_service`.
+  - Add clear background routing interception rules under `enable_customer_service`.
 
-## Why
+## reason
 
-Customer-service admin routes already sit under the broader disabled `app/` route group, but keeping explicit customer-service patterns makes the MVP slimming boundary clearer and safer for later physical deletion.
+The customer service background routing is already under the larger disabled `app/` routing group, but clear customer service rules are retained, which can make the MVP thinning boundary clearer and facilitate dependency judgment before subsequent physical deletion.
 
-## Docker validation
+## Docker verification
 
-PHP lint:
+PHP syntax check:
 
 ```bash
 docker exec -w /var/www/crmeb crmeb-local php -l config/mvp.php
 docker exec -w /var/www/crmeb crmeb-local php think clear
 ```
 
-HTTP checks:
+HTTP inspection:
 
-| Path | Expected result |
+| Path | Expected results |
 | --- | --- |
 | `/adminapi/app/feedback` | `{"status":400,"msg":"MVP module disabled"}` |
 | `/adminapi/app/wechat/kefu` | `{"status":400,"msg":"MVP module disabled"}` |
 | `/adminapi/app/wechat/speechcraft` | `{"status":400,"msg":"MVP module disabled"}` |
 | `/adminapi/app/kefu/auto_reply/list` | `{"status":400,"msg":"MVP module disabled"}` |
-| `/api/user/member/card/index` | Original mobile auth response: `401` |
-| `/api/sign/config` | Original mobile auth response: `401` |
-| `/adminapi/order/info/1` | Original backend auth response: `401` |
+| `/api/user/member/card/index` | Keep the original mobile terminal authentication response: `401` |
+| `/api/sign/config` | Keep the original mobile terminal authentication response: `401` |
+| `/adminapi/order/info/1` | Keep the original background authentication response: `401` |
 
-## Notes
+## illustrate
 
-- This is a semantic coverage improvement. The broad `enable_app_admin=false` rule still blocks the rest of app-admin routes.
-- Future deletion can use the explicit customer-service patterns to identify `feedback`, `wechat/kefu`, `speechcraft`, and `auto_reply` related code paths.
+- This round is a semantic coverage enhancement. The wider `enable_app_admin=false` rule will still block the remaining app background routes.
+- These explicit customer service rules can be used to locate `feedback`, `wechat/kefu`, `speechcraft` and `auto_reply` related code paths before subsequent physical deletion.

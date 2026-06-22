@@ -97,6 +97,7 @@
           v-show="headTab.length === 7 ? currentTab === '4' : false"
           :formValidate="formValidate"
           :templateList="templateList"
+          :product-extras-enabled="isProductExtrasEnabled"
           @logisticsBtn="logisticsBtn"
           @addTemp="addTemp"
         ></logistics-setting>
@@ -335,7 +336,6 @@ import {
   productCache,
   cacheDelete,
   uploadType,
-  importCard,
   productCreateApi,
   getProductTypeConfig,
   ruleAddApi,
@@ -656,6 +656,9 @@ export default {
     },
     mvpGoodsType() {
       if (!this.isMvpMode) return this.goodsType;
+      if (!this.isProductExtrasEnabled) {
+        return this.goodsType.filter((item) => Number(item.id) === 0);
+      }
       return this.goodsType.filter((item) => Number(item.id) !== 2);
     },
     labelWidth() {
@@ -824,6 +827,10 @@ export default {
     },
     // 分片上传
     videoSaveToUrl(file) {
+      if (!this.isProductExtrasEnabled) {
+        this.$message.warning('Product video upload is disabled in MVP mode');
+        return false;
+      }
       if (isVideoUpload(file)) {
         uploadByPieces({
           file: file, // 视频实体
@@ -846,6 +853,11 @@ export default {
     },
     // 类型选择/填入内容判断
     virtualbtn(index, type) {
+      if (!this.isProductExtrasEnabled && Number(index) !== 0) {
+        this.$message.warning('Product extras are disabled in MVP mode');
+        this.applyMvpProductMarketingDefaults();
+        return;
+      }
       if (this.isMvpMode && Number(index) === 2) {
         this.$message.warning('MVP 模式下已禁用优惠券商品');
         return;
@@ -967,14 +979,8 @@ export default {
       this.header['Authori-zation'] = 'Bearer ' + getCookies('token');
     },
     // 导入卡密
-    upFile(res) {
-      if (!this.isProductExtrasEnabled) {
-        this.$message.warning('MVP 模式下已禁用卡密导入');
-        return;
-      }
-      importCard({ file: res.data.src }).then((res) => {
-        this.virtualList = this.virtualList.concat(res.data);
-      });
+    upFile() {
+      this.$message.warning('Virtual card import is not available in MVP mode');
     },
     //获取视频上传类型
     uploadType() {
@@ -1108,6 +1114,7 @@ export default {
       this.formValidate.coupon_ids = [];
       this.formValidate.activity = ['默认'];
       this.formValidate.is_sub = this.normalizeMvpSubSettings(this.formValidate.is_sub || []);
+      this.applyMvpProductExtraDefaults();
       this.couponName = [];
       this.updateIds = [];
       this.updateName = [];
@@ -1119,6 +1126,30 @@ export default {
       this.oneFormValidate.forEach(resetVip);
       this.manyFormValidate.forEach(resetVip);
       this.oneFormBatch.forEach(resetVip);
+    },
+    // Reset product extra fields while MVP product extras are disabled.
+    applyMvpProductExtraDefaults() {
+      if (this.isProductExtrasEnabled || !this.formValidate) return;
+      this.formValidate.virtual_type = 0;
+      this.formValidate.is_virtual = 0;
+      this.formValidate.video_link = '';
+      this.formValidate.temp_id = 0;
+      if (this.formValidate.freight == 3) {
+        this.formValidate.freight = 2;
+      }
+      this.disk_info = '';
+      this.virtualList = [];
+      const resetProductExtraFields = (item) => {
+        if (!item) return;
+        item.is_virtual = 0;
+        item.virtual_list = [];
+        item.disk_info = '';
+        item.coupon_id = 0;
+        item.coupon_name = '';
+      };
+      this.oneFormValidate.forEach(resetProductExtraFields);
+      this.manyFormValidate.forEach(resetProductExtraFields);
+      this.oneFormBatch.forEach(resetProductExtraFields);
     },
     // 添加优惠券
     addCoupon() {
@@ -1175,12 +1206,23 @@ export default {
       this.$refs.goodsCoupon.tableList(3);
     },
     addVirtual(index, name) {
+      if (!this.isProductExtrasEnabled) {
+        this.$message.warning('Virtual product data is disabled in MVP mode');
+        this.applyMvpProductExtraDefaults();
+        return;
+      }
       this.tabIndex = index;
       this.tabName = name;
       this.addVirtualModel = true;
     },
     // 提交卡密信息
     upVirtual() {
+      if (!this.isProductExtrasEnabled) {
+        this.$message.warning('Virtual product data is disabled in MVP mode');
+        this.applyMvpProductExtraDefaults();
+        this.closeVirtual();
+        return;
+      }
       if (this.disk_type == 2) {
         for (let i = 0; i < this.virtualList.length; i++) {
           const element = this.virtualList[i];
@@ -1282,6 +1324,10 @@ export default {
       this.upload.videoIng = false;
     },
     zh_uploadFile() {
+      if (!this.isProductExtrasEnabled) {
+        this.$message.warning('Product video upload is disabled in MVP mode');
+        return;
+      }
       if (this.seletVideo == 1) {
         this.formValidate.video_link = this.videoLink;
       } else {

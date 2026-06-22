@@ -1,23 +1,23 @@
-# 2026-06-18 MVP 客服端 kefuapi 路由瘦身审计
+﻿# 2026-06-18 MVP client kefuapi routing slimming audit
 
-## 本次目标
+## This time's goal
 
-补齐客服独立 `kefuapi` 路由的 MVP 禁用防护。当前阶段仍然不物理删除客服代码、不删除路由文件、不改订单/支付/分销/签到/会员核心链路。
+Complete the MVP disabling protection of the customer service independent `kefuapi` route. At this stage, the customer service code, routing files, and order/payment/distribution/check-in/membership core links will not be physically deleted.
 
-## 定位结果
+## Positioning results
 
-| 项目 | 位置 | 结论 |
+| Project | Location | Conclusion |
 | --- | --- | --- |
-| 客服端路由入口 | `src/CRMEB/CRMEB-master/crmeb/app/kefuapi/route/route.php` | 独立于 `api`、`adminapi`，原先只挂载跨域和客服鉴权 |
-| MVP 配置 | `src/CRMEB/CRMEB-master/crmeb/config/mvp.php` | `enable_customer_service=false`，客服属于 P1 非 MVP 功能 |
-| 新增中间件 | `src/CRMEB/CRMEB-master/crmeb/app/kefuapi/middleware/MvpRouteBlockMiddleware.php` | 根据 `kefuapi_route_block_patterns` 拦截禁用路由 |
-| 日志位置 | `runtime/log/20260618.log` | 命中时记录 `[MVP] blocked kefuapi route` |
+| Customer service side routing entrance | `src/CRMEB/CRMEB-master/crmeb/app/kefuapi/route/route.php` | Independent from `api`, `adminapi`, originally only mounted cross-domain and customer service authentication |
+| MVP configuration | `src/CRMEB/CRMEB-master/crmeb/config/mvp.php` | `enable_customer_service=false`, customer service belongs to P1 non-MVP function |
+| New middleware | `src/CRMEB/CRMEB-master/crmeb/app/kefuapi/middleware/MvpRouteBlockMiddleware.php` | Intercept and disable routing based on `kefuapi_route_block_patterns` |
+| Log location | `runtime/log/20260618.log` | Log on hit `[MVP] blocked kefuapi route` |
 
-## 本次变更
+## This change
 
-- 新增 `app/kefuapi/middleware/MvpRouteBlockMiddleware.php`。
-- 在 `app/kefuapi/route/route.php` 根路由组挂载 MVP 防护。
-- 在 `config/mvp.php` 新增 `kefuapi_route_block_patterns`：
+- Added `app/kefuapi/middleware/MvpRouteBlockMiddleware.php`.
+- Mount MVP protection on the `app/kefuapi/route/route.php` root routing group.
+- Add `kefuapi_route_block_patterns` in `config/mvp.php`:
   - `login`
   - `key`
   - `scan`
@@ -30,20 +30,20 @@
   - `service`
   - `tourist`
 
-## 保留边界
+## preserve boundaries
 
-以下 MVP 核心能力不受本次变更影响：
+The following MVP core capabilities are not affected by this change:
 
-- 微信登录、用户、商品、商品详情、订单、微信支付、支付回调。
-- 二级分销关系、佣金流水。
-- 测评记录。
-- 签到入口、签到记录、签到依赖的积分基础链路。
-- 会员中心、会员状态、会员权益。
-- 后台用户、订单、商品、测评、分销、佣金、签到、会员查看。
+- WeChat login, user, product, product details, order, WeChat payment, payment callback.
+- Secondary distribution relationship and commission flow.
+- Evaluation records.
+- Sign-in entrance, sign-in record, and points-based link that sign-in relies on.
+- Member center, member status, member rights.
+- Backend users, orders, products, reviews, distribution, commissions, check-ins, and member views.
 
-## Docker 验证
+## Docker verification
 
-PHP 语法检查：
+PHP syntax check:
 
 ```bash
 docker exec -w /var/www/crmeb crmeb-local php -l config/mvp.php
@@ -52,7 +52,7 @@ docker exec -w /var/www/crmeb crmeb-local php -l app/kefuapi/route/route.php
 docker exec -w /var/www/crmeb crmeb-local php think clear
 ```
 
-接口抽测：
+Interface sampling test:
 
 ```bash
 curl -i http://127.0.0.1:8080/kefuapi/config
@@ -62,13 +62,13 @@ curl -i -X POST http://127.0.0.1:8080/kefuapi/service/speechcraft
 curl -i -X POST http://127.0.0.1:8080/kefuapi/upload
 ```
 
-期望结果：
+Expected results:
 
 ```json
 {"status":400,"msg":"MVP module disabled"}
 ```
 
-保留链路抽测：
+Reserved link random test:
 
 ```bash
 curl -i http://127.0.0.1:8080/api/sign/config
@@ -76,18 +76,18 @@ curl -i http://127.0.0.1:8080/api/user/member/card/index
 curl -i http://127.0.0.1:8080/adminapi/order/info/1
 ```
 
-期望结果：
+Expected results:
 
-- 不返回 `MVP module disabled`。
-- 未登录环境下允许返回 CRMEB 原有登录态错误，例如 `请登录` 或 `登录已过期`。
+- Does not return `MVP module disabled`.
+- It is allowed to return the original login state error of CRMEB in non-login environment, such as `please log in` or `login expired`.
 
-日志检查：
+Log check:
 
 ```bash
 docker exec -w /var/www/crmeb crmeb-local sh -lc "grep -n '\\[MVP\\] blocked kefuapi route' runtime/log/20260618.log | tail -8"
 ```
 
-本地已验证出现如下类型记录：
+It has been verified locally that the following types of records appear:
 
 ```text
 [MVP] blocked kefuapi route: {"path":"config","switch":"enable_customer_service","pattern":"config$"}
@@ -95,9 +95,9 @@ docker exec -w /var/www/crmeb crmeb-local sh -lc "grep -n '\\[MVP\\] blocked kef
 [MVP] blocked kefuapi route: {"path":"login","switch":"enable_customer_service","pattern":"login$"}
 ```
 
-## 风险点
+## Risk point
 
-- `kefuapi` 是独立应用路由，不能只依赖 `api` 或 `adminapi` 中间件覆盖。
-- 当前是“禁用拦截”，不是物理删除；真正删除客服模块前，还需要排查前端 `api/kefu.js`、客服页面、Workerman/长连接配置和后台客服配置引用。
-- `user/` 规则会覆盖 `tourist/user`，这是预期行为，因为游客客服也属于客服系统能力。
-- 如果后续重新启用客服，只需打开 `enable_customer_service`，不需要恢复路由文件。
+- `kefuapi` is an independent application route and cannot only rely on `api` or `adminapi` middleware coverage.
+- Currently it is "disable interception", not physical deletion; before actually deleting the customer service module, you need to check the front-end `api/kefu.js`, customer service page, Workerman/long connection configuration and background customer service configuration references.
+- The `user/` rule will override `tourist/user`, which is expected behavior because guest customer service is also a customer service system capability.
+- If you re-enable customer service later, you only need to open `enable_customer_service`, and there is no need to restore the routing file.

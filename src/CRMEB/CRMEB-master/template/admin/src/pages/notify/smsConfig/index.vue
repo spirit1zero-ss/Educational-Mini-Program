@@ -37,7 +37,6 @@ export default {
       sms: { open: 0 }, // 短信信息
       query: { open: 0 }, // 物流查询
       dump: { open: 0 }, // 电子面单打印
-      copy: { open: 0 }, // 商品采集
     };
   },
   created() {
@@ -81,9 +80,6 @@ export default {
         case 'sms':
           this.sms.open = 1;
           break;
-        case 'copy':
-          this.copy.open = 1;
-          break;
         case 'query':
           this.query.open = 1;
           break;
@@ -112,11 +108,6 @@ export default {
             num: data.dump.num,
             open: data.dump.open,
             surp: data.dump.open,
-          };
-          this.copy = {
-            num: data.copy.num,
-            open: data.copy.open,
-            surp: data.copy.open,
           };
           this.spinShow = false;
           this.smsAccount = data.account;

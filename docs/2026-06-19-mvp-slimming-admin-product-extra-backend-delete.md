@@ -1,13 +1,8 @@
-# 2026-06-19 MVP 后台商品扩展后端物理删除记录
-
-## 本轮目标
-
-在前端商品采集和商品迁移代码已删除后，本轮继续删除后台商品扩展的后端可调用实现。删除范围限定在商品采集和商品迁移，不处理仍需单独评估的运费模板、视频上传密钥和虚拟卡密导入。
-
-## 已删除路由
-
-从 `app/adminapi/route/product.php` 删除：
-
+# 2026-06-19 MVP backend product expansion backend physical deletion record
+## Goal of this round
+After the front-end product collection and product migration code has been deleted, this round continues to delete the back-end callable implementation of the back-end product extension. The scope of deletion is limited to product collection and product migration, and freight templates, video upload keys, and virtual card password imports that still need to be evaluated separately will not be processed.
+## Route deleted
+Removed from `app/adminapi/route/product.php`:
 - `GET /adminapi/product/product_export`
 - `POST /adminapi/product/product_import`
 - `POST /adminapi/product/crawl`
@@ -15,37 +10,29 @@
 - `POST /adminapi/product/copy`
 - `POST /adminapi/product/crawl/save`
 
-## 已删除控制器
-
-- 删除 `app/adminapi/controller/v1/product/CopyTaobao.php`
-  - 原用途：商品采集配置、复制商品、保存采集商品。
-- 从 `app/adminapi/controller/v1/product/StoreProduct.php` 删除：
+## Controller deleted
+- Delete `app/adminapi/controller/v1/product/CopyTaobao.php`
+  - Original purpose: product collection and configuration, copying products, and saving collected products.
+- Removed from `app/adminapi/controller/v1/product/StoreProduct.php`:
   - `productExport`
   - `productImport`
-
-## 已删除服务方法
-
-- 从 `app/services/product/product/CopyTaobaoServices.php` 删除：
+## Service method deleted
+- Removed from `app/services/product/product/CopyTaobaoServices.php`:
   - `copyProduct`
-- 从 `app/services/product/product/StoreProductServices.php` 删除：
+- Removed from `app/services/product/product/StoreProductServices.php`:
   - `productExportList`
   - `productImport`
-
-## 本轮保留
-
-- `CopyTaobaoServices` 文件整体仍保留。
-  - 原因：`ProductCopyJob`、`StoreProductServices`、`SystemAttachmentServices` 仍复用其中的远程图片下载能力，例如 `downloadImage`、`downloadCopyImage`。
-- 后台权限和升级记录暂未清理。
-  - 原因：`UpgradeController`、菜单/权限记录需要单独梳理，避免影响安装或升级流程。
+## Reserved for this round
+- The entire `CopyTaobaoServices` file is retained.
+  - Reason: `ProductCopyJob`, `StoreProductServices`, `SystemAttachmentServices` still reuse the remote image download capabilities, such as `downloadImage`, `downloadCopyImage`.
+- The background permissions and upgrade records have not been cleared yet.
+  - Reason: `UpgradeController`, menu/permission records need to be sorted out separately to avoid affecting the installation or upgrade process.
 - `product/product/get_template`
 - `product/product/get_temp_keys`
 - `product/product/import_card`
-  - 原因：这些属于运费模板、视频密钥、虚拟卡密导入，已被 MVP 拦截或隐藏，但仍需单独确认跨模块引用后再删。
-
-## 验证记录
-
-本轮已执行：
-
+  - Reason: These are freight templates, video keys, and virtual card password imports, which have been intercepted or hidden by MVP, but cross-module references still need to be confirmed separately before deleting them.
+## Verify records
+This round has been executed:
 ```powershell
 php -l src/CRMEB/CRMEB-master/crmeb/config/mvp.php
 php -l src/CRMEB/CRMEB-master/crmeb/app/services/product/product/CopyTaobaoServices.php
@@ -54,23 +41,17 @@ php -l src/CRMEB/CRMEB-master/crmeb/app/adminapi/controller/v1/product/StoreProd
 php -l src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/product.php
 ```
 
-结果均为无语法错误。
-
-## 残留说明
-
-当前搜索仍会命中：
-
+The results are all without syntax errors.
+## Residue description
+The current search will still hit:
 - `CopyTaobaoServices`
-  - 这是远程图片下载能力的复用类，本轮保留。
-- `UpgradeController` 中的旧文件校验和菜单/权限插入记录。
-  - 属于升级/权限数据清理范围，下一轮单独处理。
-- `config/mvp.php` 中的菜单隐藏标识。
-  - 用于继续隐藏数据库里可能存在的权限菜单，待权限记录清理后再删。
-
-## 下一轮建议
-
-下一轮建议进入权限和升级记录清理：
-
-- 清理 `UpgradeController` 中商品采集、迁移相关文件校验和菜单权限插入记录。
-- 继续清理 `config/mvp.php` 中已无路由对应的商品采集/迁移菜单隐藏标识。
-- 再单独评估运费模板、视频上传密钥、虚拟卡密导入的后端实现是否可以删除。
+  - This is a reuse class for remote image download capabilities and is reserved for this round.
+- Legacy file checksum menu/permissions insertion records in `UpgradeController`.
+  - It falls within the scope of upgrade/privilege data cleaning and will be processed separately in the next round.
+- Menu hiding flag in `config/mvp.php`.
+  - Used to continue hiding the permission menu that may exist in the database, and then delete it after the permission records are cleared.
+## Next round of suggestions
+The next round of recommended entry permissions and upgrade record cleaning:
+- Clean up the product collection and migration related file verification and menu permission insertion records in `UpgradeController`.
+- Continue to clean up the product collection/migration menu hidden logo corresponding to the route in `config/mvp.php`.
+- Then separately evaluate whether the back-end implementation of freight template, video upload key, and virtual card password import can be deleted.

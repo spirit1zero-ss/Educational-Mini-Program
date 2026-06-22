@@ -1,48 +1,38 @@
-# 2026-06-19 MVP slimming: PC optional user route coverage
-
-## Scope
-
-- Round scope: PC user optional feature route residuals.
-- Strategy: add MVP route middleware to the PC authenticated user group and block only optional user routes by config pattern.
-- Branch target: `dev3`.
-
-## Existing state reviewed
-
-- `app/api/route/pc.php` has a PC authenticated user group for cart, balance record, order list, refund order list, and collect list.
-- The group already requires `AuthTokenMiddleware`, but did not use `MvpRouteBlockMiddleware`.
-- Existing `api_route_block_patterns.enable_optional_user_features` covered app/API collection and balance paths such as `collect/` and `user/balance`, but not PC paths:
+﻿# 2026-06-19 MVP PC optional user routing coverage audit
+## scope
+- Scope of this round: PC user optional function routing remains.
+- Strategy: Add MVP routing middleware to PC logged-in user routing group, and only intercept optional user routing according to configured rules.
+- Target branch: `dev3`.
+## Checked status
+- There is a PC logged-in user routing group in `app/api/route/pc.php`, covering the shopping cart, balance record, order list, refund order list and collection list.
+- This routing group already requires `AuthTokenMiddleware`, but `MvpRouteBlockMiddleware` is not used.
+- Existing `api_route_block_patterns.enable_optional_user_features` has covered app/API collection and balance paths, such as `collect/` and `user/balance`, but not the following PC paths:
   - `pc/get_balance_record/:type`
   - `pc/get_collect_list`
-
-## Changes made in this round
-
+## Changes in this round
 - `app/api/route/pc.php`
-  - Added `MvpRouteBlockMiddleware` to the PC authenticated user route group.
+  - Added `MvpRouteBlockMiddleware` to PC logged-in user routing group.
 - `config/mvp.php`
   - Added `get_balance_record` and `get_collect_list` under `api_route_block_patterns.enable_optional_user_features`.
-
-## Explicitly not changed
-
-- Did not block PC cart route.
-- Did not block PC order list or refund order list routes.
-- Did not block login, users, products, orders, WeChat pay, pay callback, second-level distribution, commissions, sign-in, assessment, or member features.
-- Did not delete route definitions, controllers, models, tables, or frontend pages.
-- Did not run a complete mini-program build in this round.
-
-## Verification notes
-
+## Clearly unchanged
+- PC shopping cart routing is not blocked.
+- PC order list or refund order list routes are not blocked.
+- Login, user, product, order, WeChat payment, payment callback, secondary distribution, commission, check-in, evaluation or membership functions are not blocked.
+- Route definitions, controllers, models, data tables, or front-end pages are not deleted.
+- The complete applet construction was not performed in this round.
+## Verify records
 - Docker verification completed:
   - `php -l config/mvp.php`
-    - Result: no syntax errors.
+    - Result: No syntax errors.
   - `php -l app/api/route/pc.php`
-    - Result: no syntax errors.
+    - Result: No syntax errors.
   - `php think clear`
     - Result: `Clear Successed`.
   - `GET /api/pc/get_balance_record/0`
-    - Result: HTTP 200 wrapper with `{"status":400,"msg":"MVP module disabled"}`.
+    - Result: HTTP 200 wrapped response with content `{"status":400,"msg":"MVP module disabled"}`.
   - `GET /api/pc/get_collect_list`
-    - Result: HTTP 200 wrapper with `{"status":400,"msg":"MVP module disabled"}`.
+    - Result: HTTP 200 wrapped response with content `{"status":400,"msg":"MVP module disabled"}`.
   - `GET /api/pc/get_order_list`
-    - Result: HTTP 200 wrapper with `{"status":401,"msg":"请登录"}`; not `MVP module disabled`.
+    - Result: HTTP 200 wrapped response with content `{"status":401,"msg":"please log in"}`, not `MVP module disabled`.
   - `GET /api/product/detail/1`
-    - Result: HTTP 200 wrapper with `{"status":200,"msg":"success"}` and `coupons: []`.
+    - Result: HTTP 200 wrapped response with content `{"status":200,"msg":"success"}` and `coupons: []`.

@@ -4,28 +4,28 @@
       <el-tab-pane name="null" label="全部"></el-tab-pane>
       <el-tab-pane
         name="0"
-        :label="orderChartType.un_paid > 0 ? `待支付(${orderChartType.un_paid})` : `待支付`"
+        :label="orderChartType.un_paid > 0 ? `待支�?${orderChartType.un_paid})` : `待支付`"
       ></el-tab-pane>
       <el-tab-pane
         name="1"
-        :label="orderChartType.un_send > 0 ? `待发货(${orderChartType.un_send})` : `待发货`"
+        :label="orderChartType.un_send > 0 ? `待发�?${orderChartType.un_send})` : `待发货`"
       ></el-tab-pane>
-      <el-tab-pane name="5" label="待核销"></el-tab-pane>
-      <el-tab-pane name="2" label="待收货"></el-tab-pane>
-      <el-tab-pane name="3" label="待评价"></el-tab-pane>
-      <el-tab-pane name="4" label="已完成"></el-tab-pane>
-      <el-tab-pane name="-2" label="已退款"></el-tab-pane>
-      <el-tab-pane name="-4" label="已删除"></el-tab-pane>
+      <el-tab-pane v-if="isMvpStorePickupEnabled()" name="5" label="待核销"></el-tab-pane>
+      <el-tab-pane name="2" label="待收�?></el-tab-pane>
+      <el-tab-pane name="3" label="待评�?></el-tab-pane>
+      <el-tab-pane name="4" label="已完�?></el-tab-pane>
+      <el-tab-pane name="-2" label="已退�?></el-tab-pane>
+      <el-tab-pane name="-4" label="已删�?></el-tab-pane>
     </el-tabs>
     <div class="acea-row">
-      <el-button v-auth="['order-write']" type="primary" v-db-click @click="writeOff">订单核销</el-button>
+      <el-button v-if="isMvpStorePickupEnabled()" v-auth="['order-write']" type="primary" v-db-click @click="writeOff">订单核销</el-button>
       <el-button v-db-click @click="batchShipmentModal = true">批量发货</el-button>
       <!-- <el-upload class="mr14" :action="expressUrl" :headers="header" :on-success="upExpress">
         <el-button class="export" type="primary">批量发货</el-button>
       </el-upload> -->
       <el-button v-auth="['order-dels']" v-db-click @click="delAll">批量删除</el-button>
       <el-button v-auth="['export-storeOrder']" class="export" v-db-click @click="exportList">订单导出</el-button>
-      <!-- <el-button class="export" v-db-click @click="exportDeliveryList">发货单导出</el-button> -->
+      <!-- <el-button class="export" v-db-click @click="exportDeliveryList">发货单导�?/el-button> -->
     </div>
     <el-table
       :data="orderList"
@@ -42,15 +42,15 @@
         </template>
       </el-table-column>
       <el-table-column type="selection" width="55"> </el-table-column>
-      <el-table-column label="订单号 | 类型" width="200">
+      <el-table-column label="订单�?| 类型" width="200">
         <template slot-scope="scope">
           <div>{{ scope.row.order_id }}</div>
           <div class="pink_name" :style="{ color: scope.row.color }">{{ scope.row.pink_name }}</div>
-          <span v-if="scope.row.is_del === 1" style="color: #ed4014; display: block">用户已删除</span>
+          <span v-if="scope.row.is_del === 1" style="color: #ed4014; display: block">用户已删�?/span>
           <span v-if="scope.row.is_cancel === 1 && scope.row.is_del === 0" style="color: #ed4014; display: block"
-            >用户已取消</span
+            >用户已取�?/span
           >
-          <span v-if="scope.row.refund_type === 6" style="color: #ed4014; display: block">订单已退款</span>
+          <span v-if="scope.row.refund_type === 6" style="color: #ed4014; display: block">订单已退�?/span>
         </template>
       </el-table-column>
       <el-table-column label="商品信息" min-width="250">
@@ -66,21 +66,21 @@
             <el-tooltip placement="top" :open-delay="300">
               <div slot="content">
                 <div>
-                  <span>商品名称：</span>
+                  <span>商品名称�?/span>
                   <span>{{ item.cart_info.productInfo.store_name || '--' }}</span>
                 </div>
                 <div>
-                  <span>规格名称：</span>
+                  <span>规格名称�?/span>
                   <span>{{
                     item.cart_info.productInfo.attrInfo ? item.cart_info.productInfo.attrInfo.suk : '---'
                   }}</span>
                 </div>
                 <div>
-                  <span>支付价格：</span>
+                  <span>支付价格�?/span>
                   <span>¥{{ item.cart_info.truePrice || '--' }}</span>
                 </div>
                 <div>
-                  <span>购买数量：</span>
+                  <span>购买数量�?/span>
                   <span>{{ item.cart_info.cart_num || '--' }}</span>
                 </div>
               </div>
@@ -96,7 +96,7 @@
       </el-table-column>
       <el-table-column label="实际支付" min-width="100">
         <template slot-scope="scope">
-          <span>{{ scope.row.paid ? scope.row.pay_price : '未支付' }}</span>
+          <span>{{ scope.row.paid ? scope.row.pay_price : '未支�? }}</span>
         </template>
       </el-table-column>
       <el-table-column label="支付方式" min-width="100">
@@ -109,7 +109,7 @@
           <span>{{ scope.row._pay_time || '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="订单状态" min-width="100">
+      <el-table-column label="订单状�? min-width="100">
         <template slot-scope="scope">
           <div v-html="scope.row.status_name.status_name" class="pt5"></div>
           <div v-if="!scope.row.is_all_refund && scope.row.refund.length" class="trip">部分退款中</div>
@@ -162,7 +162,7 @@
             "
           />
           <a v-db-click @click="delivery(scope.row)" v-if="scope.row._status === 4 && !scope.row.split.length"
-            >配送信息</a
+            >配送信�?/a
           >
           <el-divider direction="vertical" v-if="scope.row._status === 4 && !scope.row.split.length" />
           <a
@@ -170,6 +170,7 @@
             @click="bindWrite(scope.row)"
             v-if="
               scope.row.shipping_type == 2 &&
+              isMvpStorePickupEnabled() &&
               scope.row.status == 0 &&
               scope.row.paid == 1 &&
               scope.row.refund_status === 0
@@ -180,6 +181,7 @@
             direction="vertical"
             v-if="
               scope.row.shipping_type == 2 &&
+              isMvpStorePickupEnabled() &&
               scope.row.status == 0 &&
               scope.row.paid == 1 &&
               scope.row.refund_status === 0
@@ -219,14 +221,14 @@
                 <el-dropdown-item
                   command="5"
                   v-show="scope.row.paid == 1 && scope.row.refund_status == 0 && !scope.row.refund.length"
-                  >立即退款</el-dropdown-item
+                  >立即退�?/el-dropdown-item
                 >
                 <!--                            <el-dropdown-item command="6"  v-show='scope.row._status !==1 && (scope.row.use_integral > 0 && scope.row.use_integral >= scope.row.back_integral) '>退积分</el-dropdown-item>-->
-                <!--                            <el-dropdown-item command="7"  v-show='scope.row._status === 3'>不退款</el-dropdown-item>-->
-                <el-dropdown-item command="8" v-show="scope.row._status === 4">已收货</el-dropdown-item>
+                <!--                            <el-dropdown-item command="7"  v-show='scope.row._status === 3'>不退�?/el-dropdown-item>-->
+                <el-dropdown-item command="8" v-show="scope.row._status === 4">已收�?/el-dropdown-item>
                 <el-dropdown-item command="9">删除订单</el-dropdown-item>
-                <el-dropdown-item command="12" v-show="scope.row.kuaidi_label">快递面单打印</el-dropdown-item>
-                <el-dropdown-item command="13" v-show="scope.row.paid">配货单打印</el-dropdown-item>
+                <el-dropdown-item command="12" v-show="scope.row.kuaidi_label">快递面单打�?/el-dropdown-item>
+                <el-dropdown-item command="13" v-show="scope.row.paid">配货单打�?/el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
           </template>
@@ -236,7 +238,7 @@
     <div class="acea-row row-right page">
       <pagination v-if="total" :total="total" :page.sync="page.page" :limit.sync="page.limit" @pagination="getList" />
     </div>
-    <!-- 编辑 退款 退积分 不退款-->
+    <!-- 编辑 退�?退积分 不退�?->
     <edit-from ref="edits" :FromData="FromData" @submitFail="submitFail"></edit-from>
     <!-- 详情 -->
     <details-from ref="details" :orderDatalist="orderDatalist" :orderId="orderId"></details-from>
@@ -295,7 +297,7 @@
           <el-input
             style="width: 414px"
             type="text"
-            placeholder="请输入12位核销码"
+            placeholder="请输�?2位核销�?
             v-model.number="writeOffFrom.code"
           />
         </el-form-item>
@@ -317,12 +319,12 @@
         <el-button class="export" type="primary">批量发货</el-button>
       </el-upload> -->
       <el-alert type="warning" :closable="false">
-        <p>步骤一 导出发货单</p>
-        <p>步骤二 发货单中填写物流单号</p>
-        <p>步骤三 将发货单上传</p>
+        <p>步骤一 导出发货�?/p>
+        <p>步骤�?发货单中填写物流单号</p>
+        <p>步骤�?将发货单上传</p>
       </el-alert>
       <div class="acea-row row-middle mb10 mt10">
-        <el-button v-db-click @click="exportDeliveryList">导出发货单</el-button>
+        <el-button v-db-click @click="exportDeliveryList">导出发货�?/el-button>
         <div class="pl20 tips"></div>
       </div>
       <el-upload
@@ -335,7 +337,7 @@
         :before-upload="beforeUpload"
       >
         <i class="el-icon-upload"></i>
-        <div class="el-upload__text">批量发货单,拖入上传或<em>点击上传</em></div>
+        <div class="el-upload__text">批量发货�?拖入上传�?em>点击上传</em></div>
       </el-upload>
     </el-dialog>
     <orderAddress ref="address" :addressData="addressData" @submitSuccess="submitSuccess"></orderAddress>
@@ -371,6 +373,7 @@ import Setting from '@/setting';
 import { getCookies } from '@/libs/util';
 import createWorkBook from '@/vendor/newToExcel.js';
 import { isFileUpload } from '@/utils';
+import { isMvpStorePickupEnabled } from '@/config/mvp';
 import orderAddress from '../handle/orderAddress.vue';
 export default {
   name: 'table_list',
@@ -387,15 +390,15 @@ export default {
   data() {
     const codeNum = (rule, value, callback) => {
       if (!value) {
-        return callback(new Error('请填写核销码'));
+        return callback(new Error('Verification code is required'));
       }
       // 模拟异步验证效果
       if (!Number.isInteger(value)) {
-        callback(new Error('请填写12位数字'));
+        callback(new Error('Verification code must be 12 digits'));
       } else {
         const reg = /\b\d{12}\b/;
         if (!reg.test(value)) {
-          callback(new Error('请填写12位数字'));
+          callback(new Error('Verification code must be 12 digits'));
         } else {
           callback();
         }
@@ -416,9 +419,9 @@ export default {
       status: 0,
       pay_type: '',
 
-      total: 0, // 总条数
+      total: 0, // 总条�?
       page: {
-        page: 1, // 当前页
+        page: 1, // 当前�?
         limit: 15, // 每页显示条数
       },
       data: [],
@@ -475,6 +478,7 @@ export default {
   },
   methods: {
     ...mapMutations('order', ['getOrderStatus', 'onChangeTabs', 'getIsDel', 'getisDelIdListl']),
+    isMvpStorePickupEnabled,
     batchShipment() {},
     beforeUpload(file) {
       return isFileUpload(file);
@@ -562,7 +566,7 @@ export default {
         case '11':
           this.delfromData = {
             title: '立即打印电子面单',
-            info: '您确认打印此电子面单吗?',
+            info: '您确认打印此电子面单�?',
             url: `/order/order_dump/${row.id}`,
             method: 'get',
             ids: '',
@@ -619,7 +623,7 @@ export default {
       printJS({
         printable: url,
         type: 'image',
-        documentTitle: '快递信息',
+        documentTitle: 'Express information',
         style: `img{
           width: 100%;
           height: 476px;
@@ -673,7 +677,7 @@ export default {
       });
     },
     setChecked() {
-      //将new Set()转化为数组
+      //将new Set()转化为数�?
       let ids = [...this.selectedIds];
       this.getisDelIdListl(ids);
       // 找到绑定的table的ref对应的dom，找到table的objData对象，objData保存的是当前页的数据
@@ -753,7 +757,7 @@ export default {
       this.getList();
       this.$emit('changeGetTabs');
     },
-    // 获取退款表单数据
+    // 获取退款表单数�?
     getRefundData(id) {
       this.$modalForm(getRefundFrom(id)).then(() => {
         this.getList();
@@ -771,7 +775,7 @@ export default {
           this.$message.error(res.msg);
         });
     },
-    // 不退款表单数据
+    // 不退款表单数�?
     getNoRefundData(id) {
       this.$modalForm(getnoRefund(id)).then(() => {
         this.getList();
@@ -799,7 +803,7 @@ export default {
         this.$refs.send.getCartInfo(row._status, row.id);
       });
     },
-    // 配送信息表单数据
+    // 配送信息表单数�?
     delivery(row) {
       getDistribution(row.id)
         .then(async (res) => {
@@ -812,13 +816,14 @@ export default {
     },
     // 核销订单
     bindWrite(row) {
+      if (!this.isMvpStorePickupEnabled()) return;
       let self = this;
       this.$msgbox({
         title: '提示',
-        message: '确定要核销该订单吗？',
+        message: 'Confirm write off this order?',
         showCancelButton: true,
-        cancelButtonText: '取消',
-        confirmButtonText: '确定',
+        cancelButtonText: 'Cancel',
+        confirmButtonText: 'Confirm',
         iconClass: 'el-icon-warning',
         confirmButtonClass: 'btn-custom-cancel',
       })
@@ -957,14 +962,16 @@ export default {
     },
     // 订单核销
     writeOff() {
+      if (!this.isMvpStorePickupEnabled()) return;
       this.modals2 = true;
     },
     // 订单核销
     ok(name) {
       if (!this.writeOffFrom.code) {
-        this.$message.warning('请先验证订单！');
+        this.$message.warning('Please verify the order first');
       } else {
         this.writeOffFrom.confirm = 1;
+        if (!this.isMvpStorePickupEnabled()) return;
         putWrite(this.writeOffFrom)
           .then(async (res) => {
             if (res.status === 200) {

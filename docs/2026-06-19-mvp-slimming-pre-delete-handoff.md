@@ -1,210 +1,211 @@
-# 2026-06-19 MVP 瘦身预删除交接文档
+# 2026-06-19 MVP slimming pre-delete handover document
 
-## 文档目的
+## Documentation purpose
 
-本文记录 MVP 瘦身进入物理删除前的边界。当前仍处于软瘦身阶段：代码、表、路由、控制器、服务和前端页面先保留，通过菜单隐藏、前端入口隐藏、配置开关和路由中间件完成 MVP 模式下的禁用。
+This article documents the current boundaries of MVP slimming before entering physical deletion. Currently still in a soft slimming state: feature source code remains but is disabled via hiding, front-end protection or routing interception when MVP mode is enabled.
 
-在完成本文的验证门槛前，不要物理删除文件、数据库表、路由定义、控制器、服务、模型或前端页面。
+Do not delete files, database tables, route definitions, controllers, services, models, or front-end pages before completing the validation thresholds of this article.
 
-## 当前 MVP 基线
+## Current MVP Baseline
 
-MVP 模式由以下配置启用：
+MVP mode is enabled by the following configuration:
 
 - `src/CRMEB/CRMEB-master/crmeb/config/mvp.php`
 - `src/CRMEB/CRMEB-master/template/uni-app/config/mvp.js`
 - `src/CRMEB/CRMEB-master/template/admin/src/config/mvp.js`
 
-当前保留的主范围：
+Currently the main product range reserved:
 
-- 登录与用户身份。
-- 商品列表、商品详情、后台商品核心管理。
-- 购物车、下单、订单列表和详情、订单支付、支付回调。
-- 微信支付与支付通知回调。
-- 基础二级分销、推广关系、佣金展示与佣金记录。
-- 训练营商品路径。
-- 测评记录。
-- 签到。
-- 会员等级、会员卡相关功能。
-- 后台核心用户、商品、订单、佣金财务、教育、会员配置视图。
+- Login and user identity.
+- Product listings and product details.
+- Shopping cart, order placement, order list/details, order payment and order callback.
+- WeChat payment and payment notification callbacks.
+- Basic secondary distribution, promotional relationships, commission display and commission records.
+- Training camp product path.
+- Evaluation records.
+- Sign in.
+- Member/user levels and membership card related functions.
+- Backend core user, product, order, finance/commission, education and membership views.
 
-## 必须保留
+## Must keep list
 
-以下能力进入物理删除阶段时仍必须保持可用：
+The following capabilities must continue to be available during physical deletion:
 
-- 小程序登录：
-  - 微信登录页面和授权接口。
-  - CRMEB 授权 token 流程。
-- 商品：
+- Mini program login:
+  - WeChat login page and authorization interface.
+  - CRMEB authorization token process.
+- commodity:
   - `GET /api/products`
   - `GET /api/product/detail/:id`
-  - PC 商品列表，例如 `GET /api/pc/get_products`
-  - MVP 模式下商品详情继续返回 `coupons: []`，不能失败。
-- 订单与支付：
-  - 下单、支付、订单详情、订单列表、确认收货。
-  - `pay/notify` 回调。
-  - 微信支付配置与回调处理。
-- 分销与佣金：
-  - 基础 `spread` 路由与佣金路由。
-  - 后台财务佣金列表。
-  - 不删除基础 `spread`、`brokerage` 或当前保留的佣金数据路径。
-- 测评：
+  - PC product list, for example `GET /api/pc/get_products`
+  - In MVP mode, product details must continue to return `coupons: []` and cannot fail.
+- Order and payment:
+  - Ordering, payment, details, listing and receiving process.
+  - `pay/notify` callback.
+  - WeChat payment configuration and callback processing.
+- Distribution and commissions:
+  - Basic `spread` routing and commission routing.
+  - Backend financial commission list.
+  - Does not delete the underlying `spread`, `brokerage` or currently retained commission data paths.
+- Evaluation:
   - `POST /api/education/assessment_records`
-  - 后台教育测评记录列表和详情。
-- 签到与积分记录：
-  - 签到入口和签到路由族继续保留。
-  - 签到使用的基础积分记录继续保留。
-  - 积分商城禁用，但积分记录暂不作为删除目标。
-- 会员：
-  - 用户会员页面与后台会员配置。
-  - 用户等级和会员卡后台页面。
-- 后台基础能力：
-  - 后台登录和首页框架。
-  - 用户列表和详情、商品列表和编辑、订单列表和详情、佣金财务、教育、系统基础设置。
+  - Backstage education assessment record list/details.
+- Sign-in and points records:
+  - The check-in entrance and check-in routing family will continue to be retained.
+  - The record of basic points used for sign-in will continue to be retained.
+  - The points mall has been disabled, but points records are not targeted for deletion yet.
+- member:
+  - User membership page and background membership configuration.
+  - User level and membership card backend page.
+- Basic backend capabilities:
+  - Background login and home page frame.
+  - User list/details, product list/edit, order list/details, finance/commission, education, system basic settings.
 
-## 已隐藏或软禁用
+## List hidden
 
-MVP 模式下以下能力已从菜单、前端路由、DIY 组件、页面入口或接口侧隐藏或拦截：
+In MVP mode, the following capabilities are hidden from menus, front-end routing, DIY components, or page entries:
 
-- 优惠券：
-  - 小程序/H5 优惠券入口和 DIY 优惠券组件。
-  - 后台优惠券路由和商品/用户详情中的优惠券标签。
-  - 商品详情仍返回 `coupons: []`。
-- 营销活动：
-  - 砍价、拼团、秒杀、预售、抽奖。
-  - 后台营销路由中除签到、积分记录、会员配置外的非保留路由。
-  - 后台商品活动检测接口 `product/product/check_activity` 已纳入路由拦截。
-- 客服：
-  - 小程序/H5 客服悬浮入口和 DIY 组件。
-  - 后台客服菜单。
-  - 后台公共接口 `get_workerman_url` 已纳入路由拦截。
-  - Kefu API 已整体加 MVP 拦截。
-- 直播和短视频：
-  - 小程序直播/视频 DIY 组件和直播列表直连请求。
-  - 后台直播路由。
-- CMS/新闻：
-  - 后台 CMS、文章、新闻入口。
-  - 移动端文章路由。
-  - PC `get_news_*` 路由已拦截。
-- DIY/页面装修：
-  - 后台 DIY、主题、页面装修路由。
-  - 公共 DIY 数据接口已拦截，保留签到使用的 DIY 数据。
-- 线下和门店自提：
-  - 线下支付。
-  - 门店列表、门店员工、自提、核销订单。
-- 可选用户功能：
-  - 余额中心、收藏列表、浏览记录、分享、系统消息、注销、礼物/收礼、好友代付、用户财务导出。
-  - 后台用户注销前端路由已隐藏。
-  - 后台新人礼接口已拦截，营销前端白名单排除 `marketing_gift`。
-- 高级分销：
-  - 事业部、代理、员工等高级分销路由和后台入口。
-- 系统扩展：
-  - 小票打印、外部应用/open API 账号和接口配置。
-  - 复杂物流配置，例如运费、城市数据、配送模板设置。
-- 发票：
-  - 移动端发票路由。
-  - 后台发票和电子发票配置路由。
-- 商品扩展：
-  - 后台商品采集、商品迁移、虚拟卡密导入、视频上传密钥、运费模板接口已在 MVP 模式下拦截。
-  - 后台商品列表页已隐藏商品采集和商品迁移入口。
-  - 后台商品编辑页 MVP 模式下不再自动请求运费模板，不再展示视频上传入口，不再调用视频上传密钥或卡密导入接口。
-  - 商品采集弹窗和商品迁移导入组件已从商品列表/商品编辑主页面静态依赖中摘除，文件暂留在删除映射中。
-  - 商品采集弹窗、商品迁移导入组件，以及只服务它们的前端 API wrapper 已完成第一批前端物理删除。
-  - 商品采集和商品迁移的后台路由、控制器动作和专用服务方法已完成第一批后端物理删除。
+- Coupon:
+  - Mini program/H5 coupon entrance and DIY coupon component.
+  - Backend coupon routing and coupon tab in product/user details.
+  - Product listings still return `coupons: []`.
+- Marketing activities:
+  - Bargaining, group buying, flash sales, pre-sales, and draws.
+  - Routing in the background marketing routing except for retained check-ins, points records and member configuration.
+  - The backend product activity detection interface `product/product/check_activity` has been included in routing interception.
+- customer service:
+  - Mini program/H5 customer service floating entrance and DIY components.
+  - Backend customer service menu rules.
+  - The backend public interface `get_workerman_url` has been included in route interception.
+  - Kefu API entry is protected.
+- Live broadcast and short video:
+  - Mini program live broadcast/video DIY components and live broadcast list direct connection request protection.
+  - Backstage live broadcast routing.
+- CMS/News:
+  - Backend CMS/article/news portal.
+  - Mobile article routing.
+  - PC `get_news_*` route has been blocked by the router.
+- DIY/page decoration:
+  - Backend DIY/theme/page decoration routing.
+  - The public DIY data interface has been blocked, except for the DIY data used for sign-in retention.
+- Offline and store pickup:
+  - Offline payment.
+  - Store list, store employees, self-pickup, and write-off orders.
+- Optional user features:
+  - Balance center, favorites list, browsing/access records, sharing, system messages, logout, gifts/receiving gifts, payment on behalf of friends, and user financial export.
+  - The front-end routing for backend user logout has been hidden.
+  - The backend newbie gift backend route has been blocked; the marketing frontend whitelist excludes `marketing_gift`.
+- Advanced Distribution:
+  - Advanced distribution routing and backend entrance for divisions/agents/employees.
+- System extensions:
+  - Ticket printer/ticket routing.
+  - External application/open API account and interface configuration.
+  - Complex logistics configuration, such as freight rates, city data, and delivery template settings.
+- bill:
+  - Mobile invoice routing.
+  - Backend invoice and electronic invoice configuration routing.
+- Product extension:
+  - Backend product collection, product migration, virtual card key import, video upload key, and freight template interfaces have been blocked in MVP mode.
+  - The product collection and product migration entrances have been hidden on the backend product list page.
+  - In the MVP mode of the backend product editing page, the freight template will no longer be automatically requested, the video upload entrance will no longer be displayed, and the video upload key or card secret import interface will no longer be called.
+  - The product collection pop-up window and product migration import components have been removed from the static dependencies of the product list/product editing main page, and the files are temporarily left in the deletion mapping.
+  - The product collection pop-up window, product migration import component, and the front-end API wrapper that only serves them have completed the first batch of front-end physical deletions.
+  - The first batch of backend physical deletions have been completed for the background routing, controller actions, and dedicated service methods of item collection and item migration.
 
-## 后端软拦截清单
+## Soft route interception list
 
-后端软拦截集中在 `config/mvp.php` 和各端路由拦截中间件。
+Backend soft interception is concentrated in `config/mvp.php` and routing interception middleware.
 
-后台路由拦截：
+Background routing interception:
 
-- 营销禁用模块：
-  - 优惠券、砍价、拼团、秒杀、预售、积分商城、充值、抽奖。
-- 后台应用和客服：
-  - `app/`、微信应用后台路由、反馈、话术、客服、自动回复。
+- Marketing module disabled:
+  - Coupons, bargaining, group buying, flash sales, pre-sales, points mall, recharge, and draws.
+- Backend application/customer service:
+  - `app/`, WeChat application background routing, feedback, speaking skills, customer service, and automatic reply.
 - CMS/DIY：
   - `cms/`、`diy/`、`diy_pro/`、`theme/`、`theme_module/`。
-- 发票：
-  - 订单发票、发票开具/下载/配置路径。
-- 线下/门店：
-  - 线下收银、线下扫码、扫码列表、门店、门店员工、核销订单。
-- 可选用户：
-  - 用户财务导出、用户注销列表/动作、新人礼。
-- 物流/系统：
-  - 运费、城市设置、配送模板、小票打印、外部接口/账号设置。
-- 高级分销：
+- bill:
+  - Order invoice, invoice issuance/download/configuration path.
+- Offline/store:
+  - Offline checkout, offline QR code scanning, QR code scanning list, stores, store employees, and write-off orders.
+- Optional users:
+  - User financial export, user logout list/operation, newcomer gift.
+- Logistics/System:
+  - Shipping costs, city settings, delivery templates, receipt printer tickets, external interface/account settings.
+- Advanced Distribution:
   - `agent/division`。
-- 商品扩展：
+- Product extension:
   - `product/product/get_template`、`product/product/get_temp_keys`、`product/product/import_card`
   - `product/product_export`、`product/product_import`
   - `product/crawl`、`product/copy_config`、`product/copy`
 
-API 和 PC 路由拦截：
+API and PC route interception:
 
-- 优惠券：
+- Coupon:
   - `coupon/`、`coupons`、`new_coupon`、`get_today_coupon`、`order/product_coupon`、`theme/coupon`。
-- 营销活动：
+- Marketing activities:
   - `bargain/`、`combination/`、`seckill/`、`advance/`、`lottery`、`user/activity`。
-- 积分商城和充值：
+- Points mall and recharge:
   - `store_integral/`、`recharge/`。
-- 直播：
+- live streaming:
   - `wechat/live`。
 - CMS：
   - `article/`、`theme/article`、`get_news_`。
-- 客服：
+- customer service:
   - `user/service/`、`get_customer_type`、`get_workerman_url`。
-- 发票：
+- bill:
   - `invoice`、`order/invoice`、`order/make_up_invoice`、`order/down_invoice`。
-- 线下/门店：
+- Offline/store:
   - `order/offline/`、`store_list`。
-- 复杂物流：
+- Complex logistics:
   - `order/order_verific`。
-- 可选用户：
+- Optional users:
   - `collect/`、`get_collect_list`、`get_balance_record`、`user/visit`、`user/set_visit`、`user/share`、`user/message_system`、`user_cancel`、`order/friend_detail`、`order/receive_gift`、`order/gift_detail`、`user/balance`。
-- 高级分销：
-  - 强制拦截 `agent/` 和 `v2/agent/`，并拦截 `division/order`。
-- 页面 DIY：
+- Advanced Distribution:
+  - Force interception of `agent/` and `v2/agent/`, and interception of `division/order`.
+- Page DIY:
   - `diy/color_change`、`diy/get_diy`、`diy/get_version`、`diy/get_store_status`。
 
-Kefu API 拦截：
+Kefu API interception:
 
-- 客服禁用时，登录、key、扫码、配置、微信、上传、用户、订单、商品、客服、游客路径均拦截。
+- When customer service is disabled, login, key, code scanning, configuration, WeChat, upload, user, order, product, customer service, and visitor paths are all blocked.
 
-## 暂不删除
+## Do not delete yet
 
-以下能力即使已隐藏或拦截，当前仍保留源码和数据：
+Even if the following capabilities are hidden or intercepted, their source code and data are still retained:
 
-- 已禁用的活动模块：
-  - 优惠券、砍价、拼团、秒杀、预售、抽奖、直播、CMS、DIY/主题、积分商城、充值。
-- 客服和 kefu 代码：
-  - 后台客服页面/控制器。
+- Active module disabled:
+  - Coupons, bargaining, group buying, flash sales, pre-sales, lottery, live broadcast, CMS, DIY/theme, points mall, recharge.
+- Customer service and kefu code:
+  - Backend customer service page/controller.
   - `app/kefuapi`。
-- 可选用户模块：
-  - 余额、收藏、浏览记录、分享、消息、注销、礼物/好友代付、新人礼。
-- 门店/线下模块：
-  - 线下支付、门店自提、门店员工、核销订单。
-- 发票模块：
-  - 用户发票、订单发票、电子发票。
-- 物流扩展：
-  - 运费模板、城市数据设置、配送模板设置、小票打印。
-- 商品扩展：
-  - 后端商品采集/复制、商品迁移导入导出已完成第一批物理删除。
-  - 虚拟卡密导入、视频上传密钥、运费模板接口仍暂留并由 MVP 路由拦截保护。
-  - 前端商品采集弹窗、商品迁移导入组件和专用 API wrapper 已完成第一批物理删除。
-- 高级分销：
-  - 事业部/代理/员工高级分销，基础二级分销继续保留。
-- 构建和运行产物：
+- Optional user modules:
+  - Balance, collection, browsing history, sharing, messages, logout, gift/friend payment path, newbie gift.
+- Store/offline module:
+  - Offline payment, store pickup, store staff, and verification of orders.
+- Invoice module:
+  - User invoice, order invoice, electronic invoice.
+- Logistics expansion:
+  - Freight template, city data settings, delivery template settings, receipt printer.
+- Product extension:
+  - Back-end product collection/copying, product migration, import and export have completed the first batch of physical deletions.
+  - Virtual card secret import, video upload key, and freight template interfaces are still persisted and protected by MVP routing interception.
+  - The front-end product collection pop-up window, product migration import component and dedicated API wrapper have completed the first batch of physical deletions.
+- Advanced Distribution:
+  - Business unit/agent/employee advanced distribution and basic second-level distribution will continue to be retained.
+- Build/run the product:
   - `template/uni-app/dist`
   - `crmeb/public/statics/mp_view`
-  - 运行日志和缓存
-  - 仅本地使用的 `public/install.lock`
-- 数据库表和迁移：
-  - 验证门槛通过且准备删除映射前，不物理删除任何表。
+  - Run log/cache
+  - `public/install.lock` for local use only
+- Database tables and migrations:
+  - No table should be physically dropped until the validation threshold is passed and the mapping is ready to be dropped.
 
-## 物理删除门槛
+## Physical deletion threshold
 
-任何物理删除前，都要执行以下检查，并把输出记录到新的日期文档中。
+Before any physical deletion, the following checks are performed and the output is logged to a new date document.
 
-后端语法和缓存：
+Backend syntax and caching:
 
 ```powershell
 docker exec -w /var/www/crmeb crmeb php -l config/mvp.php
@@ -214,27 +215,27 @@ docker exec -w /var/www/crmeb crmeb php -l app/api/route/pc.php
 docker exec -w /var/www/crmeb crmeb php think clear
 ```
 
-必须执行小程序构建：
+Mini program build must be performed:
 
 ```powershell
 cd C:\Users\pc\Documents\ssp\Educational-Mini-Program-dev3\src\CRMEB\CRMEB-master\template\uni-app
 npm run build:mp-weixin
 ```
 
-小程序构建是物理删除前的强制门槛。如果依赖缺失，先安装依赖，并记录准确的安装命令和告警信息。预期输出目录：
+Mini program construction is the mandatory threshold before physical deletion. If dependencies are missing, install them first and record the exact installation commands and all warnings. Expected output directory:
 
 ```text
 src/CRMEB/CRMEB-master/template/uni-app/dist/build/mp-weixin
 ```
 
-建议执行后台构建：
+It is recommended to perform a background build:
 
 ```powershell
 cd C:\Users\pc\Documents\ssp\Educational-Mini-Program-dev3\src\CRMEB\CRMEB-master\template\admin
 npm run build
 ```
 
-后端烟测：
+Backend smoke test:
 
 ```powershell
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/api/product/detail/1
@@ -248,7 +249,7 @@ Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/p
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/crawl
 ```
 
-最低预期：
+Minimum expected results:
 
 - `GET /api/product/detail/1`
   - `status=200`
@@ -256,73 +257,73 @@ Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/c
   - `coupons=[]`
 - `GET /api/pc/get_products`
   - `status=200`
-  - 不能是 `MVP module disabled`
+  - Cannot be `MVP module disabled`
 - `GET /api/pc/get_news_list`
   - `status=400`
   - `msg=MVP module disabled`
 - `GET /adminapi/user/user`
-  - 可返回登录过期等鉴权响应
-  - 不能是 `MVP module disabled`
+  - Authentication protection response, such as login expiration
+  - Cannot be `MVP module disabled`
 - `GET /adminapi/user/cancel_list`
   - `status=400`
   - `msg=MVP module disabled`
 - `GET /adminapi/product/product`
-  - 可返回登录过期等鉴权响应
-  - 不能是 `MVP module disabled`
+  - Can return authentication responses such as login expiration
+  - Cannot be `MVP module disabled`
 - `GET /adminapi/product/product/get_template`
-  - MVP 模式下应被拦截。
+  - Should be intercepted in MVP mode.
 - `POST /adminapi/product/product_import`
-  - MVP 模式下应被拦截。
+  - Should be intercepted in MVP mode.
 - `POST /adminapi/product/crawl`
-  - MVP 模式下应被拦截。
+  - Should be intercepted in MVP mode.
 
-小程序构建后人工检查：
+Manual inspection of the small program after executing `npm run build:mp-weixin`:
 
-- 将 `dist/build/mp-weixin` 导入微信开发者工具。
-- 确认登录页能打开。
-- 确认 MVP 首页/商品入口能打开。
-- 确认商品详情能打开，且不显示优惠券 UI。
-- 确认购物车/订单确认仍可用。
-- 确认正常订单流程中微信支付入口仍可达。
-- 确认测评入口可打开，登录后可提交。
-- 确认签到和会员路径在预期位置可见。
-- 确认以下隐藏入口不可见：
-  - 优惠券
-  - 客服
-  - 直播/视频
-  - 文章/CMS/新闻
-  - 积分商城
-  - 充值
-  - 发票
-  - 门店自提/线下支付
-  - 余额/收藏/浏览/礼物/好友代付/注销
-  - 后台商品采集/商品迁移/视频上传/卡密导入/运费模板扩展入口
+- Import `dist/build/mp-weixin` into WeChat developer tools.
+- Confirm that the login page can be opened.
+- Confirm that the MVP homepage/product entrance can be opened.
+- Confirm that the product details can be opened and the coupon UI is not displayed.
+- Confirm cart/order confirmation is still available.
+- Confirm that the WeChat payment entrance is still accessible during the normal order process.
+- Confirm that the evaluation entrance can be opened and can be submitted after logging in.
+- Confirm check-in and member paths are still visible where expected.
+- Confirm that the following hidden entrances are not visible:
+  - Coupon
+  - customer service
+  - Live broadcast/video
+  - Articles/CMS/News
+  - Points Mall
+  - top up
+  - bill
+  - Store pickup/offline payment
+  - Balance/Collection/Browse/Gift/Friend Payment/Cancel.
+  - Backend product collection/product migration/video upload/card secret import/freight template expansion entrance
 
-## 删除规则
+## delete rule
 
-验证门槛通过后，物理删除仍要按小批次推进：
+After the verification threshold is passed, physical deletion must still be promoted in small batches:
 
-- 一次只删除一个模块族。
-- 每个模块族都要保留可回溯删除映射：
-  - 前端页面/组件
-  - 后台路由/页面/API wrapper
-  - API/后台路由定义
-  - 控制器/服务/DAO/模型
-  - 菜单记录
-  - 数据库表和迁移/安装 SQL
-- 共享 helper 至少经过两轮搜索确认没有保留路径引用后再删除。
-- 不删除以下能力依赖的内容：
-  - 商品详情
-  - 下单/支付/回调/列表/详情
-  - 微信登录/支付
-  - 基础分销/佣金
-  - 测评
-  - 签到
-  - 会员功能
+- Only delete one module family at a time.
+- Each module family must retain retroactive deletion mappings:
+  - Front-end pages/components
+  - Backend routing/page/API wrapper
+  - API/backend route definition
+  - controller/service/dao/model
+  - Menu record
+  - Database tables and migration/installation SQL
+- The shared helper must be deleted after at least two rounds of searches to confirm that no path references are retained.
+- Do not delete anything that the following capabilities depend on:
+  - Product details
+  - Order/Payment/Callback/List/Details
+  - WeChat login/payment
+  - Basic Distribution/Commission
+  - Evaluation
+  - Sign in
+  - Member functions.
 
-## 审计来源文档
+## Audit source documents
 
-本文汇总以下软瘦身记录：
+This article summarizes the following soft slimming round records:
 
 - `docs/2026-06-17-mvp-slimming-candidates.md`
 - `docs/2026-06-17-mvp-slimming-phase1.md`

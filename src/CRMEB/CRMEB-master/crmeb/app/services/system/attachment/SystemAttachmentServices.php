@@ -14,7 +14,6 @@ namespace app\services\system\attachment;
 
 use app\services\BaseServices;
 use app\dao\system\attachment\SystemAttachmentDao;
-use app\services\product\product\CopyTaobaoServices;
 use crmeb\exceptions\AdminException;
 use crmeb\exceptions\ApiException;
 use crmeb\exceptions\UploadException;
@@ -314,7 +313,7 @@ class SystemAttachmentServices extends BaseServices
         $siteUrl = sys_config('site_url');
 
         foreach ($data['images'] as $image) {
-            $uploadValue = app()->make(CopyTaobaoServices::class)->downloadImage($image);
+            $uploadValue = app()->make(RemoteImageServices::class)->downloadImage($image);
             if (is_array($uploadValue)) {
                 //TODO 拼接图片地址
                 if ($uploadValue['image_type'] == 1) {

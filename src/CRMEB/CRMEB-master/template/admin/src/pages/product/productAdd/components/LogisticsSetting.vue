@@ -15,7 +15,7 @@
           <el-radio-group v-model="formValidate.freight">
             <!-- <el-radio :label="1">包邮</el-radio> -->
             <el-radio :label="2">固定邮费</el-radio>
-            <el-radio :label="3">运费模板</el-radio>
+            <el-radio v-if="productExtrasEnabled" :label="3">运费模板</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-col>
@@ -27,7 +27,7 @@
           </div>
         </el-form-item>
       </el-col>
-      <el-col :span="24" v-if="formValidate.freight == 3">
+      <el-col :span="24" v-if="productExtrasEnabled && formValidate.freight == 3">
         <el-form-item label="" prop="temp_id">
           <div class="acea-row">
             <el-select v-model="formValidate.temp_id" clearable placeholder="请选择运费模板" class="input_width maxW">
@@ -53,6 +53,10 @@ export default {
     templateList: {
       type: Array,
       required: true,
+    },
+    productExtrasEnabled: {
+      type: Boolean,
+      default: true,
     },
   },
   methods: {

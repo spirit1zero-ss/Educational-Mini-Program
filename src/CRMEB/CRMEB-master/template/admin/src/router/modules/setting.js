@@ -625,15 +625,6 @@ const settingRouter = {
       component: () => import('@/pages/setting/setSystem/index'),
     },
     {
-      path: 'other_config/copy/:type?/:tab_id?',
-      name: `${pre}other_copy`,
-      meta: {
-        auth: ['setting-other-copy'],
-        title: '商品采集配置',
-      },
-      component: () => import('@/pages/setting/setSystem/index'),
-    },
-    {
       path: 'other_config/logistics/:type?/:tab_id?',
       name: `${pre}other_logistics`,
       meta: {

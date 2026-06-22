@@ -3,7 +3,6 @@
     <el-card :bordered="false" shadow="never">
       <el-tabs v-model="isChecked" @tab-click="onChangeType">
         <el-tab-pane label="短信" name="1"></el-tab-pane>
-        <el-tab-pane label="商品采集" name="4"></el-tab-pane>
         <el-tab-pane label="物流查询" name="3"></el-tab-pane>
         <el-tab-pane label="电子面单打印" name="2"></el-tab-pane>
       </el-tabs>
@@ -68,11 +67,10 @@
           />
         </div>
       </div>
-      <!--商品采集，物流，电子面单列表-->
+      <!--物流，电子面单列表-->
       <div
         v-else-if="
           (isChecked === '3' && query.open === 1) ||
-          (isChecked === '4' && copy.open === 1) ||
           (isChecked === '2' && dump.open === 1)
         "
       >
@@ -119,8 +117,7 @@
           v-if="
             (isChecked === '1' && !isSms) ||
             (isChecked === '2' && !isDump) ||
-            (isChecked === '3' && !isLogistics) ||
-            (isChecked === '4' && !isCopy)
+            (isChecked === '3' && !isLogistics)
           "
           class="wuBox acea-row row-column-around row-middle"
         >
@@ -128,10 +125,6 @@
           <span v-if="isChecked === '1'">
             <span class="wuSp1">短信服务未开通哦</span>
             <span class="wuSp2">点击立即开通按钮，即可使用短信服务哦～～～</span>
-          </span>
-          <span v-if="isChecked === '4'">
-            <span class="wuSp1">商品采集服务未开通哦</span>
-            <span class="wuSp2">点击立即开通按钮，即可使用商品采集服务哦～～～</span>
           </span>
           <span v-if="isChecked === '3'">
             <span class="wuSp1">物流查询未开通哦</span>
@@ -344,7 +337,6 @@ import {
   serveInfoApi,
   serveSmsOpenApi,
   serveOpnExpressApi,
-  serveOpnOtherApi,
   serveRecordListApi,
   exportTempApi,
   exportAllApi,
@@ -355,10 +347,6 @@ import {
 export default {
   name: 'tableList',
   props: {
-    copy: {
-      type: Object,
-      default: null,
-    },
     dump: {
       type: Object,
       default: null,
@@ -431,7 +419,6 @@ export default {
       exportList: [], // 快递公司列表
       isSms: false, // 是否开通短信
       isDump: false, // 是否开通电子面单
-      isCopy: false, // 是否开通商品采集
       modals: false,
       isLogistics: false, //是否开通物流查询
     };
@@ -546,7 +533,7 @@ export default {
         // if ((this.isChecked === '2' && this.query.open === 0) || (this.dump.open === 0 && this.isChecked === '3')) this.isDump = false
         if (this.isChecked === '2' && this.query.open === 0) this.isDump = false;
         if (this.isChecked === '3' && this.query.open === 0) this.isLogistics = false;
-        if (this.dump.open === 1 || this.query.open === 1 || this.copy.open === 1) this.getRecordList();
+        if (this.dump.open === 1 || this.query.open === 1) this.getRecordList();
       }
     },
     // 其他列表
@@ -622,25 +609,6 @@ export default {
                 },
               ];
               break;
-            default:
-              this.columns2 = [
-                {
-                  title: '复制URL',
-                  key: 'url',
-                  minWidth: 400,
-                },
-                {
-                  title: '请求状态',
-                  key: '_resultcode',
-                  minWidth: 120,
-                },
-                {
-                  title: '添加时间',
-                  key: 'add_time',
-                  minWidth: 150,
-                },
-              ];
-              break;
           }
           this.loading = false;
         })
@@ -674,10 +642,6 @@ export default {
           this.isChecked = '1';
           this.isSms = true;
           break;
-        case 'copy':
-          this.isChecked = '4';
-          this.openOther();
-          break;
         case 'query':
           this.isChecked = '3';
           this.onDumpOpen();
@@ -693,7 +657,6 @@ export default {
       if (this.isChecked === '1') this.isSms = true;
       if (this.isChecked === '2') this.openDump();
       if (this.isChecked === '3') this.onDumpOpen();
-      if (this.isChecked === '4') this.openOther();
     },
     // 开通物流
     onDumpOpen() {
@@ -713,31 +676,6 @@ export default {
             this.$message.info(res.msg);
             this.$emit('openService', 'query');
           });
-        })
-        .catch(() => {});
-    },
-    // 开通其他
-    openOther() {
-      this.$msgbox({
-        title: '开通商品采集吗',
-        message: '确定要开通商品采集吗？',
-        showCancelButton: true,
-        cancelButtonText: '取消',
-        confirmButtonText: '确定',
-        iconClass: 'el-icon-warning',
-        confirmButtonClass: 'btn-custom-cancel',
-      })
-        .then(() => {
-          setTimeout(() => {
-            serveOpnOtherApi({ type: 1 })
-              .then(async (res) => {
-                this.getRecordList();
-                this.$emit('openService', 'copy');
-              })
-              .catch((res) => {
-                this.$message.error(res.msg);
-              });
-          }, 300);
         })
         .catch(() => {});
     },

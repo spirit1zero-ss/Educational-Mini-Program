@@ -17,7 +17,6 @@ use app\services\order\StoreCartServices;
 use app\services\other\CacheServices;
 use app\services\product\product\StoreCategoryServices;
 use app\services\product\product\StoreProductServices;
-use crmeb\services\FileService;
 use app\services\other\UploadService;
 use think\facade\App;
 use think\Request;
@@ -426,28 +425,6 @@ class StoreProduct extends AuthController
         return app('json')->success('删除成功');
     }
 
-    /**
-     * 导入卡密
-     * @return mixed
-     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
-     */
-    public function import_card()
-    {
-        $data = $this->request->getMore([
-            ['file', ""]
-        ]);
-        if (!$data['file']) return app('json')->fail('请上传文件');
-        $file = public_path() . substr($data['file'], 1);
-        // 获取文件后缀
-        $suffix = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        if (!in_array($suffix, ['xls', 'xlsx'])) {
-            return app('json')->fail('文件格式不正确，请上传xls或xlsx格式的文件！');
-        }
-        /** @var FileService $readExcelService */
-        $readExcelService = app()->make(FileService::class);
-        $cardData = $readExcelService->readExcel($file, 'card', 1, ucfirst($suffix));
-        return app('json')->success($cardData);
-    }
 
     /**
      * 商品批量设置

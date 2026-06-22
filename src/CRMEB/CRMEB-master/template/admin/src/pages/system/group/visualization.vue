@@ -524,6 +524,7 @@ import draggable from 'vuedraggable';
 import uploadPictures from '@/components/uploadPictures';
 import linkaddress from '@/components/linkaddress';
 import { getCookies } from '@/libs/util';
+import { isMvpProductExtrasEnabled } from '@/config/mvp';
 
 export default {
   name: 'list',
@@ -690,6 +691,9 @@ export default {
     },
     zh_uploadFile_change(evfile) {
       let that = this;
+      if (!isMvpProductExtrasEnabled()) {
+        return that.$message.warning('Video upload is disabled in MVP mode');
+      }
       let suffix = evfile.target.files[0].name.substr(evfile.target.files[0].name.indexOf('.'));
       if (suffix.indexOf('.mp4') === -1) {
         return that.$message.error('只能上传MP4文件');

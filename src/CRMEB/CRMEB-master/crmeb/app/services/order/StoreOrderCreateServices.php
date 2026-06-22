@@ -167,6 +167,9 @@ class StoreOrderCreateServices extends BaseServices
                 throw new ApiStatusException('ORDER_EXIST', '订单生成失败，你已经参加该团了，请先支付订单', ['orderId' => $storeOrderServices->getStoreIdPink($pinkId, $uid)]);
         }
         $virtual_type = $cartGroup['cartInfo'][0]['productInfo']['virtual_type'] ?? 0;
+        $storeSelfMention = sys_config('store_self_mention') ?? 0;
+        if (!$storeSelfMention) $shippingType = 1;
+        if ($is_gift == 1) $shippingType = 0;
 
         //下单前发票验证
         if ($invoice_id) {
@@ -235,10 +238,6 @@ class StoreOrderCreateServices extends BaseServices
             $useIntegral = false;
         }
         //$shipping_type = 1 快递发货 $shipping_type = 2 门店自提
-        $storeSelfMention = sys_config('store_self_mention') ?? 0;
-        if (!$storeSelfMention) $shippingType = 1;
-        if ($is_gift == 1) $shippingType = 0;
-
         $orderInfo = [
             'uid' => $uid,
             'order_id' => $this->getNewOrderId('cp'),

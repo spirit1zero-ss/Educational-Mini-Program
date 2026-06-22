@@ -370,17 +370,6 @@ export function uploadType() {
 }
 
 /**
- * @description 导入卡密
- */
-export function importCard(data) {
-  return request({
-    url: 'product/product/import_card',
-    method: 'get',
-    params: data,
-  });
-}
-
-/**
  * @description 商品批量设置
  * @param {Number} param id {Number} 属性id
  * @param {Object} param data {Object} 传值参数

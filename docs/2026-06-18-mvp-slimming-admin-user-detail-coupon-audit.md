@@ -1,52 +1,52 @@
-# CRMEB MVP 瘦身：后台用户详情优惠券入口收口审计
+# CRMEB MVP Slimming: backend user details coupon entrance closing audit
 
-日期：2026-06-18
+Date: 2026-06-18
 
-## 目标
+## Target
 
-继续执行 MVP 软瘦身，只隐藏后台用户详情中的优惠券查看入口并增加前端兜底，不删除代码、不改用户详情接口、不影响用户、订单、商品、支付、二级分销、佣金、签到和会员核心能力。
+Continue to implement MVP soft slimming, only hide the coupon viewing entrance in the backend user details and add a front-end cover. No code will be deleted, no user details interface will be changed, and it will not affect users, orders, products, payments, secondary distribution, commissions, check-ins and core member capabilities.
 
-本阶段聚焦后台用户详情抽屉中的残留入口：
+This stage focuses on the remaining entries in the background user details drawer:
 
-- 用户详情页签中的持有优惠券。
-- 从内部状态切换到 `coupon` 时触发的优惠券明细查询。
+- Hold coupons in the user details tab.
+- Coupon details query triggered when switching from internal state to `coupon`.
 
-## 本次调整
+## This adjustment
 
-位置：
+Location:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/user/list/handle/userDetails.vue`
 
-处理：
+deal with:
 
-- 引入 `isMvpCouponEnabled()`。
-- 新增 `mvpList` 计算属性，MVP 模式下过滤 `coupon` 页签。
-- `changeTab()` 增加优惠券页签兜底拦截。
-- `changeType()` 增加 `coupon` 类型兜底拦截，避免从内部状态或分页触发优惠券明细接口。
+- Introduced `isMvpCouponEnabled()`.
+- Added `mvpList` calculated attribute, filtering `coupon` tab in MVP mode.
+- `changeTab()` Adds coupon interception.
+- `changeType()` adds `coupon` type covert interception to avoid triggering the coupon details interface from internal status or paging.
 
-## 保留能力
+## retain ability
 
-本次不影响：
+This time it does not affect:
 
-- 后台用户详情查看。
-- 后台用户编辑。
-- 消费记录。
-- 积分明细。
-- 签到记录。
-- 好友关系。
-- 会员状态查看。
-- 二级分销和佣金核心链路。
+- View background user details.
+- Backend user editing.
+- Consumption records.
+- Points details.
+- Sign in record.
+- Friendship.
+- View member status.
+- Secondary distribution and commission core links.
 
-## 本地验证路径
+## local verification path
 
-后台构建：
+Background build:
 
 ```bash
 cd src/CRMEB/CRMEB-master/template/admin
 npm run build
 ```
 
-Docker 后端核心抽测：
+Docker backend core sampling test:
 
 ```bash
 docker exec -w /var/www/crmeb crmeb-local php think clear
@@ -54,15 +54,15 @@ curl.exe -i --max-time 20 http://127.0.0.1:8080/api/product/detail/1
 curl.exe -i --max-time 20 http://127.0.0.1:8080/adminapi/marketing/coupon/released
 ```
 
-浏览器后台路径：
+Browser background path:
 
 - `http://127.0.0.1:8080/admin`
-- 登录后进入用户列表。
-- 打开任意用户详情，确认不显示持有优惠券页签。
-- 确认用户信息、消费记录、积分明细、签到记录、好友关系仍可查看。
+- After logging in, enter the user list.
+- Open any user details and confirm that the Coupon Holding tab is not displayed.
+- Confirm that user information, consumption records, points details, check-in records, and friend relationships can still be viewed.
 
-## 风险点
+## Risk point
 
-- 本阶段只隐藏后台前端入口；如果后端用户详情接口仍支持优惠券明细，当前不做物理删除。
-- 余额变动页签仍保留在用户详情中，属于 P2 谨慎候选；后续是否隐藏需要单独确认，避免误伤资金/售后关联查看。
-- 后续物理删除优惠券能力前，还需排查用户详情接口、优惠券发放组件、营销路由、权限菜单和历史优惠券数据。
+- At this stage, only the back-end front-end entrance is hidden; if the back-end user details interface still supports coupon details, no physical deletion is currently performed.
+- The balance change tab is still retained in the user details and is a cautious candidate for P2; whether to hide it in the future needs to be confirmed separately to avoid accidental damage to funds/after-sales related viewing.
+- Before physically deleting the coupon capability, you need to check the user details interface, coupon issuance component, marketing routing, permission menu and historical coupon data.

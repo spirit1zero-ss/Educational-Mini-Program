@@ -1,484 +1,361 @@
-# CRMEB MVP 瘦身 dev3 交接文档
-
-## 先读这里：另一台电脑要继续完成的工作
-
-这份交接文档的核心不是让另一台电脑重新规划项目，而是让另一台电脑上的 Codex 接着完成当前没有做完的 MVP 瘦身。
-
-当前不要开始大规模物理删除。请继续按“小轮次软瘦身”完成剩余入口和接口残留。每做完一轮，必须提交、推送到 `dev3`，然后停下来等用户确认。
-
-### 当前最重要的未完成任务
-
-1. 处理商品详情响应里的优惠券残留。
-   - 现象：`/api/product/detail/1` 仍返回 `coupons` 字段。
-   - 目标：MVP 模式下商品详情不再带出优惠券数据。
-   - 要求：只在 `enable_coupon=false` 时置空或隐藏 `coupons`，不要删除优惠券服务、不要改订单逻辑、不要影响商品详情打开。
-
-2. 继续排查前台/H5/小程序是否还有非 MVP 入口。
-   - 优先查优惠券、客服、直播、短视频、CMS、积分商城玩法、门店、自提、核销、预售、秒杀、拼团、砍价。
-   - 只隐藏入口或加 MVP 拦截，不要物理删除。
-
-3. 继续排查后台是否还有非 MVP 菜单或按钮。
-   - 优先查商品详情、商品编辑、用户详情、装修页、营销页、设置页。
-   - 已经处理过的不要重复改，先读 `docs/2026-06-18-mvp-slimming-*.md`。
-
-4. 继续补齐接口侧 MVP 拦截。
-   - 如果前端入口已经隐藏，但接口还能直接访问非 MVP 功能，优先补后端 MVP 拦截。
-   - 不要删除 route 文件，先用现有 MVP 中间件或配置开关。
-
-5. 每轮都新增或更新一份审计文档。
-   - 文档放在 `docs/`。
-   - 写清楚本轮处理了什么、没处理什么、验证命令、风险点。
-
-### 下一轮直接执行建议
-
-下一轮建议直接做：
-
+﻿# CRMEB MVP slimming dev3 handover document
+## Document language convention
+Subsequently added or updated handover, audit, and verification records under `docs/` will use Chinese by default. Commands, paths, interfaces, configuration names, JSON fields, status codes, and submission information examples remain in their original text to avoid affecting replication execution and troubleshooting.
+## Read here first: work to be continued on another computer
+The core of this handover document is not to let another computer re-plan the project, but to let Codex on the other computer continue to complete the MVP slimming that is currently unfinished.
+Do not initiate mass physical deletions at this time. Please continue to press "Small rounds of soft slimming" to complete the remaining entrances and interface residues. After each round, it must be submitted and pushed to `dev3`, and then stopped to wait for user confirmation.
+### The most important unfinished tasks at the moment
+1. Handle the remaining coupons in the product details response.
+   - Phenomenon: `/api/product/detail/1` still returns the `coupons` field.
+   - Target: Product details no longer bring out coupon data in MVP mode.
+   - Requirements: Only leave blank or hide `coupons` when `enable_coupon=false`, do not delete the coupon service, do not change the order logic, and do not affect the opening of product details.
+2. Continue to check whether there are non-MVP entrances in the front desk/H5/mini program.
+   - Prioritize checking coupons, customer service, live broadcasts, short videos, CMS, points mall gameplay, stores, self-pickup, write-off, pre-sales, flash sales, group buying, and bargaining.
+   - Only hide the entrance or add MVP interception, do not delete it physically.
+3. Continue to check whether there are non-MVP menus or buttons in the background.
+   - Prioritize checking product details, product editing, user details, decoration page, marketing page, and settings page.
+   - Do not repeat changes that have been processed, read `docs/2026-06-18-mvp-slimming-*.md` first.
+4. Continue to complete the MVP interception on the interface side.
+   - If the front-end entrance has been hidden, but the interface can still directly access non-MVP functions, priority should be given to back-end MVP interception.
+   - Don't delete route files, use existing MVP middleware or config switches first.
+5. Add or update an audit document in each round.
+   - Documentation is placed in `docs/`.
+   - Write down clearly what was processed in this round, what was not processed, verification commands, and risk points.
+### Directly implement the recommendations in the next round
+It is recommended to do the following in the next round:
 ```text
-MVP 模式下隐藏商品详情接口里的 coupons 响应字段。
+Hide the coupons response field in the product detail API when MVP mode is enabled.
 ```
 
-执行顺序：
-
-1. 用 `rg` 定位商品详情接口和 `coupons` 赋值位置。
-2. 找到现有 MVP 配置读取方式，优先复用 `enable_coupon=false`。
-3. 在商品详情响应组装处最小改动：MVP 禁用优惠券时设置 `coupons=[]` 或不返回该字段。
-4. 不改订单、不改支付、不改佣金、不删优惠券表。
-5. 跑 Docker 验证：
-
+Execution order:
+1. Use `rg` to locate the product details interface and `coupons` to assign the location.
+2. Find the existing MVP configuration reading method and reuse `enable_coupon=false` first.
+3. Minimal changes in product details response assembly: MVP sets `coupons=[]` or does not return this field when coupons are disabled.
+4. Do not change the order, payment, commission, or delete the coupon list.
+5. Run Docker to verify:
 ```powershell
 docker exec -w /var/www/crmeb crmeb-local php think clear
 curl.exe -i --max-time 20 http://127.0.0.1:8080/api/product/detail/1
 curl.exe -i --max-time 20 http://127.0.0.1:8080/adminapi/marketing/coupon/released
 ```
 
-6. 确认商品详情仍 `status:200`，优惠券接口仍返回 `MVP module disabled`。
-7. 新增审计文档，提交并推送 `dev3`，然后停下等用户确认。
-
-### 当前不要做的事
-
-- 不要物理删除模块。
-- 不要清理数据库表。
-- 不要重写支付。
-- 不要改订单状态机。
-- 不要删除签到、会员、二级分销、佣金相关代码。
-- 不要一次处理多个模块。
-
-## 交接目的
-
-用户需要切换到另一台电脑继续开发。本分支用于把当前本地项目状态交接给另一台电脑上的 Codex。
-
-新分支：
-
+6. Confirm that the product details are still `status:200`, and the coupon interface still returns `MVP module disabled`.
+7. Add an audit document, submit and push `dev3`, and then wait for user confirmation.
+### Things not to do right now
+- Do not physically remove the module.
+- Do not clean the database tables.
+- Do not rewrite payments.
+- Do not change the order state machine.
+- Do not delete codes related to check-in, membership, secondary distribution, and commission.
+- Don't work on multiple modules at once.
+## Handover purpose
+Users need to switch to another computer to continue development. This branch is used to transfer the current local project status to the Codex on another computer.
+New branch:
 - `dev3`
 
-当前工作重点：
-
-- 只做 CRMEB MVP 软瘦身。
-- 每跑一轮必须停下来让用户确认，再进行下一轮。
-- 当前阶段不物理删除代码、不改支付、不破坏订单状态机。
-
-## 另一台电脑接手方式
-
+Current work focus:
+- Only do CRMEB MVP soft slimming.
+- Each round must be stopped to allow the user to confirm before proceeding to the next round.
+- At the current stage, the code is not physically deleted, the payment is not changed, and the order state machine is not destroyed.
+## Another computer takes over
 ```powershell
 git fetch origin
 git checkout dev3
 ```
 
-如果本地没有 `dev3`：
-
+If there is no `dev3` locally:
 ```powershell
 git fetch origin
 git checkout -b dev3 origin/dev3
 ```
 
-## 当前上下文
-
-最新交接提交：
-
+## Current context
+Latest handover submission:
 - `13a3a55a fix: hide MVP diy coupon config entries`
 
-该提交之前，项目已多轮完成 MVP 软瘦身，主要方向是隐藏或拦截非 MVP 入口，而不是删除文件。
-
-重要规则：
-
-- 保留签到功能。
-- 保留会员功能。
-- 保留用户、商品、订单、微信支付、支付回调、二级分销、佣金、测评、后台核心查看。
-- 不重写支付。
-- 不破坏订单状态机。
-- 不做批量物理删除。
-- 每一轮只处理一个明确范围，提交并推送后等待用户确认。
-
-## 已完成的瘦身方向
-
-已完成多轮软瘦身，覆盖范围包括：
-
-- 用户侧可选入口隐藏。
-- 旧版用户 DIY 可选入口隐藏。
-- 结算页可选能力入口隐藏。
-- 后端可选用户路由拦截。
-- 线下门店/核销/线下支付相关路由拦截。
-- 高级分销/代理商/事业部相关路由拦截。
-- 移动端商家管理路由拦截。
-- 移动端 DIY 公共接口拦截，同时保留签到相关接口。
-- 客服、kefuapi 相关路由拦截。
-- 后台首页高级入口隐藏。
-- 后台商品、用户营销入口隐藏。
-- 后台商品新增编辑页优惠券入口隐藏。
-- 后台用户详情优惠券页签隐藏。
-- 后台 DIY/装修优惠券配置入口隐藏。
-
-相关审计文档都在 `docs/2026-06-18-mvp-slimming-*.md`。
-
-## 最近一轮具体改动
-
-最近一轮是后台 DIY/装修优惠券配置收口：
-
+Before this submission, the project had completed multiple rounds of MVP soft slimming, with the main direction being to hide or block non-MVP entries rather than delete files.
+Important rules:
+- Keep the check-in function.
+- Retain membership functions.
+- Retain users, products, orders, WeChat payment, payment callbacks, secondary distribution, commissions, evaluations, and background core viewing.
+- Don't rewrite payments.
+- Does not destroy the order state machine.
+- No batch physical deletion is performed.
+- Only one clear range is processed in each round, and it waits for user confirmation after submission and push.
+## Completed slimming direction
+Completed multiple rounds of soft slimming, coverage includes:
+- Optional entrance hiding on user side.
+- DIY optional entrance hiding for old version users.
+- The optional ability entrance is hidden on the settlement page.
+- Optional user routing interception in the backend.
+- Offline store/verification/offline payment related routing interception.
+- Advanced distribution/agent/business department related route interception.
+- Mobile merchants manage route interception.
+- Block DIY public interfaces on the mobile terminal while retaining sign-in related interfaces.
+- Customer service and kefuapi related route interception.
+- The advanced entrance to the backend homepage is hidden.
+- The backend product and user marketing entrances are hidden.
+- The coupon entrance of the new editing page of the backend products is hidden.
+- The user details coupon tab in the background is hidden.
+- The backend DIY/decoration coupon configuration entrance is hidden.
+Relevant audit documents are in `docs/2026-06-18-mvp-slimming-*.md`.
+## The latest round of specific changes
+The latest round is the closure of the background DIY/decoration coupon configuration:
 - `src/CRMEB/CRMEB-master/template/admin/src/components/mobileConfig/c_custom_component.vue`
-  - MVP 模式下过滤自定义组件 `selectType` 里的 `coupon`。
-  - 历史数据如果选中 `coupon`，降级为 `user`。
-  - 不再展示优惠券数据源、优惠券选择器和优惠券筛选条件。
+  - Filter `coupon` in custom component `selectType` in MVP mode.
+  - If `coupon` is selected for historical data, it will be downgraded to `user`.
+  - The coupon data source, coupon selector, and coupon filters are no longer displayed.
 - `src/CRMEB/CRMEB-master/template/admin/src/components/mobilePage/home_custom_component.vue`
-  - MVP 模式下历史 `coupon` 自定义组件降级预览。
-  - `fetchCouponList()` 增加兜底，不再请求优惠券列表。
+  - Historical `coupon` custom component degradation preview in MVP mode.
+  - `fetchCouponList()` Adds a guarantee and no longer requests the coupon list.
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/setting/devise/diyIndex.vue`
-  - MVP 模式下左侧组件面板过滤独立优惠券组件。
-
-审计文档：
-
+  - Filter independent coupon components in the left component panel in MVP mode.
+Audit documents:
 - `docs/2026-06-18-mvp-slimming-admin-diy-coupon-config-audit.md`
 
-## 下一轮建议
-
-下一轮建议不要扩大范围，优先处理一个明确的小点：
-
-### 建议下一轮：商品详情响应里的优惠券字段
-
-在 Docker 验证时发现：
-
+## Next round of suggestions
+In the next round, it is recommended not to expand the scope, but to prioritize one clear small point:
+### Suggested next round: Coupon field in product details response
+Found during Docker verification:
 - `GET http://127.0.0.1:8080/api/product/detail/1`
-- 返回 `status:200`
-- 但响应数据中仍包含历史 `coupons` 字段。
-
-建议下一轮先定位商品详情接口生成 `coupons` 的位置，在 MVP 模式下最小改动处理：
-
-- 不影响商品详情打开。
-- 不影响创建订单。
-- 不影响会员价、商品规格、库存。
-- 不影响订单、支付、支付回调、佣金。
-- 只在 `enable_coupon=false` 时隐藏或置空商品详情响应中的优惠券数据。
-
-注意：这可能涉及后端商品详情服务，不要顺手删除优惠券服务或数据库字段。
-
-## 本地验证命令
-
-后台前端构建：
-
+- Return `status:200`
+- But the response data still contains the historical `coupons` field.
+It is recommended to locate the location where `coupons` is generated by the product details interface in the next round, and handle it with minimal changes in MVP mode:
+- Does not affect the opening of product details.
+- Does not affect order creation.
+- Does not affect member prices, product specifications, and inventory.
+- Does not affect orders, payments, payment callbacks, and commissions.
+- Hide or null the coupon data in the product detail response only when `enable_coupon=false`.
+Note: This may involve the backend product details service, do not delete the coupon service or database fields.
+## Local verification command
+Backend front-end construction:
 ```powershell
 cd src/CRMEB/CRMEB-master/template/admin
 npm run build
 ```
 
-Docker 后端清缓存：
-
+Docker backend clear cache:
 ```powershell
 docker exec -w /var/www/crmeb crmeb-local php think clear
 ```
 
-核心接口回归：
-
+Core interface returns:
 ```powershell
 curl.exe -i --max-time 20 http://127.0.0.1:8080/api/product/detail/1
 curl.exe -i --max-time 20 http://127.0.0.1:8080/adminapi/marketing/coupon/released
 ```
 
-期望：
-
-- 商品详情接口返回 `HTTP/1.1 200 OK`，JSON `status:200`。
-- 后台优惠券接口返回 `{"status":400,"msg":"MVP module disabled"}`。
-
-代码检查：
-
+expect:
+- The product details interface returns `HTTP/1.1 200 OK`, JSON `status:200`.
+- The background coupon interface returns `{"status":400,"msg":"MVP module disabled"}`.
+Code inspection:
 ```powershell
 git diff --check
 git status --short --branch
 ```
 
-## 已知非阻塞提示
-
-后台 `npm run build` 当前会出现既有警告：
-
-- `mini-css-extract-plugin` CSS 顺序警告。
-- 资源体积超过推荐限制。
-- `Browserslist` 数据较旧。
-
-这些警告在当前多轮瘦身前后都存在，只要构建退出码为 0，不视为本轮失败。
-
-Git 可能提示：
-
+## Known non-blocking hints
+In the background, `npm run build` currently displays existing warnings:
+- `mini-css-extract-plugin` CSS order warning.
+- The resource size exceeds the recommended limit.
+- `Browserslist` data is older.
+These warnings exist before and after the current round of slimming. As long as the build exit code is 0, it is not considered a failure in this round.
+Git may prompt:
 - `LF will be replaced by CRLF`
 - `There are too many unreachable loose objects`
 
-前者是 Windows 换行提示；后者是仓库维护提示。除非用户明确要求，不要在瘦身轮次里做仓库清理。
-
-## 交接给下一位 Codex 的工作方式
-
-1. 先读本文件和最近一轮对应审计文档。
-2. 每轮只选一个小范围。
-3. 改动前先定位文件和现有逻辑。
-4. 优先使用已有 `mvp` 配置开关。
-5. 做软隐藏或软拦截，不做物理删除。
-6. 必须跑本地验证命令。
-7. 新增或更新对应 docs 审计文档。
-8. 提交并推送后停下，等用户确认下一轮。
-
-## 不要误删的功能
-
-这些是 MVP 保留能力：
-
-- 微信小程序登录。
-- 后台用户列表。
-- MVP 首页入口。
-- 训练营商品与商品详情。
-- 创建订单。
-- 微信支付。
-- 支付回调。
-- 订单变为已支付。
-- 二级分销关系绑定。
-- 二级佣金记录生成。
-- 后台用户、订单、商品、测评、分销、佣金查看。
-- 签到。
-- 会员。
-
-## 关键风险
-
-- CRMEB 原始模块耦合较深，很多优惠券、余额、积分、门店、分销高级能力会通过商品、用户、订单服务间接出现。
-- 物理删除前必须做依赖排查，不要直接删目录。
-- 商品详情接口仍可能带出历史营销字段，这是下一轮候选，但要小心不要影响普通商品购买链路。
-- 分销模块不能整体删除，只能区分基础二级分销/佣金和高级代理商/事业部。
-- 签到可能依赖积分底层流水，不能直接删除积分底层能力。
-
-## 物理删除前完整执行计划
-
-本节给另一台电脑的 Codex 直接作为任务 Runbook 使用。目标是先完成“可删除性证明”，再进入物理删除。没有完成本节验收前，不允许删除目录、删除数据库表、删除核心服务类或删除路由文件。
-
-### 总原则
-
-1. 继续采用每轮确认机制：每完成一轮计划、代码、验证、提交、推送后，必须停下来等用户确认。
-2. 每轮只处理一个模块族，例如“优惠券展示残留”“客服模块”“直播模块”，不要跨模块批量删除。
-3. 物理删除前先完成软瘦身稳定期，确认 MVP 核心链路仍可运行。
-4. 任何删除候选都必须先证明没有被 MVP 保留能力依赖。
-5. 对于有数据库表、订单字段、用户字段、商品字段关联的模块，只允许先做隐藏、置空、旁路和文档标注，不允许直接删表。
-
-### 阶段 0：接手环境确认
-
-执行：
-
+The former is a Windows line break prompt; the latter is a warehouse maintenance prompt. Unless explicitly requested by the user, do not do warehouse cleaning during slimming rounds.
+## How to hand over to the next Codex
+1. Read this document and the most recent round of corresponding audit documents first.
+2. Choose only a small range in each round.
+3. Locate files and existing logic before making changes.
+4. Priority is given to using the existing `mvp` configuration switch.
+5. Perform soft hiding or soft interception without physical deletion.
+6. You must run the local verification command.
+7. Add or update the corresponding docs audit document.
+8. After submitting and pushing, stop and wait for the user to confirm the next round.
+## Don’t delete the function by mistake
+These are MVP retention capabilities:
+- Log in with WeChat applet.
+- Backend user list.
+- MVP homepage entrance.
+- Training camp products and product details.
+- Create an order.
+- WeChat Pay.
+- Payment callback.
+- The order becomes paid.
+- Secondary distribution relationship binding.
+- Secondary commission record generation.
+- View backend users, orders, products, reviews, distribution, and commissions.
+- Sign in.
+- Membership.
+## Key Risks
+- The original module of CRMEB is deeply coupled, and many advanced capabilities such as coupons, balances, points, stores, and distribution will appear indirectly through products, users, and order services.
+- Dependencies must be checked before physical deletion. Do not delete the directory directly.
+- The product details interface may still bring out the historical marketing field, which is a candidate for the next round, but be careful not to affect the normal product purchase link.
+- The distribution module cannot be deleted as a whole, only basic second-level distribution/commission and advanced agents/business units can be distinguished.
+- Sign-in may depend on the underlying flow of points, and the underlying ability of points cannot be deleted directly.
+## Complete execution plan before physical deletion
+In this section, the Codex of another computer can be used directly as a task runbook. The goal is to complete a "proof of deletability" before moving onto physical deletion. Before completing the acceptance of this section, deleting directories, deleting database tables, deleting core service classes, or deleting routing files is not allowed.
+### General principles
+1. Continue to use each round of confirmation mechanism: after completing each round of planning, code, verification, submission, and push, you must stop and wait for user confirmation.
+2. Only process one module family in each round, such as "Coupon Display Residual", "Customer Service Module" and "Live Broadcast Module". Do not batch delete across modules.
+3. Complete the soft slimming stabilization period before physical deletion to confirm that the MVP core link is still operational.
+4. Any candidate for deletion must first demonstrate that it is not dependent on MVP retention capabilities.
+5. For modules associated with database tables, order fields, user fields, and product fields, only hiding, blanking, bypassing, and document marking are allowed first, and direct deletion of tables is not allowed.
+### Phase 0: Takeover environment confirmation
+implement:
 ```powershell
 git fetch origin
 git checkout -b dev3 origin/dev3
 git status --short --branch
 ```
 
-确认：
-
-- 当前分支为 `dev3`。
-- 工作树干净。
-- 最新提交包含本交接文档。
-
-如果需要 Docker 验证：
-
+confirm:
+- The current branch is `dev3`.
+- The working tree is clean.
+- The latest commit contains this handover document.
+If Docker verification is required:
 ```powershell
 docker ps
 docker exec -w /var/www/crmeb crmeb-local php think clear
 ```
 
-如果 Docker 容器不存在，先不要改代码，先向用户确认本地运行方式。
-
-### 阶段 1：生成物理删除前依赖地图
-
-先不要删除任何文件。先用 `rg` 建立依赖地图。
-
-建议先排查这些高风险关键字：
-
+If the Docker container does not exist, do not change the code yet, but first confirm the local running mode with the user.
+### Phase 1: Generate dependency map before physical deletion
+Don't delete any files yet. First use `rg` to create a dependency map.
+It is recommended to check these high-risk keywords first:
 ```powershell
-rg -n "coupon|优惠券|store_coupon" src/CRMEB/CRMEB-master
-rg -n "bargain|砍价" src/CRMEB/CRMEB-master
-rg -n "combination|拼团" src/CRMEB/CRMEB-master
-rg -n "seckill|秒杀" src/CRMEB/CRMEB-master
-rg -n "presale|预售" src/CRMEB/CRMEB-master
-rg -n "live|直播|wechat_live" src/CRMEB/CRMEB-master
-rg -n "kefu|客服|customer" src/CRMEB/CRMEB-master
-rg -n "diy|get_diy|装修" src/CRMEB/CRMEB-master
-rg -n "store|核销|自提|offline" src/CRMEB/CRMEB-master
+rg -n "coupon|coupon|store_coupon" src/CRMEB/CRMEB-master
+rg -n "bargain|bargain" src/CRMEB/CRMEB-master
+rg -n "combination|group buying" src/CRMEB/CRMEB-master
+rg -n "seckill|flash sale" src/CRMEB/CRMEB-master
+rg -n "presale|presale" src/CRMEB/CRMEB-master
+rg -n "live|live streaming|wechat_live" src/CRMEB/CRMEB-master
+rg -n "kefu|customer service|customer" src/CRMEB/CRMEB-master
+rg -n "diy|get_diy|page builder" src/CRMEB/CRMEB-master
+rg -n "store|verification|self pickup|offline" src/CRMEB/CRMEB-master
 rg -n "agent|division|spread|brokerage" src/CRMEB/CRMEB-master
 ```
 
-每个模块至少整理：
-
-- 前台页面路径。
-- 后台页面路径。
-- API 路由路径。
-- Service / Dao / Model 路径。
-- 数据库表名或字段名。
-- 是否被订单、商品、用户、支付、分销、签到、会员引用。
-- 当前是否已有 MVP 开关。
-- 当前是否已有后端拦截。
-- 当前是否已有前端隐藏。
-
-输出文档建议：
-
+Each module organizes at least:
+- Front page path.
+-Backend page path.
+- API routing path.
+- Service/Dao/Model path.
+- Database table name or field name.
+- Whether it is referenced by orders, products, users, payments, distribution, check-ins, and members.
+- Whether there is currently an MVP switch.
+- Whether there is currently any backend interception.
+- Whether there is currently a front-end hidden.
+Output documentation suggestions:
 - `docs/2026-06-18-mvp-physical-delete-dependency-map.md`
 
-### 阶段 2：建立删除候选分级表
-
-在依赖地图之后，按下面标准分级。
-
-#### D0 禁止删除
-
-这些不能进入物理删除候选：
-
-- 微信登录。
-- 用户基础表、用户列表、用户详情核心信息。
-- 商品基础能力、商品详情、SKU、库存。
-- 订单创建、订单支付、订单状态机。
-- 微信支付、支付回调、退款相关基础结构。
-- 二级分销关系、佣金记录、佣金后台查看。
-- 测评记录。
-- 签到入口、签到记录、签到依赖的积分底层流水。
-- 会员中心、会员状态、会员权益、会员后台配置。
-- 后台用户、订单、商品、测评、分销、佣金、签到、会员查看。
-
-#### D1 可优先物理删除候选
-
-满足以下条件后才可删除：
-
-- 已经被 MVP 配置软隐藏或软拦截。
-- 没有被 D0 模块调用。
-- 删除后构建和 Docker 核心接口仍通过。
-
-候选：
-
-- 直播 / 微信直播独立页面和装修组件。
-- 短视频独立入口。
-- CMS 文章专题独立入口，前提是训练营商品详情不依赖文章。
-- 抽奖独立玩法。
-- 客服独立前端浮窗和 kefuapi，前提是没有订单售后入口依赖。
-- MCP/outapi 示例和开放接口样例，前提是非运行必需。
-
-#### D2 只能先拆边缘，不能整体删除
-
-这些模块有状态机或核心字段耦合：
-
-- 优惠券：订单、商品详情、用户详情、商品编辑可能有字段残留。
-- 秒杀、拼团、砍价、预售：商品服务里可能有活动标记和价格逻辑。
-- 余额：支付、退款、用户账户流水可能依赖。
-- 积分商城：签到可能依赖积分底层能力，只能删商城玩法，不能删积分底层。
-- 门店、自提、核销：订单配送方式和核销状态可能耦合。
-- 发票：订单字段可能存在。
-- 高级分销、代理商、事业部：只能拆高级能力，不能删基础二级分销和佣金。
-- 地址：创建订单可能依赖地址，不能直接删。
-
-#### D3 后置清理
-
-这些必须最后做：
-
-- 数据库表物理删除。
-- 迁移脚本清理。
-- install / upgrade 脚本清理。
-- vendor / framework / 官方核心目录裁剪。
-- 旧构建产物清理。
-
-### 阶段 3：每个模块的删除前检查清单
-
-每个模块进入物理删除前，必须逐项打勾。
-
-模块名称：
-
-- 例如：优惠券、客服、直播、CMS、门店、预售。
-
-检查项：
-
-- 已确认模块不属于 D0。
-- 已确认模块没有被微信登录调用。
-- 已确认模块没有被商品详情必需字段调用。
-- 已确认模块没有被创建订单调用。
-- 已确认模块没有被支付和支付回调调用。
-- 已确认模块没有被订单状态机调用。
-- 已确认模块没有被二级分销关系绑定调用。
-- 已确认模块没有被佣金生成调用。
-- 已确认模块没有被签到调用。
-- 已确认模块没有被会员调用。
-- 已确认后台菜单已隐藏或禁用。
-- 已确认前端入口已隐藏或禁用。
-- 已确认后端接口已有 MVP 拦截或可以安全移除。
-- 已确认测试命令可以覆盖核心链路。
-- 已写入 docs 审计文档。
-
-如果任意一项不能确认，该模块只能继续软瘦身，不能物理删除。
-
-### 阶段 4：推荐的物理删除顺序
-
-不要从后端 Service 或数据库开始。推荐顺序：
-
-1. 删除或禁用无引用的静态示例文件、演示文件、废弃文档。
-2. 删除已确认不被引用的前端页面。
-3. 删除已确认不被引用的前端组件。
-4. 删除已确认不被引用的前端路由配置。
-5. 删除已确认不被引用的后端路由入口。
-6. 删除已确认没有调用者的 Controller 方法。
-7. 删除已确认没有调用者的 Service / Dao / Model。
-8. 最后再评估数据库表和迁移脚本。
-
-每一步都必须跑构建或接口回归，不允许累积很多删除后再验证。
-
-### 阶段 5：每轮物理删除的最小执行模板
-
-每轮任务按这个格式执行。
-
-#### 1. 定义范围
-
-示例：
-
+### Phase 2: Establish deletion candidate ranking list
+After relying on the map, grade according to the following criteria.
+#### D0 prohibits deletion
+These cannot be candidates for physical deletion:
+- Log in with WeChat.
+- User basic table, user list, user details core information.
+- Basic product capabilities, product details, SKU, and inventory.
+- Order creation, order payment, order state machine.
+- WeChat payment, payment callback, and refund related infrastructure.
+- Secondary distribution relationships, commission records, and commission background viewing.
+- Evaluation records.
+- Sign-in entrance, sign-in records, and the underlying flow of points that sign-in relies on.
+- Member center, member status, member rights, and member backend configuration.
+- Backend users, orders, products, reviews, distribution, commissions, check-ins, and member viewing.
+#### D1 can give priority to physical deletion candidates
+It can be deleted only when the following conditions are met:
+- Already configured to be soft-hidden or soft-blocked by MVP.
+- Not called by D0 module.
+- Build and Docker core interface still pass after removal.
+Candidates:
+- Live broadcast/WeChat live broadcast independent page and decoration components.
+- Independent entrance for short videos.
+- CMS has an independent entrance to article topics, provided that the training camp product details do not rely on articles.
+- Independent lottery gameplay.
+- Customer service independent front-end floating window and kefuapi, provided there is no order after-sales portal dependency.
+- MCP/outapi samples and open interface samples, if not required for operation.
+#### D2 can only be removed at the edge first, not the whole thing.
+These modules have state machine or core field coupling:
+- Coupons: There may be fields left in orders, product details, user details, and product editing.
+- Flash sales, group buying, bargaining, and pre-sales: product services may have activity tags and price logic.
+- Balance: Payment, refund, and user account flow may depend on it.
+- Points Mall: Signing in may depend on the underlying points ability. You can only delete the mall gameplay, but not the underlying points.
+- Store, self-pickup, write-off: order delivery method and write-off status may be coupled.
+- Invoice: Order field may be present.
+- Advanced distribution, agents, and business units: only advanced capabilities can be removed, but basic secondary distribution and commissions cannot be deleted.
+- Address: Creating an order may depend on the address and cannot be deleted directly.
+#### D3 post-cleanup
+These must be done last:
+- Database tables are physically deleted.
+- Migration script cleanup.
+- install/upgrade script cleanup.
+- vendor/framework/official core directory cropping.
+- Old build product cleanup.
+### Phase 3: Pre-removal checklist for each module
+Each module must be ticked one by one before physical deletion.
+Module name:
+- For example: coupons, customer service, live broadcast, CMS, stores, pre-sales.
+Check items:
+- Confirmed module does not belong to D0.
+- It has been confirmed that the module is not called by WeChat login.
+- Confirmed module is not called by required fields of product details.
+- Confirmed module is not called by creating order.
+- Confirmed module is not being called by payment and payment callbacks.
+- Confirmed module is not called by the order state machine.
+- It has been confirmed that the module is not bound and called by the secondary distribution relationship.
+- Confirmed module is not being called by commission generation.
+- Confirmed module is not being called by check-in.
+- Confirmed that the module is not called by members.
+- Confirmed that the backend menu is hidden or disabled.
+- Confirmed that the front-end portal is hidden or disabled.
+- Confirmed that the backend interface has MVP interception or can be safely removed.
+- Test commands have been confirmed to cover core links.
+- docs audit documentation has been written.
+If any item cannot be confirmed, the module can only continue to be soft slimmed down and cannot be physically deleted.
+### Phase 4: Recommended physical removal sequence
+Don't start with a backend service or database. Recommended order:
+1. Delete or disable static sample files, demo files, and abandoned documents without references.
+2. Delete the front-end pages that have been confirmed not to be referenced.
+3. Delete the front-end components that are confirmed not to be referenced.
+4. Delete the front-end routing configuration that has been confirmed not to be referenced.
+5. Delete the backend routing entries that are confirmed not to be referenced.
+6. Delete the Controller method that is confirmed to have no caller.
+7. Delete the Service/Dao/Model that has been confirmed to have no caller.
+8. Finally, evaluate the database tables and migration scripts.
+Each step must be run to build or interface regression, and it is not allowed to accumulate many deletions before verifying.
+### Phase 5: Minimum execution template for each round of physical deletion
+Each round of tasks is executed in this format.
+#### 1. Define scope
+Example:
 ```text
-本轮只处理客服独立浮窗和 kefuapi 示例入口，不处理订单售后，不处理用户消息，不处理后台订单备注。
+This round only handles the standalone customer-service floating entry and the kefuapi sample entry; it does not handle order after-sales, user messages, or backend order remarks.
 ```
 
-#### 2. 定位现有逻辑
-
-执行：
-
+#### 2. Locate existing logic
+implement:
 ```powershell
-rg -n "kefu|客服|customerService" src/CRMEB/CRMEB-master/template/uni-app src/CRMEB/CRMEB-master/template/admin src/CRMEB/CRMEB-master/crmeb
+rg -n "kefu|customer service|customerService" src/CRMEB/CRMEB-master/template/uni-app src/CRMEB/CRMEB-master/template/admin src/CRMEB/CRMEB-master/crmeb
 ```
 
-记录：
-
-- 入口文件。
-- 路由文件。
-- 调用方。
-- 是否已有 MVP 拦截。
-
-#### 3. 判断是否可物理删除
-
-如果只在禁用入口中出现，可以进入删除候选。
-
-如果被订单、支付、用户、商品、会员、签到、分销引用，停止物理删除，只做软隐藏。
-
-#### 4. 执行最小删除
-
-只删除当前模块明确无引用的文件。
-
-禁止：
-
-- 顺手删同目录其他文件。
-- 顺手改订单、支付、用户、商品核心服务。
-- 顺手删数据库表。
-
-#### 5. 验证
-
-最少执行：
-
+Record:
+- Entry file.
+- Routing files.
+- caller.
+- Whether there is already an MVP interception.
+#### 3. Determine whether it can be physically deleted
+If it only appears in the disabled entry, you can enter the deletion candidate.
+If it is referenced by orders, payments, users, products, members, check-ins, and distribution, stop physically deleting it and only perform soft hiding.
+#### 4. Perform minimal deletion
+Only delete files that are explicitly not referenced by the current module.
+prohibit:
+- Easily delete other files in the same directory.
+- Easily change order, payment, user, and product core services.
+- Delete database tables easily.
+#### 5. Verification
+Minimum execution:
 ```powershell
 git diff --check
 cd src/CRMEB/CRMEB-master/template/admin
@@ -488,90 +365,71 @@ curl.exe -i --max-time 20 http://127.0.0.1:8080/api/product/detail/1
 curl.exe -i --max-time 20 http://127.0.0.1:8080/adminapi/marketing/coupon/released
 ```
 
-如果改动涉及小程序或 H5：
-
+If the change involves mini programs or H5:
 ```powershell
 cd src/CRMEB/CRMEB-master/template/uni-app
 npm run build:mp-weixin
 ```
 
-如果没有依赖或命令失败，记录失败原因，不要伪造通过。
-
-#### 6. 写文档
-
-新增或更新：
-
+If there are no dependencies or the command fails, record the reason for the failure and do not fake the pass.
+#### 6. Write documentation
+New or updated:
 ```text
 docs/2026-06-18-mvp-physical-delete-<module>-audit.md
 ```
 
-必须写：
-
-- 本轮删除范围。
-- 删除文件列表。
-- 未删除原因。
-- 验证命令和结果。
-- 风险点。
-- 回滚方式。
-
-#### 7. 提交推送
-
-提交信息建议：
-
+Must write:
+- Delete range this round.
+- Delete file list.
+- Reason for not deleting.
+- Verify commands and results.
+- Risk points.
+- Rollback mode.
+#### 7. Submit push
+Submit information suggestions:
 ```text
 chore: remove MVP-disabled <module> files
 ```
 
-推送：
-
+Push:
 ```powershell
 git push origin HEAD:dev3
 ```
 
-推送后停止，等待用户确认。
-
-### 阶段 6：必须保留的回归路径
-
-每次物理删除后，至少要确认：
-
-- 商品详情可打开。
-- 可创建订单。
-- 可发起微信支付，或至少支付创建接口不因删除报错。
-- 支付回调处理逻辑文件没有被改动。
-- 订单支付成功状态更新逻辑没有被改动。
-- 二级分销关系读取逻辑没有被改动。
-- 佣金生成逻辑没有被改动。
-- 后台用户列表可访问。
-- 后台订单列表可访问。
-- 后台商品列表可访问。
-- 后台分销/佣金查看不报错。
-- 签到入口和签到接口不受影响。
-- 会员中心和会员后台配置不受影响。
-
-### 阶段 7：推荐后续任务队列
-
-建议另一台电脑按以下顺序继续，每次只做一项。
-
-1. 商品详情响应 `coupons` 字段收口：只在 MVP 模式下置空或隐藏，不删优惠券底层。
-2. 直播 / 短视频独立组件依赖排查：如果无 D0 依赖，列入第一批物理删除候选。
-3. 客服独立入口和 kefuapi 依赖排查：确认不影响订单售后后，再考虑物理删除。
-4. CMS / 文章 / 专题依赖排查：确认训练营商品详情不依赖后，再考虑物理删除。
-5. 秒杀 / 拼团 / 砍价 / 预售商品活动字段排查：先拆商品详情和列表响应残留，暂不删服务。
-6. 门店 / 核销 / 线下支付排查：只在确认订单配送方式不依赖后再进入删除候选。
-7. 积分商城玩法排查：只删商城玩法候选，保留签到依赖的积分流水。
-8. 高级分销排查：只删代理商、事业部、员工分佣等高级能力候选，保留二级分销和佣金。
-9. 数据库表清理计划：只写计划，不执行，等核心链路稳定后再做。
-
-### 阶段 8：物理删除前最终验收门槛
-
-只有满足以下条件，才允许开始第一轮真正删除文件：
-
-- 已有依赖地图文档。
-- 已有删除候选分级表。
-- 已确认 D0 保留清单。
-- 已确认本轮模块不被 D0 调用。
-- 已有回滚策略。
-- 已有本地 Docker 验证路径。
-- 用户明确回复同意进入物理删除。
-
-用户没有明确同意前，继续只做软瘦身、文档和依赖排查。
+Stop after pushing and wait for user confirmation.
+### Phase 6: Return paths that must be preserved
+After each physical deletion, at least confirm:
+- Product details can be opened.
+- Can create orders.
+- WeChat payment can be initiated, or at least the payment creation interface will not report an error due to deletion.
+- The payment callback processing logic file has not been changed.
+- The order payment success status update logic has not been changed.
+- The secondary distribution relationship reading logic has not been changed.
+- Commission generation logic has not been changed.
+- Backend user list is accessible.
+- The backend order list is accessible.
+- Backend product list is accessible.
+- Backend distribution/commission viewing does not report errors.
+- The sign-in entrance and sign-in interface are not affected.
+- Member Center and Member Backend configurations are not affected.
+### Phase 7: Recommended follow-up task queue
+It is recommended that the other computer continue in the following order, doing only one item at a time.
+1. Product details response `coupons` field closing: only left blank or hidden in MVP mode, without deleting the bottom layer of the coupon.
+2. Live broadcast/short video independent component dependency check: If there is no D0 dependency, it will be included in the first batch of physical deletion candidates.
+3. Customer service independent entrance and kefuapi dependency troubleshooting: After confirming that it does not affect the order after-sales, physical deletion will be considered.
+4. CMS / article / topic dependency check: After confirming that the training camp product details are not dependent, consider physical deletion.
+5. Check the activity fields of flash sales/group buying/bargaining/pre-sale products: remove the remaining product details and list responses first, and do not delete the services yet.
+6. Store / write-off / offline payment troubleshooting: Only enter the deletion candidate after confirming that the order delivery method is not dependent.
+7. Troubleshooting points mall gameplay: only delete mall gameplay candidates and keep the points flow that depends on sign-in.
+8. Advanced distribution screening: only delete candidates with advanced capabilities such as agents, business units, and employee commissions, and retain secondary distribution and commissions.
+9. Database table cleaning plan: Only write the plan, do not execute it, wait until the core link is stable.
+### Phase 8: Final acceptance threshold before physical deletion
+The first round of actual file deletion is allowed only if the following conditions are met:
+- There is already a dependent map document.
+- A list of candidates for deletion has been created.
+- Confirmed D0 reserve list.
+- It is confirmed that this round module is not called by D0.
+- There is a rollback strategy in place.
+- There is already a local Docker verification path.
+- The user expressly replies consenting to physical deletion.
+Before the user explicitly agrees, continue to only perform software slimming, documentation and dependency troubleshooting.

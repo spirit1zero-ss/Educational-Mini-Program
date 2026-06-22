@@ -281,6 +281,7 @@ import { getCookies } from '@/libs/util';
 import uploadImg from '@/components/uploadImg';
 import { VueTreeList, Tree, TreeNode } from 'vue-tree-list';
 import { isVideoUpload } from '@/utils';
+import { isMvpProductExtrasEnabled } from '@/config/mvp';
 export default {
   name: 'uploadPictures',
   components: { uploadImg, VueTreeList },
@@ -402,6 +403,9 @@ export default {
     },
     zh_uploadFile_change(evfile) {
       let that = this;
+      if (!isMvpProductExtrasEnabled()) {
+        return that.$message.warning('Video upload is disabled in MVP mode');
+      }
       if (evfile.target.files[0].type !== 'video/mp4') {
         return that.$message.error('只能上传mp4文件');
       }

@@ -1,75 +1,75 @@
-# 2026-06-19 MVP 后台商品扩展前端收口审计
+# 2026-06-19 MVP back-end product expansion front-end closing audit
 
-## 本轮目标
+## Goal of this round
 
-在上一轮后端已拦截商品扩展接口的基础上，本轮继续收口后台前端入口，避免 MVP 模式下页面主动调用已禁用接口或暴露不需要的操作按钮。
+On the basis that the last round of back-end intercepted the product extension interface, this round continues to close the back-end front-end entrance to prevent the page from actively calling disabled interfaces or exposing unnecessary operation buttons in MVP mode.
 
-## 已收口的前端入口
+## Closed front entrance
 
-统一由 `template/admin/src/config/mvp.js` 中的 `isMvpProductExtrasEnabled()` 控制。
+Unification is controlled by `isMvpProductExtrasEnabled()` in `template/admin/src/config/mvp.js`.
 
-- 商品列表页：
-  - 隐藏“商品采集”按钮。
-  - 隐藏“商品迁移”下拉入口。
-  - MVP 模式下商品迁移导入/导出方法增加短路提示。
-  - 已从商品列表主页面移除采集弹窗 `taoBao.vue` 和迁移导入组件 `goodsImport.vue` 的静态依赖。
-- 批量物流设置：
-  - MVP 模式下不展示“运费模板”选项。
-  - MVP 模式下不再请求 `product/product/get_template`。
-  - 仍保留固定邮费等基础物流字段，避免影响商品核心编辑。
-- 商品编辑页：
-  - MVP 模式下不再通过 query type 打开商品采集弹窗。
-  - MVP 模式下不再自动请求运费模板接口。
-  - MVP 模式下不展示新视频上传入口；已有视频仍可展示和删除。
-  - MVP 模式下视频云上传逻辑不再请求 `product/product/get_temp_keys`。
-  - MVP 模式下隐藏“导入卡密”上传按钮，并在导入回调中增加短路保护。
-  - 已从商品编辑主页面移除采集弹窗 `taoBao.vue` 的静态依赖。
+- Product list page:
+  - Hide the "Product Collection" button.
+  - Hide the "Product Migration" drop-down entry.
+  - A short-circuit prompt is added to the product migration import/export method in MVP mode.
+  - The static dependencies of the collection pop-up window `taoBao.vue` and the migration import component `goodsImport.vue` have been removed from the main product list page.
+- Batch logistics settings:
+  - The "Shipping Template" option is not displayed in MVP mode.
+  - `product/product/get_template` is no longer requested in MVP mode.
+  - Basic logistics fields such as fixed postage are still retained to avoid affecting the core editing of products.
+- Product editing page:
+  - In MVP mode, the product collection pop-up window is no longer opened through query type.
+  - The freight template interface is no longer automatically requested in MVP mode.
+  - In MVP mode, the new video upload portal is not displayed; existing videos can still be displayed and deleted.
+  - In MVP mode, the video cloud upload logic no longer requests `product/product/get_temp_keys`.
+  - Hide the "Import Card Secret" upload button in MVP mode, and add short-circuit protection in the import callback.
+  - The static dependency of the collection pop-up window `taoBao.vue` has been removed from the main product editing page.
 
-## 保留边界
+## preserve boundaries
 
-本轮没有删除页面、组件或 API wrapper，仍保留：
+Pages, components or API wrappers have not been deleted in this round and remain:
 
-- 商品列表、商品编辑、新增商品主流程。
-- 普通商品、卡密/网盘商品、虚拟商品的基础编辑能力。
-- 商品分类、规格、标签、参数、保障等基础管理能力。
-- 商品普通数据导出 `export/storeProduct`。
+- Product list, product editing, and main process of adding new products.
+- Basic editing capabilities for ordinary products, card secret/network disk products, and virtual products.
+- Basic management capabilities such as product classification, specifications, labels, parameters, and guarantees.
+- Product general data export `export/storeProduct`.
 
-## 变更文件
+## change file
 
 - `src/CRMEB/CRMEB-master/template/admin/src/config/mvp.js`
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productList/index.vue`
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productAdd/index.vue`
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productAdd/components/BasicInfo.vue`
 
-## 验证建议
+## Verify recommendations
 
-建议在后台构建或本地开发环境中检查：
+It is recommended to check in the background build or local development environment:
 
-- 商品列表页不显示“商品采集”和“商品迁移”。
-- 商品列表页普通“数据导出”仍显示。
-- 批量修改中选择“物流设置”时不出现“运费模板”选项。
-- 商品编辑页不出现新增视频上传入口。
-- 商品编辑页打开时不再请求 `product/product/get_template`。
-- 直接访问 `/product/add_product?type=-1` 不再弹出采集商品弹窗。
+- The product list page does not display "Product Collection" and "Product Migration".
+- The normal "Data Export" on the product list page is still displayed.
+- The "Freight Template" option does not appear when "Logistics Settings" is selected in batch modification.
+- The new video upload entry does not appear on the product editing page.
+- `product/product/get_template` is no longer requested when the product edit page is opened.
+- Directly accessing `/product/add_product:type=-1` will no longer pop up the product collection pop-up window.
 
-## 后续删除提示
+## Subsequent deletion tips
 
-真正物理删除前，还需要继续搜索并确认：
+Before actual physical deletion, you still need to continue searching and confirming:
 
-- `taoBao.vue` 采集弹窗是否可以整体删除。
-- 商品迁移导入组件 `goodsImport.vue` 是否可以整体删除。
-- `api/product.js` 和 `api/export.js` 中商品扩展 wrapper 是否还有非 MVP 路径引用。
-- 后台菜单表、权限表中的商品采集和迁移权限是否要进入删除映射。
+- `taoBao.vue` Whether the collection pop-up window can be deleted as a whole.
+- Whether the product migration import component `goodsImport.vue` can be deleted as a whole.
+- Whether there are non-MVP path references for the product extension wrapper in `api/product.js` and `api/export.js`.
+- Whether the product collection and migration permissions in the backend menu table and permission table need to enter the deletion mapping.
 
-## 当前残留状态
+## Current residual status
 
-以下文件已不再由商品主页面静态导入，并已在后续小批次中物理删除：
+The following files are no longer statically imported from the main product page and have been physically deleted in subsequent small batches:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productAdd/taoBao.vue`
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productList/taoBao.vue`
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/product/productList/components/goodsImport.vue`
 
-以下 API wrapper 已确认无保留路径引用，并已在后续小批次中物理删除：
+The following API wrappers have confirmed unreserved path references and have been physically removed in subsequent mini-batches:
 
 - `copyConfigApi`
 - `crawlFromApi`

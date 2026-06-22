@@ -28,6 +28,8 @@ return [
     'enable_wechat_pay' => true,
     'enable_training_camp_product' => true,
     'enable_product_extras' => false,
+    'enable_product_copy' => false,
+    'enable_serve_purchase' => false,
 
     'admin_menu_hidden_patterns' => [
         'enable_coupon' => [
@@ -137,9 +139,6 @@ return [
             'agent-division',
         ],
         'enable_product_extras' => [
-            'product-crawl',
-            'product-copy',
-            'product-copy_config',
             'product-product-get_template',
             'product-product-get_temp_keys',
             'product-product-import_card',
@@ -232,6 +231,8 @@ return [
             'order/scan_list',
         ],
         'enable_store_pickup' => [
+            'order/write',
+            'order/write_update',
             'merchant/store',
             'merchant/store_staff',
             'merchant/verify',
@@ -344,13 +345,13 @@ return [
             'order/down_invoice',
         ],
         'enable_complex_logistics' => [
-            'order/order_verific',
         ],
         'enable_offline_payment' => [
             'order/offline/',
         ],
         'enable_store_pickup' => [
             'store_list',
+            'order/order_verific',
         ],
         'enable_optional_user_features' => [
             'collect/',

@@ -258,7 +258,6 @@ return [
     '请先开通短信服务' => 'Please activate the SMS service first',
     '请先开通物流查询服务' => 'Please activate the logistics inquiry service first',
     '请先开通电子面单打印服务' => 'Please activate the electronic receipt printing service first',
-    '请先开通商品采集服务' => 'Please activate the product collection service first',
     '请设置短信签名' => 'Please set SMS signature',
     '修改短信签名成功' => 'Modified SMS Signature Successfully',
     '默认模板不能删除' => 'Default templates cannot be deleted',

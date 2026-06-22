@@ -1,78 +1,78 @@
-# CRMEB MVP 瘦身：旧版用户 DIY 组件入口收口审计
+# CRMEB MVP slimming down: DIY component entrance and closing audit for old version users
 
-日期：2026-06-18
+Date: 2026-06-18
 
-## 目标
+## Target
 
-继续执行 MVP 软瘦身，只隐藏入口，不删除代码、不改后端接口、不破坏订单和支付主流程。
+Continue to implement MVP soft slimming, only hide the entrance, do not delete the code, do not change the back-end interface, and do not destroy the main order and payment process.
 
-本阶段补齐旧版 DIY 用户信息组件中的可选用户入口。
+This stage completes the optional user entry in the old version of DIY user information component.
 
-## 背景
+## background
 
-此前已收口：
+Previously closed:
 
-- 用户中心菜单
-- 新版 `homeUserInfor` DIY 用户组件
-- 订单确认页可选能力
+- User center menu
+- New version `homeUserInfor` DIY user component
+- Optional capabilities on order confirmation page
 
-扫描发现旧版组件仍可能被 `pageDesign` 渲染：
-
-- `src/CRMEB/CRMEB-master/template/uni-app/subpackage/diyComponents/userInfor.vue`
-
-该组件仍展示并跳转：
-
-- 优惠券
-- 积分入口
-- 余额
-- 收藏商品
-- 浏览记录
-
-这些入口已属于 MVP 禁用或非核心可选能力。
-
-## 本次调整
-
-位置：
+Scanning found that older components may still be rendered by `pageDesign`:
 
 - `src/CRMEB/CRMEB-master/template/uni-app/subpackage/diyComponents/userInfor.vue`
 
-处理：
+The component still displays and jumps:
 
-- 引入统一的 `isMvpHiddenLink` 规则。
-- 抽出 `getMenuUrl(type)`，把菜单类型映射到实际页面 URL。
-- 新增 `isMvpMenuVisible(type)`，模板根据统一 MVP 隐藏规则决定是否显示。
-- `handleMenu(type)` 增加兜底保护，隐藏链接即使被直接调用也不会跳转。
+- Coupon
+- Points entrance
+- Balance
+- Collect items
+- Browsing history
 
-## 保留能力
+These entrances are already MVP-disabled or non-core optional capabilities.
 
-本次不影响：
+## This adjustment
 
-- 用户头像、昵称、手机号展示
-- 会员等级和会员成长展示
-- 登录入口
-- 签到和会员能力
-- 分销佣金入口
-- 商品、订单、微信支付链路
+Location:
 
-## 本地验证路径
+- `src/CRMEB/CRMEB-master/template/uni-app/subpackage/diyComponents/userInfor.vue`
 
-前端构建：
+deal with:
+
+- Introduce unified `isMvpHiddenLink` rules.
+- Extract `getMenuUrl(type)` to map the menu type to the actual page URL.
+- Added `isMvpMenuVisible(type)`, the template determines whether to display based on the unified MVP hiding rules.
+- `handleMenu(type)` adds covert protection, the hidden link will not jump even if it is called directly.
+
+## retain ability
+
+This time it does not affect:
+
+- User avatar, nickname, mobile phone number display
+- Member level and membership growth display
+- Login portal
+- Sign-in and membership capabilities
+- Distribution commission entrance
+- Products, orders, WeChat payment links
+
+## local verification path
+
+Front-end build:
 
 ```bash
 cd src/CRMEB/CRMEB-master/template/uni-app
 npm run build:mp-weixin
 ```
 
-页面验证：
+Page verification:
 
-- 微信开发者工具导入 `src/CRMEB/CRMEB-master/template/uni-app/dist/build/mp-weixin`
-- 打开个人中心或后台 DIY 用户中心页面
-- 确认旧版用户信息组件不再展示余额、优惠券、收藏、浏览记录等非 MVP 入口
-- 确认会员信息仍可显示
+- WeChat developer tool import `src/CRMEB/CRMEB-master/template/uni-app/dist/build/mp-weixin`
+- Open the personal center or backend DIY user center page
+- Confirm that the old version of the user information component will no longer display non-MVP entries such as balance, coupons, collections, browsing history, etc.
+- Confirm that member information can still be displayed
 
-## 风险点
+## Risk point
 
-- 后台 DIY 配置可能切换新旧用户信息组件，因此新旧组件都需要保留同一套 MVP 过滤规则。
-- 积分底层能力仍需保留给签到链路，当前只隐藏用户侧积分入口，不删除积分账户或流水。
-- 后续真正删除旧版 DIY 组件前，需要确认所有 `pageDesign` 配置不再引用 `userInfor`。
+- Backend DIY configuration may switch between old and new user information components, so both old and new components need to retain the same set of MVP filtering rules.
+- The underlying ability of points still needs to be reserved for the sign-in link. Currently, only the user-side points entrance is hidden, and the points account or turnover is not deleted.
+- Before actually deleting the old version of DIY components, you need to confirm that all `pageDesign` configurations no longer reference `userInfor`.
 

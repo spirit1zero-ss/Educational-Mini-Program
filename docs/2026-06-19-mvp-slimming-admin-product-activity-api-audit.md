@@ -1,64 +1,64 @@
-# 2026-06-19 MVP 瘦身：后台商品活动检测接口收口审计
+# 2026-06-19 MVP Slimming: Backend Product Activity Detection Interface Closure Audit
 
-## 范围
+## scope
 
-继续执行 MVP 软瘦身，不删除商品代码、不删除营销活动代码、不改商品保存逻辑、不改订单和支付链路。
+Continue to implement MVP soft slimming without deleting product codes, marketing activity codes, product saving logic, or order and payment links.
 
-本轮只处理后台商品接口中的一个非 MVP 活动残留：
+This round only processes one non-MVP activity residue in the backend product interface:
 
 - `GET /adminapi/product/product/check_activity/:id`
 
-该接口用于检测商品是否已有营销活动开启。当前 MVP 模式下砍价、拼团、秒杀、预售、抽奖等活动能力均已禁用，因此后台不需要继续暴露这个活动检测接口。
+This interface is used to detect whether the product has marketing activities started. In the current MVP mode, activities such as price bargaining, group buying, flash sales, pre-sales, and lottery draws are all disabled, so there is no need to continue to expose this activity detection interface in the backend.
 
-## 本次调整
+## This adjustment
 
-调整文件：
+Adjustment file:
 
 - `src/CRMEB/CRMEB-master/crmeb/config/mvp.php`
 - `src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/product.php`
 
-调整内容：
+Adjustments:
 
-- 在 `enable_activity_status` 的接口拦截规则中增加 `product/product/check_activity`。
-- 给后台商品路由组增加 `MvpRouteBlockMiddleware`。
+- Add `product/product/check_activity` to the interface interception rules of `enable_activity_status`.
+- Add `MvpRouteBlockMiddleware` to the backend product routing group.
 
-商品路由组仍保留原有认证、权限和日志中间件。MVP 中间件只按配置规则拦截命中的禁用接口，不会整组关闭商品管理接口。
+The product routing group still retains the original authentication, permissions and log middleware. The MVP middleware only intercepts the hit disabled interfaces according to the configuration rules, and does not close the entire product management interface.
 
-## 保留能力
+## retain ability
 
-本轮不影响：
+This round does not affect:
 
-- 后台商品列表、商品详情、商品新增和编辑。
-- 商品分类、规格、属性规则、商品上下架。
-- 商品库存、价格、训练营商品路径。
-- 订单、支付、退款、佣金、签到和会员功能。
+- Backend product list, product details, product addition and editing.
+- Product classification, specifications, attribute rules, product listing and removal.
+- Product inventory, price, training camp product path.
+- Order, payment, refund, commission, check-in and membership functions.
 
-## 验证记录
+## Verify records
 
-已执行本地语法检查：
+Local syntax check performed:
 
 ```powershell
 php -l src/CRMEB/CRMEB-master/crmeb/config/mvp.php
 php -l src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/product.php
 ```
 
-结果：
+result:
 
-- `config/mvp.php` 未发现语法错误。
-- `app/adminapi/route/product.php` 未发现语法错误。
+- `config/mvp.php` No syntax error found.
+- `app/adminapi/route/product.php` No syntax error found.
 
-CRMEB 容器运行后建议补充接口抽测：
+After the CRMEB container is running, it is recommended to supplement the interface sampling test:
 
 ```powershell
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/product
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/product/check_activity/1
 ```
 
-预期：
+expected:
 
-- `GET /adminapi/product/product` 仍走原有后台认证或正常商品列表逻辑，不应返回 `MVP module disabled`。
-- `GET /adminapi/product/product/check_activity/1` 在 `enable_activity_status=false` 时返回 `MVP module disabled`。
+- `GET /adminapi/product/product` still follows the original background authentication or normal product list logic and should not return `MVP module disabled`.
+- `GET /adminapi/product/product/check_activity/1` returns `MVP module disabled` when `enable_activity_status=false` is used.
 
-## 后续备注
+## Follow-up remarks
 
-后台商品路由里仍有商品采集、商品迁移、虚拟卡密导入、视频上传密钥、运费模板等能力。本轮没有处理这些接口，因为它们与商品管理、物流或运营配置存在混用，需要后续单独判断是否属于 MVP 保留能力。
+The backend product routing still has the capabilities of product collection, product migration, virtual card password import, video upload key, freight template, etc. These interfaces are not processed in this round because they are mixed with commodity management, logistics or operation configuration, and need to be separately judged later to determine whether they belong to MVP reserved capabilities.

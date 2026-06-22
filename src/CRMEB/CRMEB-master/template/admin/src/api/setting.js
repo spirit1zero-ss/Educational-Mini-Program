@@ -285,17 +285,6 @@ export function serveRecordListApi(params) {
 }
 
 /**
- * @description 设置 短信 开通其他服务
- */
-export function serveOpnOtherApi(params) {
-  return request({
-    url: 'serve/open',
-    method: 'get',
-    params,
-  });
-}
-
-/**
  * @description 设置 短信 开通电子面单
  */
 export function serveOpnExpressApi(data) {

@@ -1,54 +1,54 @@
-# 2026-06-19 MVP 后台商品扩展接口瘦身审计
+# 2026-06-19 MVP backend product expansion interface slimming audit
 
-## 本轮目标
+## Goal of this round
 
-本轮继续采用软瘦身策略，不删除路由定义、控制器、服务、模型、数据表或前端文件，只在 MVP 模式下收口后台商品模块中不属于当前最小产品范围的扩展能力。
+This round continues to adopt the soft slimming strategy, without deleting route definitions, controllers, services, models, data tables or front-end files, and only closing the expansion capabilities in the backend product module that do not fall within the current minimum product scope in MVP mode.
 
-## 后台商品扩展能力状态
+## Backend product expansion capability status
 
-当前由 `config/mvp.php` 中的 `enable_product_extras=false` 继续控制仍保留的扩展接口；商品采集和商品迁移已进入物理删除阶段。
+Currently, `enable_product_extras=false` in `config/mvp.php` continues to control the remaining extended interfaces; product collection and product migration have entered the physical deletion stage.
 
-- 商品采集已物理删除：
+- Product collection has been physically deleted:
   - `POST /adminapi/product/crawl`
   - `GET /adminapi/product/copy_config`
   - `POST /adminapi/product/copy`
   - `POST /adminapi/product/crawl/save`
-- 商品迁移已物理删除：
+- Product migration has been physically deleted:
   - `GET /adminapi/product/product_export`
   - `POST /adminapi/product/product_import`
-- 虚拟卡密导入仍由 MVP 路由拦截：
+- Virtual card secret import is still intercepted by MVP routing:
   - `GET /adminapi/product/product/import_card`
-- 视频上传密钥仍由 MVP 路由拦截：
+- Video upload key is still intercepted by MVP routing:
   - `GET /adminapi/product/product/get_temp_keys`
-- 运费模板仍由 MVP 路由拦截：
+- The shipping template is still intercepted by the MVP route:
   - `GET /adminapi/product/product/get_template`
 
-## 保留边界
+## preserve boundaries
 
-以下后台商品核心能力本轮不拦截，仍作为 MVP 商品管理主流程保留：
+The following backend product core capabilities are not intercepted in this round and are still retained as the main process of MVP product management:
 
-- 商品列表、详情、新增、编辑、上下架、回收站。
-- 商品分类、规格、规则、属性生成。
-- 商品类型配置。
-- 商品标签、参数、保障等基础管理能力。
+- Product list, details, new addition, editing, loading and unloading, and recycle bin.
+- Product classification, specifications, rules, and attribute generation.
+- Product type configuration.
+- Basic management capabilities such as product labels, parameters, and guarantees.
 
-## 影响说明
+## Impact statement
 
-- 后台商品路由组已经接入 `MvpRouteBlockMiddleware`，未删除的扩展接口继续通过配置模式完成拦截。
-- 商品采集和商品迁移路由、控制器动作和专用服务方法已在后续小批次中物理删除。
-- 菜单侧同步加入商品扩展隐藏匹配，减少后台入口暴露。
-- 商品核心接口未整组禁用，避免影响后台商品列表和编辑页的主流程。
+- The backend product routing group has been connected to `MvpRouteBlockMiddleware`, and the undeleted extended interfaces continue to be intercepted through configuration mode.
+- Item collection and item migration routes, controller actions, and dedicated service methods have been physically removed in subsequent mini-batches.
+- The product extension hidden matching is added to the menu side simultaneously to reduce the exposure of the backend entrance.
+- The core product interfaces are not disabled as a whole group to avoid affecting the main process of the backend product list and editing page.
 
-## 验证记录
+## Verify records
 
-本轮需要至少完成：
+This round needs to complete at least:
 
 ```powershell
 php -l src/CRMEB/CRMEB-master/crmeb/config/mvp.php
 php -l src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/product.php
 ```
 
-建议后续有后台登录态时补充接口烟测：
+It is recommended to supplement the interface smoke test when there is a background login state in the future:
 
 ```powershell
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/product
@@ -57,16 +57,16 @@ Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/p
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/product/crawl
 ```
 
-预期结果：
+Expected results:
 
-- `product/product` 这类核心商品列表接口不应因为本轮配置被 MVP 拦截。
-- `product/product/get_template` 等仍保留的商品扩展接口应返回 MVP 禁用提示或等价拦截结果。
-- `product/product_import`、`product/crawl` 等已删除接口不再作为可调用后台能力存在。
+- `product/product` This type of core product list interface should not be intercepted by MVP due to this round of configuration.
+- Remaining commodity extension interfaces such as `product/product/get_template` should return MVP disable prompts or equivalent interception results.
+- Deleted interfaces such as `product/product_import` and `product/crawl` no longer exist as callable background capabilities.
 
-## 后续删除提示
+## Subsequent deletion tips
 
-真正物理删除前，需要继续确认：
+Before actual physical deletion, you need to continue to confirm:
 
-- 是否还有前端按钮或页面直接调用这些接口。
-- 是否有商品编辑表单依赖运费模板返回值做必填初始化。
-- 是否有历史商品数据迁移、导入卡密或采集任务需要留存只读入口。
+- Is there any front-end button or page that calls these interfaces directly:
+- Whether there is a product editing form that relies on the return value of the freight template for required initialization.
+- Whether there are any historical product data migration, card secret import or collection tasks that require a read-only entry.

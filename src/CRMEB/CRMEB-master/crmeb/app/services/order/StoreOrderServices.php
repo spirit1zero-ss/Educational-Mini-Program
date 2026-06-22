@@ -1687,6 +1687,9 @@ HTML;
      */
     public function getOrderConfirmData(array $user, $cartId, bool $new, int $addressId, int $shipping_type = 1, int $is_gift = 0)
     {
+        if ($shipping_type == 2 && !(int)sys_config('store_self_mention')) {
+            $shipping_type = 1;
+        }
         $addr = [];
         /** @var UserAddressServices $addressServices */
         $addressServices = app()->make(UserAddressServices::class);
@@ -2732,6 +2735,9 @@ HTML;
         }
         if (!$cartInfo) {
             throw new ApiException('数据不存在');
+        }
+        if (!(int)sys_config('store_self_mention')) {
+            return ['type' => 1];
         }
         $arr = [];
         foreach ($cartInfo as $item) {

@@ -12,6 +12,7 @@ const HIDDEN_DASHBOARD_LINK_KEYWORDS = [
 
 const DISABLED_MARKETING_ACTIVITIES = ['bargain', 'combination', 'seckill'];
 const PRODUCT_EXTRAS_ENABLED = false;
+const STORE_PICKUP_ENABLED = false;
 
 export function isMvpAdminLinkVisible(link = '') {
   if (!MVP_ENABLED || !link) return true;
@@ -30,4 +31,9 @@ export function isMvpMarketingActivityEnabled(type = '') {
 export function isMvpProductExtrasEnabled() {
   if (!MVP_ENABLED) return true;
   return PRODUCT_EXTRAS_ENABLED;
+}
+
+export function isMvpStorePickupEnabled() {
+  if (!MVP_ENABLED) return true;
+  return STORE_PICKUP_ENABLED;
 }

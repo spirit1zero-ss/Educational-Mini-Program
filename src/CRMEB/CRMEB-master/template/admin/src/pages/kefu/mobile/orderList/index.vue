@@ -3,8 +3,8 @@
     <div class="head-box">
       <div class="nav acea-row row-around row-middle">
         <div class="item" :class="where.type === '' ? 'on' : ''" v-db-click @click="changeStatus('')">全部</div>
-        <div class="item" :class="where.type === 0 ? 'on' : ''" v-db-click @click="changeStatus(0)">未支付</div>
-        <div class="item" :class="where.type === 1 ? 'on' : ''" v-db-click @click="changeStatus(1)">未发货</div>
+        <div class="item" :class="where.type === 0 ? 'on' : ''" v-db-click @click="changeStatus(0)">未支�?/div>
+        <div class="item" :class="where.type === 1 ? 'on' : ''" v-db-click @click="changeStatus(1)">未发�?/div>
         <div class="item" :class="where.type === -1 ? 'on' : ''" v-db-click @click="changeStatus(-1)">退款中</div>
       </div>
       <div class="input-box">
@@ -50,7 +50,7 @@
               </div>
             </template>
             <div class="public-total">
-              共{{ item.total_num }}件商品，应支付 <span class="money">￥{{ item.pay_price }}</span> ( 邮费 ¥{{
+              共{{ item.total_num }}件商品，应支�?<span class="money">￥{{ item.pay_price }}</span> ( 邮费 ¥{{
                 item.pay_postage
               }}
               )
@@ -66,7 +66,7 @@
                 <!--            </div>-->
               </div>
               <div class="acea-row row-middle">
-                <div class="bnt" v-db-click @click="modify(item, 0)" v-if="item.paid === 0">一键改价</div>
+                <div class="bnt" v-db-click @click="modify(item, 0)" v-if="item.paid === 0">一键改�?/div>
                 <div class="bnt" v-db-click @click="modify(item, 1)">订单备注</div>
                 <div
                   class="bnt"
@@ -74,7 +74,7 @@
                   @click="modify(item, 0)"
                   v-if="item._status._type === -1 && item.refund_status === 1"
                 >
-                  立即退款
+                  立即退�?
                 </div>
                 <div
                   class="bnt cancel"
@@ -88,11 +88,11 @@
                   class="bnt"
                   v-if="item._status._type === 1 && item.shipping_type !== 2"
                   :to="'/kefu/orderDelivery/' + item.id + '/' + item.order_id"
-                  >去发货
+                  >去发�?
                 </router-link>
                 <div
                   class="bnt cancel"
-                  v-if="item._status._type === 1 && item.shipping_type === 2"
+                  v-if="isMvpStorePickupEnabled() && item._status._type === 1 && item.shipping_type === 2"
                   v-db-click
                   @click="storeCancellation(item)"
                 >
@@ -138,7 +138,7 @@
       :status="status"
     ></PriceChange>
     <write-off
-      v-if="iShidden"
+      v-if="isMvpStorePickupEnabled() && iShidden"
       :iShidden="iShidden"
       :orderInfo="orderInfo"
       @cancel="cancel"
@@ -155,6 +155,7 @@ import { validatorDefaultCatch } from '@/libs/dialog';
 import WriteOff from '../../components/writeOff';
 import { HappyScroll } from 'vue-happy-scroll';
 import { serviceInfo } from '@/api/kefu_mobile';
+import { isMvpStorePickupEnabled } from '@/config/mvp';
 export default {
   name: 'AdminOrderList',
   components: {
@@ -236,12 +237,14 @@ export default {
     });
   },
   methods: {
+    isMvpStorePickupEnabled,
     // 搜索回车
     bindSearch() {
       this.init();
     },
     // 去核销
     storeCancellation(item) {
+      if (!this.isMvpStorePickupEnabled()) return;
       this.orderInfo = item;
       this.iShidden = true;
     },
@@ -249,6 +252,7 @@ export default {
       this.iShidden = res;
     },
     confirm: function () {
+      if (!this.isMvpStorePickupEnabled()) return;
       orderVerificApi(this.orderInfo.id)
         .then((res) => {
           this.iShidden = false;
@@ -275,12 +279,12 @@ export default {
       this.change = msg;
       this.init();
     },
-    // 拒绝退款
+    // 拒绝退�?
     getRefuse(id) {
       orderRefuseApi(data)
         .then(() => {
           that.change = false;
-          that.$dialog.success('已拒绝退款');
+          that.$dialog.success('Refund rejected');
           that.init();
         })
         .catch((error) => {
@@ -307,7 +311,7 @@ export default {
         editPriceApi(data)
           .then(() => {
             that.change = false;
-            that.$dialog.success('改价成功');
+            that.$dialog.success('Price updated');
             that.init();
           })
           .catch((error) => {
@@ -327,7 +331,7 @@ export default {
         orderRefundApi(data).then(
           (res) => {
             that.change = false;
-            that.$dialog.success('退款成功');
+            that.$dialog.success('Refund successful');
             that.init();
           },
           (err) => {
@@ -348,7 +352,7 @@ export default {
         orderMarkApi(data).then(
           (res) => {
             that.change = false;
-            that.$dialog.success('提交成功');
+            that.$dialog.success('Submitted successfully');
             that.init();
           },
           (err) => {
@@ -404,7 +408,7 @@ export default {
       //   }
       // );
     },
-    // 话术滚动到底部
+    // 话术滚动到底�?
     handleWordsScroll(vm, refreshDom, done) {
       this.getIndex();
       done();

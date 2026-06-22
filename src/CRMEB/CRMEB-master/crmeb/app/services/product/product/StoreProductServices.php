@@ -37,7 +37,6 @@ use app\services\user\UserSearchServices;
 use app\services\user\UserServices;
 use crmeb\exceptions\AdminException;
 use app\jobs\ProductLogJob;
-use app\jobs\ProductCopyJob;
 use crmeb\exceptions\ApiException;
 use crmeb\services\GroupDataService;
 use think\facade\Config;
@@ -482,6 +481,7 @@ class StoreProductServices extends BaseServices
      */
     public function getAttr(array $data, int $id, int $type)
     {
+        $this->applyMvpProductExtraDefaults($data);
         /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
         $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
         /** @var StoreProductVirtualServices $virtualService */
@@ -622,12 +622,17 @@ class StoreProductServices extends BaseServices
         if (count($data['slider_image']) < 1) throw new AdminException('请选择商品轮播图');
         if ($data['is_limit'] == 1 && $data['min_qty'] > $data['limit_num']) throw new AdminException('起购数量不能大于限购数量');
 
+        $this->applyMvpProductExtraDefaults($data);
         $detail = $data['attrs'];
         $attr = $data['items'];
         $cate_id = $data['cate_id'];
         $coupon_ids = $data['coupon_ids'];
         $description = $data['description'];
         $type = $data['type'];
+        if ((int)$type === -1 && function_exists('mvp_enabled') && !mvp_enabled('enable_product_copy', false)) {
+            $type = 0;
+            $data['is_copy'] = 0;
+        }
         $data['recommend_list'] = count($data['recommend_list']) ? implode(',', array_column($data['recommend_list'], 'product_id')) : '';
         $data['is_vip'] = in_array(0, $data['is_sub']) ? 1 : 0;
         $data['is_sub'] = in_array(1, $data['is_sub']) ? 1 : 0;
@@ -719,7 +724,6 @@ class StoreProductServices extends BaseServices
         $data['activity'] = implode(',', $data['activity']);
         $data['cate_id'] = implode(',', $data['cate_id']);
         $data['label_id'] = implode(',', $data['label_id']);
-        $slider_image = $data['slider_image'];
         $data['image'] = $data['slider_image'][0];
         $data['slider_image'] = json_encode($data['slider_image']);
         $data['stock'] = array_sum(array_column($detail, 'stock'));
@@ -734,13 +738,8 @@ class StoreProductServices extends BaseServices
         $storeProductCouponServices = app()->make(StoreProductCouponServices::class);
         /** @var StoreCategoryServices $storeCategoryServices */
         $storeCategoryServices = app()->make(StoreCategoryServices::class);
-        $is_copy = $data['is_copy'] ?? 0;
         unset($data['is_copy']);
-        $descriptionImages = [];
-        if (isset($data['description_images'])) {
-            $descriptionImages = $data['description_images'];
-        }
-        $this->transaction(function () use ($id, $is_copy, $data, $descriptionImages, $description, $cate_id, $storeDescriptionServices, $storeProductCateServices, $storeProductAttrServices, $storeProductCouponServices, $storeCategoryServices, $detail, $attr, $coupon_ids, $type, $slider_image) {
+        $this->transaction(function () use ($id, $data, $description, $cate_id, $storeDescriptionServices, $storeProductCateServices, $storeProductAttrServices, $storeProductCouponServices, $storeCategoryServices, $detail, $attr, $coupon_ids) {
             if ($data['spec_type'] == 0) {
                 $attr = [
                     [
@@ -807,47 +806,6 @@ class StoreProductServices extends BaseServices
                 if (!empty($coupon_ids)) $storeProductCouponServices->setCoupon($res->id, $coupon_ids);
                 if (!$attrRes) throw new AdminException('添加失败');
 
-                //采集商品下载图片
-                if ($type == -1) {
-                    $s_image_down = [];
-                    //下载商品轮播图
-                    foreach ($slider_image as $s_image) {
-                        if (sys_config('queue_open', 0) == 1) {
-                            ProductCopyJob::dispatch('copySliderImage', [$res->id, $s_image, count($slider_image)]);
-                        } else {
-                            //下载图片
-                            $s_image_down[] = app()->make(CopyTaobaoServices::class)->downloadCopyImage(!is_int(strpos($s_image, 'http')) ? 'http://' . ltrim($s_image, '\//') : $s_image);
-                        }
-                    }
-
-                    //下载商品详情图
-                    preg_match_all('#<img.*?src="([^"]*)"[^>]*>#i', $description, $match);
-                    foreach ($match[1] as $d_image) {
-                        if (sys_config('queue_open', 0) == 1) {
-                            ProductCopyJob::dispatch('copyDescriptionImage', [$res->id, $description, $d_image, count($match[1])]);
-                        } else {
-                            $d_img = app()->make(CopyTaobaoServices::class)->downloadCopyImage(!is_int(strpos($d_image, 'http')) ? 'http://' . ltrim($d_image, '\//') : $d_image);
-                            $description = str_replace($d_image, $d_img, $description);
-                        }
-                    }
-
-                    //下载商品规格图
-                    $productAttrValue = app()->make(StoreProductAttrValueServices::class);
-                    $attrValueList = $productAttrValue->getColumn(['product_id' => $res->id, 'type' => 0], 'image', 'id');
-                    foreach ($attrValueList as $value_id => $value_image) {
-                        if (sys_config('queue_open', 0) == 1) {
-                            ProductCopyJob::dispatch('copyAttrImage', [$value_id, $value_image]);
-                        } else {
-                            $v_img = app()->make(CopyTaobaoServices::class)->downloadCopyImage(!is_int(strpos($value_image, 'http')) ? 'http://' . ltrim($value_image, '\//') : $value_image);
-                            $productAttrValue->update($value_id, ['image' => $v_img]);
-                        }
-                    }
-
-                    if (sys_config('queue_open', 0) == 0) {
-                        $this->update($res->id, ['slider_image' => $s_image_down ? json_encode($s_image_down) : '', 'image' => $s_image_down[0]]);
-                        $storeDescriptionServices->saveDescription((int)$res->id, $description);
-                    }
-                }
             }
         });
     }
@@ -985,6 +943,53 @@ class StoreProductServices extends BaseServices
         }
         $result = ['attr' => $attrList, 'value' => $valueList];
         return compact('result', 'attrGroup', 'valueGroup');
+    }
+
+    /**
+     * Normalize product-extra fields when the MVP product-extra switch is disabled.
+     * This protects the save endpoint from crafted requests that bypass frontend guards.
+     *
+     * @param array $data
+     * @return void
+     */
+    private function applyMvpProductExtraDefaults(array &$data): void
+    {
+        if (!function_exists('mvp_enabled') || mvp_enabled('enable_product_extras', false)) {
+            return;
+        }
+
+        $data['is_virtual'] = 0;
+        $data['virtual_type'] = 0;
+        $data['video_link'] = '';
+        $data['temp_id'] = 0;
+        if (($data['freight'] ?? 0) == 3) {
+            $data['freight'] = 2;
+        }
+
+        $resetSku = function (&$item) {
+            if (!is_array($item)) {
+                return;
+            }
+            $item['is_virtual'] = 0;
+            $item['virtual_list'] = [];
+            $item['disk_info'] = '';
+            $item['coupon_id'] = 0;
+            $item['coupon_name'] = '';
+        };
+
+        if (isset($data['attrs']) && is_array($data['attrs'])) {
+            foreach ($data['attrs'] as &$item) {
+                $resetSku($item);
+            }
+            unset($item);
+        }
+
+        if (isset($data['items']) && is_array($data['items'])) {
+            foreach ($data['items'] as &$item) {
+                $resetSku($item);
+            }
+            unset($item);
+        }
     }
 
     /**

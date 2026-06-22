@@ -168,15 +168,6 @@
         <router-link v-auth="['product-product-save']" :to="$routeProStr + '/product/add_product'"
           ><el-button type="primary" class="mr14">添加商品</el-button></router-link
         >
-        <el-button
-          v-if="isMvpProductExtrasEnabled()"
-          v-auth="['product-crawl-save']"
-          type="success"
-          class="mr14"
-          v-db-click
-          @click="onCopy"
-          >商品采集</el-button
-        >
         <el-dropdown class="bnt mr14" @command="batchSelect">
           <el-button>批量修改<i class="el-icon-arrow-down el-icon--right"></i></el-button>
           <el-dropdown-menu slot="dropdown">
@@ -201,14 +192,7 @@
             >
           </el-dropdown-menu>
         </el-dropdown>
-        <el-dropdown v-if="isMvpProductExtrasEnabled()" class="bnt mr14" @command="goodsMove">
-          <el-button>商品迁移<i class="el-icon-arrow-down el-icon--right"></i></el-button>
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item :command="1">商品导入</el-dropdown-item>
-            <el-dropdown-item :command="2">商品导出</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
-        <el-button v-auth="['export-storeProduct']" class="export" v-db-click @click="onExports(0)">数据导出</el-button>
+        <el-button v-auth="['export-storeProduct']" class="export" v-db-click @click="onExports">数据导出</el-button>
       </div>
       <el-table
         ref="table"
@@ -878,17 +862,6 @@ export default {
           this.$message.error(res.msg);
         });
     },
-    goodsMove(type) {
-      if (!this.isMvpProductExtrasEnabled()) {
-        this.$message.warning('MVP 模式下已禁用商品迁移');
-        return;
-      }
-      if (type === 1) {
-        this.onImport();
-      } else {
-        this.onExports(2);
-      }
-    },
     activeData(dataLabel) {
       this.labelShow = false;
       this.dataLabel = dataLabel;
@@ -959,25 +932,15 @@ export default {
       this.artFrom.type = this.$route.query.type.toString();
       this.getDataList();
     },
-    onImport() {
-      if (!this.isMvpProductExtrasEnabled()) {
-        this.$message.warning('MVP 模式下已禁用商品迁移');
-        return;
-      }
-    },
     // 导出
-    async onExports(type) {
-      if (type && !this.isMvpProductExtrasEnabled()) {
-        this.$message.warning('MVP 模式下已禁用商品迁移');
-        return;
-      }
+    async onExports() {
       let [th, filekey, data, fileName] = [[], [], [], ''];
       let excelData = JSON.parse(JSON.stringify(this.artFrom));
       excelData.page = 1;
       excelData.limit = 50;
       excelData.ids = this.ids;
       for (let i = 0; i < excelData.page + 1; i++) {
-        let lebData = await this.getExcelData(excelData, type);
+        let lebData = await this.getExcelData(excelData);
         if (!fileName) fileName = lebData.filename;
         if (!filekey.length) {
           filekey = lebData.fileKey;
@@ -992,7 +955,7 @@ export default {
         }
       }
     },
-    getExcelData(excelData, type) {
+    getExcelData(excelData) {
       return new Promise((resolve, reject) => {
         exportProductList(excelData).then((res) => {
           resolve(res.data);
@@ -1066,17 +1029,6 @@ export default {
       }
       this.ids = ids;
       this.multipleSelection = uniqueArr;
-    },
-    // 复制淘宝
-    onCopy() {
-      if (!this.isMvpProductExtrasEnabled()) {
-        this.$message.warning('MVP 模式下已禁用商品采集');
-        return;
-      }
-      this.$router.push({
-        path: this.$routeProStr + '/product/add_product',
-        query: { type: -1 },
-      });
     },
     // tab选择
     onClickTab() {

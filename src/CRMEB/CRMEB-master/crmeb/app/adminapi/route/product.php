@@ -74,7 +74,6 @@ Route::group('product', function () {
         //检测是否有活动开启
         Route::get('product/check_activity/:id', 'v1.product.StoreProduct/check_activity')->option(['real_name' => '检测是商品否有活动开启']);
         //导入虚拟商品卡密
-        Route::get('product/import_card', 'v1.product.StoreProduct/import_card')->option(['real_name' => '导入虚拟商品卡密']);
         //商品详情
         Route::get('product/:id', 'v1.product.StoreProduct/get_product_info')->option(['real_name' => '商品详情']);
         //加入回收站

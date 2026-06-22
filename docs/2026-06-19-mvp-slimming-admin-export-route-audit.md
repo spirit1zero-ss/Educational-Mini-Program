@@ -1,49 +1,49 @@
-# 2026-06-19 MVP slimming: admin export route coverage
+﻿# 2026-06-19 MVP background export routing coverage audit
 
-## Scope
+## scope
 
-- Round scope: backend admin export route residuals.
-- Strategy: add one narrow MVP route block for optional user finance export. No export controller deletion, no table deletion, no frontend build.
-- Branch target: `dev3`.
+- Scope of this round: The background export routing remains.
+- Strategy: Only add a precise MVP route interception for optional user financial exports; do not delete export controllers, do not delete data tables, and do not perform front-end builds.
+- Target branch: `dev3`.
 
-## Existing state reviewed
+## Status checked
 
 - `app/adminapi/route/export.php` already uses `MvpRouteBlockMiddleware`.
-- Existing disabled marketing exports are already blocked:
+- Disabled marketing exports have been blocked:
   - `export/bargain_list`
   - `export/combination_list`
   - `export/seckill_list`
   - `export/userRecharge`
   - `export/verify_order`
-- Retained exports should stay available behind auth:
-  - User, order, product exports.
-  - Commission and basic distribution exports.
-  - Member card export.
-  - Point log export is not blocked in this round because sign-in can depend on point records.
+- Preserved exports should continue to be available after authentication:
+  - Export users, orders, and products.
+  - Commission and base distribution exports.
+  - Export membership card.
+  - Points log export will not be intercepted this round because check-in may rely on points records.
 
-## Changes made in this round
+## Changes in this round
 
 - `config/mvp.php`
-  - Added `admin_route_block_patterns.enable_optional_user_features` with `export/userFinance`.
+  - Added `export/userFinance` to `admin_route_block_patterns.enable_optional_user_features`.
 
-## Explicitly not changed
+## Clearly unchanged
 
-- Did not block `export/userCommission`; commissions are MVP-retained.
-- Did not block `export/userAgent`; basic distribution remains MVP-retained.
-- Did not block `export/userPoint`; sign-in can depend on point records.
-- Did not delete `ExportExcel.php` or any export route definitions.
-- Did not change login, users, products, orders, WeChat pay, pay callback, second-level distribution, commissions, sign-in, assessment, or member features.
+- Unintercepted `export/userCommission`; Commissions are subject to MVP retention capabilities.
+- Not intercepted `export/userAgent`; base distribution remains an MVP retained capability.
+- Not intercepted `export/userPoint`; check-in may rely on points record.
+- `ExportExcel.php` or any export route definitions are not removed.
+- The login, user, product, order, WeChat payment, payment callback, secondary distribution, commission, check-in, evaluation or membership functions have not been modified.
 
-## Verification notes
+## Verify records
 
-- Source check confirms `admin_route_block_patterns.enable_optional_user_features` includes `export/userFinance`.
-- Source check confirms `export/userCommission` and `export/userPoint` were not added to the MVP block list.
-- Follow-up Docker verification was completed after Docker Desktop was available:
+- Source code inspection confirms that `admin_route_block_patterns.enable_optional_user_features` contains `export/userFinance`.
+- Source code inspection confirmed that `export/userCommission` and `export/userPoint` were not added to the MVP interception list.
+- Supplemental Docker verification has been completed once Docker Desktop is available:
   - `docker exec -w /var/www/crmeb crmeb php -l config/mvp.php`
-    - Result: no syntax errors.
+    - Result: No syntax errors.
   - `docker exec -w /var/www/crmeb crmeb php think clear`
     - Result: `Clear Successed`.
   - `GET /adminapi/export/userFinance`
-    - Result: HTTP 200 wrapper with `{"status":400,"msg":"MVP module disabled"}`.
+    - Result: HTTP 200 wrapped response with content `{"status":400,"msg":"MVP module disabled"}`.
   - `GET /adminapi/export/userCommission`
-    - Result: HTTP 200 wrapper with `{"status":401,"msg":"登录已过期,请重新登录","data":[]}`; not `MVP module disabled`.
+    - Result: HTTP 200 wrapped response with content `{"status":401,"msg":"login expired, please log in again","data":[]}`, not `MVP module disabled`.

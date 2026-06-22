@@ -1,65 +1,44 @@
-# 2026-06-19 MVP 瘦身：后台公共客服接口收口审计
-
-## 范围
-
-继续执行 MVP 软瘦身，不删除文件、路由定义、控制器、服务、模型、数据库表或前端页面。
-
-本轮只收口一个后台公共接口残留：
-
+# 2026-06-19 MVP Slimming: backend public customer service interface closing audit
+## scope
+Continue with MVP soft slimming without deleting files, route definitions, controllers, services, models, database tables, or front-end pages.
+In this round, only one backend public interface remains:
 - `GET /adminapi/get_workerman_url`
 
-该接口用于获取客服长连接相关数据。当前 MVP 模式下客服能力已禁用，因此该接口也应进入统一拦截范围。
-
-## 本次调整
-
-调整文件：
-
+This interface is used to obtain customer service long connection related data. The customer service capability is currently disabled in MVP mode, so this interface should also enter the unified interception range.
+## This adjustment
+Adjustment file:
 - `src/CRMEB/CRMEB-master/crmeb/config/mvp.php`
 - `src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/route.php`
 
-调整内容：
-
-- 在 `enable_customer_service` 的后台路由拦截规则中增加 `get_workerman_url`。
-- 给后台未登录公共路由组增加 `MvpRouteBlockMiddleware`。
-
-该中间件按配置规则匹配路径，因此后台登录、登录信息、验证码、扫码上传、后台自定义 JS 等公共基础入口不会被拦截；只有命中已禁用 MVP 模块规则的接口会返回 `MVP module disabled`。
-
-## 保留能力
-
-本轮不影响：
-
-- 后台登录。
-- 后台验证码和登录信息。
-- 后台菜单加载。
-- 商品、订单、支付、教育、签到、会员和基础分销链路。
-- 现有客服源码、控制器、页面和 kefu API 文件。
-
-## 验证记录
-
-已执行本地语法检查：
-
+Adjustments:
+- Add `get_workerman_url` to the background routing interception rules of `enable_customer_service`.
+- Add `MvpRouteBlockMiddleware` to the background unlogged public routing group.
+This middleware matches paths according to configuration rules, so common basic entrances such as background login, login information, verification code, scan code upload, and background custom JS will not be intercepted; only interfaces that hit disabled MVP module rules will return `MVP module disabled`.
+## Reserved capabilities
+This round does not affect:
+- Backend login.
+-Backend verification code and login information.
+-Backend menu loading.
+- Products, orders, payment, education, check-in, membership and basic distribution links.
+- Existing customer service source code, controller, page and kefu API files.
+## Verify records
+Local syntax check performed:
 ```powershell
 php -l src/CRMEB/CRMEB-master/crmeb/config/mvp.php
 php -l src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/route.php
 ```
 
-结果：
-
-- `config/mvp.php` 未发现语法错误。
-- `app/adminapi/route/route.php` 未发现语法错误。
-
-CRMEB 容器运行后建议补充接口抽测：
-
+result:
+- `config/mvp.php` No syntax error found.
+- `app/adminapi/route/route.php` No syntax error found.
+After the CRMEB container is running, it is recommended to supplement the interface sampling test:
 ```powershell
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/login/info
 Invoke-WebRequest -UseBasicParsing -Uri http://127.0.0.1:8080/adminapi/get_workerman_url
 ```
 
-预期：
-
-- `GET /adminapi/login/info` 仍可访问。
-- `GET /adminapi/get_workerman_url` 在 `enable_customer_service=false` 时返回 `MVP module disabled`。
-
-## 后续备注
-
-更大的 `serve` 路由组仍包含一号通、短信和电子面单相关接口。本轮没有处理它，因为其中短信配置可能属于运营保留能力，需要单独逐条判断后再决定是否拦截。
+expected:
+- `GET /adminapi/login/info` is still accessible.
+- `GET /adminapi/get_workerman_url` returns `MVP module disabled` when `enable_customer_service=false` is used.
+## Follow-up remarks
+The larger `serve` routing group still contains interfaces related to ONLY, SMS, and electronic forms. This round did not deal with it because the SMS configuration may belong to operational reserve capabilities and needs to be judged individually before deciding whether to intercept.

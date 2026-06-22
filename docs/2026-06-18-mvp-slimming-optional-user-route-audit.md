@@ -1,26 +1,13 @@
-# 2026-06-18 MVP 用户侧可选功能路由瘦身审计
-
-## 本次目标
-
-补齐移动端用户侧可选功能的 MVP 禁用防护。当前阶段不删除代码、不改订单主链路、不改地址和售后退款能力。
-
-## 定位结果
-
-| 项目 | 位置 | 结论 |
-| --- | --- | --- |
-| 收藏 | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `collect/*` 非 MVP 核心能力 |
-| 浏览/访问记录 | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user/visit_list`、`user/visit`、`user/set_visit` 非 MVP 核心能力 |
-| 分享记录 | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user/share`、`user/share/words` 非 MVP 核心能力 |
-| 站内信 | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user/message_system/*` 非 MVP 核心能力 |
-| 用户注销 | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user_cancel` 非 MVP 验收能力 |
-| 代付/礼物 | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `order/friend_detail`、`order/receive_gift`、`order/gift_detail` 非 MVP 支付链路 |
-| 余额统计 | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user/balance` 非 MVP 核心查看能力 |
-
-## 本次变更
-
-- 新增 MVP 开关：
+# 2026-06-18 MVP user-side optional function routing slimming audit
+## This goal
+MVP disabling protection that complements optional features on the mobile user side. At this stage, the code will not be deleted, the main link of the order will not be changed, the address will not be changed, and the after-sales refund capability will not be available.
+## Positioning results
+| Project | Location | Conclusion || --- | --- | --- |
+| Collection | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `collect/*` Non-MVP Core Competencies || Browse/visit records | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user/visit_list`, `user/visit`, `user/set_visit` Non-MVP core capabilities || Share record | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user/share`, `user/share/words` non-MVP core capabilities || Site message | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user/message_system/*` Non-MVP core capabilities || User logout | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user_cancel` Non-MVP acceptance capability || Payment/Gift | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `order/friend_detail`, `order/receive_gift`, `order/gift_detail` Non-MVP payment link || Balance statistics | `src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php` | `user/balance` Non-MVP core viewing capabilities |
+## This change
+- Added MVP switch:
   - `enable_optional_user_features=false`
-- 在 `api_route_block_patterns.enable_optional_user_features` 中增加：
+- Added in `api_route_block_patterns.enable_optional_user_features`:
   - `collect/`
   - `user/visit`
   - `user/set_visit`
@@ -31,29 +18,22 @@
   - `order/receive_gift`
   - `order/gift_detail`
   - `user/balance`
-
-## 保留边界
-
-以下能力不受本次变更影响：
-
-- 微信登录、用户信息、训练营商品、商品详情。
-- 普通订单确认、创建、支付、详情、列表、确认收货。
-- 微信支付和支付回调。
-- 地址能力：暂时保留，避免影响实物订单确认页。
-- 售后退款能力：暂时保留，避免影响订单状态机和售后流程。
-- 二级分销、佣金、签到、会员、测评。
-
-## Docker 验证
-
-PHP 语法检查：
-
+## Preserve boundaries
+The following capabilities are not affected by this change:
+- WeChat login, user information, training camp products, product details.
+- Ordinary order confirmation, creation, payment, details, list, confirmation of receipt.
+- WeChat payment and payment callback.
+- Address capability: temporarily reserved to avoid affecting the physical order confirmation page.
+- After-sales refund capability: temporarily reserved to avoid affecting the order status machine and after-sales process.
+- Secondary distribution, commission, check-in, membership, evaluation.
+## Docker verification
+PHP syntax check:
 ```bash
 docker exec -w /var/www/crmeb crmeb-local php -l config/mvp.php
 docker exec -w /var/www/crmeb crmeb-local php think clear
 ```
 
-禁用接口抽测：
-
+Disable interface spot testing:
 ```bash
 curl -i http://127.0.0.1:8080/api/collect/user
 curl -i http://127.0.0.1:8080/api/user/visit_list
@@ -66,14 +46,12 @@ curl -i http://127.0.0.1:8080/api/order/gift_detail/test
 curl -i http://127.0.0.1:8080/api/user/balance
 ```
 
-期望结果：
-
+Expected results:
 ```json
 {"status":400,"msg":"MVP module disabled"}
 ```
 
-保留接口抽测：
-
+Keep interface sampling:
 ```bash
 curl -i http://127.0.0.1:8080/api/user
 curl -i http://127.0.0.1:8080/api/userinfo
@@ -84,13 +62,10 @@ curl -i http://127.0.0.1:8080/api/sign/config
 curl -i http://127.0.0.1:8080/api/user/member/card/index
 ```
 
-期望结果：
-
-- 不返回 `MVP module disabled`。
-- 未登录环境下可以返回 CRMEB 原有登录态错误。
-
-## 风险点
-
-- 收藏按钮、浏览记录页、站内信页若仍有前端入口，会收到 MVP 禁用响应；下一阶段需要继续隐藏前端入口。
-- `user/balance` 可能被旧用户中心用于展示余额，当前 MVP 不验收余额能力；如界面仍展示余额，应在前端入口阶段同步隐藏。
-- 地址和售后退款本次不拦截，后续必须单独做依赖排查。
+Expected results:
+- Does not return `MVP module disabled`.
+- When not logged in, the original login state error of CRMEB can be returned.
+## Risk points
+- If there are still front-end entrances for favorite buttons, browsing history pages, and site mail pages, you will receive an MVP disable response; you need to continue to hide the front-end entrances in the next stage.
+- `user/balance` may be used by the old user center to display balances. The current MVP does not accept the balance capability; if the interface still displays balances, it should be hidden simultaneously in the front-end entry stage.
+- The address and after-sales refund will not be intercepted this time, and dependencies must be checked separately in the future.

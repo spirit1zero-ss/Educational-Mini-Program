@@ -1,67 +1,67 @@
-# 2026-06-15 修改说明
+# 2026-06-15 Modification instructions
 
-## 本次目标
+## This time's goal
 
-打通自主学习训练营 H5 与本地 CRMEB 后端的基础数据链路，并按保守策略清理临时 mock、旧构建和预览配置。
+Open the basic data link between the self-learning training camp H5 and the local CRMEB backend, and clean up temporary mocks, old builds and preview configurations according to conservative strategies.
 
-## 前端 H5 修改
+## Front-end H5 modification
 
-- 保留当前 H5 全部页面：首页、训练营、测评、成长档案、我的训练营、邀请好友、团队中心、佣金中心。
-- 新增 CRMEB API 访问层：
+- Keep all current H5 pages: home page, training camp, evaluation, growth files, my training camp, invite friends, team center, and commission center.
+- Added CRMEB API access layer:
   - `src/api/crmebClient.js`
   - `src/api/training.js`
   - `src/hooks/useCrmebData.js`
-- H5 请求统一走 `/api`，开发环境由 Vite 代理到本地 CRMEB 后端 `http://127.0.0.1:8080`。
-- 训练营页已读取 CRMEB 商品列表接口，并展示后台商品名称、价格、销量、开营时间等信息。
-- 我的、邀请、团队、佣金页面已优先读取 CRMEB 用户/分销/佣金接口。
-- 接口失败、未登录或无数据时，页面会回退到演示数据，并明确显示“演示数据”，不会误标为 CRMEB 数据。
-- CRMEB 返回的相对图片路径会自动补成本地后端域名，避免 H5 图片地址失效。
+- H5 requests are uniformly routed to `/api`, and the development environment is proxied by Vite to the local CRMEB backend `http://127.0.0.1:8080`.
+- The training camp page has read the CRMEB product list interface and displays background product name, price, sales volume, opening time and other information.
+- The My, Invitation, Team, and Commission pages have priority to read the CRMEB User/Distribution/Commission interface.
+- When the interface fails, you are not logged in, or there is no data, the page will fall back to the demo data and clearly display "demo data", which will not be mistakenly marked as CRMEB data.
+- The relative image path returned by CRMEB will automatically be supplemented with the local backend domain name to avoid invalidation of the H5 image address.
 
-## CRMEB / 构建配置修改
+## CRMEB/Build configuration modification
 
-- `vite.config.js` 改为使用 `loadEnv` 读取环境变量。
-- H5 构建输出统一到 CRMEB 后端静态目录：
+- `vite.config.js` uses `loadEnv` instead to read environment variables.
+- H5 build output is unified into the CRMEB backend static directory:
   - `src/CRMEB/CRMEB-master/crmeb/public/h5`
-- `.env.example` 保留本地联调配置示例：
+- `.env.example` retains local joint debugging configuration example:
   - `VITE_CRMEB_API_BASE=/api`
   - `VITE_CRMEB_API_ORIGIN=http://127.0.0.1:8080`
   - `VITE_CRMEB_TOKEN_KEY=Authori-zation`
-- 本地 `.env` 已配置同样的开发后端地址，但不会提交到 Git。
+- Local `.env` is configured with the same development backend address, but will not be committed to Git.
 
-## 后台与小程序相关调整
+## Adjustments related to background and mini programs
 
-- CRMEB 后台商品编辑页保留 MVP 训练营方向的简化逻辑。
-- UniApp / 小程序商品详情保留 MVP 训练营商品过滤逻辑。
-- 保留 CRMEB 后端、后台、UniApp、小程序模板源码，未做破坏性精简。
+- The CRMEB backend product editing page retains the simplified logic of the MVP training camp direction.
+- UniApp/mini program product details retain the MVP training camp product filtering logic.
+- The source code of the CRMEB backend, background, UniApp, and mini program templates is retained without destructive streamlining.
 
-## 清理内容
+## Clean content
 
-- 删除根目录临时微信预览配置：
+- Delete the temporary WeChat preview configuration in the root directory:
   - `project.config.json`
   - `project.private.config.json`
-- 清空旧 `dist/` 构建文件。
-- 清空 `.wechat-local-data/` mock 服务文件。
-- 未删除 CRMEB 官方目录：
+- Empty old `dist/` build files.
+- Clear the `.wechat-local-data/` mock service file.
+- The CRMEB official directory has not been deleted:
   - `src/CRMEB/CRMEB-master/crmeb`
   - `src/CRMEB/CRMEB-master/template/admin`
   - `src/CRMEB/CRMEB-master/template/uni-app`
   - `src/CRMEB/CRMEB-master/crmeb/public/statics/mp_view`
 
-## 测试结果
+## Test results
 
-- `npm run build` 通过。
-- H5 开发服务可访问：
+- `npm run build` passes.
+- H5 development services are available at:
   - `http://127.0.0.1:5173/`
-- H5 构建产物已生成：
+- H5 build product has been generated:
   - `src/CRMEB/CRMEB-master/crmeb/public/h5/index.html`
   - `src/CRMEB/CRMEB-master/crmeb/public/h5/assets/*`
-- 当前环境中 `http://127.0.0.1:8080` 未检测到真实 CRMEB PHP/Docker 后端服务，因此真实后端接口联调未完成。
-- 前端代理 `/api` 在后端未启动时会失败，但页面具备演示数据回退能力。
+- In the current environment, `http://127.0.0.1:8080` has not detected the real CRMEB PHP/Docker backend service, so the real backend interface joint debugging has not been completed.
+- The front-end proxy `/api` will fail when the backend is not started, but the page has demo data fallback capabilities.
 
-## 后续建议
+## Follow-up suggestions
 
-- 启动真实 CRMEB 后端后，重新测试：
+- After starting the real CRMEB backend, retest:
   - `http://127.0.0.1:8080/admin`
   - `http://127.0.0.1:8080/api/products`
   - `http://127.0.0.1:5173/#/camp`
-- 若要完全后端化教育数据，下一阶段新增 `education_*` 表和 `/api/education/*` 接口，用于测评结果、成长档案、训练营进度持久化。
+- To fully back-end education data, the next phase will add the `education_*` table and `/api/education/*` interface for persistence of assessment results, growth files, and training camp progress.

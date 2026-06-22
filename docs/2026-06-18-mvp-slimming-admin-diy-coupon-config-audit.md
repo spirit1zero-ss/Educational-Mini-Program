@@ -1,56 +1,56 @@
-# CRMEB MVP 瘦身：后台装修优惠券配置入口收口审计
+# CRMEB MVP Slimming: Backend Decoration Coupon Configuration Entrance Closure Audit
 
-## 本轮目标
+## Goal of this round
 
-继续执行 MVP 软瘦身，只隐藏后台 DIY/装修里的优惠券配置入口和预览取数兜底，不删除代码、不改装修路由、不影响商品、订单、支付、二级分销、佣金、签到和会员核心能力。
+Continue to implement MVP soft slimming, only hiding the coupon configuration entrance and preview retrieval in the background DIY/decoration, without deleting codes, not changing decoration routes, and not affecting products, orders, payments, secondary distribution, commissions, check-ins, and core member capabilities.
 
-## 本轮改动
+## Changes in this round
 
-### 后台自定义组件配置
+### Backend custom component configuration
 
-文件：
+document:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/components/mobileConfig/c_custom_component.vue`
 
-改动：
+change:
 
-- 引入 `isMvpCouponEnabled()`。
-- MVP 模式下过滤自定义组件 `selectType` 中的 `coupon` 选项。
-- 如果历史装修数据已经保存为 `coupon`，配置面板会降级到 `user`。
-- `coupon` 配置分支增加 MVP 判断，避免继续展示优惠券数据源、优惠券选择器、优惠券筛选条件。
+- Introduced `isMvpCouponEnabled()`.
+- Filter the `coupon` option in custom component `selectType` in MVP mode.
+- If historical decoration data has been saved as `coupon`, the configuration panel will be downgraded to `user`.
+- `coupon` Configure the branch to add MVP judgment to avoid continuing to display coupon data sources, coupon selectors, and coupon filter conditions.
 
-### 后台自定义组件预览
+### Backend custom component preview
 
-文件：
+document:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/components/mobilePage/home_custom_component.vue`
 
-改动：
+change:
 
-- 引入 `isMvpCouponEnabled()`。
-- MVP 模式下历史 `coupon` 自定义组件降级为 `user` 预览。
-- `fetchCouponList()` 增加兜底，MVP 模式下不再请求优惠券列表接口。
+- Introduced `isMvpCouponEnabled()`.
+- Historical `coupon` custom component is downgraded to `user` preview in MVP mode.
+- `fetchCouponList()` adds a cover, no longer requests the coupon list interface in MVP mode.
 
-### 后台装修组件面板
+### Backstage decoration component panel
 
-文件：
+document:
 
 - `src/CRMEB/CRMEB-master/template/admin/src/pages/setting/devise/diyIndex.vue`
 
-改动：
+change:
 
-- 引入 `isMvpCouponEnabled()`。
-- MVP 模式下左侧组件面板过滤独立 `home_coupon` / `coupon` 组件。
-- 历史自定义组件角标遇到 `coupon` 时返回空文本，避免继续突出优惠券类型。
+- Introduced `isMvpCouponEnabled()`.
+- The left component panel in MVP mode filters independent `home_coupon` / `coupon` components.
+- When the historical custom component corner mark encounters `coupon`, it returns empty text to avoid continuing to highlight the coupon type.
 
-## 未改动范围
+## unchanged range
 
-- 未删除 `home_coupon.vue`、`c_home_coupon.vue` 等组件文件。
-- 未修改后台 DIY 路由和保存接口。
-- 未修改订单、支付、支付回调、分销、佣金、签到、会员。
-- 未修改数据库表和历史装修数据。
+- Component files such as `home_coupon.vue` and `c_home_coupon.vue` are not deleted.
+- The backend DIY routing and saving interfaces have not been modified.
+- Unmodified orders, payments, payment callbacks, distribution, commissions, check-ins, and memberships.
+- The database tables and historical decoration data have not been modified.
 
-## 本地验证
+## local verification
 
 ```powershell
 git diff --check
@@ -61,16 +61,16 @@ curl.exe -i --max-time 20 http://127.0.0.1:8080/api/product/detail/1
 curl.exe -i --max-time 20 http://127.0.0.1:8080/adminapi/marketing/coupon/released
 ```
 
-后台手工验证：
+Backend manual verification:
 
-- 登录后台进入装修/DIY 页面。
-- 确认左侧营销组件中不再显示独立优惠券组件。
-- 添加自定义组件，确认选择信息中不再显示优惠券。
-- 如果加载历史优惠券自定义组件，确认不会继续请求优惠券列表接口。
+- Log in to the backend to enter the decoration/DIY page.
+- Confirm that the standalone coupon component is no longer displayed in the marketing component on the left.
+- Add a custom component and confirm that the coupon is no longer displayed in the selection message.
+- If the historical coupon custom component is loaded, confirm that it will not continue to request the coupon list interface.
 
-## 风险点
+## Risk point
 
-- 本轮是前端软隐藏，历史装修数据中仍可能保留优惠券组件配置。
-- 后台 DIY 路由此前已按 MVP 配置禁用；如果后续重新开启 DIY 页面，需要同时确认页面级入口和组件级入口。
-- 会员组件中仍可能展示会员权益相关优惠券文案。会员功能是 MVP 保留项，本轮未处理会员内部展示，避免误伤会员中心。
-- 真正物理删除优惠券装修组件前，还需要排查 `mobilePage/index.js` 自动注册、`mobileConfig/index.js` 自动注册、主题保存数据、历史页面 JSON 和数据库装修表。
+- This round is soft-hidden on the front end, and the coupon component configuration may still be retained in the historical decoration data.
+- The background DIY routing has been disabled according to the MVP configuration; if you subsequently reopen the DIY page, you need to confirm both the page-level entry and the component-level entry.
+- Coupon copy related to membership benefits may still be displayed in the membership component. The membership function is a reserved item of MVP, and the internal display of members is not processed in this round to avoid accidentally damaging the member center.
+- Before actually physically deleting the coupon decoration component, you need to check the `mobilePage/index.js` automatic registration, `mobileConfig/index.js` automatic registration, theme save data, history page JSON and database decoration table.
