@@ -2,7 +2,7 @@
   <!-- 会员价/佣金 -->
   <el-row>
     <el-col :span="24">
-      <el-form-item v-if="!isMvpMode" label="付费会员专属：">
+      <el-form-item v-if="!isCoreScope" label="付费会员专属：">
         <el-switch :active-value="1" :inactive-value="0" v-model="formValidate.vip_product" size="large">
           <span slot="open">开启</span>
           <span slot="close">关闭</span>
@@ -22,7 +22,7 @@
       <el-form-item label="单独设置：">
         <el-checkbox-group v-model="formValidate.is_sub" @change="checkAllGroupChange">
           <el-checkbox :label="1">佣金设置（数字即返佣金额）</el-checkbox>
-          <el-checkbox v-if="!isMvpMode" :label="0">付费会员价</el-checkbox>
+          <el-checkbox v-if="!isCoreScope" :label="0">付费会员价</el-checkbox>
         </el-checkbox-group>
       </el-form-item>
     </el-col>
@@ -70,14 +70,14 @@
               </template>
               <template v-else-if="item.slot === 'fictitious'">
                 <el-button
-                  v-if="!isMvpMode && !row.coupon_id && formValidate.virtual_type == 2"
+                  v-if="!isCoreScope && !row.coupon_id && formValidate.virtual_type == 2"
                   v-db-click
                   @click="addGoodsCoupon(scope.$index, 'oneFormValidate')"
                   >选择优惠券</el-button
                 >
                 <span
                   class="see"
-                  v-else-if="!isMvpMode && row.coupon_id && formValidate.virtual_type == 2"
+                  v-else-if="!isCoreScope && row.coupon_id && formValidate.virtual_type == 2"
                   v-db-click
                   @click="see(row, 'manyFormValidate', scope.$index)"
                   >{{ row.coupon_name }}</span
@@ -165,7 +165,7 @@
             @input="(val) => $emit('update:manyBrokerageTwo', val)"
           ></el-input-number>
         </span>
-        <span class="brokerage" v-if="!isMvpMode && formValidate.is_sub.indexOf(0) > -1">
+        <span class="brokerage" v-if="!isCoreScope && formValidate.is_sub.indexOf(0) > -1">
           会员价：<el-input-number
             :controls="false"
             placeholder="请输入会员价"
@@ -178,7 +178,7 @@
             @focus="$emit('update:manyVipDiscount', undefined)"
           ></el-input-number>
         </span>
-        <span class="brokerage" v-if="!isMvpMode && formValidate.is_sub.indexOf(0) > -1">
+        <span class="brokerage" v-if="!isCoreScope && formValidate.is_sub.indexOf(0) > -1">
           会员折扣：<el-input-number
             :controls="false"
             placeholder="请输入折扣比例"
@@ -238,14 +238,14 @@
               </template>
               <template v-else-if="item.slot === 'fictitious'">
                 <el-button
-                  v-if="!isMvpMode && !row.coupon_id && formValidate.virtual_type == 2"
+                  v-if="!isCoreScope && !row.coupon_id && formValidate.virtual_type == 2"
                   v-db-click
                   @click="addGoodsCoupon(scope.$index + 1, 'manyFormValidate')"
                   >选择优惠券</el-button
                 >
                 <span
                   class="see"
-                  v-else-if="!isMvpMode && row.coupon_id && formValidate.virtual_type == 2"
+                  v-else-if="!isCoreScope && row.coupon_id && formValidate.virtual_type == 2"
                   v-db-click
                   @click="see(row, 'manyFormValidate', scope.$index + 1)"
                   >{{ row.coupon_name }}</span
@@ -385,7 +385,7 @@ export default {
       type: Number | undefined,
       required: true,
     },
-    isMvpMode: {
+    isCoreScope: {
       type: Boolean,
       default: false,
     },

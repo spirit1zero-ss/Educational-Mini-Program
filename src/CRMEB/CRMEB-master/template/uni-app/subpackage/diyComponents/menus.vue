@@ -365,8 +365,7 @@
 
 <script>
 import commonWrapper from "./commonWrapper.vue";
-import { getCustomer } from "@/utils/index.js";
-import { isMvpHiddenLink } from "@/config/mvp.js";
+import { isRetiredLink } from "@/config/coreScope.js";
 import { toLogin } from "@/libs/login.js";
 import { mapGetters } from "vuex";
 
@@ -411,7 +410,7 @@ export default {
       let menuList = [];
       list.forEach((item) => {
         const url = item && item.info && item.info[1] ? item.info[1].value : "";
-        if (item.show && !isMvpHiddenLink(url)) {
+        if (item.show && !isRetiredLink(url)) {
           menuList.push(item);
         }
       });
@@ -648,15 +647,13 @@ export default {
       this.$util.JumpPath(url);
     },
     goMenuPage(url) {
-      if (isMvpHiddenLink(url)) return;
+      if (isRetiredLink(url)) return;
       if (this.isLogin) {
         if (url.indexOf("http") === -1) {
           if (url== "/kefu/mobile_list") {
             return uni.navigateTo({
               url: `/pages/annex/web_view/index?url=${location.origin}${url}`,
             });
-          } else if (url == "/pages/extension/customer_list/chat") {
-            return getCustomer(url);
           }
           uni.navigateTo({
             url: url,

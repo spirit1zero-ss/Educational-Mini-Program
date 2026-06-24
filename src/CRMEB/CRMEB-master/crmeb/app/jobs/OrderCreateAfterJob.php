@@ -89,7 +89,7 @@ class OrderCreateAfterJob extends BaseJobs
                 $orderData['division_brokerage'] = $orderComputed->getOrderSumPrice($cartInfo, 'division_brokerage', false);
             }
             $createService->update(['id' => $orderId], $orderData);
-            Log::info('mvp_order_brokerage_precomputed', [
+            Log::info('order_brokerage_precomputed', [
                 'id' => $orderId,
                 'order_id' => $orderInfo['order_id'] ?? '',
                 'uid' => $uid,

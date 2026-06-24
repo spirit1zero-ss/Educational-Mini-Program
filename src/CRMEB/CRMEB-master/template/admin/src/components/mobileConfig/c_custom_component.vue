@@ -39,7 +39,7 @@ import toolCom from '@/components/mobileConfigRight/index.js';
 import rightBtn from '@/components/rightBtn/index.vue';
 import CustomDesign from '@/components/CustomDesign';
 import { mapState, mapMutations } from 'vuex';
-import { isMvpCouponEnabled } from '@/config/mvp';
+import { isCouponAvailable } from '@/config/coreScope';
 
 export default {
   name: 'c_custom_component',
@@ -74,7 +74,7 @@ export default {
       let styleConfig = null;
       if (this.type === 'article') styleConfig = this.configObj.articleColumnStyle;
       else if (this.type === 'goods') styleConfig = this.configObj.goodsColumnStyle;
-      else if (this.isMvpCouponEnabled() && this.type === 'coupon') styleConfig = this.configObj.couponColumnStyle;
+      else if (this.isCouponAvailable() && this.type === 'coupon') styleConfig = this.configObj.couponColumnStyle;
 
       if (styleConfig) {
         return (styleConfig.tabVal || 0) + 1;
@@ -102,7 +102,7 @@ export default {
     },
     'configObj.selectType.activeValue': {
       handler(nVal, oVal) {
-        if (!this.isMvpCouponEnabled() && nVal === 'coupon') {
+        if (!this.isCouponAvailable() && nVal === 'coupon') {
           this.configObj.selectType.activeValue = 'user';
           return;
         }
@@ -149,9 +149,9 @@ export default {
     });
   },
   methods: {
-    isMvpCouponEnabled,
-    filterMvpSelectTypeList(list = []) {
-      if (this.isMvpCouponEnabled()) return list;
+    isCouponAvailable,
+    filterRetainedSelectTypeList(list = []) {
+      if (this.isCouponAvailable()) return list;
       return list.filter((item) => item.activeValue !== 'coupon');
     },
     patchConfig(data) {
@@ -499,15 +499,15 @@ export default {
         });
       }
       if (data.selectType && Array.isArray(data.selectType.list)) {
-        data.selectType.list = this.filterMvpSelectTypeList(data.selectType.list);
+        data.selectType.list = this.filterRetainedSelectTypeList(data.selectType.list);
       }
-      if (data.selectType && !this.isMvpCouponEnabled() && data.selectType.activeValue === 'coupon') {
+      if (data.selectType && !this.isCouponAvailable() && data.selectType.activeValue === 'coupon') {
         data.selectType.activeValue = 'user';
       }
       return data;
     },
     updateRCom() {
-      if (!this.isMvpCouponEnabled() && this.type === 'coupon') {
+      if (!this.isCouponAvailable() && this.type === 'coupon') {
         this.type = 'user';
         if (this.configObj.selectType) {
           this.configObj.selectType.activeValue = 'user';
@@ -554,7 +554,7 @@ export default {
             );
             arr.push({ components: toolCom.c_input_number, configNme: 'articleNum' });
           }
-        } else if (this.isMvpCouponEnabled() && this.type === 'coupon') {
+        } else if (this.isCouponAvailable() && this.type === 'coupon') {
           arr = arr.concat([
             { components: toolCom.c_radio, configNme: 'couponDisplayMode' },
             { components: toolCom.c_radio, configNme: 'couponColumnStyle' },

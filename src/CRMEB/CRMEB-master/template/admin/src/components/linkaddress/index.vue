@@ -1,228 +1,136 @@
 <template>
   <div>
-    <el-dialog :visible.sync="modals" title="选择链接" :close-on-click-modal="false" append-to-body width="1000px">
+    <el-dialog
+      :visible.sync="modals"
+      title="选择链接"
+      :close-on-click-modal="false"
+      append-to-body
+      width="1000px"
+    >
       <div class="table_box">
         <div class="left_box" v-if="fromType !== 'diyPage'">
-          <el-tree :data="categoryData" node-key="id" default-expand-all :props="props" highlight-current
-            @node-click="handleCheckChange" :current-node-key="treeId"></el-tree>
+          <el-tree
+            :data="categoryData"
+            node-key="id"
+            default-expand-all
+            :props="props"
+            highlight-current
+            :current-node-key="treeId"
+            @node-click="handleCheckChange"
+          />
         </div>
-        <div class="right_box" v-if="currenType == 'link'">
+
+        <div class="right_box" v-if="currenType === 'link'">
           <div v-if="tableList.length">
             <div class="cont">请选择链接</div>
             <div class="Box">
-              <div class="cont_box" :class="currenId == item.id ? 'on' : ''" v-for="(item, index) in tableList"
-                :key="index" v-db-click @click="getUrl(item)">
-                {{ item.name }}
+              <div
+                class="cont_box"
+                :class="currenId === item.id ? 'on' : ''"
+                v-for="(item, index) in tableList"
+                :key="index"
+                v-db-click
+                @click="getUrl(item)"
+              >
+                {{ item.name || item.title }}
               </div>
             </div>
           </div>
         </div>
-        <div class="right_box" v-if="currenType == 'marketing_link' && coupon.length">
-          <div>
-            <div class="cont">优惠券</div>
-            <div class="Box">
-              <div class="cont_box" :class="currenId == item.id ? 'on' : ''" v-for="(item, index) in coupon"
-                :key="index" v-db-click @click="getUrl(item)">
-                {{ item.name }}
-              </div>
-            </div>
-          </div>
-          <div>
-            <div v-permission="'seckill'" v-if="basicsList.length">
-              <div class="cont">秒杀</div>
-              <div class="Box">
-                <div class="cont_box" :class="currenId == item.id ? 'on' : ''" v-for="(item, index) in basicsList"
-                  :key="index" v-db-click @click="getUrl(item)">
-                  {{ item.name }}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div v-permission="'bargain'" v-if="distributionList.length">
-              <div class="cont">砍价</div>
-              <div class="Box">
-                <div class="cont_box" :class="currenId == item.id ? 'on' : ''" v-for="(item, index) in distributionList"
-                  :key="index" v-db-click @click="getUrl(item)">
-                  {{ item.name }}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div v-permission="'combination'" v-if="userList.length">
-              <div class="cont">拼团</div>
-              <div class="Box">
-                <div class="cont_box" :class="currenId == item.id ? 'on' : ''" v-for="(item, index) in userList"
-                  :key="index" v-db-click @click="getUrl(item)">
-                  {{ item.name }}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div v-if="integral.length">
-            <div class="cont">积分</div>
-            <div class="Box">
-              <div class="cont_box" :class="currenId == item.id ? 'on' : ''" v-for="(item, index) in integral"
-                :key="index" v-db-click @click="getUrl(item)">
-                {{ item.name }}
-              </div>
-            </div>
-          </div>
-          <div v-if="luckDraw.length">
-            <div class="cont">抽奖</div>
-            <div class="Box">
-              <div class="cont_box" :class="currenId == item.id ? 'on' : ''" v-for="(item, index) in luckDraw"
-                :key="index" v-db-click @click="getUrl(item)">
-                {{ item.name }}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="right_box" :class="fromType == 'diyPage' ? 'diy' : ''" v-if="
-          currenType == 'special' ||
-          currenType == 'product_category' ||
-          currenType == 'product' ||
-          currenType == 'seckill' ||
-          currenType == 'bargain' ||
-          currenType == 'combination' ||
-          currenType == 'news' ||
-          currenType == 'advance' ||
-          currenType == 'integral' ||
-          currenType == 'lottery_list'
-        ">
-          <el-form ref="formValidate" :model="formValidate" class="tabform" v-if="currenType == 'product'">
+
+        <div
+          class="right_box"
+          :class="fromType === 'diyPage' ? 'diy' : ''"
+          v-if="['product_category', 'product'].includes(currenType)"
+        >
+          <el-form ref="formValidate" :model="formValidate" class="tabform" v-if="currenType === 'product'">
             <el-row :gutter="24">
               <el-col :span="8">
                 <el-form-item label="" label-for="pid">
-                  <!-- <el-select v-model="formValidate.cate_id" style="width: 180px" clearable @change="userSearchs">
-                    <el-option
-                      v-for="item in treeSelect"
-                      :value="item.id"
-                      :key="item.id"
-                      :label="item.html + item.cate_name"
-                    >
-                    </el-option>
-                  </el-select> -->
-                  <el-cascader style="width: 180px" v-model="formValidate.cate_id" size="small" :options="treeSelect"
-                    :props="{ multiple: true, checkStrictly: true, emitPath: false }" filterable clearable
-                    @change="userSearchs"></el-cascader>
+                  <el-cascader
+                    style="width: 180px"
+                    v-model="formValidate.cate_id"
+                    size="small"
+                    :options="treeSelect"
+                    :props="{ multiple: true, checkStrictly: true, emitPath: false }"
+                    filterable
+                    clearable
+                    @change="userSearchs"
+                  />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
                 <el-form-item label="" label-for="store_name">
-                  <el-input search enter-button placeholder="请输入商品名称,关键字,编号" v-model="formValidate.store_name"
-                    style="width: 200px" @change="userSearchs" />
+                  <el-input
+                    search
+                    enter-button
+                    placeholder="请输入商品名称、关键字、编号"
+                    v-model="formValidate.store_name"
+                    style="width: 200px"
+                    @change="userSearchs"
+                  />
                 </el-form-item>
               </el-col>
             </el-row>
           </el-form>
-          <el-table row-key="id" ref="table" empty-text="暂无数据" :data="tableList" v-loading="loading" :max-height="currenType == 'product_category'
-              ? '460'
-              : currenType == 'product' ||
-                currenType == 'seckill' ||
-                currenType == 'bargain' ||
-                currenType == 'advance' ||
-                currenType == 'combination' ||
-                currenType == 'news' ||
-                currenType == 'integral'
-                ? '428'
-                : ''
-            ">
-            <el-table-column :width="currenType != 'product_category' ? 50 : 80" v-if="
-              [
-                'special',
-                'product',
-                'seckill',
-                'product_category',
-                'bargain',
-                'combination',
-                'advance',
-                'integral',
-                'news',
-                'lottery_list',
-                'link',
-              ].includes(currenType)
-            ">
+
+          <el-table
+            row-key="id"
+            ref="table"
+            empty-text="暂无数据"
+            :data="tableList"
+            v-loading="loading"
+            :max-height="currenType === 'product_category' ? '460' : '428'"
+          >
+            <el-table-column :width="currenType !== 'product_category' ? 50 : 80">
               <template slot-scope="scope">
-                <el-radio v-model="templateRadio" :label="scope.row.id"
-                  @change.native="getTemplateRow(scope.row)">&nbsp;</el-radio>
+                <el-radio
+                  v-model="templateRadio"
+                  :label="scope.row.id"
+                  @change.native="getTemplateRow(scope.row)"
+                >
+                  &nbsp;
+                </el-radio>
               </template>
             </el-table-column>
-            <el-table-column :label="item.title" :width="item.width" :min-width="item.minWidth" v-for="(item, index) in currenType == 'special'
-              ? columns
-              : currenType == 'product_category'
-                ? columns7
-                : currenType == 'bargain' ||
-                  currenType == 'combination' ||
-                  currenType == 'advance' ||
-                  currenType == 'integral'
-                  ? bargain
-                  : currenType == 'news'
-                    ? news
-                    : currenType == 'lottery_list'
-                      ? lottery
-                      : currenType == 'link'
-                        ? diyLink
-                        : columns8" :key="index">
+            <el-table-column
+              :label="item.title"
+              :width="item.width"
+              :min-width="item.minWidth"
+              v-for="(item, index) in currenType === 'product_category' ? columnsCategory : columnsProduct"
+              :key="index"
+            >
               <template slot-scope="scope">
-                <template v-if="item.key">
-                  <div>
-                    <span>{{ scope.row[item.key] }}</span>
+                <span v-if="item.key">{{ scope.row[item.key] }}</span>
+                <viewer v-else-if="item.slot === 'pic' && scope.row.hasOwnProperty('pic')">
+                  <div class="tabBox_img">
+                    <img v-lazy="scope.row.pic" />
                   </div>
-                </template>
-                <template v-else-if="item.slot === 'pic' && scope.row.hasOwnProperty('pic')">
-                  <viewer>
-                    <div class="tabBox_img">
-                      <img v-lazy="scope.row.pic" />
-                    </div>
-                  </viewer>
-                </template>
-                <template v-else-if="item.slot === 'image' && scope.row.hasOwnProperty('image')">
-                  <viewer>
-                    <div class="tabBox_img">
-                      <img v-lazy="scope.row.image" />
-                    </div>
-                  </viewer>
-                </template>
-                <template v-else-if="item.slot === 'image_input' && scope.row.hasOwnProperty('image_input')">
-                  <viewer>
-                    <div class="tabBox_img">
-                      <img v-lazy="scope.row.image_input[0]" />
-                    </div>
-                  </viewer>
-                </template>
+                </viewer>
+                <viewer v-else-if="item.slot === 'image' && scope.row.hasOwnProperty('image')">
+                  <div class="tabBox_img">
+                    <img v-lazy="scope.row.image" />
+                  </div>
+                </viewer>
               </template>
             </el-table-column>
           </el-table>
-          <div class="acea-row row-right page" v-if="
-            currenType == 'product' ||
-            currenType == 'special' ||
-            currenType == 'seckill' ||
-            currenType == 'bargain' ||
-            currenType == 'advance' ||
-            currenType == 'combination' ||
-            currenType == 'news' ||
-            currenType == 'integral' ||
-            currenType == 'lottery_list'
-          ">
-            <pagination v-if="total" :total="total" :page.sync="formValidate.page" :limit.sync="formValidate.limit"
-              @pagination="getList" />
+          <div class="acea-row row-right page" v-if="currenType === 'product'">
+            <pagination
+              v-if="total"
+              :total="total"
+              :page.sync="formValidate.page"
+              :limit.sync="formValidate.limit"
+              @pagination="getList"
+            />
           </div>
         </div>
-        <div class="right_box" v-if="currenType == 'custom'">
-          <!--<div v-if="!tableList.length || customNum==2">-->
-          <!--<el-button type="primary" v-db-click @click="customList" v-if="tableList.length">自定义列表</el-button>-->
+
+        <div class="right_box" v-if="currenType === 'custom'">
           <div style="width: 340px; margin: 150px 100px 0 120px">
             <el-form ref="customdate" :model="customdate" :rules="ruleValidate" :label-width="100">
-              <!--<el-form-item label="链接名称：" prop="name">-->
-              <!--<el-input v-model="customdate.name" placeholder="会员中心"></el-input>-->
-              <!--</el-form-item>-->
-              <!-- <el-form-item label="跳转路径：" prop="url">
-                <el-input v-model="customdate.url" placeholder="请输入跳转路径"></el-input>
-              </el-form-item> -->
               <div class="mb30 radioGroup">
-                <el-radio-group v-model="customdate.status" @input="radioTap('customdate')">
+                <el-radio-group v-model="customdate.status">
                   <el-radio :label="2">
                     <span>跳转其他小程序</span>
                   </el-radio>
@@ -231,17 +139,15 @@
                   </el-radio>
                 </el-radio-group>
               </div>
-              <div v-if="customdate.status == 1">
-                <el-form-item label="跳转路径：" prop="url" key="url">
-                  <el-input v-model="customdate.url" placeholder="请输入正确跳转路径"></el-input>
-                </el-form-item>
-              </div>
-              <div v-if="customdate.status == 2">
+              <el-form-item v-if="customdate.status === 1" label="跳转路径：" prop="url" key="url">
+                <el-input v-model="customdate.url" placeholder="请输入正确跳转路径" />
+              </el-form-item>
+              <div v-if="customdate.status === 2">
                 <el-form-item label="APPID：" prop="appid" key="appid">
-                  <el-input v-model="customdate.appid" placeholder="请输入正确APPID"></el-input>
+                  <el-input v-model="customdate.appid" placeholder="请输入正确APPID" />
                 </el-form-item>
                 <el-form-item label="小程序路径：" prop="mpUrl" key="mpUrl">
-                  <el-input v-model="customdate.mpUrl" placeholder="请输入正确小程序路径"></el-input>
+                  <el-input v-model="customdate.mpUrl" placeholder="请输入正确小程序路径" />
                 </el-form-item>
               </div>
             </el-form>
@@ -249,28 +155,50 @@
         </div>
       </div>
       <span slot="footer" class="dialog-footer">
-        <el-button v-db-click @click="cancel">取 消</el-button>
-        <el-button type="primary" v-db-click @click="handleSubmit('customdate')" v-if="currenType == 'custom'">确
-          定</el-button>
-        <el-button type="primary" v-db-click @click="ok" v-else>确 定</el-button>
+        <el-button v-db-click @click="cancel">取消</el-button>
+        <el-button type="primary" v-db-click @click="handleSubmit('customdate')" v-if="currenType === 'custom'">
+          确定
+        </el-button>
+        <el-button type="primary" v-db-click @click="ok" v-else>确定</el-button>
       </span>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { pageCategory, pageLink, saveLink } from '@/api/diy';
+import { pageCategory } from '@/api/diy';
 import { cascaderListApi, changeListApi } from '@/api/product';
-import {
-  seckillListApi,
-  combinationListApi,
-  bargainListApi,
-  integralProductListApi,
-  presellListApi,
-} from '@/api/marketing';
-import { lotteryList } from '@/api/lottery';
-import { cmsListApi } from '@/api/cms';
 import { linkListApi } from '@/api/setting';
+
+const ALLOWED_TYPES = ['link', 'product', 'product_category', 'custom'];
+const RETIRED_LINK_KEYWORDS = [
+  '/pages/activity/',
+  '/pages/points_mall',
+  '/pages/goods/lottery',
+  '/pages/goods/receive_gift',
+  '/pages/goods/receive_gifts_status',
+  '/pages/users/user_coupon',
+  '/pages/users/user_get_coupon',
+  '/pages/users/user_integral',
+  '/pages/users/user_money',
+  '/pages/users/user_payment',
+  '/pages/columnGoods/HotNewGoods',
+  '/pages/columnGoods/live_list',
+  '/pages/extension/news',
+  '/pages/extension/customer_list',
+];
+
+function hasRetiredUrl(value) {
+  return RETIRED_LINK_KEYWORDS.some((keyword) => String(value || '').includes(keyword));
+}
+
+function filterTree(nodes = []) {
+  return nodes
+    .filter((node) => ALLOWED_TYPES.includes(node.type) || (node.children && node.children.length))
+    .map((node) => ({ ...node, children: filterTree(node.children || []) }))
+    .filter((node) => ALLOWED_TYPES.includes(node.type) || node.children.length);
+}
+
 export default {
   name: 'linkaddress',
   props: {
@@ -289,96 +217,15 @@ export default {
         children: 'children',
       },
       templateRadio: 0,
-      columns: [
-        {
-          title: 'ID',
-          key: 'id',
-          width: 60,
-        },
-        {
-          title: '页面名称',
-          key: 'title',
-          width: 150,
-        },
-        {
-          title: '页面链接',
-          key: 'url',
-        },
+      columnsCategory: [
+        { title: 'ID', key: 'id', width: 60 },
+        { title: '分类名称', key: 'cate_name', tree: true },
+        { title: '分类图标', slot: 'pic' },
       ],
-      columns7: [
-        {
-          title: 'ID',
-          key: 'id',
-          width: 60,
-        },
-        {
-          title: '分类名称',
-          key: 'cate_name',
-          tree: true,
-        },
-        {
-          title: '分类图标',
-          slot: 'pic',
-        },
-      ],
-      columns8: [
-        {
-          title: 'ID',
-          key: 'id',
-          width: 60,
-        },
-        {
-          title: '商品图片',
-          slot: 'image',
-          width: 90,
-        },
-        {
-          title: '商品名称',
-          key: 'store_name',
-        },
-      ],
-      bargain: [
-        {
-          title: 'ID',
-          key: 'id',
-          width: 60,
-        },
-        {
-          title: '商品图片',
-          slot: 'image',
-          width: 90,
-        },
-        {
-          title: '商品名称',
-          key: 'title',
-        },
-      ],
-      news: [
-        {
-          title: 'ID',
-          key: 'id',
-          width: 60,
-        },
-        {
-          title: '文章图片',
-          slot: 'image_input',
-          width: 90,
-        },
-        {
-          title: '文章名称',
-          key: 'title',
-        },
-      ],
-      lottery: [
-        {
-          title: 'ID',
-          key: 'id',
-          width: 60,
-        },
-        {
-          title: '名称',
-          key: 'name',
-        },
+      columnsProduct: [
+        { title: 'ID', key: 'id', width: 60 },
+        { title: '商品图片', slot: 'image', width: 90 },
+        { title: '商品名称', key: 'store_name' },
       ],
       formValidate: {
         page: 1,
@@ -387,18 +234,12 @@ export default {
         store_name: '',
       },
       total: 0,
-      basicsList: [],
-      userList: [],
-      distributionList: [],
-      coupon: [],
-      luckDraw: [],
-      integral: [],
       currenId: '',
       currenUrl: '',
       loading: false,
       tableList: [],
       presentId: 0,
-      categoryId: '', //左侧分类id
+      categoryId: '',
       treeSelect: [],
       customdate: {
         url: '',
@@ -406,16 +247,13 @@ export default {
         mpUrl: '',
         status: 2,
       },
-      customNum: 1,
       ruleValidate: {
-        name: [{ required: true, message: '请输入链接名称', trigger: 'blur' }],
         url: [{ required: true, message: '请输入跳转路径', trigger: 'blur' }],
         appid: [{ required: true, message: '请输入APPID', trigger: 'blur' }],
       },
       treeId: 0,
     };
   },
-  computed: {},
   created() {
     this.getSort();
     this.goodsCategory();
@@ -425,76 +263,20 @@ export default {
       this.presentId = row.id;
       this.currenUrl = row.url;
     },
-    // 删除
-    delLink(row, tit, num) {
-      let delfromData = {
-        title: tit,
-        num: num,
-        url: `diy/del_link/${row.id}`,
-        method: 'DELETE',
-        ids: '',
-      };
-      this.$modalSure(delfromData)
-        .then((res) => {
-          this.$message.success(res.msg);
-          this.tableList.splice(num, 1);
-          if (!this.tableList.length) {
-            this.customNum = 2;
-          }
-        })
-        .catch((res) => {
-          this.$message.error(res.msg || '删除失败');
-        });
-    },
-    customLink() {
-      this.customNum = 2;
-    },
-    customList() {
-      this.customNum = 1;
-    },
-    getCustomList() {
-      pageLink(this.categoryId)
-        .then((res) => {
-          if (!res.data.list.length) {
-            this.customNum = 2;
-          }
-          this.tableList = res.data.list;
-        })
-        .catch((err) => {
-          this.$message.error(err.msg || '获取自定义列表失败');
-        });
-    },
-    getLotteryList() { },
     handleSubmit(name) {
       this.$refs[name].validate((valid) => {
-        if (valid) {
-          let url = this.customdate.url;
-          if (this.customdate.status == 1) {
-            url = this.customdate.url;
-          } else {
-            url = this.customdate.mpUrl + '@APPID=' + this.customdate.appid;
-          }
-          this.$emit('linkUrl', url);
-          this.modals = false;
-          this.reset();
-          // saveLink(this.customdate,this.categoryId).then(res=>{
-          // 	this.getCustomList();
-          // 	this.$message.success(res.msg);
-          // 	this.$emit("linkUrl",this.customdate.url);
-          // 	this.modals = false
-          // 	this.reset();
-          // }).catch(err=>{
-          // 	this.$message.error(err.msg);
-          // })
-        } else {
+        if (!valid) {
           this.$message.error('请填写信息');
+          return;
         }
+        const url = this.customdate.status === 1
+          ? this.customdate.url
+          : `${this.customdate.mpUrl}@APPID=${this.customdate.appid}`;
+        this.$emit('linkUrl', url);
+        this.modals = false;
+        this.reset();
       });
     },
-    handleReset(name) {
-      this.$refs[name].resetFields();
-    },
-    // 商品分类；
     goodsCategory() {
       cascaderListApi(1)
         .then((res) => {
@@ -504,7 +286,6 @@ export default {
           this.$message.error(res.msg || '获取商品分类失败');
         });
     },
-    // 表格搜索
     userSearchs() {
       this.formValidate.page = 1;
       this.getList();
@@ -513,7 +294,6 @@ export default {
       this.currenUrl = '';
       this.presentId = 0;
       this.currenId = '';
-      // this.customdate.name="";
       this.customdate.url = '';
     },
     getUrl(item) {
@@ -523,20 +303,10 @@ export default {
     getSort() {
       pageCategory()
         .then((res) => {
-          if (res.data.length) {
-            res.data[0].children[0].selected = true;
-          }
-          this.categoryData = res.data;
-          if (
-            this.fromType === 'diyPage' &&
-            res.data.length &&
-            res.data[0].children.length &&
-            res.data[0].children[2]
-          ) {
-            this.handleCheckChange(res.data[0].children[2]);
-          } else if (res.data.length && res.data[0].children.length && res.data[0].children[0].children.length) {
-            this.handleCheckChange(res.data[0].children[0].children[0]);
-          }
+          this.categoryData = filterTree(res.data);
+          const firstGroup = this.categoryData.find((item) => item.children && item.children.length);
+          const firstNode = firstGroup && firstGroup.children[0];
+          if (firstNode) this.handleCheckChange(firstNode);
         })
         .catch((err) => {
           this.$message.error(err.msg || '获取链接分类失败');
@@ -545,242 +315,64 @@ export default {
     getList() {
       this.loading = true;
       this.formValidate.limit = 15;
-      if (this.currenType == 'product') {
-        changeListApi(this.formValidate)
-          .then(async (res) => {
-            let data = res.data;
-            data.list.forEach((e) => {
-              e.url = `/pages/goods_details/index?id=${e.id}`;
-            });
-            this.tableList = data.list;
-            this.total = res.data.count;
-            this.loading = false;
-          })
-          .catch((res) => {
-            this.loading = false;
-            this.$message.error(res.msg || '获取列表失败');
+      changeListApi(this.formValidate)
+        .then((res) => {
+          const data = res.data;
+          data.list.forEach((item) => {
+            item.url = `/pages/goods_details/index?id=${item.id}`;
           });
-      } else if (this.currenType == 'seckill') {
-        seckillListApi(this.formValidate)
-          .then(async (res) => {
-            let data = res.data;
-            data.list.forEach((e) => {
-              e.url = `/pages/activity/goods_seckill_details/index?id=${e.id}&status=1`;
-            });
-            this.tableList = data.list;
-            this.total = res.data.count;
-            this.loading = false;
-          })
-          .catch((res) => {
-            this.loading = false;
-            this.$message.error(res.msg || '获取秒杀列表失败');
-          });
-      } else if (this.currenType == 'advance') {
-        presellListApi(this.formValidate)
-          .then(async (res) => {
-            let data = res.data;
-            data.list.forEach((e) => {
-              e.url = `/pages/activity/presell/index?id=${e.id}&status=1`;
-            });
-            this.tableList = data.list;
-            this.total = res.data.count;
-            this.loading = false;
-          })
-          .catch((res) => {
-            this.loading = false;
-            this.$message.error(res.msg || '获取预售列表失败');
-            advance;
-          });
-      } else if (this.currenType == 'bargain') {
-        bargainListApi(this.formValidate)
-          .then(async (res) => {
-            let data = res.data;
-            data.list.forEach((e) => {
-              e.url = `/pages/activity/goods_bargain_details/index?id=${e.id}`;
-            });
-            this.tableList = data.list;
-            this.total = res.data.count;
-            this.loading = false;
-          })
-          .catch((res) => {
-            this.loading = false;
-            this.$message.error(res.msg || '获取砍价列表失败');
-          });
-      } else if (this.currenType == 'combination') {
-        combinationListApi(this.formValidate)
-          .then(async (res) => {
-            let data = res.data;
-            data.list.forEach((e) => {
-              e.url = `/pages/activity/goods_combination_details/index?id=${e.id}`;
-            });
-            this.tableList = data.list;
-            this.total = res.data.count;
-            this.loading = false;
-          })
-          .catch((res) => {
-            this.loading = false;
-            this.$message.error(res.msg || '获取拼团列表失败');
-          });
-      } else if (this.currenType == 'news') {
-        cmsListApi(this.formValidate)
-          .then(async (res) => {
-            let data = res.data;
-            data.list.forEach((e) => {
-              e.url = `/pages/extension/news_details/index?id=${e.id}`;
-            });
-            this.tableList = data.list;
-            this.total = data.count;
-            this.loading = false;
-          })
-          .catch((res) => {
-            this.loading = false;
-            this.$message.error(res.msg || '获取新闻列表失败');
-          });
-      } else if (this.currenType == 'lottery_list') {
-        this.formValidate = {
-          page: 1,
-          limit: 15,
-          factor: 1,
-        };
-        lotteryList(this.formValidate)
-          .then(async (res) => {
-            let data = res.data;
-            data.list.forEach((e) => {
-              e.url = `/pages/goods/lottery/grids/index?type=1&lottery_id=${e.id}`;
-            });
-            this.tableList = data.list;
-            this.total = data.count;
-            this.loading = false;
-          })
-          .catch((res) => {
-            this.loading = false;
-            this.$message.error(res.msg || '获取抽奖列表失败');
-          });
-      } else if (this.currenType == 'integral') {
-        integralProductListApi(this.formValidate)
-          .then(async (res) => {
-            let data = res.data;
-            data.list.forEach((e) => {
-              e.url = `/pages/points_mall/integral_goods_details?id=${e.id}`;
-            });
-            this.tableList = data.list;
-            this.total = res.data.count;
-            this.loading = false;
-          })
-          .catch((res) => {
-            this.loading = false;
-            this.$message.error(res.msg || '获取积分商品列表失败');
-          });
-      }
+          this.tableList = data.list;
+          this.total = data.count;
+          this.loading = false;
+        })
+        .catch((res) => {
+          this.loading = false;
+          this.$message.error(res.msg || '获取商品列表失败');
+        });
     },
     handleCheckChange(data) {
       this.reset();
-      let id = '';
       this.treeId = data.id;
-      if (data.pid) {
-        id = data.id;
-        this.categoryId = data.id;
-      } else {
-        return false;
-      }
-      this.loading = true;
+      if (!data.pid || !ALLOWED_TYPES.includes(data.type)) return;
+
+      this.categoryId = data.id;
       this.currenType = data.type;
-      if (
-        this.currenType == 'product' ||
-        this.currenType == 'seckill' ||
-        this.currenType == 'bargain' ||
-        this.currenType == 'combination' ||
-        this.currenType == 'news' ||
-        this.currenType == 'advance' ||
-        this.currenType == 'integral' ||
-        this.currenType == 'lottery_list'
-      ) {
+      this.loading = true;
+
+      if (this.currenType === 'product') {
         this.getList();
-      } else if (this.currenType == 'custom') {
-        this.getCustomList();
-      } else {
-        this.formValidate = {
-          id,
-          page: 1,
-        };
-        linkListApi(this.formValidate)
-          .then((res) => {
-            this.loading = false;
-            let data = res.data.list;
-            this.total = res.data.count;
-            if (this.currenType == 'special') {
-              let list = [];
-              data.forEach((e) => {
-                e.url = `/pages/annex/special/index?theme_id=${e.id}&name=${e.title}`;
-                list.push(e);
-              });
-              this.tableList = list;
-            } else {
-              this.tableList = data;
-            }
-            // if (this.currenType == 'marketing_link' || this.currenType == 'link') {
-            //   let basicsList = [];
-            //   let distributionList = [];
-            //   let userList = [];
-            //   let integral = [];
-            //   let luckDraw = [];
-            //   let coupon = [];
-            //   data.forEach((e) => {
-            //     if (e.type == 1) {
-            //       basicsList.push(e);
-            //     } else if (e.type == 2) {
-            //       distributionList.push(e);
-            //     } else if (e.type == 3) {
-            //       userList.push(e);
-            //     } else if (e.type == 4) {
-            //       integral.push(e);
-            //     } else if (e.type == 5) {
-            //       luckDraw.push(e);
-            //     } else {
-            //       coupon.push(e);
-            //     }
-            //   });
-            //   this.basicsList = basicsList;
-            //   this.distributionList = distributionList;
-            //   this.userList = userList;
-            //   this.coupon = coupon;
-            //   this.luckDraw = luckDraw;
-            //   this.integral = integral;
-            // } else if (this.currenType == 'special') {
-            //   let list = [];
-            //   data.forEach((e) => {
-            //     e.url = `/pages/annex/special/index?id=${e.id}&name=${e.name}`;
-            //     if (e.is_diy) {
-            //       list.push(e);
-            //     }
-            //   });
-            //   this.tableList = list;
-            // } else if (this.currenType == 'product_category') {
-            //   data.forEach((e) => {
-            //     if (e.hasOwnProperty('children')) {
-            //       e.children.forEach((j) => {
-            //         j.url = `/pages/goods/goods_list/index?sid=${j.id}&title=${j.cate_name}`;
-            //       });
-            //     }
-            //     e.url = `/pages/goods/goods_list/index?cid=${e.id}&title=${e.cate_name}`;
-            //   });
-            //   this.tableList = data;
-            // }
-          })
-          .catch((err) => {
-            this.loading = false;
-            this.$message.error(err.msg || '获取链接列表失败');
-          });
+        return;
       }
+      if (this.currenType === 'custom') {
+        this.loading = false;
+        return;
+      }
+
+      linkListApi({ id: data.id, page: 1 })
+        .then((res) => {
+          const list = res.data.list || [];
+          this.total = res.data.count;
+          this.tableList = list
+            .filter((item) => !hasRetiredUrl(item.url || item.value || item.val))
+            .map((item) => {
+              if (this.currenType !== 'product_category') return item;
+              const url = item.url || `/pages/goods/goods_list/index?cid=${item.id}&title=${item.cate_name}`;
+              return { ...item, url };
+            });
+          this.loading = false;
+        })
+        .catch((err) => {
+          this.loading = false;
+          this.$message.error(err.msg || '获取链接列表失败');
+        });
     },
     ok() {
-      if (this.currenUrl == '') {
+      if (!this.currenUrl) {
         return this.$message.warning('请选择链接');
-      } else {
-        this.$emit('linkUrl', this.currenUrl);
-        this.modals = false;
-        this.reset();
       }
+      this.$emit('linkUrl', this.currenUrl);
+      this.modals = false;
+      this.reset();
     },
     cancel() {
       this.modals = false;
@@ -797,35 +389,14 @@ export default {
   height: 30px;
 }
 
-::v-deep .el-tree--highlight-current .el-tree-node.is-current>.el-tree-node__content {
+::v-deep .el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content {
   background-color: var(--prev-bg-menu-hover-ba-color) !important;
   border-right: 2px solid var(--prev-color-primary);
-}
-
-::v-deep .ivu-tree-title-selected,
-::v-deep .ivu-tree-title-selected:hover,
-::v-deep .ivu-tree-title:hover {
-  background-color: unset;
-  color: var(--prev-color-primary);
-}
-
-::v-deep .ivu-table-cell-tree {
-  border: 0;
-  font-size: 15px;
-  background-color: unset;
 }
 
 ::v-deep .el-table .cell {
   display: flex;
   align-items: center;
-}
-
-::v-deep .ivu-table-cell-tree .ivu-icon-ios-add:before {
-  content: '\F11F';
-}
-
-::v-deep .ivu-table-cell-tree .ivu-icon-ios-remove:before {
-  content: '\F116';
 }
 
 .tabBox_img {
@@ -840,48 +411,17 @@ export default {
   }
 }
 
-/* 定义滑块 内阴影+圆角 */
 ::-webkit-scrollbar-thumb {
   -webkit-box-shadow: inset 0 0 6px #ddd;
 }
 
 ::-webkit-scrollbar {
   width: 4px !important;
-  /* 对垂直流动条有效 */
 }
 
 .on {
   background-color: var(--prev-color-primary) !important;
   color: #fff !important;
-}
-
-.menu-item {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  word-break: break-all;
-
-  .icon-box {
-    z-index: 3;
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: none;
-  }
-
-  &:hover .icon-box {
-    display: block;
-  }
-
-  .right-menu {
-    z-index: 10;
-    position: absolute;
-    right: -106px;
-    top: -11px;
-    width: auto;
-    min-width: 121px;
-  }
 }
 
 .radioGroup {
@@ -900,11 +440,6 @@ export default {
     border-right: 1px solid #eeeeee;
     overflow-x: hidden;
     overflow-y: auto;
-
-    .left_cont {
-      margin-bottom: 12px;
-      cursor: pointer;
-    }
   }
 
   .right_box {
@@ -917,9 +452,8 @@ export default {
     overflow-y: auto;
 
     .cont {
-      font-weight: 500;
-      color: #000000;
       font-weight: bold;
+      color: #000000;
     }
 
     .Box {
@@ -943,28 +477,6 @@ export default {
           color: #333;
         }
       }
-
-      .item {
-        position: relative;
-
-        .iconfont {
-          display: none;
-        }
-
-        &:hover {
-          .iconfont {
-            display: block;
-          }
-        }
-      }
-
-      .iconfont {
-        position: absolute;
-        right: 9px;
-        top: -8px;
-        font-size: 18px;
-        color: #333;
-      }
     }
   }
 
@@ -974,40 +486,6 @@ export default {
 
   ::v-deep .page {
     margin-top: 10px;
-  }
-
-  .Button {
-    position: absolute;
-    bottom: 15px;
-    right: 15px;
-    font-family: PingFangSC-Regular;
-    text-align: center;
-
-    .cancel {
-      width: 70px;
-      height: 32px;
-      background: #ffffff;
-      border: 1px solid rgba(0, 0, 0, 0.14901960784313725);
-      border-radius: 2px;
-      font-size: 14px;
-      color: #000000;
-      line-height: 32px;
-      float: left;
-      margin-right: 10px;
-      cursor: pointer;
-    }
-
-    .ok {
-      width: 70px;
-      height: 32px;
-      background: var(--prev-color-primary);
-      border-radius: 2px;
-      font-size: 14px;
-      color: #ffffff;
-      line-height: 32px;
-      float: left;
-      cursor: pointer;
-    }
   }
 }
 </style>

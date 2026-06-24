@@ -66,7 +66,7 @@ import { getNavigation } from "@/api/public.js";
 // import {getCartCounts} from '@/api/order.js';
 import { getDiyVersion } from "@/api/api.js";
 import BaseBadge from "@/components/BaseBadge/index.vue";
-import { filterMvpFooterNavigation, isMvpHiddenLink } from "@/config/mvp.js";
+import { filterRetainedFooterNavigation, isRetiredLink } from "@/config/coreScope.js";
 export default {
   name: "pageFooter",
   components: { BaseBadge },
@@ -140,7 +140,7 @@ export default {
     configData: {
       handler(newVal) {
         if (newVal) {
-          let configData = filterMvpFooterNavigation(newVal);
+          let configData = filterRetainedFooterNavigation(newVal);
           this.newData = configData;
           this.showTabBar = configData.effectConfig.tabVal;
         }
@@ -170,7 +170,7 @@ export default {
   },
   methods: {
     setNavigationInfo(data) {
-      data = filterMvpFooterNavigation(data);
+      data = filterRetainedFooterNavigation(data);
       if (this.isTabBar) {
         this.newData = data;
         this.showTabBar = data.effectConfig.tabVal;
@@ -211,7 +211,7 @@ export default {
       }
     },
     goRouter(item) {
-      if (!item || isMvpHiddenLink(item.link)) return;
+      if (!item || isRetiredLink(item.link)) return;
       var pages = getCurrentPages();
       var page = pages[pages.length - 1].$page.fullPath;
       if (item.link == page) return;

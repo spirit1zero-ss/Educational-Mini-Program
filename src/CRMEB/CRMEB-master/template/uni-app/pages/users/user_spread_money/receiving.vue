@@ -140,7 +140,7 @@ export default {
 			if (this.type == 1) {
 				backUrl = '/pages/users/user_spread_money/index?type=1';
 			} else {
-				backUrl = '/pages/goods/lottery/grids/record';
+				backUrl = '/pages/user/index';
 			}
 			uni.reLaunch({
 				url: backUrl

@@ -51,7 +51,7 @@ import { productGetTempKeysApi, uploadType } from '@/api/product';
 import Setting from '@/setting';
 import { getCookies } from '@/libs/util';
 import { isVideoUpload } from '@/utils';
-import { isMvpProductExtrasEnabled } from '@/config/mvp';
+import { areProductExtrasAvailable } from '@/config/coreScope';
 // import "../../../public/UEditor/dialogs/internal";
 export default {
   name: 'vide11o',
@@ -137,8 +137,8 @@ export default {
     },
     zh_uploadFile_change(evfile) {
       let that = this;
-      if (!isMvpProductExtrasEnabled()) {
-        return that.$message.warning('Video upload is disabled in MVP mode');
+      if (!areProductExtrasAvailable()) {
+        return that.$message.warning('Video upload is disabled in the current product scope');
       }
       if (evfile.target.files[0].type !== 'video/mp4') {
         return that.$message.error('只能上传mp4文件');

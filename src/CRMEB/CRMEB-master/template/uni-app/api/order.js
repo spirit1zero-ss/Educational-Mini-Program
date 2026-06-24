@@ -384,20 +384,3 @@ export function cancelRefundOrder(uni) {
 export function getCashierOrder(orderId, type) {
 	return request.get(`order/cashier/${orderId}/${type}`);
 }
-
-/**
- * 发票地址获取
- * @param object data
- */
-export function getInvoiceLink(id) {
-	return request.get(`v2/order/down_invoice/${id}`);
-}
-
-/**
- * 领取礼物
- * @param orderId
- * @param data
- */
-export function orderReceiveGift(orderId, data) {
-	return request.post("order/receive_gift/" + orderId, data);
-}

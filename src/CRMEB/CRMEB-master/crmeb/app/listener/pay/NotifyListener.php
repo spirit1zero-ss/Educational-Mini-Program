@@ -34,7 +34,7 @@ class NotifyListener
     {
         [$notify, $payType] = $event;
 
-        Log::info('mvp_pay_notify_received', [
+        Log::info('pay_notify_received', [
             'pay_type' => $payType,
             'attach' => $notify['attach'] ?? '',
             'out_trade_no' => $notify['out_trade_no'] ?? '',
@@ -55,7 +55,7 @@ class NotifyListener
                 if (($count = strpos($notify['out_trade_no'], '_')) !== false) {
                     $notify['out_trade_no'] = substr($notify['out_trade_no'], $count + 1);
                 }
-                Log::info('mvp_pay_notify_dispatch', [
+                Log::info('pay_notify_dispatch', [
                     'attach' => $notify['attach'],
                     'order_id' => $notify['out_trade_no'] ?? '',
                     'trade_no' => $notify['transaction_id'] ?? '',

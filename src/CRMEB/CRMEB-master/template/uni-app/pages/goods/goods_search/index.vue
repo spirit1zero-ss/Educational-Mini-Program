@@ -10,7 +10,7 @@
 					</view>
 					<view class='bnt' @tap='searchBut'>{{$t(`搜索`)}}</view>
 				</view>
-				<template v-if="!isMvpMode && history.length">
+				<template v-if="!isCoreScope && history.length">
 					<view class='title acea-row row-between-wrapper'>
 						<view>{{$t(`搜索历史`)}}</view>
 						<view class="iconfont icon-shanchu" @click="clear"></view>
@@ -22,8 +22,8 @@
 						</block>
 					</view>
 				</template>
-				<view class='title' v-if="!isMvpMode">{{$t(`热门搜索`)}}</view>
-				<view class='list acea-row' v-if="!isMvpMode">
+				<view class='title' v-if="!isCoreScope">{{$t(`热门搜索`)}}</view>
+				<view class='list acea-row' v-if="!isCoreScope">
 					<block v-for="(item,index) in hotSearchList" :key="index">
 						<view class='item line1' @tap='setHotSearchValue(item.val)' v-if="item.val">{{item.val}}</view>
 					</block>
@@ -38,7 +38,7 @@
 				<view class='pictrue' v-if="bastList.length == 0">
 					<image :src="imgHost + '/statics/images/noSearch.png'"></image>
 				</view>
-				<recommend :hostProduct='hostProduct' v-if="!isMvpMode && bastList.length == 0 && page > 1"></recommend>
+				<recommend :hostProduct='hostProduct' v-if="!isCoreScope && bastList.length == 0 && page > 1"></recommend>
 			</view>
 		</scroll-view>
 		<home></home>
@@ -66,10 +66,10 @@
 		HTTP_REQUEST_URL
 	} from '@/config/app';
 	import {
-		applyMvpTrainingCampFilter,
-		isMvpEnabled,
-		MVP_TRAINING_CAMP_KEYWORD
-	} from '@/config/mvp.js';
+		applyTrainingCampFilter,
+		isCoreScopeEnabled,
+		TRAINING_CAMP_KEYWORD
+	} from '@/config/coreScope.js';
 	export default {
 		components: {
 			goodList,
@@ -77,8 +77,8 @@
 			home
 		},
 		computed: {
-			isMvpMode() {
-				return isMvpEnabled();
+			isCoreScope() {
+				return isCoreScopeEnabled();
 			}
 		},
 		mixins: [colors],
@@ -107,8 +107,8 @@
 			};
 		},
 		onShow: function() {
-			if (this.isMvpMode) {
-				this.searchValue = MVP_TRAINING_CAMP_KEYWORD;
+			if (this.isCoreScope) {
+				this.searchValue = TRAINING_CAMP_KEYWORD;
 				this.hotSearchList = [];
 				this.history = [];
 				if (!this.bastList.length) this.getProductList();
@@ -130,7 +130,7 @@
 			scrollLower(){
 				if (this.bastList.length > 0) {
 					this.getProductList();
-				} else if (!this.isMvpMode) {
+				} else if (!this.isCoreScope) {
 					this.getHostProduct();
 				}
 			},
@@ -146,7 +146,7 @@
 				});
 			},
 			searchList() {
-				if (this.isMvpMode) return;
+				if (this.isCoreScope) return;
 				searchList({
 					page: 1,
 					limit: 10
@@ -183,7 +183,7 @@
 				if (that.loading) return;
 				that.loading = true;
 				that.loadTitle = '';
-				const query = applyMvpTrainingCampFilter({
+				const query = applyTrainingCampFilter({
 					keyword: that.searchValue.trim(),
 					page: that.page,
 					limit: that.limit
@@ -204,7 +204,7 @@
 			},
 			getHostProduct: function() {
 				let that = this;
-				if (that.isMvpMode) return;
+				if (that.isCoreScope) return;
 				if (!this.isScroll) return
 				getProductHot(that.hotPage, that.limit).then(res => {
 					that.isScroll = res.data.length >= that.limit
@@ -213,18 +213,18 @@
 				});
 			},
 			setHotSearchValue: function(event) {
-				this.$set(this, 'searchValue', this.isMvpMode ? MVP_TRAINING_CAMP_KEYWORD : event);
+				this.$set(this, 'searchValue', this.isCoreScope ? TRAINING_CAMP_KEYWORD : event);
 				this.page = 1;
 				this.loadend = false;
 				this.$set(this, 'bastList', []);
 				this.getProductList();
 			},
 			setValue: function(event) {
-				this.$set(this, 'searchValue', this.isMvpMode ? MVP_TRAINING_CAMP_KEYWORD : event.detail.value);
+				this.$set(this, 'searchValue', this.isCoreScope ? TRAINING_CAMP_KEYWORD : event.detail.value);
 			},
 			searchBut: function() {
 				let that = this;
-				if (that.isMvpMode) that.searchValue = MVP_TRAINING_CAMP_KEYWORD;
+				if (that.isCoreScope) that.searchValue = TRAINING_CAMP_KEYWORD;
 				if (!that.searchValue.trim()) return this.$util.Tips({
 					title: that.$t(`请输入要搜索的商品`)
 				});

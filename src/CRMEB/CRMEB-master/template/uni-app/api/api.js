@@ -499,20 +499,6 @@ export function wechatAppAuth(data) {
   });
 }
 /**
- * 获取客服类型
- * @returns {*}
- */
-export function getCustomerType(data) {
-  return request.get(
-    "get_customer_type",
-    {},
-    {
-      noAuth: true,
-    },
-  );
-}
-
-/**
  * 获取开屏广告
  * @returns {*}
  */

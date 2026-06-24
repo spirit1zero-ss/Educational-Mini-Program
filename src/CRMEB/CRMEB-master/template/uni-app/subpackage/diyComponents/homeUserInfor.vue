@@ -578,7 +578,7 @@
 <script>
 import commonWrapper from "./commonWrapper.vue";
 import { mapGetters } from "vuex";
-import { isMvpHiddenLink } from "@/config/mvp.js";
+import { isRetiredLink } from "@/config/coreScope.js";
 
 export default {
   components: { commonWrapper },
@@ -1091,7 +1091,7 @@ export default {
       ];
       return list
         .filter((item) => this.checkType.indexOf(item.id) != -1)
-        .filter((item) => !isMvpHiddenLink(this.getDataNavigationUrl(item.id)))
+        .filter((item) => !isRetiredLink(this.getDataNavigationUrl(item.id)))
         .map((item) => ({ ...item, val: this.getDataValue(item.key) }));
     },
   },
@@ -1138,11 +1138,11 @@ export default {
     getDataNavigationUrl(id) {
       switch (id) {
         case 1:
-          return "/pages/users/user_money/index";
+          return "/pages/user/index";
         case 3:
-          return "/pages/users/user_coupon/index";
+          return "/pages/user/index";
         case 2:
-          return "/pages/users/user_integral/index";
+          return "/pages/user/index";
         case 5:
           return "/pages/users/user_goods_collection/index";
         case 6:

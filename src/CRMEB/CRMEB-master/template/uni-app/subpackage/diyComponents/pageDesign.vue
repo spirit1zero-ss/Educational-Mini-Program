@@ -48,49 +48,18 @@
         <!-- 自定义样式 -->
         <block v-for="(item, index) in styleConfig" :key="index">
           <view :id="item.id">
-            <userInfor
-              v-if="item.name == 'userInfor'"
-              :dataConfig="item"
-              @changeLogin="changeLogin"
-            ></userInfor>
             <homeUserInfor
               v-else-if="item.name == 'member'"
               :dataConfig="item"
               @changeLogin="changeLogin"
             ></homeUserInfor>
-            <newVip
-              v-else-if="item.name == 'newVip'"
-              :dataConfig="item"
-            ></newVip>
             <!-- 文章列表 -->
-            <articleList
-              v-else-if="item.name == 'articleList'"
-              :dataConfig="item"
-            ></articleList>
-            <bargain
-              v-else-if="item.name == 'bargain'"
-              :dataConfig="item"
-              @changeBarg="changeBarg"
-            ></bargain>
             <blankPage
               v-else-if="item.name == 'blankPage'"
               :dataConfig="item"
             ></blankPage>
-            <combination
-              v-else-if="item.name == 'combination'"
-              :dataConfig="item"
-            ></combination>
             <!-- 优惠券 -->
-            <coupon
-              v-else-if="item.name == 'coupon'"
-              :dataConfig="item"
-              @changeLogin="changeLogin"
-            ></coupon>
             <!-- 客户服务 -->
-            <customerService
-              v-else-if="item.name == 'customerService'"
-              :dataConfig="item"
-            ></customerService>
             <!-- 商品列表 -->
             <goodList
               ref="goodLists"
@@ -109,31 +78,15 @@
             <guide v-else-if="item.name == 'guide'" :dataConfig="item"></guide>
             <!-- 直播模块 -->
             <!-- #ifdef  MP-WEIXIN -->
-            <liveBroadcast
-              v-else-if="item.name == 'liveBroadcast'"
-              :dataConfig="item"
-            ></liveBroadcast>
             <!-- #endif -->
             <menus v-else-if="item.name == 'menus'" :dataConfig="item"></menus>
             <!-- 实时消息 -->
-            <news v-else-if="item.name == 'news'" :dataConfig="item"></news>
             <!-- 图片库 -->
             <pictureCube
               v-else-if="item.name == 'pictureCube'"
               :dataConfig="item"
             ></pictureCube>
             <!-- 促销列表 -->
-            <promotionList
-              ref="promotionLists"
-              v-else-if="item.name == 'promotionList'"
-              :dataConfig="item"
-              :productVideoStatus="productVideoStatus"
-              :positionTop="positionTop"
-            ></promotionList>
-            <seckill
-              v-else-if="item.name == 'seckill'"
-              :dataConfig="item"
-            ></seckill>
             <!-- 轮播图-->
             <swiperBg
               v-else-if="item.name == 'swiperBg'"
@@ -149,23 +102,11 @@
               v-else-if="item.name == 'titles'"
               :dataConfig="item"
             ></titles>
-            <presale
-              v-else-if="item.name == 'presale'"
-              :dataConfig="item"
-            ></presale>
-            <pointsMall
-              v-else-if="item.name == 'pointsMall'"
-              :dataConfig="item"
-            ></pointsMall>
             <!-- #ifndef APP -->
             <richText
               v-else-if="item.name == 'richText'"
               :dataConfig="item"
             ></richText>
-            <videos
-              v-else-if="item.name == 'videos'"
-              :dataConfig="item"
-            ></videos>
             <!-- #endif -->
             <signIn
               v-else-if="item.name == 'signIn'"
@@ -263,30 +204,16 @@ import colors from "@/mixins/color";
 import homeComb from "./homeComb.vue";
 import headerSerch from "./headerSerch.vue";
 import tabNav from "./tabNav.vue";
-import userInfor from "./userInfor.vue";
 import homeUserInfor from "./homeUserInfor.vue";
-import newVip from "./newVip.vue";
-import articleList from "./articleList.vue";
-import bargain from "./bargain.vue";
 import blankPage from "./blankPage.vue";
-import combination from "./combination.vue";
-import coupon from "./coupon.vue";
-import customerService from "./customerService.vue";
 import goodList from "./goodList.vue";
 import guide from "./guide.vue";
-import liveBroadcast from "./liveBroadcast.vue";
 import menus from "./menus.vue";
-import news from "./news.vue";
 import pictureCube from "./pictureCube.vue";
-import promotionList from "./promotionList.vue";
-import seckill from "./seckill.vue";
 import swiperBg from "./swiperBg.vue";
 import swipers from "./swipers.vue";
 import titles from "./titles.vue";
-import presale from "./presale.vue";
-import pointsMall from "./pointsMall.vue";
 import richText from "./richText.vue";
-import videos from "./videos.vue";
 import signIn from "./signIn.vue";
 import hotspot from "./hotspot.vue";
 import follow from "./follow.vue";
@@ -297,9 +224,9 @@ import homeReviews from "./homeReviews.vue";
 import productDesc from "./productDesc.vue";
 import customComponent from "./customComponent.vue";
 import {
-  filterMvpFooterNavigation,
-  isMvpDiyItemVisible,
-} from "@/config/mvp.js";
+  filterRetainedFooterNavigation,
+  isRetainedDiyItem,
+} from "@/config/coreScope.js";
 
 export default {
   name: "PageDesign",
@@ -308,30 +235,16 @@ export default {
     homeComb,
     headerSerch,
     tabNav,
-    userInfor,
     homeUserInfor,
-    newVip,
-    articleList,
-    bargain,
     blankPage,
-    combination,
-    coupon,
-    customerService,
     goodList,
     guide,
-    liveBroadcast,
     menus,
-    news,
     pictureCube,
-    promotionList,
-    seckill,
     swiperBg,
     swipers,
     titles,
-    presale,
-    pointsMall,
     richText,
-    videos,
     signIn,
     hotspot,
     follow,
@@ -563,11 +476,11 @@ export default {
       if (data.value) {
         let lastArr = this.objToArr(data.value);
         lastArr.forEach((item) => {
-          if (!isMvpDiyItemVisible(item, { isHome: this.isHome })) {
+          if (!isRetainedDiyItem(item, { isHome: this.isHome })) {
             return;
           }
           if (item.name == "pageFoot" && !this.microPage) {
-            this.footerConfigData = filterMvpFooterNavigation(item);
+            this.footerConfigData = filterRetainedFooterNavigation(item);
           }
           if (item.name === "homeComb" && !item.isHide) {
             this.showHomeComb = true;

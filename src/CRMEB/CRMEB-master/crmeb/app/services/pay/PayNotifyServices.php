@@ -35,7 +35,7 @@ class PayNotifyServices
     public function wechatProduct(string $order_id = null, string $trade_no = null, string $payType = PayServices::WEIXIN_PAY)
     {
         try {
-            Log::info('mvp_pay_product_notify_start', [
+            Log::info('pay_product_notify_start', [
                 'order_id' => $order_id,
                 'trade_no' => $trade_no,
                 'pay_type' => $payType,
@@ -44,25 +44,25 @@ class PayNotifyServices
             $services = app()->make(StoreOrderSuccessServices::class);
             $orderInfo = $services->getOne(['order_id' => $order_id]);
             if (!$orderInfo) {
-                Log::warning('mvp_pay_product_notify_order_missing', ['order_id' => $order_id]);
+                Log::warning('pay_product_notify_order_missing', ['order_id' => $order_id]);
                 return true;
             }
             if ($orderInfo->paid) {
-                Log::info('mvp_pay_product_notify_already_paid', [
+                Log::info('pay_product_notify_already_paid', [
                     'order_id' => $order_id,
                     'id' => $orderInfo->id ?? 0,
                 ]);
                 return true;
             }
             $res = $services->paySuccess($orderInfo->toArray(), $payType, ['trade_no' => $trade_no]);
-            Log::info('mvp_pay_product_notify_finish', [
+            Log::info('pay_product_notify_finish', [
                 'order_id' => $order_id,
                 'id' => $orderInfo->id ?? 0,
                 'result' => (bool)$res,
             ]);
             return $res;
         } catch (\Exception $e) {
-            Log::error('mvp_pay_product_notify_error', [
+            Log::error('pay_product_notify_error', [
                 'order_id' => $order_id,
                 'error' => $e->getMessage(),
             ]);

@@ -524,7 +524,7 @@ import draggable from 'vuedraggable';
 import uploadPictures from '@/components/uploadPictures';
 import linkaddress from '@/components/linkaddress';
 import { getCookies } from '@/libs/util';
-import { isMvpProductExtrasEnabled } from '@/config/mvp';
+import { areProductExtrasAvailable } from '@/config/coreScope';
 
 export default {
   name: 'list',
@@ -656,7 +656,7 @@ export default {
   mounted() {
     this.getGroupAll();
     this.info();
-    this.url = this.BaseURL + 'pages/columnGoods/HotNewGoods/index?type=1';
+    this.url = this.BaseURL + 'pages/goods/goods_list/index?type=1';
   },
   methods: {
     getEditorContent(data) {
@@ -691,8 +691,8 @@ export default {
     },
     zh_uploadFile_change(evfile) {
       let that = this;
-      if (!isMvpProductExtrasEnabled()) {
-        return that.$message.warning('Video upload is disabled in MVP mode');
+      if (!areProductExtrasAvailable()) {
+        return that.$message.warning('Video upload is disabled in the current product scope');
       }
       let suffix = evfile.target.files[0].name.substr(evfile.target.files[0].name.indexOf('.'));
       if (suffix.indexOf('.mp4') === -1) {
@@ -835,23 +835,23 @@ export default {
         this.a = 0;
         switch (row.config_name) {
           case 'routine_home_bast_banner':
-            this.url = this.BaseURL + 'pages/columnGoods/HotNewGoods/index?type=1&name=精品推荐';
+            this.url = this.BaseURL + 'pages/goods/goods_list/index?type=1&name=精品推荐';
             break;
           case 'sign_day_num':
             this.url = '';
             this.getListHeader();
             break;
           case 'combination_banner':
-            this.url = this.BaseURL + 'pages/activity/goods_combination/index';
+            this.url = this.BaseURL + 'pages/goods/goods_list/index';
             break;
           case 'routine_home_hot_banner':
-            this.url = this.BaseURL + 'pages/columnGoods/HotNewGoods/index?type=2&name=热门榜单';
+            this.url = this.BaseURL + 'pages/goods/goods_list/index?type=2&name=热门榜单';
             break;
           case 'routine_home_new_banner':
-            this.url = this.BaseURL + 'pages/columnGoods/HotNewGoods/index?type=3&name=首发新品';
+            this.url = this.BaseURL + 'pages/goods/goods_list/index?type=3&name=首发新品';
             break;
           case 'routine_home_benefit_banner':
-            this.url = this.BaseURL + 'pages/columnGoods/HotNewGoods/index?type=4&name=促销单品';
+            this.url = this.BaseURL + 'pages/goods/goods_list/index?type=4&name=促销单品';
             break;
           case 'user_recharge_quota':
             this.url = '';

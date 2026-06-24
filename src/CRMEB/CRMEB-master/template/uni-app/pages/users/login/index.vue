@@ -107,7 +107,7 @@ import { loginH5, loginMobile, registerVerify, register, getCodeApi, getUserInfo
 import attrs, { required, alpha_num, chs_phone } from '@/utils/validate';
 import { getLogo } from '@/api/public';
 // import cookie from "@/utils/store/cookie";
-import { VUE_APP_API_URL } from '@/utils';
+import { HTTP_REQUEST_URL } from '@/config/app';
 // #ifdef APP-PLUS
 import { wechatAppAuth } from '@/api/api.js';
 // #endif
@@ -375,7 +375,7 @@ export default {
 				});
 		},
 		again() {
-			this.codeUrl = VUE_APP_API_URL + '/sms_captcha?' + 'key=' + this.keyCode + Date.parse(new Date());
+			this.codeUrl = HTTP_REQUEST_URL + '/sms_captcha?' + 'key=' + this.keyCode + Date.parse(new Date());
 		},
 		success(data) {
 			this.$refs.verify.hide();

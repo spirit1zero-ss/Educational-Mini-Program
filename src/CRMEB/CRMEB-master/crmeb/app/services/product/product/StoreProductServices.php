@@ -14,10 +14,6 @@ namespace app\services\product\product;
 
 use app\dao\product\product\StoreProductDao;
 use app\Request;
-use app\services\activity\bargain\StoreBargainServices;
-use app\services\activity\combination\StoreCombinationServices;
-use app\services\activity\coupon\StoreCouponUserServices;
-use app\services\activity\seckill\StoreSeckillServices;
 use app\services\BaseServices;
 use app\services\activity\coupon\StoreCouponIssueServices;
 use app\services\order\StoreCartServices;
@@ -177,30 +173,13 @@ class StoreProductServices extends BaseServices
 
     public function getActivityExist($productIds)
     {
-        if (!count($productIds)) return [];
-        $seckill = app()->make(StoreSeckillServices::class)->getProductExist($productIds);
-        $bargain = app()->make(StoreBargainServices::class)->getProductExist($productIds);
-        $combination = app()->make(StoreCombinationServices::class)->getProductExist($productIds);
         $activityExist = [];
         foreach ($productIds as $productId) {
-            $activityExist[$productId]['seckill'] = false;
-            $activityExist[$productId]['bargain'] = false;
-            $activityExist[$productId]['combination'] = false;
-            foreach ($seckill as $key1 => $item1) {
-                if ($productId == $key1) {
-                    $activityExist[$productId]['seckill'] = true;
-                }
-            }
-            foreach ($bargain as $key2 => $item2) {
-                if ($productId == $key2) {
-                    $activityExist[$productId]['bargain'] = true;
-                }
-            }
-            foreach ($combination as $key3 => $item3) {
-                if ($productId == $key3) {
-                    $activityExist[$productId]['combination'] = true;
-                }
-            }
+            $activityExist[$productId] = [
+                'seckill' => false,
+                'bargain' => false,
+                'combination' => false,
+            ];
         }
         return $activityExist;
     }
@@ -445,23 +424,6 @@ class StoreProductServices extends BaseServices
     }
 
     /**
-     * Skip disabled marketing lookups in MVP mode for public product lists.
-     *
-     * @return bool
-     */
-    protected function shouldSkipMvpActivityLookups(): bool
-    {
-        if (!function_exists('mvp_enabled')) {
-            return false;
-        }
-
-        return !mvp_enabled('enable_coupon', true)
-            && !mvp_enabled('enable_bargain', true)
-            && !mvp_enabled('enable_combination', true)
-            && !mvp_enabled('enable_seckill', true);
-    }
-
-    /**
      * 获取运费模板列表
      * @return array
      */
@@ -481,7 +443,7 @@ class StoreProductServices extends BaseServices
      */
     public function getAttr(array $data, int $id, int $type)
     {
-        $this->applyMvpProductExtraDefaults($data);
+        $this->applyCoreProductDefaults($data);
         /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
         $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
         /** @var StoreProductVirtualServices $virtualService */
@@ -622,14 +584,14 @@ class StoreProductServices extends BaseServices
         if (count($data['slider_image']) < 1) throw new AdminException('请选择商品轮播图');
         if ($data['is_limit'] == 1 && $data['min_qty'] > $data['limit_num']) throw new AdminException('起购数量不能大于限购数量');
 
-        $this->applyMvpProductExtraDefaults($data);
+        $this->applyCoreProductDefaults($data);
         $detail = $data['attrs'];
         $attr = $data['items'];
         $cate_id = $data['cate_id'];
         $coupon_ids = $data['coupon_ids'];
         $description = $data['description'];
         $type = $data['type'];
-        if ((int)$type === -1 && function_exists('mvp_enabled') && !mvp_enabled('enable_product_copy', false)) {
+        if ((int)$type === -1) {
             $type = 0;
             $data['is_copy'] = 0;
         }
@@ -946,18 +908,14 @@ class StoreProductServices extends BaseServices
     }
 
     /**
-     * Normalize product-extra fields when the MVP product-extra switch is disabled.
+     * Normalize retired product-extra fields to the supported product shape.
      * This protects the save endpoint from crafted requests that bypass frontend guards.
      *
      * @param array $data
      * @return void
      */
-    private function applyMvpProductExtraDefaults(array &$data): void
+    private function applyCoreProductDefaults(array &$data): void
     {
-        if (!function_exists('mvp_enabled') || mvp_enabled('enable_product_extras', false)) {
-            return;
-        }
-
         $data['is_virtual'] = 0;
         $data['virtual_type'] = 0;
         $data['video_link'] = '';
@@ -1193,38 +1151,6 @@ class StoreProductServices extends BaseServices
      */
     public function checkActivity($id = 0, $return = false)
     {
-        if ($id) {
-            /** @var StoreSeckillServices $storeSeckillService */
-            $storeSeckillService = app()->make(StoreSeckillServices::class);
-            $res1 = $storeSeckillService->count(['product_id' => $id, 'is_del' => 0]);
-            if ($res1) {
-                if ($return) {
-                    return false;
-                } else {
-                    throw new AdminException('商品参与秒杀活动开启，无法进行此操作');
-                }
-            }
-            /** @var StoreBargainServices $storeBargainService */
-            $storeBargainService = app()->make(StoreBargainServices::class);
-            $res2 = $storeBargainService->count(['product_id' => $id, 'is_del' => 0]);
-            if ($res2) {
-                if ($return) {
-                    return false;
-                } else {
-                    throw new AdminException('商品参与砍价活动开启，无法进行此操作');
-                }
-            }
-            /** @var StoreCombinationServices $storeCombinationService */
-            $storeCombinationService = app()->make(StoreCombinationServices::class);
-            $res3 = $storeCombinationService->count(['product_id' => $id, 'is_del' => 0]);
-            if ($res3) {
-                if ($return) {
-                    return false;
-                } else {
-                    throw new AdminException('商品参与拼团活动开启，无法进行此操作');
-                }
-            }
-        }
         return true;
     }
 
@@ -1358,52 +1284,12 @@ class StoreProductServices extends BaseServices
     public function getActivityList(array $list, bool $status = true, $seckillIdsList = false, $pinkIdsList = false, $bargrainIdsList = false)
     {
         if (!$list) return [];
-        if ($status) {
-            $productIds = array_column($list, 'id');
-        } else {
-            $productIds = [$list['id']];
-            $list = [$list];
-        }
-        if ($this->shouldSkipMvpActivityLookups()) {
-            foreach ($list as &$item) {
-                $item['activity'] = [];
-                $item['checkCoupon'] = false;
-            }
-            return $status ? $list : [];
-        }
-        if ($seckillIdsList === false) {
-            /** @var StoreSeckillServices $storeSeckillService */
-            $storeSeckillService = app()->make(StoreSeckillServices::class);
-            $seckillIdsList = $storeSeckillService->getSeckillIdsArray($productIds, ['id', 'time_id', 'product_id']);
-        }
-        if ($pinkIdsList === false) {
-            /** @var StoreCombinationServices $storeCombinationServices */
-            $storeCombinationServices = app()->make(StoreCombinationServices::class);
-            $pinkIdsList = $storeCombinationServices->getPinkIdsArray($productIds, ['id']);
-        }
-        if ($bargrainIdsList === false) {
-            /** @var StoreBargainServices $storeBargainServices */
-            $storeBargainServices = app()->make(StoreBargainServices::class);
-            $bargrainIdsList = $storeBargainServices->getBargainIdsArray($productIds, ['id']);
-        }
-
-        /** @var StoreCouponIssueServices $couponIssueServices */
-        $couponIssueServices = app()->make(StoreCouponIssueServices::class);
-
+        if (!$status) return [];
         foreach ($list as &$item) {
-            $seckillId = array_filter($seckillIdsList, function ($val) use ($item) {
-                if ($val['product_id'] === $item['id']) {
-                    return $val;
-                }
-            });
-            $item['activity'] = $this->activity($item['activity'], $item['id'], $pinkIdsList[$item['id']] ?? 0, $seckillId, $bargrainIdsList[$item['id']] ?? 0, $status);
-            $item['checkCoupon'] = $couponIssueServices->checkProductCoupon($item['id']);
+            $item['activity'] = [];
+            $item['checkCoupon'] = false;
         }
-        if ($status) {
-            return $list;
-        } else {
-            return $list[0]['activity'];
-        }
+        return $list;
     }
 
     /**
@@ -1671,13 +1557,7 @@ class StoreProductServices extends BaseServices
         $data['mapKey'] = sys_config('tengxun_map_key');
         $data['store_self_mention'] = (int)sys_config('store_self_mention') ?? 0; //门店自提是否开启
         $data['activity'] = $this->getActivityList($data['storeInfo'], false);
-        if (function_exists('mvp_enabled') && !mvp_enabled('enable_coupon', true)) {
-            $data['coupons'] = [];
-        } else {
-            /** @var StoreCouponIssueServices $couponService */
-            $couponService = app()->make(StoreCouponIssueServices::class);
-            $data['coupons'] = $couponService->getIssueCouponList($uid, ['product_id' => $id, 'type' => -1])['list'];
-        }
+        $data['coupons'] = [];
         $data['routine_contact_type'] = sys_config('routine_contact_type', 0);
         //浏览记录
         ProductLogJob::dispatch(['visit', ['uid' => $uid, 'product_id' => $id]]);
@@ -1993,17 +1873,6 @@ class StoreProductServices extends BaseServices
             $memberCardService = app()->make(MemberCardServices::class);
             $vipStatus = $memberCardService->isOpenMemberCard('vip_price');
             $seckillIdsList = $pinkIdsList = $bargrainIdsList = false;
-            if (count($fields) > 1 && !$this->shouldSkipMvpActivityLookups()) {
-                /** @var StoreSeckillServices $storeSeckillService */
-                $storeSeckillService = app()->make(StoreSeckillServices::class);
-                $seckillIdsList = $storeSeckillService->getSeckillIdsArray([], ['id', 'time_id', 'product_id']);
-                /** @var StoreCombinationServices $storeCombinationServices */
-                $storeCombinationServices = app()->make(StoreCombinationServices::class);
-                $pinkIdsList = $storeCombinationServices->getPinkIdsArray([], ['id']);
-                /** @var StoreBargainServices $storeBargainServices */
-                $storeBargainServices = app()->make(StoreBargainServices::class);
-                $bargrainIdsList = $storeBargainServices->getBargainIdsArray([], ['id']);
-            }
             [$page, $limit] = $this->getPageValue();
             $where['vip_user'] = $uid ? app()->make(UserServices::class)->value(['uid' => $uid], 'is_money_level') : 0;
             foreach ($fields as $field) {
@@ -2349,42 +2218,6 @@ class StoreProductServices extends BaseServices
         if (!$levelDiscount && $isMember && $productIsVip) {
             $realPrice = $memberPrice;
             $isVip = 1;
-        }
-        /** @var StoreProductServices $storeProductService */
-        $storeProductService = app()->make(StoreProductServices::class);
-        /** @var StoreCategoryServices $storeCategoryService */
-        $storeCategoryService = app()->make(StoreCategoryServices::class);
-        $cateId = $storeProductService->value(['id' => $id], 'cate_id');
-        $cateId = explode(',', (string)$cateId);
-        $cateId = array_merge($cateId, $storeCategoryService->cateIdByPid($cateId));
-        $cateId = array_diff($cateId, [0]);
-        $list = app()->make(StoreCouponIssueServices::class)->getPcIssueCouponList($uid, $cateId, $id);
-        usort($list, function ($a, $b) {
-            return $b['coupon_price'] - $a['coupon_price'];
-        });
-        $time = time();
-        foreach ($list as $item) {
-            // 优惠券不在使用时间范围内
-            if ($item['start_use_time'] != 0 && ($item['start_use_time'] > $time || $item['end_use_time'] < $time)) {
-                continue;
-            }
-            // 用户未登录或者不是付费会员跳过付费会员券
-            if ($item['receive_type'] == 4 && !$isMember) {
-                continue;
-            }
-            // 判断用户是否还能领取或者已经领取未使用
-            if ($uid) {
-                $canUserCoupon = app()->make(StoreCouponUserServices::class)->getUserCouponCanUse($uid, $item['id'], $item['receive_limit']);
-                if (!$canUserCoupon) {
-                    continue;
-                }
-            }
-            // 满足优惠券使用门槛
-            if ($realPrice >= $item['use_min_price']) {
-                $realPrice = bcsub($realPrice, $item['coupon_price'], 2);
-                if ($realPrice < 0) $realPrice = 0;
-                break;
-            }
         }
         return ['real_price' => $realPrice, 'price' => $price, 'is_vip' => $isVip, 'product_is_vip' => $productIsVip, 'member_price' => $memberPrice, 'level_price' => $levelPrice, 'user_is_member' => $isMember, 'ot_price' => $otPrice];
     }

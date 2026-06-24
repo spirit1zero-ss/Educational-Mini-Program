@@ -50,7 +50,7 @@
         </router-link>
       </el-card>
     </el-col>
-    <el-col v-if="isMvpAdminLinkVisible('/cms/article/index')" v-bind="grid" class="ivu-mb" v-auth="['cms-article-index']">
+    <el-col v-if="isRetainedAdminLink('/cms/article/index')" v-bind="grid" class="ivu-mb" v-auth="['cms-article-index']">
       <el-card shadow="never">
         <router-link :to="{ path: $routeProStr + '/cms/article/index' }">
           <div class="icon">
@@ -70,7 +70,7 @@
         </router-link>
       </el-card>
     </el-col>
-    <el-col v-if="isMvpAdminLinkVisible('/marketing/store_coupon_issue/index')" v-bind="grid" class="ivu-mb" v-auth="['marketing-store_coupon-index']">
+    <el-col v-if="isRetainedAdminLink('/marketing/store_coupon_issue/index')" v-bind="grid" class="ivu-mb" v-auth="['marketing-store_coupon-index']">
       <el-card shadow="never">
         <router-link :to="{ path: $routeProStr + '/marketing/store_coupon_issue/index' }">
           <div class="icon">
@@ -83,7 +83,7 @@
   </el-row>
 </template>
 <script>
-import { isMvpAdminLinkVisible } from '@/config/mvp';
+import { isRetainedAdminLink } from '@/config/coreScope';
 
 export default {
   data() {
@@ -98,7 +98,7 @@ export default {
     };
   },
   methods: {
-    isMvpAdminLinkVisible,
+    isRetainedAdminLink,
   },
 };
 </script>

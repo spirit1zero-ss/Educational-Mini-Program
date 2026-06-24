@@ -216,16 +216,8 @@
 			},
 			jumpCon(item) {
 				if (this.jump) {
-					let url = '';
-					if (item.type == 0) {
-						url = `/pages/goods_details/index?id=${item.product_id}`
-					} else if (item.type == 1) {
-						url = `/pages/activity/goods_seckill_details/index?id=${item.seckill_id}&time_id=${item.productInfo.time_id}`
-					} else if (item.type == 2) {
-						url = `/pages/activity/goods_bargain_details/index?id=${item.bargain_id}&bargain=${this.uid}`
-					} else if (item.type == 3) {
-						url = `/pages/activity/goods_combination_details/index?id=${item.combination_id}`
-					}
+					let productId = item.product_id || (item.productInfo && (item.productInfo.id || item.productInfo.product_id));
+					let url = `/pages/goods_details/index?id=${productId}`;
 					uni.navigateTo({
 						url
 					})

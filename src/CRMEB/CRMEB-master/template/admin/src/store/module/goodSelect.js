@@ -117,7 +117,7 @@ export default {
                 },
                 {
                   title: '链接',
-                  value: '/pages/users/user_get_coupon/index',
+                  value: '/pages/goods/goods_list/index',
                   maxlength: 999,
                   tips: '请填写链接',
                 },
@@ -168,7 +168,7 @@ export default {
                 },
                 {
                   title: '链接',
-                  value: '/pages/activity/goods_combination/index',
+                  value: '/pages/goods/goods_list/index',
                   maxlength: 999,
                   tips: '请填写链接',
                 },
@@ -185,7 +185,7 @@ export default {
                 },
                 {
                   title: '链接',
-                  value: '/pages/activity/goods_seckill/index',
+                  value: '/pages/goods/goods_list/index',
                   maxlength: 999,
                   tips: '请填写链接',
                 },
@@ -202,7 +202,7 @@ export default {
                 },
                 {
                   title: '链接',
-                  value: '/pages/activity/goods_bargain/index',
+                  value: '/pages/goods/goods_list/index',
                   maxlength: 999,
                   tips: '请填写链接',
                 },
@@ -219,7 +219,7 @@ export default {
                 },
                 {
                   title: '链接',
-                  value: '/pages/activity/goods_bargain/index',
+                  value: '/pages/goods/goods_list/index',
                   maxlength: 999,
                   tips: '请填写链接',
                 },

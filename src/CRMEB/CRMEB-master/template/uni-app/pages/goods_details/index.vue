@@ -63,12 +63,12 @@
             :replyCount="replyCount"
             :replyChance="replyChance"
             :productId="id"
-            :couponList="isMvpMode ? [] : couponList"
-            :activity="isMvpMode ? [] : activity"
+            :couponList="isCoreScope ? [] : couponList"
+            :activity="isCoreScope ? [] : activity"
             :attr="attr"
             :attrTxt="attrTxt"
             :attrValue="attrValue"
-            :isShowPaidVip="!isMvpMode && isShowPaidVip"
+            :isShowPaidVip="!isCoreScope && isShowPaidVip"
             @bindSortId="bindSortId"
             @changeSpec="onChangeSpecFromPageDesign"
             @showSpecModal="onShowSpecModalFromPageDesign"
@@ -97,13 +97,6 @@
         @goBuy="goBuy"
         @share="listenerActionSheet"
       ></productBottom>
-      <shareRedPackets
-        :sharePacket="sharePacket"
-        @listenerActionSheet="listenerActionSheet"
-        @closeChange="closeChange"
-        :showAnimate="showAnimate"
-        @boxStatus="boxStatus"
-      ></shareRedPackets>
       <!-- 组件 -->
       <productWindow
         :attr="attr"
@@ -132,14 +125,6 @@
         ref="cusSwiperImg"
         :list="storeInfo.slider_image"
       ></swiperPrevie>
-      <couponListWindow
-        :coupon="coupon"
-        v-if="coupon && !isMvpMode"
-        @ChangCouponsClone="ChangCouponsClone"
-        @ChangCoupons="ChangCoupons"
-        @ChangCouponsUseState="ChangCouponsUseState"
-        @tabCouponType="tabCouponType"
-      ></couponListWindow>
       <!-- 分享按钮 -->
       <view
         class="generate-posters acea-row row-middle"
@@ -222,12 +207,6 @@
           @click="H5ShareBox = false"
         ></image>
       </view>
-      <kefuIcon
-        :ids="parseInt(id)"
-        :routineContact="routineContact"
-        :storeInfo="storeInfo"
-        :goodsCon="1"
-      ></kefuIcon>
       <!-- #ifdef H5 || APP-PLUS -->
       <zb-code
         ref="qrcode"
@@ -278,10 +257,7 @@ import { mapGetters } from "vuex";
 
 import cusPreviewImg from "@/components/cusPreviewImg/index.vue";
 import swiperPrevie from "@/components/cusPreviewImg/swiperPrevie.vue";
-import couponListWindow from "@/components/couponListWindow";
 import productWindow from "@/components/productWindow";
-import shareRedPackets from "@/components/shareRedPackets";
-import kefuIcon from "@/components/kefuIcon";
 import menuIcon from "@/components/menuIcon.vue";
 import { updateURLParameter } from "@/utils";
 import ClipboardJS from "@/plugin/clipboard/clipboard.js";
@@ -292,7 +268,7 @@ import authorize from "@/components/Authorize";
 import { TOKENNAME } from "@/config/app.js";
 // #endif
 import { HTTP_REQUEST_URL } from "@/config/app";
-import { isMvpEnabled, isMvpTrainingCampProduct } from "@/config/mvp.js";
+import { isCoreScopeEnabled, isTrainingCampProduct } from "@/config/coreScope.js";
 let app = getApp();
 import colors from "@/mixins/color";
 import { sharePoster } from "@/mixins/sharePoster";
@@ -303,10 +279,7 @@ import PageDesign from "@/subpackage/diyComponents/pageDesign.vue";
 import productBottom from "@/subpackage/diyComponents/productBottom.vue";
 export default {
   components: {
-    couponListWindow,
     productWindow,
-    shareRedPackets,
-    kefuIcon,
     menuIcon,
     cusPreviewImg,
     swiperPrevie,
@@ -412,8 +385,8 @@ export default {
   },
   computed: {
     ...mapGetters(["isLogin", "cartNum"]),
-    isMvpMode() {
-      return isMvpEnabled();
+    isCoreScope() {
+      return isCoreScopeEnabled();
     },
     isShowPaidVip() {
       let s =
@@ -427,7 +400,7 @@ export default {
     isLogin: {
       handler: function (newV, oldV) {
         if (newV == true) {
-          if (!this.isMvpMode) this.getCouponList();
+          if (!this.isCoreScope) this.getCouponList();
           this.getCartCount();
           this.downloadFilePromotionCode();
           // this.ShareInfo();
@@ -684,7 +657,7 @@ export default {
      *去商品详情页
      */
     goDetail(item) {
-      if (this.isMvpMode) {
+      if (this.isCoreScope) {
         uni.redirectTo({
           url: "/pages/goods_details/index?id=" + item.id,
         });
@@ -699,21 +672,21 @@ export default {
       // 砍价
       if (item.activity && item.activity.type == 2) {
         uni.redirectTo({
-          url: `/pages/activity/goods_bargain_details/index?id=${item.activity.id}&bargain=${this.uid}`,
+          url: "/pages/goods_details/index?id=" + item.id,
         });
         return;
       }
       // 拼团
       if (item.activity && item.activity.type == 3) {
         uni.redirectTo({
-          url: `/pages/activity/goods_combination_details/index?id=${item.activity.id}`,
+          url: "/pages/goods_details/index?id=" + item.id,
         });
         return;
       }
       // 秒杀
       if (item.activity && item.activity.type == 1) {
         uni.redirectTo({
-          url: `/pages/activity/goods_seckill_details/index?id=${item.activity.id}&time_id=${item.activity.time_id}`,
+          url: "/pages/goods_details/index?id=" + item.id,
         });
         return;
       }
@@ -833,7 +806,7 @@ export default {
     },
     setRealPrice(id, unique) {
       realPrice(id, unique).then((res) => {
-        this.realPriceData = this.isMvpMode
+        this.realPriceData = this.isCoreScope
           ? {
               ...res.data,
               is_vip: 0,
@@ -844,7 +817,7 @@ export default {
         this.$set(
           this.attr.productSelect,
           "vip_price",
-          this.isMvpMode ? 0 : res.data.member_price
+          this.isCoreScope ? 0 : res.data.member_price
         );
         this.ot_price = res.data.ot_price;
       });
@@ -873,7 +846,7 @@ export default {
         .then((res) => {
           uni.hideLoading();
           let storeInfo = res.data.storeInfo;
-          if (this.isMvpMode && !isMvpTrainingCampProduct(storeInfo)) {
+          if (this.isCoreScope && !isTrainingCampProduct(storeInfo)) {
             return that.$util.Tips(
               {
                 title: that.$t(`商品暂不可查看`),
@@ -884,7 +857,7 @@ export default {
               }
             );
           }
-          if (this.isMvpMode) {
+          if (this.isCoreScope) {
             storeInfo = {
               ...storeInfo,
               is_vip: 0,
@@ -904,7 +877,7 @@ export default {
           that.$set(that, "replyChance", res.data.replyChance);
           that.$set(that.attr, "productAttr", res.data.productAttr);
           that.$set(that, "productValue", res.data.productValue);
-          that.$set(that, "is_vip", this.isMvpMode ? 0 : res.data.storeInfo.is_vip);
+          that.$set(that, "is_vip", this.isCoreScope ? 0 : res.data.storeInfo.is_vip);
           that.$set(that.sharePacket, "priceName", res.data.priceName);
           that.$set(
             that.sharePacket,
@@ -937,9 +910,9 @@ export default {
           that.$set(
             that,
             "activity",
-            this.isMvpMode ? [] : (res.data.activity ? res.data.activity : [])
+            this.isCoreScope ? [] : (res.data.activity ? res.data.activity : [])
           );
-          that.$set(that, "couponList", this.isMvpMode ? [] : res.data.coupons);
+          that.$set(that, "couponList", this.isCoreScope ? [] : res.data.coupons);
           that.$set(
             that,
             "routineContact",
@@ -1097,7 +1070,7 @@ export default {
      *
      */
     getCouponList(type) {
-      if (this.isMvpMode) return;
+      if (this.isCoreScope) return;
       let that = this,
         obj = {
           page: 1,
@@ -1215,7 +1188,7 @@ export default {
      */
     couponTap: function () {
       let that = this;
-      if (that.isMvpMode) return;
+      if (that.isCoreScope) return;
       if (that.isLogin === false) {
         toLogin();
       } else {
@@ -1225,18 +1198,18 @@ export default {
       }
     },
     goActivity(item) {
-      if (this.isMvpMode) return;
+      if (this.isCoreScope) return;
       if (item.type === "1" && this.$permission("seckill")) {
         uni.navigateTo({
-          url: `/pages/activity/goods_seckill_details/index?id=${item.id}&time_id=${item.time_id}`,
+          url: `/pages/goods_details/index?id=${item.id}`,
         });
       } else if (item.type === "2" && this.$permission("bargain")) {
         uni.navigateTo({
-          url: `/pages/activity/goods_bargain_details/index?id=${item.id}&bargain=${this.uid}`,
+          url: `/pages/goods_details/index?id=${item.id}`,
         });
       } else if (item.type === "3" && this.$permission("combination")) {
         uni.navigateTo({
-          url: `/pages/activity/goods_combination_details/index?id=${item.id}`,
+          url: `/pages/goods_details/index?id=${item.id}`,
         });
       }
     },
@@ -1315,7 +1288,7 @@ export default {
             let url =
               "/pages/goods/order_confirm/index?new=1&cartId=" +
               res.data.cartId;
-            if (this.isMvpMode) url += "&noCoupon=1";
+            if (this.isCoreScope) url += "&noCoupon=1";
             if (this.isGiftOrder) url += "&is_gift=" + this.isGiftOrder;
             uni.navigateTo({
               url,
@@ -1554,7 +1527,7 @@ export default {
       this.$set(this, "attrValue", productSelect.suk);
     },
     bindSortId(data) {
-      if (this.isMvpMode && data.dataType.tabVal != 1) return;
+      if (this.isCoreScope && data.dataType.tabVal != 1) return;
       if (data.dataType.tabVal == 1) {
         uni.navigateTo({
           url: `/pages/goods/goods_list/index?cid=${data.classPage.id}&title=${data.classPage.name}`,
@@ -1565,7 +1538,7 @@ export default {
         });
       } else {
         uni.navigateTo({
-          url: `/pages/annex/special/index?theme_id=${data.microPage.id}`,
+          url: `/pages/goods/goods_list/index`,
         });
       }
     },

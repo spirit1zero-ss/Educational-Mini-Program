@@ -125,7 +125,7 @@ class StoreOrderTakeServices extends BaseServices
         $orderInfoServices = app()->make(StoreOrderCartInfoServices::class);
         $storeName = $orderInfoServices->getCarIdByProductTitle((int)$order['id']);
         $storeTitle = Str::substrUTf8($storeName, 20, 'UTF-8', '');
-        Log::info('mvp_order_take_brokerage_start', [
+        Log::info('order_take_brokerage_start', [
             'id' => $order['id'] ?? 0,
             'order_id' => $order['order_id'] ?? '',
             'uid' => $order['uid'] ?? 0,
@@ -472,7 +472,7 @@ class StoreOrderTakeServices extends BaseServices
             $this->sendBackOrderBrokerage($orderInfo, $one_spread_uid, $brokeragePrice);
         }
         // 一级返佣成功 跳转二级返佣
-        Log::info('mvp_order_brokerage_income_one', [
+        Log::info('order_brokerage_income_one', [
             'id' => $orderInfo['id'] ?? 0,
             'order_id' => $orderInfo['order_id'] ?? '',
             'uid' => $orderInfo['uid'] ?? 0,
@@ -543,7 +543,7 @@ class StoreOrderTakeServices extends BaseServices
             'number' => floatval($brokeragePrice),
             'frozen_time' => $frozenTime
         ], $balance, $orderInfo['id']);
-        Log::info('mvp_order_brokerage_income_two', [
+        Log::info('order_brokerage_income_two', [
             'id' => $orderInfo['id'] ?? 0,
             'order_id' => $orderInfo['order_id'] ?? '',
             'uid' => $orderInfo['uid'] ?? 0,

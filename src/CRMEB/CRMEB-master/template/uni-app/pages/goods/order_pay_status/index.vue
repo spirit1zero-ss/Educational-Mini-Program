@@ -89,12 +89,6 @@
 				</view>
 			</view>
 		</view>
-		<lotteryModel
-			v-show="orderLottery && order_pay_info.paid && loading && lotteryLoading && !is_gift"
-			:options="options"
-			@orderDetails="goOrderDetails"
-			@lotteryShow="getOrderLottery"
-		></lotteryModel>
 		<giftModal :aleartStatus="giftModalShow" :giftData="giftData" @shareH5="shareH5" @close="giftModalShow = false"></giftModal>
 		<view class="mask" v-if="giftModalShow"></view>
 		<canvas class="canvas" canvas-id="posterCanvas"></canvas>
@@ -106,7 +100,6 @@
 
 <script>
 import { userShare } from '@/api/user.js';
-import lotteryModel from './payLottery.vue';
 import giftModal from './components/giftModal.vue';
 import { getOrderDetail, orderCoupon } from '@/api/order.js';
 import { openOrderSubscribe } from '@/utils/SubscribeMessage.js';
@@ -119,7 +112,6 @@ import colors from '@/mixins/color';
 import { HTTP_REQUEST_URL } from '@/config/app';
 export default {
 	components: {
-		lotteryModel,
 		giftModal,
 		// #ifdef MP
 		authorize
@@ -130,7 +122,7 @@ export default {
 		return {
 			imgHost: HTTP_REQUEST_URL,
 			loading: false,
-			lotteryLoading: false,
+			lotteryLoading: true,
 			orderLottery: false,
 			orderId: '',
 			order_pay_info: {
@@ -210,7 +202,7 @@ export default {
 		return {
 			title: that.giftData.message || '',
 			imageUrl: that.mpGiftImg || '',
-			path: '/pages/goods/receive_gift/index?id=' + this.giftData.id + '&spid=' + this.$store.state.app.uid
+			path: '/pages/goods/order_pay_status/index?order_id=' + this.orderId
 		};
 	},
 	onShareTimeline() {
@@ -234,7 +226,7 @@ export default {
 				let configAppMessage = {
 					desc: this.giftData.message,
 					title: this.giftData.title,
-					link: window.location.protocol + '//' + window.location.host + '/pages/goods/receive_gift/index?id=' + this.giftData.id + '&spid=' + that.$store.state.app.uid,
+					link: window.location.protocol + '//' + window.location.host + '/pages/goods/order_pay_status/index?order_id=' + that.orderId,
 					imgUrl: that.mpGiftImg
 				};
 				that.$wechat
@@ -327,7 +319,7 @@ export default {
 		// 去参团页面；
 		goPink: function (id) {
 			uni.navigateTo({
-				url: '/pages/activity/goods_combination_status/index?id=' + id
+				url: '/pages/goods/order_pay_status/index?order_id=' + this.orderId
 			});
 		},
 		/**

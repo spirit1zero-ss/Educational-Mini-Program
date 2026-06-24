@@ -605,7 +605,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/users/user_get_coupon/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -656,7 +656,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_combination/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -673,7 +673,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_seckill/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -690,7 +690,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_bargain/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -707,7 +707,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_bargain/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -752,7 +752,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/users/user_get_coupon/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -803,7 +803,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_combination/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -820,7 +820,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_seckill/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -837,7 +837,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_bargain/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -854,7 +854,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_bargain/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '请填写链接',
                   },
@@ -966,7 +966,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_combination/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '链接',
                   },
@@ -989,7 +989,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_seckill/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '链接',
                   },
@@ -1012,7 +1012,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_bargain/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '链接',
                   },
@@ -1048,7 +1048,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_combination/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '链接',
                   },
@@ -1071,7 +1071,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_seckill/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '链接',
                   },
@@ -1094,7 +1094,7 @@ export default {
                   },
                   {
                     title: '链接',
-                    value: '/pages/activity/goods_bargain/index',
+                    value: '/pages/goods/goods_list/index',
                     maxlength: 999,
                     tips: '链接',
                   },
@@ -1127,7 +1127,7 @@ export default {
               },
               {
                 title: '链接',
-                val: '/pages/columnGoods/live_list/index',
+                val: '/pages/index/index',
                 max: 999,
                 pla: '选填',
               },
@@ -1159,7 +1159,7 @@ export default {
               },
               {
                 title: '链接',
-                val: '/pages/columnGoods/live_list/index',
+                val: '/pages/index/index',
                 max: 999,
                 pla: '选填',
               },
@@ -1821,7 +1821,7 @@ export default {
               },
               {
                 title: '链接',
-                val: '/pages/columnGoods/HotNewGoods/index',
+                val: '/pages/goods/goods_list/index',
                 max: 999,
                 pla: '选填',
               },
@@ -1929,7 +1929,7 @@ export default {
               },
               {
                 title: '链接',
-                val: '/pages/columnGoods/HotNewGoods/index?type=1',
+                val: '/pages/goods/goods_list/index?type=1',
                 max: 999,
                 pla: '选填',
               },
@@ -2057,7 +2057,7 @@ export default {
               },
               {
                 title: '链接',
-                val: '/pages/columnGoods/HotNewGoods/index?type=1',
+                val: '/pages/goods/goods_list/index?type=1',
                 max: 999,
                 pla: '选填',
               },
@@ -2085,7 +2085,7 @@ export default {
               },
               {
                 title: '链接',
-                val: '/pages/columnGoods/HotNewGoods/index?type=1',
+                val: '/pages/goods/goods_list/index?type=1',
                 max: 999,
                 pla: '选填',
               },

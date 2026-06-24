@@ -42,7 +42,6 @@ Route::group('pc', function () {
         Route::get('get_news_detail/:id', 'pc.PublicController/getNewsDetail')->name('getNewsDetail')->option(['real_name' => '获取文章详情']);//获取文章详情
     })->middleware(\app\http\middleware\AllowOriginMiddleware::class)
         ->middleware(\app\api\middleware\StationOpenMiddleware::class)
-        ->middleware(\app\api\middleware\MvpRouteBlockMiddleware::class)
         ->middleware(\app\api\middleware\AuthTokenMiddleware::class, false)
         ->option(['parent' => 'PC', 'cate_name' => '用户未授权接口']);
 
@@ -52,10 +51,8 @@ Route::group('pc', function () {
         Route::get('get_balance_record/:type', 'pc.UserController/getBalanceRecord')->name('getBalanceRecord')->option(['real_name' => '余额记录']);//余额记录
         Route::get('get_order_list', 'pc.OrderController/getOrderList')->name('getOrderList')->option(['real_name' => '订单列表']);//订单列表
         Route::get('get_refund_order_list', 'pc.OrderController/getRefundOrderList')->name('getRefundOrderList')->option(['real_name' => '退款订单列表']);//退款订单列表
-        Route::get('get_collect_list', 'pc.UserController/getCollectList')->name('getCollectList')->option(['real_name' => '收藏列表']);//收藏列表
     })->middleware(\app\http\middleware\AllowOriginMiddleware::class)
         ->middleware(\app\api\middleware\StationOpenMiddleware::class)
-        ->middleware(\app\api\middleware\MvpRouteBlockMiddleware::class)
         ->middleware(\app\api\middleware\AuthTokenMiddleware::class, true)
         ->option(['parent' => 'PC', 'cate_name' => '用户授权接口']);
 

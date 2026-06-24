@@ -38,20 +38,20 @@
 							<image :src='item.image' :class='is_switch==true?"":"on"'></image>
 							<span class="pictrue_log_class"
 								:class="is_switch === true ? 'pictrue_log_big' : 'pictrue_log'"
-								v-if="!isMvpMode && item.activity && item.activity.type === '1' && $permission('seckill')">{{$t(`秒杀`)}}</span>
+								v-if="!isCoreScope && item.activity && item.activity.type === '1' && $permission('seckill')">{{$t(`秒杀`)}}</span>
 							<span class="pictrue_log_class"
 								:class="is_switch === true ? 'pictrue_log_big' : 'pictrue_log'"
-								v-if="!isMvpMode && item.activity && item.activity.type === '2' && $permission('bargain')">{{$t(`砍价`)}}</span>
+								v-if="!isCoreScope && item.activity && item.activity.type === '2' && $permission('bargain')">{{$t(`砍价`)}}</span>
 							<span class="pictrue_log_class"
 								:class="is_switch === true ? 'pictrue_log_big' : 'pictrue_log'"
-								v-if="!isMvpMode && item.activity && item.activity.type === '3' && $permission('combination')">{{$t(`拼团`)}}</span>
+								v-if="!isCoreScope && item.activity && item.activity.type === '3' && $permission('combination')">{{$t(`拼团`)}}</span>
 						</view>
 						<view class='text' :class='is_switch==true?"":"on"'>
 							<view class='name line2'>{{item.store_name}}</view>
 							<view class='money font-color' :class='is_switch==true?"":"on"'>{{$t(`￥`)}}<text
 									class='num'>{{item.price}}</text></view>
 							<view class='vip acea-row row-between-wrapper' :class='is_switch==true?"":"on"'>
-								<view class='vip-money' v-if="!isMvpMode && item.vip_price && item.vip_price > 0">
+								<view class='vip-money' v-if="!isCoreScope && item.vip_price && item.vip_price > 0">
 									{{$t(`￥`)}}{{item.vip_price}}
 									<image src='../../../static/images/vip.png'></image>
 								</view>
@@ -73,7 +73,7 @@
 				<image :src="imgHost + '/statics/images/no-thing.png'"></image>
 				<view class="tips">{{$t(`暂无商品，去看点别的吧`)}}</view>
 			</view>
-			<recommend v-if="!isMvpMode" :hostProduct="hostProduct"></recommend>
+			<recommend v-if="!isCoreScope" :hostProduct="hostProduct"></recommend>
 		</view>
 		<!-- #ifndef MP -->
 		<home></home>
@@ -102,15 +102,15 @@
 	} from '@/config/app';
 	import colors from '@/mixins/color.js';
 	import {
-		applyMvpTrainingCampFilter,
-		isMvpEnabled,
-		MVP_TRAINING_CAMP_KEYWORD
-	} from '@/config/mvp.js';
+		applyTrainingCampFilter,
+		isCoreScopeEnabled,
+		TRAINING_CAMP_KEYWORD
+	} from '@/config/coreScope.js';
 	export default {
 		computed: {
 			...mapGetters(['uid']),
-			isMvpMode() {
-				return isMvpEnabled();
+			isCoreScope() {
+				return isCoreScopeEnabled();
 			}
 		},
 		components: {
@@ -158,9 +158,9 @@
 			this.title = options.title || '';
 			this.$set(this.where, 'keyword', options.searchValue || '');
 			this.$set(this.where, 'productId', options.productId || '');
-			if (this.isMvpMode) {
-				this.where = applyMvpTrainingCampFilter(this.where);
-				this.title = this.title || MVP_TRAINING_CAMP_KEYWORD;
+			if (this.isCoreScope) {
+				this.where = applyTrainingCampFilter(this.where);
+				this.title = this.title || TRAINING_CAMP_KEYWORD;
 			}
 			this.get_product_list();
 		},
@@ -190,7 +190,7 @@
 			},
 			searchSubmit: function(e) {
 				let that = this;
-				that.$set(that.where, 'keyword', that.isMvpMode ? MVP_TRAINING_CAMP_KEYWORD : e.detail.value);
+				that.$set(that.where, 'keyword', that.isCoreScope ? TRAINING_CAMP_KEYWORD : e.detail.value);
 				that.loadend = false;
 				that.$set(that.where, 'page', 1)
 				this.get_product_list(true);
@@ -200,7 +200,7 @@
 			 */
 			get_host_product: function() {
 				let that = this;
-				if (that.isMvpMode) return;
+				if (that.isCoreScope) return;
 				if (that.hotScroll) return
 				getProductHot(
 					that.hotPage,
@@ -264,7 +264,7 @@
 				if (isPage === true) that.$set(that, 'productList', []);
 				that.loading = true;
 				that.loadTitle = '';
-				const query = that.isMvpMode ? applyMvpTrainingCampFilter(that.where) : that.where;
+				const query = that.isCoreScope ? applyTrainingCampFilter(that.where) : that.where;
 				getProductslist(query).then(res => {
 					let list = res.data;
 					let productList = that.$util.SplitArray(list, that.productList);
@@ -274,7 +274,7 @@
 					that.loadTitle = loadend ? that.$t(`没有更多内容啦~`) : that.$t(`加载更多`);
 					that.$set(that, 'productList', productList);
 					that.$set(that.where, 'page', that.where.page + 1);
-					if (!that.productList.length && !that.isMvpMode) this.get_host_product();
+					if (!that.productList.length && !that.isCoreScope) this.get_host_product();
 				}).catch(err => {
 					that.loading = false;
 					that.loadTitle = that.$t(`加载更多`);
@@ -284,7 +284,7 @@
 				if (this.productList.length > 0) {
 					this.get_product_list();
 					uni.$emit('scroll');
-				} else if (!this.isMvpMode) {
+				} else if (!this.isCoreScope) {
 					this.get_host_product();
 					uni.$emit('scroll');
 				}

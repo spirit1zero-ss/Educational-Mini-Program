@@ -76,7 +76,6 @@
 </template>
 <script>
 import { AccountLogin, loginInfoApi } from '@/api/account';
-import { getWorkermanUrl } from '@/api/kefu';
 import { setCookies } from '@/libs/util';
 import '@/assets/js/canvas-nest.min';
 import Verify from '@/components/verifition/Verify';
@@ -216,7 +215,6 @@ export default {
                 });
               }, 0);
             }
-            this.checkSocket();
           } catch (e) {}
           PrevLoading.start();
           this.$router.push({

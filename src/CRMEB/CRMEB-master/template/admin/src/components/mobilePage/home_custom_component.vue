@@ -123,7 +123,7 @@
 <script>
 import { mapState } from 'vuex';
 import { getArticleList, getCouponList, getThemeProduct } from '@/api/diy';
-import { isMvpCouponEnabled } from '@/config/mvp';
+import { isCouponAvailable } from '@/config/coreScope';
 
 export default {
   name: 'home_custom_component',
@@ -147,7 +147,7 @@ export default {
     ...mapState('mobildConfig', ['defaultArray']),
     selectTypeValue() {
       const selectType = this.configObj.selectType ? this.configObj.selectType.activeValue : 'user';
-      if (!this.isMvpCouponEnabled() && selectType === 'coupon') return 'user';
+      if (!this.isCouponAvailable() && selectType === 'coupon') return 'user';
       return selectType;
     },
     isListMode() {
@@ -689,7 +689,7 @@ export default {
     });
   },
   methods: {
-    isMvpCouponEnabled,
+    isCouponAvailable,
     setConfig(data) {
       if (!data) return;
       this.configObj = data;
@@ -703,14 +703,14 @@ export default {
       this.bgColorRight = data.moduleColor.color[1].item;
       if (this.selectTypeValue === 'article') {
         this.fetchArticleList();
-      } else if (this.selectTypeValue === 'coupon' && this.isMvpCouponEnabled()) {
+      } else if (this.selectTypeValue === 'coupon' && this.isCouponAvailable()) {
         this.fetchCouponList();
       } else if (this.selectTypeValue === 'goods') {
         this.fetchGoodsList();
       }
     },
     fetchCouponList() {
-      if (!this.isMvpCouponEnabled()) {
+      if (!this.isCouponAvailable()) {
         this.listData = [];
         return;
       }

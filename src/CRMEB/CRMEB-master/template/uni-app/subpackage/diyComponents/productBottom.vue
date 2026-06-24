@@ -40,52 +40,7 @@
               </view>
               <view class="p_center">{{ $t(`购物车`) }}</view>
             </view>
-            <!-- #ifdef APP-PLUS || H5 -->
-            <view
-              v-if="item_id === 0"
-              class="item"
-              @click="goCustomer"
-            >
-              <view class="iconfont icon-kefu"></view>
-              <view class="p_center">{{ $t(`客服`) }}</view>
-            </view>
-            <!-- #endif -->
-            <!-- #ifdef MP -->
-            <view
-              v-if="item_id === 0 && routineContact == 0"
-              class="item"
-              @click="goCustomer"
-            >
-              <view class="iconfont icon-kefu"></view>
-              <view class="p_center">{{ $t(`客服`) }}</view>
-            </view>
-            <button
-              v-else-if="item_id === 0 && routineContact == 1"
-              class="item"
-              open-type="contact"
-              :send-message-title="storeInfo.store_name"
-              :send-message-img="storeInfo.image"
-              :send-message-path="`/pages/goods_details/index?id=${storeInfo.id}`"
-              show-message-card
-              hover-class="none"
-            >
-              <view class="iconfont icon-kefu"></view>
-              <view class="p_center">{{ $t(`客服`) }}</view>
-            </button>
-            <!-- #endif -->
-            <view v-if="item_id === 4" class="item" @click="goShare">
-              <view class="iconfont icon-fenxiang4"></view>
-              <view class="p_center">{{ $t(`分享`) }}</view>
-            </view>
           </block>
-          <view v-if="is_gift" @click="goGift()" class="item">
-            <image
-              class="gift-icon"
-              src="@/static/images/gift-icon.png"
-              mode=""
-            ></image>
-            <view class="p_center">{{ $t(`送礼物`) }}</view>
-          </view>
         </block>
         <block v-else>
           <view
@@ -108,14 +63,6 @@
               mode="aspectFit"
             ></image>
             <view class="p_center">{{ item.name }}</view>
-          </view>
-          <view v-if="is_gift" @click="goGift()" class="item">
-            <image
-              class="gift-icon"
-              src="@/static/images/gift-icon.png"
-              mode=""
-            ></image>
-            <view class="p_center">{{ $t(`送礼物`) }}</view>
           </view>
         </block>
       </div>
@@ -228,7 +175,6 @@
 
 <script>
 import commonWrapper from "./commonWrapper.vue";
-import { getCustomer } from "@/utils/index.js";
 export default {
   name: "productBottom",
   components: {
@@ -391,9 +337,6 @@ export default {
     },
   },
   methods: {
-    goCustomer() {
-      getCustomer(`/pages/extension/customer_list/chat?productId=${this.storeInfo.id}`);
-    },
     goPage(url) {
       if (!url) return;
       uni.navigateTo({

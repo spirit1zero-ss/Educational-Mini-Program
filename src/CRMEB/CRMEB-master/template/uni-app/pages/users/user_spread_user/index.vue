@@ -114,7 +114,7 @@
 	// #endif
 	import home from '@/components/home';
 	import colors from '@/mixins/color.js'
-	import { isMvpEnabled } from '@/config/mvp.js';
+	import { isCoreScopeEnabled } from '@/config/coreScope.js';
 	export default {
 		components: {
 			// #ifdef MP
@@ -207,7 +207,7 @@
 				getUserInfo().then(res => {
 					that.$set(that, 'userInfo', res.data);
 					if (!res.data.spread_status) {
-						if (isMvpEnabled()) {
+						if (isCoreScopeEnabled()) {
 							uni.showToast({
 								title: that.$t(`暂无推广权限，可查看佣金记录`),
 								icon: 'none'

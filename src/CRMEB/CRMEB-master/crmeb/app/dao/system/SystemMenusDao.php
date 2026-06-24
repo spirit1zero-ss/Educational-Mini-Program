@@ -22,18 +22,18 @@ use app\model\system\SystemMenus;
 class SystemMenusDao extends BaseDao
 {
 
-    protected function getMvpHiddenMenuPatterns(): array
+    protected function getRetiredMenuPatterns(): array
     {
-        if (function_exists('mvp_admin_hidden_menu_patterns')) {
-            return mvp_admin_hidden_menu_patterns();
+        if (function_exists('retired_admin_menu_patterns')) {
+            return retired_admin_menu_patterns();
         }
 
         return [];
     }
 
-    protected function withMvpHiddenMenu(array $where): array
+    protected function withoutRetiredMenus(array $where): array
     {
-        $where['mvp_hidden_menu'] = $this->getMvpHiddenMenuPatterns();
+        $where['retired_menu'] = $this->getRetiredMenuPatterns();
         return $where;
     }
 
@@ -73,7 +73,7 @@ class SystemMenusDao extends BaseDao
             $field = ['id', 'menu_name', 'icon', 'pid', 'sort', 'menu_path', 'is_show', 'header', 'is_header', 'is_show_path', 'is_show'];
         }
         $where['no_model'] = sys_config('model_checkbox', ['seckill', 'bargain', 'combination']);
-        $where = $this->withMvpHiddenMenu($where);
+        $where = $this->withoutRetiredMenus($where);
         return $this->search($where)->field($field)->order('sort DESC,id DESC')->failException(false)->select();
     }
 
@@ -85,7 +85,7 @@ class SystemMenusDao extends BaseDao
     public function getMenusUnique(array $where)
     {
         $where['no_model'] = sys_config('model_checkbox', ['seckill', 'bargain', 'combination']);
-        $where = $this->withMvpHiddenMenu($where);
+        $where = $this->withoutRetiredMenus($where);
         return $this->search($where)->where('unique_auth', '<>', '')->column('unique_auth', '');
     }
 
@@ -111,7 +111,7 @@ class SystemMenusDao extends BaseDao
     {
         $where = array_merge($where, ['is_del' => 0]);
         $where['no_model'] = sys_config('model_checkbox', ['seckill', 'bargain', 'combination']);
-        $where = $this->withMvpHiddenMenu($where);
+        $where = $this->withoutRetiredMenus($where);
         return $this->search($where)->field($field)->order('sort DESC,id ASC')->select();
     }
 
@@ -136,7 +136,7 @@ class SystemMenusDao extends BaseDao
     public function column(array $where, string $field, string $key = '')
     {
         $where['no_model'] = sys_config('model_checkbox', ['seckill', 'bargain', 'combination']);
-        $where = $this->withMvpHiddenMenu($where);
+        $where = $this->withoutRetiredMenus($where);
         return $this->search($where)->column($field, $key);
     }
 
@@ -151,7 +151,7 @@ class SystemMenusDao extends BaseDao
     public function menusSelect(array $where, $type = 1)
     {
         $where['no_model'] = sys_config('model_checkbox', ['seckill', 'bargain', 'combination']);
-        $where = $this->withMvpHiddenMenu($where);
+        $where = $this->withoutRetiredMenus($where);
         if ($type == 1) {
             return $this->search($where)->field('id,pid,menu_name,menu_path,unique_auth,sort')->order('sort DESC,id DESC')->select();
         } else {
@@ -168,7 +168,7 @@ class SystemMenusDao extends BaseDao
     public function getSearchList()
     {
         $where['no_model'] = sys_config('model_checkbox', ['seckill', 'bargain', 'combination']);
-        $where = $this->withMvpHiddenMenu($where);
+        $where = $this->withoutRetiredMenus($where);
         $where = array_merge($where, ['is_show' => 1, 'auth_type' => 1, 'is_del' => 0, 'is_show_path' => 0]);
         return $this->search($where)
             ->field('id,pid,menu_name,menu_path,unique_auth,sort')->order('sort DESC,id DESC')->select();

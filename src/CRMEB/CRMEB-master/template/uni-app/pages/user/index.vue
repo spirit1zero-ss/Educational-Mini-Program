@@ -71,7 +71,7 @@ import Loading from "@/components/Loading/index.vue";
 import { getCrmebCopyRight } from "@/api/api.js";
 import { goShopDetail } from "@/libs/order.js";
 import PageDesign from "@/subpackage/diyComponents/pageDesign.vue";
-import { isMvpEnabled, isMvpHiddenLink } from "@/config/mvp.js";
+import { isCoreScopeEnabled, isRetiredLink } from "@/config/coreScope.js";
 
 export default {
   components: {
@@ -335,7 +335,7 @@ export default {
         toLogin();
       } else {
         uni.navigateTo({
-          url: `/pages/activity/goods_bargain_details/index?id=${item.id}&spid=${this.$store.state.app.uid}`,
+          url: `/pages/goods_details/index?id=${item.id}`,
         });
       }
     },
@@ -372,7 +372,7 @@ export default {
     },
     // 记录会员访问
     setVisit() {
-      if (isMvpEnabled()) return;
+      if (isCoreScopeEnabled()) return;
       setVisit({
         url: "/pages/user/index",
       }).then((res) => {});
@@ -502,12 +502,11 @@ export default {
         let storeMenu = [];
         let myMenu = [];
         res.data.routine_my_menus.forEach((el, index, arr) => {
-          if (isMvpHiddenLink(el.url)) {
+          if (isRetiredLink(el.url)) {
             return;
           }
           if (
             el.url == "/pages/admin/order/index" ||
-            el.url == "/pages/admin/order_cancellation/index" ||
             el.url == "/pages/admin/manage/index" ||
             el.name == "客服接待"
           ) {

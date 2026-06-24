@@ -23,14 +23,14 @@
 	} from "@/api/public.js";
 	import pageFooter from "@/components/pageFooter/index.vue";
 	import {
-		isMvpEnabled,
-		MVP_TRAINING_CAMP_KEYWORD
-	} from "@/config/mvp.js";
+		isCoreScopeEnabled,
+		TRAINING_CAMP_KEYWORD
+	} from "@/config/coreScope.js";
 	export default {
 		computed: {
 			...mapGetters(["isLogin", "uid"]),
-			isMvpMode() {
-				return isMvpEnabled();
+			isCoreScope() {
+				return isCoreScopeEnabled();
 			}
 		},
 		components: {
@@ -52,15 +52,15 @@
 			};
 		},
 		onLoad() {
-			if (this.isMvpMode) {
+			if (this.isCoreScope) {
 				uni.redirectTo({
-					url: `/pages/goods/goods_list/index?searchValue=${MVP_TRAINING_CAMP_KEYWORD}&title=${MVP_TRAINING_CAMP_KEYWORD}`,
+					url: `/pages/goods/goods_list/index?searchValue=${TRAINING_CAMP_KEYWORD}&title=${TRAINING_CAMP_KEYWORD}`,
 				});
 			}
 		},
 		onReady() {},
 		onShow() {
-			if (this.isMvpMode) return;
+			if (this.isCoreScope) return;
 			this.getCategoryVersion();
 		},
 		onPageScroll(e) {

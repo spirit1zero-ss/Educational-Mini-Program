@@ -196,7 +196,7 @@
 				orderComment(value).then(res => {
 					uni.hideLoading();
 					if (res.data.to_lottery) {
-						let jumpPath = '/pages/goods/goods_comment_con/lottery_comment?type=4&order_id=' + that
+						let jumpPath = '/pages/goods/goods_comment_list/index?order_id=' + that
 							.orderId + '&date=' + Date.parse(new Date())
 						that.$util.Tips({
 							title: that.$t(`感谢您的评价`),

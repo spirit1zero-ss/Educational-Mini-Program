@@ -27,11 +27,11 @@
         <span class="expand-key">Merchant note:</span>
         <span class="expand-value" v-text="row.remark ? row.remark : 'None'"></span>
       </el-col>
-      <el-col :span="6" v-if="isMvpStorePickupEnabled() && row.shipping_type == 2">
+      <el-col :span="6" v-if="isStorePickupAvailable() && row.shipping_type == 2">
         <span class="expand-key">Write-off store:</span>
         <span class="expand-value" v-text="row.verify_code ? row.store_name : 'None'"></span>
       </el-col>
-      <el-col :span="6" v-if="isMvpStorePickupEnabled() && row.shipping_type == 2">
+      <el-col :span="6" v-if="isStorePickupAvailable() && row.shipping_type == 2">
         <span class="expand-key">Write-off code:</span>
         <span class="expand-value" v-text="row.verify_code ? row.verify_code : 'None'"></span>
       </el-col>
@@ -40,7 +40,7 @@
 </template>
 
 <script>
-import { isMvpStorePickupEnabled } from '@/config/mvp';
+import { isStorePickupAvailable } from '@/config/coreScope';
 
 export default {
   name: 'table-expand',
@@ -48,7 +48,7 @@ export default {
     row: Object,
   },
   methods: {
-    isMvpStorePickupEnabled,
+    isStorePickupAvailable,
   },
 };
 </script>

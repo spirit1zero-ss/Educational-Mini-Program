@@ -13,7 +13,6 @@ namespace app\services\order;
 
 
 use app\dao\order\StoreOrderDao;
-use app\services\activity\lottery\LuckLotteryServices;
 use app\services\activity\combination\StorePinkServices;
 use app\services\BaseServices;
 use app\services\pay\PayServices;
@@ -78,7 +77,7 @@ class StoreOrderSuccessServices extends BaseServices
         $orderInfoServices = app()->make(StoreOrderCartInfoServices::class);
         $orderInfo['storeName'] = $orderInfoServices->getCarIdByProductTitle((int)$orderInfo['id']);
         $res1 = $this->dao->update($orderInfo['id'], $updata);
-        Log::info('mvp_order_pay_success_update', [
+        Log::info('order_pay_success_update', [
             'id' => $orderInfo['id'] ?? 0,
             'order_id' => $orderInfo['order_id'] ?? '',
             'uid' => $orderInfo['uid'] ?? 0,
@@ -95,16 +94,10 @@ class StoreOrderSuccessServices extends BaseServices
             $orderServices = app()->make(StoreOrderServices::class);
             $resPink = $pinkServices->createPink($orderServices->tidyOrder($orderInfo, true));//创建拼团
         }
-        //缓存抽奖次数 除过线下支付
-        if (isset($orderInfo['pay_type']) && $orderInfo['pay_type'] != 'offline') {
-            /** @var LuckLotteryServices $luckLotteryServices */
-            $luckLotteryServices = app()->make(LuckLotteryServices::class);
-            $luckLotteryServices->setCacheLotteryNum((int)$orderInfo['uid'], 'order');
-        }
         $orderInfo['send_name'] = $orderInfo['real_name'];
         //订单支付成功后置事件
         event('OrderPaySuccessListener', [$orderInfo]);
-        Log::info('mvp_order_pay_success_event_dispatched', [
+        Log::info('order_pay_success_event_dispatched', [
             'id' => $orderInfo['id'] ?? 0,
             'order_id' => $orderInfo['order_id'] ?? '',
             'spread_uid' => $orderInfo['spread_uid'] ?? 0,

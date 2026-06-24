@@ -205,36 +205,6 @@ Route::group('setting', function () {
         Route::get('usermenu_data/header', 'v1.setting.SystemGroupData/header')->option(['real_name' => '个人中心菜单数据字段']);
         //个人中心菜单数据状态
         Route::put('usermenu_data/set_status/:id/:status', 'v1.setting.SystemGroupData/set_status')->option(['real_name' => '个人中心菜单数据状态']);
-        //分享海报配置资源
-        Route::resource('poster_data', 'v1.setting.SystemGroupData')->except(['read'])->option([
-            'real_name' => [
-                'index' => '获取分享海报列表',
-                'create' => '获取分享海报表单',
-                'save' => '保存分享海报',
-                'edit' => '获取修改分享海报表单',
-                'update' => '修改分享海报',
-                'delete' => '删除分享海报'
-            ]
-        ]);
-        //分享海报数据字段
-        Route::get('poster_data/header', 'v1.setting.SystemGroupData/header')->option(['real_name' => '分享海报数据字段']);
-        //分享海报数据状态
-        Route::put('poster_data/set_status/:id/:status', 'v1.setting.SystemGroupData/set_status')->option(['real_name' => '分享海报数据状态']);
-        //秒杀配置资源
-        Route::resource('seckill_data', 'v1.setting.SystemGroupData')->except(['read'])->option([
-            'real_name' => [
-                'index' => '获取分秒杀配置列表',
-                'create' => '获取秒杀配置表单',
-                'save' => '保存秒杀配置',
-                'edit' => '获取修改秒杀配置表单',
-                'update' => '修改秒杀配置',
-                'delete' => '删除秒杀配置'
-            ]
-        ]);
-        //秒杀数据字段
-        Route::get('seckill_data/header', 'v1.setting.SystemGroupData/header')->option(['real_name' => '秒杀数据字段']);
-        //秒杀数据状态
-        Route::put('seckill_data/set_status/:id/:status', 'v1.setting.SystemGroupData/set_status')->option(['real_name' => '秒杀数据状态']);
         //获取隐私协议
         Route::get('get_user_agreement', 'v1.setting.SystemGroupData/getUserAgreement')->option(['real_name' => '获取隐私协议']);
         //设置隐私协议
@@ -244,33 +214,21 @@ Route::group('setting', function () {
     /** 城市数据 */
     Route::group(function () {
         //获取城市数据完整列表
-        Route::get('city/full_list', 'v1.setting.SystemCity/fullList')->option(['real_name' => '获取城市数据完整列表']);
         //获取城市数据列表
-        Route::get('city/list/:parent_id', 'v1.setting.SystemCity/index')->option(['real_name' => '获取城市数据列表']);
         //添加城市数据表单
-        Route::get('city/add/:parent_id', 'v1.setting.SystemCity/add')->option(['real_name' => '添加城市数据表单']);
         //修改城市数据表单
-        Route::get('city/:id/edit', 'v1.setting.SystemCity/edit')->option(['real_name' => '修改城市数据表单']);
         //新增/修改城市数据
-        Route::post('city/save', 'v1.setting.SystemCity/save')->option(['real_name' => '新增/修改城市数据']);
         //修改城市数据表单
-        Route::delete('city/del/:city_id', 'v1.setting.SystemCity/delete')->option(['real_name' => '删除城市数据']);
         //清除城市数据缓存
-        Route::get('city/clean_cache', 'v1.setting.SystemCity/clean_cache')->option(['real_name' => '清除城市数据缓存']);
     })->option(['parent' => 'setting', 'cate_name' => '城市数据']);
 
     /** 运费模版 */
     Route::group(function () {
         //运费模板列表
-        Route::get('shipping_templates/list', 'v1.setting.ShippingTemplates/temp_list')->option(['real_name' => '运费模板列表']);
         //修改运费模板数据
-        Route::get('shipping_templates/:id/edit', 'v1.setting.ShippingTemplates/edit')->option(['real_name' => '修改运费模板数据']);
         //保存新增修改
-        Route::post('shipping_templates/save/:id', 'v1.setting.ShippingTemplates/save')->option(['real_name' => '新增或修改运费模版']);
         //删除运费模板
-        Route::delete('shipping_templates/del/:id', 'v1.setting.ShippingTemplates/delete')->option(['real_name' => '删除运费模板']);
         //城市数据接口
-        Route::get('shipping_templates/city_list', 'v1.setting.ShippingTemplates/city_list')->option(['real_name' => '城市数据接口']);
     })->option(['parent' => 'setting', 'cate_name' => '运费模版']);
 
 
@@ -305,30 +263,18 @@ Route::group('setting', function () {
     /** 对外接口 */
     Route::group(function () {
         //对外接口账号信息
-        Route::get('system_out_account/index', 'v1.setting.SystemOutAccount/index')->option(['real_name' => '对外接口账号信息']);
         //对外接口账号添加
-        Route::post('system_out_account/save', 'v1.setting.SystemOutAccount/save')->option(['real_name' => '对外接口账号添加']);
         //对外接口账号修改
-        Route::post('system_out_account/update/:id', 'v1.setting.SystemOutAccount/update')->option(['real_name' => '对外接口账号修改']);
         //设置账号是否禁用
-        Route::put('system_out_account/set_status/:id/:status', 'v1.setting.SystemOutAccount/set_status')->option(['real_name' => '设置账号是否禁用']);
         //设置账号推送接口
-        Route::put('system_out_account/set_up/:id', 'v1.setting.SystemOutAccount/outSetUpSave')->option(['real_name' => '设置账号推送接口']);
         //删除账号
-        Route::delete('system_out_account/:id', 'v1.setting.SystemOutAccount/delete')->option(['real_name' => '删除账号']);
         //测试获取token接口
-        Route::post('system_out_account/text_out_url', 'v1.setting.SystemOutAccount/textOutUrl')->option(['real_name' => '测试获取token接口']);
 
         //对外接口列表
-        Route::get('system_out_interface/list', 'v1.setting.SystemOutAccount/outInterfaceList')->option(['real_name' => '对外接口列表']);
         //新增修改对外接口
-        Route::post('system_out_interface/save/:id', 'v1.setting.SystemOutAccount/saveInterface')->option(['real_name' => '新增修改对外接口']);
         //对外接口信息
-        Route::get('system_out_interface/info/:id', 'v1.setting.SystemOutAccount/interfaceInfo')->option(['real_name' => '对外接口信息']);
         //修改接口名称
-        Route::put('system_out_interface/edit_name', 'v1.setting.SystemOutAccount/editInterfaceName')->option(['real_name' => '修改接口名称']);
         //删除接口
-        Route::delete('system_out_interface/del/:id', 'v1.setting.SystemOutAccount/delInterface')->option(['real_name' => '删除接口']);
     })->option(['parent' => 'setting', 'cate_name' => '对外接口']);
 
 
@@ -366,7 +312,6 @@ Route::group('setting', function () {
 
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
-    \app\adminapi\middleware\MvpRouteBlockMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class

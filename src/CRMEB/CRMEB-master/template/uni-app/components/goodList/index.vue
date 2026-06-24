@@ -7,18 +7,18 @@
 					<view class='pictrue'>
 						<image :src='item.image'></image>
 						<span class="pictrue_log pictrue_log_class"
-							v-if="!isMvpMode && item.activity && item.activity.type === '1' && $permission('seckill')">{{$t(`秒杀`)}}</span>
+							v-if="!isCoreScope && item.activity && item.activity.type === '1' && $permission('seckill')">{{$t(`秒杀`)}}</span>
 						<span class="pictrue_log pictrue_log_class"
-							v-if="!isMvpMode && item.activity && item.activity.type === '2' && $permission('bargain')">{{$t(`砍价`)}}</span>
+							v-if="!isCoreScope && item.activity && item.activity.type === '2' && $permission('bargain')">{{$t(`砍价`)}}</span>
 						<span class="pictrue_log pictrue_log_class"
-							v-if="!isMvpMode && item.activity && item.activity.type === '3' && $permission('combination')">{{$t(`拼团`)}}</span>
+							v-if="!isCoreScope && item.activity && item.activity.type === '3' && $permission('combination')">{{$t(`拼团`)}}</span>
 					</view>
 					<view class='underline'>
 						<view class='text'>
 							<view class='line1'>{{item.store_name}}</view>
 							<view class='money font-color'>{{$t(`￥`)}}<text class='num'>{{item.price}}</text></view>
 							<view class='vip-money acea-row row-middle'
-								v-if="!isMvpMode && item.is_vip && item.vip_price && item.vip_price > 0">
+								v-if="!isCoreScope && item.is_vip && item.vip_price && item.vip_price > 0">
 								{{$t(`￥`)}}{{item.vip_price || 0}}
 								<image src='../../static/images/vip.png'></image><text class='num'>
 								{{$t(`已售`)}}{{item.sales}}{{$t(item.unit_name)}}</text>
@@ -43,13 +43,13 @@
 		goPage
 	} from '@/libs/order.js'
 	import {
-		isMvpEnabled
-	} from '@/config/mvp.js'
+		isCoreScopeEnabled
+	} from '@/config/coreScope.js'
 	export default {
 		computed: {
 			...mapGetters(['uid']),
-			isMvpMode() {
-				return isMvpEnabled();
+			isCoreScope() {
+				return isCoreScopeEnabled();
 			}
 		},
 		props: {

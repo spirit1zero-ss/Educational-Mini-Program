@@ -250,26 +250,6 @@
 				:gift_uid="orderInfo.gift_uid"
 				@openSubcribe="openSubcribe"
 			></orderGoods>
-			<!-- #ifdef H5 || APP-PLUS -->
-			<div class="goodCall" @click="goGoodCall">
-				<span class="iconfont icon-kefu"></span>
-				<span>{{ $t(`联系客服`) }}</span>
-			</div>
-			<!-- #endif -->
-			<!-- #ifdef MP -->
-			<div class="goodCall" @click="goGoodCall" v-if="routineContact == 0">
-				<button hover-class="none">
-					<span class="iconfont icon-kefu"></span>
-					<span>{{ $t(`联系客服`) }}</span>
-				</button>
-			</div>
-			<div class="goodCall" v-else>
-				<button hover-class="none" open-type="contact">
-					<span class="iconfont icon-kefu"></span>
-					<span>{{ $t(`联系客服`) }}</span>
-				</button>
-			</div>
-			<!-- #endif -->
 			<view class="wrapper" v-if="isReturn == 1 && (is_gift == 0 || is_gift == 1)">
 				<view class="item acea-row row-between">
 					<view>{{ $t(`申请理由`) }}：</view>
@@ -536,7 +516,6 @@
 		<!-- #ifdef MP -->
 		<!-- <authorize @onLoadFun="onLoadFun" :isAuto="isAuto" :isShowAuth="isShowAuth" @authColse="authColse"></authorize> -->
 		<!-- #endif -->
-		<invoiceModal :aleartStatus="aleartStatus" :invoiceData="invoiceData" @close="aleartStatus = false"></invoiceModal>
 		<view class="mask invoice-mask" v-if="aleartStatus || giftModalShow" @click="aleartStatus = false"></view>
 		<view class="mask more-mask" v-if="moreBtn" @click="moreBtn = false"></view>
 		<giftModal :aleartStatus="giftModalShow" :giftData="giftModalData" @shareH5="shareH5" @close="giftModalShow = false"></giftModal>
@@ -544,26 +523,12 @@
 		<view class="share-box" v-if="H5ShareBox">
 			<image :src="imgHost + '/statics/images/share-info.png'" @click="H5ShareBox = false"></image>
 		</view>
-		<invoice-picker
-			:inv-show="invShow"
-			:is-special="special_invoice"
-			:url-query="urlQuery"
-			:inv-checked="invChecked"
-			:order-id="order_id"
-			:inv-list="invList"
-			:is-order="1"
-			@inv-close="invClose"
-			@inv-change="invSub"
-			@inv-cancel="invCancel"
-		></invoice-picker>
 	</view>
 </template>
 
 <script>
 import { getOrderDetail, refundOrderDetail, orderAgain, orderTake, orderDel, refundOrderDel, orderCancel, refundExpress, cancelRefundOrder } from '@/api/order.js';
 import { openOrderRefundSubscribe } from '@/utils/SubscribeMessage.js';
-import { getCustomerType } from '@/api/api.js';
-import { getCustomer } from '@/utils/index.js';
 import { getUserInfo, invoiceList, makeUpinvoice } from '@/api/user.js';
 import home from '@/components/home';
 import orderGoods from '@/components/orderGoods';
@@ -574,8 +539,6 @@ import { mapGetters } from 'vuex';
 import authorize from '@/components/Authorize';
 // #endif
 import colors from '@/mixins/color';
-import invoicePicker from '../components/invoicePicker/index.vue';
-import invoiceModal from '../components/invoiceModal/index.vue';
 import giftModal from '../order_pay_status/components/giftModal.vue';
 import zbCode from '@/components/zb-code/zb-code.vue';
 import { HTTP_REQUEST_URL } from '@/config/app.js';
@@ -583,8 +546,6 @@ import { userShare } from '@/api/user.js';
 export default {
 	components: {
 		home,
-		invoicePicker,
-		invoiceModal,
 		orderGoods,
 		giftModal,
 		zbCode,
@@ -716,7 +677,6 @@ export default {
 		if (this.isLogin) {
 			this.getOrderInfo();
 			this.getUserInfo();
-			this.getCustomerType();
 			let opt = wx.getEnterOptionsSync();
 			if (opt.scene == '1038' && opt.referrerInfo.appId == 'wxef277996acc166c3') {
 				// 代表从收银台小程序返回
@@ -777,7 +737,7 @@ export default {
 		return {
 			title: that.giftModalData.gift_mark || '',
 			imageUrl: that.mpGiftImg || '',
-			path: '/pages/goods/receive_gift/index?id=' + this.giftModalData.id + '&spid=' + this.$store.state.app.uid
+			path: '/pages/goods/order_details/index?order_id=' + this.orderId
 		};
 	},
 	onShareTimeline() {
@@ -789,7 +749,7 @@ export default {
 				id: that.id,
 				spid: that.uid || 0
 			},
-			path: '/pages/goods/receive_gift/index?id=' + this.giftModalData.id + '&spid=' + this.$store.state.app.uid,
+			path: '/pages/goods/order_details/index?order_id=' + this.orderId,
 			imageUrl: that.mpGiftImg
 		};
 	},
@@ -803,7 +763,7 @@ export default {
 				let configAppMessage = {
 					desc: that.giftModalData.gift_mark,
 					title: that.giftModalData.title,
-					link: window.location.protocol + '//' + window.location.host + '/pages/goods/receive_gift/index?id=' + that.giftModalData.id + '&spid=' + that.$store.state.app.uid,
+					link: window.location.protocol + '//' + window.location.host + '/pages/goods/order_details/index?order_id=' + that.orderId,
 					imgUrl: that.mpGiftImg
 				};
 				that.$wechat.wechatEvevt(['updateAppMessageShareData', 'updateTimelineShareData', 'onMenuShareAppMessage', 'onMenuShareTimeline'], configAppMessage);
@@ -849,20 +809,6 @@ export default {
 			uni.navigateTo({
 				url: `/pages/goods/order_refund_goods/index?orderId=` + this.order_id
 			});
-		},
-		getCustomerType() {
-			getCustomerType()
-				.then((res) => {
-					this.customerInfo = res.data;
-				})
-				.catch((err) => {
-					this.$util.Tips({
-						title: err
-					});
-				});
-		},
-		goGoodCall() {
-			getCustomer(`/pages/extension/customer_list/chat?orderId=${this.order_id}&isReturn=${this.isReturn}`);
 		},
 		openSubcribe(e) {
 			let page = e;
@@ -1040,13 +986,13 @@ export default {
 					that.$set(that, 'routineContact', Number(res.data.routine_contact_type));
 					// #ifdef H5 || APP-PLUS
 					this.$nextTick(() => {
-						that.val = HTTP_REQUEST_URL + '/pages/admin/order_cancellation/index?verify_code=' + that.orderInfo.verify_code;
+						that.val = HTTP_REQUEST_URL + '/pages/goods/order_details/index?order_id=' + that.orderId;
 					});
 					// #endif
 					// #ifdef MP
 					if (!that.orderInfo.code) {
 						this.$nextTick(() => {
-							that.val = HTTP_REQUEST_URL + '/pages/admin/order_cancellation/index?verify_code=' + that.orderInfo.verify_code;
+							that.val = HTTP_REQUEST_URL + '/pages/goods/order_details/index?order_id=' + that.orderId;
 						});
 					} else {
 						this.codeSrc = that.orderInfo.code || '';
@@ -1254,7 +1200,7 @@ export default {
 		 */
 		goJoinPink: function () {
 			uni.navigateTo({
-				url: '/pages/activity/goods_combination_status/index?id=' + this.orderInfo.pink_id
+				url: '/pages/goods/order_details/index?order_id=' + this.orderId
 			});
 		},
 		/**

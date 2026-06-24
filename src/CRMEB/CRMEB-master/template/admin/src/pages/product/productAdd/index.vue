@@ -23,7 +23,7 @@
           v-show="currentTab === '1'"
           :isCai="type"
           :formValidate="formValidate"
-          :goodsType="mvpGoodsType"
+          :goodsType="coreGoodsType"
           :treeSelect="treeSelect"
           :tileLabelList="tileLabelList"
           :progress="progress"
@@ -56,7 +56,7 @@
           :oneFormBatch="oneFormBatch"
           :formDynamic="formDynamic"
           :canSel="canSel"
-          :isMvpMode="isMvpMode"
+          :isCoreScope="isCoreScope"
           @changeSpec="changeSpec"
           @confirm="confirm"
           @onMoveSpec="onMoveSpec"
@@ -114,7 +114,7 @@
           :manyBrokerageTwo.sync="manyBrokerageTwo"
           :manyVipPrice.sync="manyVipPrice"
           :manyVipDiscount.sync="manyVipDiscount"
-          :isMvpMode="isMvpMode"
+          :isCoreScope="isCoreScope"
           @checkAllGroupChange="checkAllGroupChange"
           @changeVipPrice="changeVipPrice"
           @changeDiscount="changeDiscount"
@@ -128,7 +128,7 @@
           :couponName="couponName"
           :dataLabel="dataLabel"
           :activity="activity"
-          :isMvpMode="isMvpMode"
+          :isCoreScope="isCoreScope"
           @handleClose="handleClose"
           @addCoupon="addCoupon"
           @openLabel="openLabel"
@@ -274,14 +274,14 @@
     ></freightTemplate>
     <add-attr ref="addattr" @getList="userSearchs"></add-attr>
     <coupon-list
-      v-if="!isMvpMode"
+      v-if="!isCoreScope"
       ref="couponTemplates"
       @nameId="nameId"
       :couponids="formValidate.coupon_ids"
       :updateIds="updateIds"
       :updateName="updateName"
     ></coupon-list>
-    <coupon-list v-if="!isMvpMode" ref="goodsCoupon" many="one" :luckDraw="true" @getCouponId="goodsCouponId"></coupon-list>
+    <coupon-list v-if="!isCoreScope" ref="goodsCoupon" many="one" :luckDraw="true" @getCouponId="goodsCouponId"></coupon-list>
     <el-dialog :visible.sync="goods_modals" title="商品列表" footerHide class="paymentFooter" scrollable width="1000px">
       <goods-list v-if="goods_modals" ref="goodslist" :ischeckbox="true" @getProductId="getProductId"></goods-list>
     </el-dialog>
@@ -366,7 +366,7 @@ import PriceCommission from './components/PriceCommission.vue';
 import MarketingSetting from './components/MarketingSetting.vue';
 import OtherSetting from './components/OtherSetting.vue';
 import { formatRichText } from '@/utils/editorImg';
-import { isMvpEnabled, isMvpProductExtrasEnabled } from '@/config/mvp';
+import { isCoreScopeEnabled, areProductExtrasAvailable } from '@/config/coreScope';
 
 export default {
   name: 'ProductAdd',
@@ -648,14 +648,14 @@ export default {
   },
   computed: {
     ...mapState('media', ['isMobile']),
-    isMvpMode() {
-      return isMvpEnabled();
+    isCoreScope() {
+      return isCoreScopeEnabled();
     },
     isProductExtrasEnabled() {
-      return isMvpProductExtrasEnabled();
+      return areProductExtrasAvailable();
     },
-    mvpGoodsType() {
-      if (!this.isMvpMode) return this.goodsType;
+    coreGoodsType() {
+      if (!this.isCoreScope) return this.goodsType;
       if (!this.isProductExtrasEnabled) {
         return this.goodsType.filter((item) => Number(item.id) === 0);
       }
@@ -729,7 +729,7 @@ export default {
             }
 
             this.formValidate = data;
-            this.applyMvpProductMarketingDefaults();
+            this.applyCoreProductMarketingDefaults();
             this.dataLabel = data.label_id;
             this.formValidate.coupon_ids = ids;
             this.updateIds = ids;
@@ -773,7 +773,7 @@ export default {
                 },
               ];
             }
-            this.applyMvpProductMarketingDefaults();
+            this.applyCoreProductMarketingDefaults();
             this.watchActivity();
             this.spinShow = false;
           }
@@ -828,7 +828,7 @@ export default {
     // 分片上传
     videoSaveToUrl(file) {
       if (!this.isProductExtrasEnabled) {
-        this.$message.warning('Product video upload is disabled in MVP mode');
+        this.$message.warning('Product video upload is disabled in the current product scope');
         return false;
       }
       if (isVideoUpload(file)) {
@@ -854,17 +854,17 @@ export default {
     // 类型选择/填入内容判断
     virtualbtn(index, type) {
       if (!this.isProductExtrasEnabled && Number(index) !== 0) {
-        this.$message.warning('Product extras are disabled in MVP mode');
-        this.applyMvpProductMarketingDefaults();
+        this.$message.warning('Product extras are disabled in the current product scope');
+        this.applyCoreProductMarketingDefaults();
         return;
       }
-      if (this.isMvpMode && Number(index) === 2) {
-        this.$message.warning('MVP 模式下已禁用优惠券商品');
+      if (this.isCoreScope && Number(index) === 2) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券商品');
         return;
       }
       if (type != 1) {
         if (this.$route.params.id) return this.$message.error('编辑商品不支持切换商品类型');
-        this.formValidate.is_sub = this.normalizeMvpSubSettings([]);
+        this.formValidate.is_sub = this.normalizeCoreSubSettings([]);
         let id = this.$route.params.id;
         if (id) {
           checkActivityApi(id)
@@ -924,7 +924,7 @@ export default {
           this.headTab = virtualHeadTabs;
           break;
       }
-      this.applyMvpProductMarketingDefaults();
+      this.applyCoreProductMarketingDefaults();
     },
     // 新增分类
     addCate() {
@@ -980,7 +980,7 @@ export default {
     },
     // 导入卡密
     upFile() {
-      this.$message.warning('Virtual card import is not available in MVP mode');
+      this.$message.warning('Virtual card import is not available in the current product scope');
     },
     //获取视频上传类型
     uploadType() {
@@ -998,7 +998,7 @@ export default {
         ids.push(item.id);
       });
       this.formValidate = data;
-      this.applyMvpProductMarketingDefaults();
+      this.applyCoreProductMarketingDefaults();
       this.seletVideo = data.seletVideo;
       this.contents = data.description;
       this.couponName = data.coupons;
@@ -1056,7 +1056,7 @@ export default {
         this.manyFormValidate = [...this.oneFormBatch, ...data.attrs];
       }
 
-      this.applyMvpProductMarketingDefaults();
+      this.applyCoreProductMarketingDefaults();
       setTimeout((e) => {
         this.checkAllGroup(this.formValidate.is_sub);
       }, 1000);
@@ -1071,11 +1071,11 @@ export default {
     },
     // 单独设置会员设置
     checkAllGroupChange(data) {
-      this.formValidate.is_sub = this.normalizeMvpSubSettings(data);
+      this.formValidate.is_sub = this.normalizeCoreSubSettings(data);
       this.checkAllGroup(this.formValidate.is_sub);
     },
     checkAllGroup(data) {
-      data = this.normalizeMvpSubSettings(data || []);
+      data = this.normalizeCoreSubSettings(data || []);
       let endLength = this.attrs.length + 3;
       if (this.formValidate.spec_type === 0) {
         if (data.length === 2) {
@@ -1102,19 +1102,19 @@ export default {
         }
       }
     },
-    normalizeMvpSubSettings(data = []) {
-      if (!this.isMvpMode) return data;
+    normalizeCoreSubSettings(data = []) {
+      if (!this.isCoreScope) return data;
       return data.filter((item) => item !== 0);
     },
-    applyMvpProductMarketingDefaults() {
-      if (!this.isMvpMode || !this.formValidate) return;
+    applyCoreProductMarketingDefaults() {
+      if (!this.isCoreScope || !this.formValidate) return;
       this.formValidate.vip_product = 0;
       this.formValidate.vip_product_type = 0;
       this.formValidate.give_integral = 0;
       this.formValidate.coupon_ids = [];
       this.formValidate.activity = ['默认'];
-      this.formValidate.is_sub = this.normalizeMvpSubSettings(this.formValidate.is_sub || []);
-      this.applyMvpProductExtraDefaults();
+      this.formValidate.is_sub = this.normalizeCoreSubSettings(this.formValidate.is_sub || []);
+      this.applyCoreProductExtraDefaults();
       this.couponName = [];
       this.updateIds = [];
       this.updateName = [];
@@ -1127,8 +1127,8 @@ export default {
       this.manyFormValidate.forEach(resetVip);
       this.oneFormBatch.forEach(resetVip);
     },
-    // Reset product extra fields while MVP product extras are disabled.
-    applyMvpProductExtraDefaults() {
+    // Reset product extra fields while retired product extras are disabled.
+    applyCoreProductExtraDefaults() {
       if (this.isProductExtrasEnabled || !this.formValidate) return;
       this.formValidate.virtual_type = 0;
       this.formValidate.is_virtual = 0;
@@ -1153,8 +1153,8 @@ export default {
     },
     // 添加优惠券
     addCoupon() {
-      if (this.isMvpMode) {
-        this.$message.warning('MVP 模式下已禁用优惠券玩法');
+      if (this.isCoreScope) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券玩法');
         return;
       }
       this.$refs.couponTemplates.isTemplate = true;
@@ -1176,8 +1176,8 @@ export default {
         }
         this.addVirtualModel = true;
       } else {
-        if (this.isMvpMode) {
-          this.$message.warning('MVP 模式下已禁用优惠券商品');
+        if (this.isCoreScope) {
+          this.$message.warning('当前精简产品范围内已禁用优惠券商品');
           return;
         }
         this.$refs.goodsCoupon.isTemplate = true;
@@ -1196,8 +1196,8 @@ export default {
     },
     // 添加优惠券
     addGoodsCoupon(index, name) {
-      if (this.isMvpMode) {
-        this.$message.warning('MVP 模式下已禁用优惠券商品');
+      if (this.isCoreScope) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券商品');
         return;
       }
       this.tabIndex = index;
@@ -1207,8 +1207,8 @@ export default {
     },
     addVirtual(index, name) {
       if (!this.isProductExtrasEnabled) {
-        this.$message.warning('Virtual product data is disabled in MVP mode');
-        this.applyMvpProductExtraDefaults();
+        this.$message.warning('Virtual product data is disabled in the current product scope');
+        this.applyCoreProductExtraDefaults();
         return;
       }
       this.tabIndex = index;
@@ -1218,8 +1218,8 @@ export default {
     // 提交卡密信息
     upVirtual() {
       if (!this.isProductExtrasEnabled) {
-        this.$message.warning('Virtual product data is disabled in MVP mode');
-        this.applyMvpProductExtraDefaults();
+        this.$message.warning('Virtual product data is disabled in the current product scope');
+        this.applyCoreProductExtraDefaults();
         this.closeVirtual();
         return;
       }
@@ -1302,14 +1302,14 @@ export default {
     // 添加运费模板
     addTemp() {
       if (!this.isProductExtrasEnabled) {
-        this.$message.warning('MVP 模式下已禁用运费模板');
+        this.$message.warning('当前精简产品范围内已禁用运费模板');
         return;
       }
       this.$refs.templates.isTemplate = true;
     },
     addVideo() {
       if (!this.isProductExtrasEnabled) {
-        this.$message.warning('MVP 模式下已禁用视频上传');
+        this.$message.warning('当前精简产品范围内已禁用视频上传');
         return;
       }
       this.$videoModal((e) => {
@@ -1325,7 +1325,7 @@ export default {
     },
     zh_uploadFile() {
       if (!this.isProductExtrasEnabled) {
-        this.$message.warning('Product video upload is disabled in MVP mode');
+        this.$message.warning('Product video upload is disabled in the current product scope');
         return;
       }
       if (this.seletVideo == 1) {
@@ -1337,7 +1337,7 @@ export default {
     // 上传视频
     zh_uploadFile_change(evfile) {
       if (!this.isProductExtrasEnabled) {
-        this.$message.warning('MVP 模式下已禁用视频上传');
+        this.$message.warning('当前精简产品范围内已禁用视频上传');
         return;
       }
       let suffix = evfile.target.files[0].name.substr(evfile.target.files[0].name.indexOf('.'));
@@ -2054,7 +2054,7 @@ export default {
     handleSubmit(name) {
       this.$refs[name].validate((valid) => {
         if (valid) {
-          this.applyMvpProductMarketingDefaults();
+          this.applyCoreProductMarketingDefaults();
           this.formValidate.type = this.type;
           let arr = this.formValidate.spec_type === 0 ? this.oneFormValidate : this.manyFormValidate;
           let item = JSON.parse(JSON.stringify(arr));

@@ -162,68 +162,21 @@ if (!function_exists('sys_data')) {
     }
 }
 
-if (!function_exists('mvp_config')) {
+if (!function_exists('retired_admin_menu_patterns')) {
     /**
-     * Get MVP feature switch config.
-     * @param string|null $name
-     * @param mixed $default
-     * @return mixed
+     * Return the permanent denylist used while retired database menu rows remain.
      */
-    function mvp_config(?string $name = null, $default = null)
+    function retired_admin_menu_patterns(): array
     {
         try {
-            if (class_exists(Config::class)) {
-                if ($name === null || $name === '') {
-                    return Config::get('mvp', []);
-                }
-
-                return Config::get('mvp.' . $name, $default);
-            }
+            $patterns = Config::get('retired.admin_menu_patterns', []);
         } catch (\Throwable $e) {
+            $configFile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'retired.php';
+            $config = is_file($configFile) ? include $configFile : [];
+            $patterns = $config['admin_menu_patterns'] ?? [];
         }
 
-        $configFile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'mvp.php';
-        $config = is_file($configFile) ? include $configFile : [];
-        if ($name === null || $name === '') {
-            return $config;
-        }
-
-        return is_array($config) && array_key_exists($name, $config) ? $config[$name] : $default;
-    }
-}
-
-if (!function_exists('mvp_enabled')) {
-    /**
-     * Determine whether an MVP feature switch is enabled.
-     * @param string $name
-     * @param bool $default
-     * @return bool
-     */
-    function mvp_enabled(string $name, bool $default = false): bool
-    {
-        return (bool)mvp_config($name, $default);
-    }
-}
-
-if (!function_exists('mvp_admin_hidden_menu_patterns')) {
-    /**
-     * Build admin menu path/auth patterns hidden by MVP switches.
-     * @return array
-     */
-    function mvp_admin_hidden_menu_patterns(): array
-    {
-        $patterns = [];
-        $rules = mvp_config('admin_menu_hidden_patterns', []);
-        if (is_array($rules)) {
-            foreach ($rules as $switch => $items) {
-                if (!mvp_enabled((string)$switch, false) && is_array($items)) {
-                    $patterns = array_merge($patterns, $items);
-                }
-            }
-        }
-
-        $patterns = array_filter(array_unique(array_map('strval', $patterns)));
-        return array_values($patterns);
+        return array_values(array_filter(array_unique(array_map('strval', (array)$patterns))));
     }
 }
 

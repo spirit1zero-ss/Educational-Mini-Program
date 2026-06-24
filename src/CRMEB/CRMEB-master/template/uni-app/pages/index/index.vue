@@ -35,7 +35,7 @@
       </view>
     </view>
     <PageDesign
-      v-if="!isMvpMode"
+      v-if="!isCoreScope"
       :style="colorStyle"
       :diyData="currentDiyData"
       :isHome="true"
@@ -166,7 +166,7 @@ import Cache from "@/utils/cache";
 import appUpdate from "@/components/update/app-update.vue";
 import { applyTheme } from "@/utils/theme.js";
 import PageDesign from "@/subpackage/diyComponents/pageDesign.vue";
-import { isMvpEnabled, MVP_HOME_ENTRIES } from "@/config/mvp.js";
+import { isCoreScopeEnabled, TRAINING_CAMP_HOME_ENTRIES } from "@/config/coreScope.js";
 
 export default {
   computed: {
@@ -274,8 +274,8 @@ export default {
       currentDiyData: {},
       isPreview: false,
       themeId: 0,
-      isMvpMode: isMvpEnabled(),
-      mvpHomeEntries: MVP_HOME_ENTRIES,
+      isCoreScope: isCoreScopeEnabled(),
+      mvpHomeEntries: TRAINING_CAMP_HOME_ENTRIES,
     };
   },
   onLoad(options) {
@@ -365,7 +365,7 @@ export default {
       handler: function (newV, oldV) {
         // 优惠券弹窗
         var newDates = new Date().toLocaleDateString();
-        if (newV && !isMvpEnabled()) {
+        if (newV && !isCoreScopeEnabled()) {
           try {
             var oldDate = uni.getStorageSync("oldDate") || "";
           } catch {}
@@ -380,7 +380,7 @@ export default {
     uni.removeStorageSync("form_type_cart");
     // 优惠券弹窗
     if (this.isLogin) {
-      if (!isMvpEnabled()) this.getCoupon();
+      if (!isCoreScopeEnabled()) this.getCoupon();
       this.getCartNum();
     }
     // #ifdef MP
@@ -436,7 +436,7 @@ export default {
       });
     },
     getCartNum: function () {
-      if (this.isMvpMode) return;
+      if (this.isCoreScope) return;
       getCartCounts()
         .then((res) => {
           this.$store.commit("indexData/setCartNum", res.data.count + "");
@@ -822,7 +822,7 @@ export default {
         this.getIsLogin();
       } else {
         uni.navigateTo({
-          url: `/pages/activity/goods_bargain_details/index?id=${item.id}&spid=${this.$store.state.app.uid}`,
+          url: `/pages/goods_details/index?id=${item.id}`,
         });
       }
     },

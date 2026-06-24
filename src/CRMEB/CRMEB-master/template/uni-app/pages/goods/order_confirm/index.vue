@@ -1,23 +1,23 @@
 <template>
 	<view :style="colorStyle">
 		<view class='order-submission'>
-			<view class="allAddress" :style="!isMvpMode && store_self_mention && is_shipping ? '':'padding-top:10rpx'"
+			<view class="allAddress" :style="!isCoreScope && store_self_mention && is_shipping ? '':'padding-top:10rpx'"
 				v-if="!virtual_type && (!is_gift || is_gift == 2)">
 				<view class="nav acea-row">
 					<view class="item font-num" :class="shippingType == 0 ? 'on' : 'on2'" @tap="addressType(0)"
-						v-if='!isMvpMode && store_self_mention && is_shipping'>
+						v-if='!isCoreScope && store_self_mention && is_shipping'>
 						<view class="before">
 							{{$t(`快递配送`)}}
 						</view>
 					</view>
 					<view class="item font-num" :class="shippingType == 1 ? 'on' : 'on2'" @tap="addressType(1)"
-						v-if='!isMvpMode && store_self_mention && is_shipping'>
+						v-if='!isCoreScope && store_self_mention && is_shipping'>
 						<view class="before">
 							{{$t(`到店自提`)}}
 						</view>
 					</view>
 				</view>
-				<view class="add-title acea-row row-between-wrapper" v-if="isMvpMode || !store_self_mention || !is_shipping"
+				<view class="add-title acea-row row-between-wrapper" v-if="isCoreScope || !store_self_mention || !is_shipping"
 					@click.prevent="openList">
 					<view class="acea-row row-middle">
 						<view class="icon" :class="shippingType==1?'orange':'red'">
@@ -44,7 +44,7 @@
 					<view class='addressCon' v-else>
 						<view class='setaddress'>{{$t(`设置收货地址`)}}</view>
 					</view>
-					<view v-if="!isMvpMode && store_self_mention && is_shipping" class='iconfont icon-jiantou'></view>
+					<view v-if="!isCoreScope && store_self_mention && is_shipping" class='iconfont icon-jiantou'></view>
 				</view>
 				<view class='address acea-row row-between-wrapper' v-else @tap="showStoreList">
 					<block v-if="storeList.length>0">
@@ -102,12 +102,9 @@
 					</view>
 				</view>
 			</view>
-			<view v-if="is_gift == 2" class="receive-btn" @click="receiveGift">
-				立即领取
-			</view>
 			<view class='wrapper' v-if="!is_gift || is_gift == 1">
 				<view class='item acea-row row-between-wrapper' @tap='couponTap'
-					v-if="!isMvpMode && !pinkId && !BargainId && !combinationId && !seckillId&& !noCoupon && !discountId && !advanceId">
+					v-if="!isCoreScope && !pinkId && !BargainId && !combinationId && !seckillId&& !noCoupon && !discountId && !advanceId">
 					<view>{{$t(`优惠券`)}}</view>
 					<view class='discount'>
 						{{couponTitle}}
@@ -115,7 +112,7 @@
 					</view>
 				</view>
 				<view class='item acea-row row-between-wrapper'
-					v-if="!isMvpMode && !pinkId && !BargainId && !combinationId && !seckillId && !advanceId && integral_open">
+					v-if="!isCoreScope && !pinkId && !BargainId && !combinationId && !seckillId && !advanceId && integral_open">
 					<view>{{$t(`积分抵扣`)}}</view>
 					<view class='discount acea-row row-middle'>
 						<view> {{useIntegral ? $t(`剩余积分`):$t(`当前积分`)}}
@@ -126,7 +123,7 @@
 						</checkbox-group>
 					</view>
 				</view>
-				<view v-if="!isMvpMode && (invoice_func || special_invoice)" class='item acea-row row-between-wrapper' @tap="goInvoice">
+				<view v-if="!isCoreScope && (invoice_func || special_invoice)" class='item acea-row row-between-wrapper' @tap="goInvoice">
 					<view>{{$t(`开具发票`)}}</view>
 					<view class='discount'>
 						{{invTitle}}
@@ -249,24 +246,24 @@
 					</view>
 				</view>
 				<view class='item acea-row row-between-wrapper'
-					v-if="!isMvpMode && priceGroup.levelPrice > 0 && userInfo.vip && !pinkId && !BargainId && !combinationId && !seckillId && !discountId">
+					v-if="!isCoreScope && priceGroup.levelPrice > 0 && userInfo.vip && !pinkId && !BargainId && !combinationId && !seckillId && !discountId">
 					<view>{{$t(`用户等级优惠`)}}：</view>
 					<view class='money'>-{{$t(`￥`)}}{{parseFloat(priceGroup.levelPrice).toFixed(2)}}</view>
 				</view>
 				<view class='item acea-row row-between-wrapper'
-					v-if="!isMvpMode && priceGroup.memberPrice > 0 && userInfo.vip && !pinkId && !BargainId && !combinationId && !seckillId && !discountId">
+					v-if="!isCoreScope && priceGroup.memberPrice > 0 && userInfo.vip && !pinkId && !BargainId && !combinationId && !seckillId && !discountId">
 					<view>{{$t(`付费会员优惠`)}}：</view>
 					<view class='money'>-{{$t(`￥`)}}{{parseFloat(priceGroup.memberPrice).toFixed(2)}}</view>
 				</view>
-				<view class='item acea-row row-between-wrapper' v-if="!isMvpMode && priceGroup.storePostageDiscount > 0">
+				<view class='item acea-row row-between-wrapper' v-if="!isCoreScope && priceGroup.storePostageDiscount > 0">
 					<view>{{$t(`会员运费优惠`)}}：</view>
 					<view class='money'>-{{$t(`￥`)}}{{parseFloat(priceGroup.storePostageDiscount).toFixed(2)}}</view>
 				</view>
-				<view class='item acea-row row-between-wrapper' v-if="!isMvpMode && coupon_price > 0">
+				<view class='item acea-row row-between-wrapper' v-if="!isCoreScope && coupon_price > 0">
 					<view>{{$t(`优惠券抵扣`)}}：</view>
 					<view class='money'>-{{$t(`￥`)}}{{parseFloat(coupon_price).toFixed(2)}}</view>
 				</view>
-				<view class='item acea-row row-between-wrapper' v-if="!isMvpMode && integral_price > 0">
+				<view class='item acea-row row-between-wrapper' v-if="!isCoreScope && integral_price > 0">
 					<view>{{$t(`积分抵扣`)}}：</view>
 					<view class='money'>-{{$t(`￥`)}}{{parseFloat(integral_price).toFixed(2)}}</view>
 				</view>
@@ -283,8 +280,6 @@
 			</view>
 		</view>
 		<view class="alipaysubmit" v-html="formContent"></view>
-		<couponListWindow v-if="!isMvpMode" :coupon='coupon' @ChangCouponsClone="ChangCouponsClone" :openType='openType' :cartId='cartId'
-			@ChangCoupons="ChangCoupons"></couponListWindow>
 		<addressWindow ref="addressWindow" @changeTextareaStatus="changeTextareaStatus" :news='news' :address='address'
 			:pagesUrl="pagesUrl" @OnChangeAddress="OnChangeAddress" @changeClose="changeClose"
 			@onHaveAddressList="onHaveAddressList"></addressWindow>
@@ -292,9 +287,6 @@
 		<!-- <authorize @onLoadFun="onLoadFun" :isAuto="isAuto" :isShowAuth="isShowAuth" @authColse="authColse"></authorize> -->
 		<!-- #endif -->
 		<home v-show="!invShow"></home>
-		<invoice-picker :inv-show="invShow" :inv-list="invList" :inv-checked="invChecked" :is-special="special_invoice"
-			:url-query="urlQuery" @inv-close="invClose" @inv-change="invChange" @inv-cancel="invCancel">
-		</invoice-picker>
 		<canvas canvas-id="canvas" v-if="canvasStatus"
 			:style="{width: canvasWidth + 'px', height: canvasHeight + 'px',position: 'absolute',left:'-100000px',top:'-100000px'}"></canvas>
 	</view>
@@ -306,8 +298,7 @@
 		orderCreate,
 		postOrderComputed,
 		checkShipping,
-		getGiftOrderDetail,
-		orderReceiveGift
+		getGiftOrderDetail
 	} from '@/api/order.js';
 	import {
 		getAddressDefault,
@@ -325,11 +316,9 @@
 		CACHE_LONGITUDE,
 		CACHE_LATITUDE
 	} from '@/config/cache.js';
-	import couponListWindow from '@/components/couponListWindow';
 	import addressWindow from '@/components/addressWindow';
 	import orderGoods from '@/components/orderGoods';
 	import home from '@/components/home';
-	import invoicePicker from '../components/invoicePicker/index.vue';
 	import {
 		toLogin
 	} from '@/libs/login.js';
@@ -343,14 +332,12 @@
 	import colors from "@/mixins/color";
 	import Debounce from "@/mixins/debounce";
 	import {
-		disableMvpOrderMarketing,
-		isMvpEnabled
-	} from '@/config/mvp.js';
+		normalizeCoreOrderPayload,
+		isCoreScopeEnabled
+	} from '@/config/coreScope.js';
 	export default {
 		components: {
 			payment,
-			invoicePicker,
-			couponListWindow,
 			addressWindow,
 			orderGoods,
 			home,
@@ -497,8 +484,8 @@
 		},
 		computed: {
 			...mapGetters(['isLogin']),
-			isMvpMode() {
-				return isMvpEnabled();
+			isCoreScope() {
+				return isCoreScopeEnabled();
 			}
 		},
 		// watch: {
@@ -528,21 +515,21 @@
 			if(options.is_gift){
 				this.is_gift = Number(options.is_gift);
 			}
-			if (this.isMvpMode) {
+			if (this.isCoreScope) {
 				this.is_gift = 0;
 			}
-			this.couponId = this.isMvpMode ? 0 : (options.couponId || 0);
-			this.noCoupon = this.isMvpMode ? 1 : (Number(options.noCoupon) || 0);
+			this.couponId = this.isCoreScope ? 0 : (options.couponId || 0);
+			this.noCoupon = this.isCoreScope ? 1 : (Number(options.noCoupon) || 0);
 			this.pinkId = options.pinkId ? parseInt(options.pinkId) : 0;
 			this.addressId = options.addressId || 0;
 			this.cartId = options.cartId;
 			this.orderId = options.order_id || 0
 			this.is_address = options.is_address ? true : false;
 			this.news = !options.new || options.new === '0' ? 0 : 1;
-			this.invChecked = this.isMvpMode ? '' : (options.invoice_id || '');
+			this.invChecked = this.isCoreScope ? '' : (options.invoice_id || '');
 			this.header_type = options.header_type || '1';
-			this.couponTitle = this.isMvpMode ? this.$t(`请选择`) : (options.couponTitle || this.$t(`请选择`))
-			if (!this.isMvpMode && options.invoice_id) {
+			this.couponTitle = this.isCoreScope ? this.$t(`请选择`) : (options.couponTitle || this.$t(`请选择`))
+			if (!this.isCoreScope && options.invoice_id) {
 				let name = ''
 				name += options.header_type == 1 ? this.$t(`个人`) : this.$t(`企业`);
 				name += options.invoice_type == 1 ? this.$t(`普通`) : this.$t(`专用`);
@@ -618,7 +605,7 @@
 			},
 			checkShipping() {
 				let that = this;
-				if (that.isMvpMode) {
+				if (that.isCoreScope) {
 					that.is_shipping = false;
 					that.shippingType = 0;
 					this.getaddressInfo();
@@ -683,7 +670,7 @@
 				if (this.shippingType == 0) {
 					this.onAddress()
 				} else {
-					if (this.isMvpMode) return;
+					if (this.isCoreScope) return;
 					this.showStoreList()
 				}
 			},
@@ -693,7 +680,7 @@
 				this.getInvoiceList()
 			},
 			getInvoiceList() {
-				if (this.isMvpMode) return;
+				if (this.isCoreScope) return;
 				uni.showLoading({
 					title: this.$t(`正在加载中`)
 				})
@@ -722,7 +709,7 @@
 			 * 开发票
 			 */
 			goInvoice: function() {
-				if (this.isMvpMode) return;
+				if (this.isCoreScope) return;
 				this.getInvoiceList()
 				this.invShow = true;
 				this.urlQuery =
@@ -762,7 +749,7 @@
 			 * 获取门店列表数据
 			 */
 			getList: function() {
-				if (this.isMvpMode) return;
+				if (this.isCoreScope) return;
 				let longitude = uni.getStorageSync("user_longitude") || ''; //经度
 				let latitude = uni.getStorageSync("user_latitude") || ''; //纬度
 				let data = {
@@ -785,7 +772,7 @@
 			 * 跳转门店列表
 			 */
 			showStoreList: function() {
-				if (this.isMvpMode) return;
+				if (this.isCoreScope) return;
 				let _this = this
 				if (this.storeList.length > 0) {
 					uni.navigateTo({
@@ -806,8 +793,8 @@
 					shipping_type: parseInt(shippingType) + 1,
 					payType: this.payType
 				}
-				data = disableMvpOrderMarketing(data);
-				if (this.isMvpMode) {
+				data = normalizeCoreOrderPayload(data);
+				if (this.isCoreScope) {
 					data.payType = 'weixin';
 					data.is_gift = 0;
 					data.shipping_type = 1;
@@ -816,18 +803,18 @@
 					let result = res.data.result;
 					if (result) {
 						this.totalPrice = result.pay_price;
-						this.integral_price = this.isMvpMode ? 0 : result.deduction_price;
-						this.coupon_price = this.isMvpMode ? 0 : result.coupon_price;
-						this.integral = this.isMvpMode ? this.usable_integral : (this.useIntegral ? result.SurplusIntegral : this.usable_integral);
+						this.integral_price = this.isCoreScope ? 0 : result.deduction_price;
+						this.coupon_price = this.isCoreScope ? 0 : result.coupon_price;
+						this.integral = this.isCoreScope ? this.usable_integral : (this.useIntegral ? result.SurplusIntegral : this.usable_integral);
 						this.$set(this.priceGroup, 'storePostage', shippingType == 1 ? 0 : result.pay_postage);
-						this.$set(this.priceGroup, 'storePostageDiscount', this.isMvpMode ? 0 : result.storePostageDiscount);
+						this.$set(this.priceGroup, 'storePostageDiscount', this.isCoreScope ? 0 : result.storePostageDiscount);
 					}
 				})
 			},
 			addressType(e) {
 				let index = e;
 				let that = this;
-				if (that.isMvpMode && parseInt(index) == 1) return;
+				if (that.isCoreScope && parseInt(index) == 1) return;
 				if (this.shippingType == parseInt(index)) return
 				this.shippingType = parseInt(index);
 				if (index == 1) {
@@ -885,7 +872,7 @@
 			 * 
 			 */
 			ChangCoupons: function(e) {
-				if (this.isMvpMode) return;
+				if (this.isCoreScope) return;
 				// this.usableCoupon = e
 				// this.coupon.coupon = false
 				let index = e,
@@ -919,7 +906,7 @@
 			 * 使用积分抵扣
 			 */
 			ChangeIntegral: function() {
-				if (this.isMvpMode) return;
+				if (this.isCoreScope) return;
 				this.useIntegral = !this.useIntegral;
 				this.computedPrice();
 			},
@@ -986,7 +973,7 @@
 					addressId: that.addressId,
 					shipping_type: that.shippingType + 1
 				}
-				if (that.isMvpMode) {
+				if (that.isCoreScope) {
 					data.is_gift = 0;
 				} else if (that.is_gift) data.is_gift = that.is_gift
 				orderConfirm(data).then(res => {
@@ -1007,7 +994,7 @@
 					that.$set(that, 'orderKey', res.data.orderKey);
 					that.$set(that, 'valid_count', res.data.valid_count);
 					that.$set(that, 'discount_id', res.data.discount_id)
-					const priceGroup = that.isMvpMode ? {
+					const priceGroup = that.isCoreScope ? {
 						...res.data.priceGroup,
 						levelPrice: 0,
 						memberPrice: 0,
@@ -1020,17 +1007,17 @@
 					that.$set(that, 'allPrice', that.$util.$h.Add(parseFloat(priceGroup.totalPrice),
 						parseFloat(priceGroup.vipPrice)).toFixed(2));
 					that.$set(that, 'seckillId', parseInt(res.data.seckill_id));
-					that.$set(that, 'invoice_func', that.isMvpMode ? false : res.data.invoice_func);
-					that.$set(that, 'special_invoice', that.isMvpMode ? false : res.data.special_invoice);
-					that.$set(that, 'store_self_mention', that.isMvpMode ? 0 : res.data.store_self_mention);
-					if (that.isMvpMode) {
+					that.$set(that, 'invoice_func', that.isCoreScope ? false : res.data.invoice_func);
+					that.$set(that, 'special_invoice', that.isCoreScope ? false : res.data.special_invoice);
+					that.$set(that, 'store_self_mention', that.isCoreScope ? 0 : res.data.store_self_mention);
+					if (that.isCoreScope) {
 						that.shippingType = 0;
 						that.invChecked = '';
 						that.invTitle = that.$t(`不开发票`);
 						that.system_store = {};
 					}
 					that.$set(that, 'virtual_type', res.data.virtual_type || 0);
-					that.$set(that, 'integral_open', that.isMvpMode ? false : res.data.integral_open);
+					that.$set(that, 'integral_open', that.isCoreScope ? false : res.data.integral_open);
 					uni.hideLoading()
 					//微信支付是否开启
 					that.cartArr[0].payStatus = res.data.pay_weixin_open || 0
@@ -1050,7 +1037,7 @@
 					}
 					//好友代付是否开启
 					that.cartArr[4].payStatus = res.data.friend_pay_status || 0;
-					if (that.isMvpMode) {
+					if (that.isCoreScope) {
 						that.cartArr[1].payStatus = 0;
 						that.cartArr[2].payStatus = 0;
 						that.cartArr[3].payStatus = 0;
@@ -1059,7 +1046,7 @@
 					// that.$set(that, 'cartArr', that.cartArr);
 					that.$set(that, 'ChangePrice', that.totalPrice);
 					that.getBargainId();
-					if (!that.isMvpMode) {
+					if (!that.isCoreScope) {
 						setTimeout(() => {
 							that.getCouponList();
 						}, 500);
@@ -1079,7 +1066,7 @@
 			 */
 			getBargainId: function() {
 				let that = this;
-				if (that.isMvpMode) {
+				if (that.isCoreScope) {
 					that.$set(that, 'BargainId', 0);
 					that.$set(that, 'combinationId', 0);
 					that.$set(that, 'discountId', 0);
@@ -1112,7 +1099,7 @@
 			 * 
 			 */
 			getCouponList: function() {
-				if (this.isMvpMode) return;
+				if (this.isCoreScope) return;
 				let shippingType = this.shippingType;
 				let that = this;
 				let data = {
@@ -1158,7 +1145,7 @@
 				}, 500);
 			},
 			couponTap: function() {
-				if (this.isMvpMode) return;
+				if (this.isCoreScope) return;
 				this.coupon.coupon = true;
 				this.coupon.list.forEach((item, index) => {
 					if (item.id == this.couponId) {
@@ -1333,8 +1320,8 @@
 					quitUrl: '/pages/goods/order_details/index?order_id=' + this.order_id
 					// #endif
 				};
-				data = disableMvpOrderMarketing(data);
-				if (that.isMvpMode) {
+				data = normalizeCoreOrderPayload(data);
+				if (that.isCoreScope) {
 					data.payType = 'weixin';
 					data.is_gift = 0;
 					data.shipping_type = 1;
@@ -1356,31 +1343,6 @@
 				// #ifndef MP
 				that.payment(data);
 				// #endif
-			},
-			receiveGift() {
-				if (this.isMvpMode) {
-					return this.$util.Tips({
-						title: 'MVP does not support gift orders'
-					});
-				}
-				let data = {
-					gift_key: this.giftData.gift_key,
-					shipping_type: this.$util.$h.Add(this.shippingType, 1),
-					name: this.contacts,
-					phone: this.contactsTel,
-					address_id: this.addressId,
-					store_id: this.system_store ? this.system_store.id : 0,
-				}
-				orderReceiveGift(this.orderId, data).then(res => {
-					uni.reLaunch({
-						url: `/pages/goods/receive_gifts_status/index?status=${res.data.status}&order_id=${this.giftData.order_id}`
-					})
-				}).catch(err => {
-					uni.showToast({
-						icon: 'none',
-						title: err
-					})
-				})
 			},
 			bindDateChange: function(e, index) {
 				this.confirm[index].value = e.target.value

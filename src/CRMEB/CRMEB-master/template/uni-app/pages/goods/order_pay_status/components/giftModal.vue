@@ -101,7 +101,7 @@ export default {
         // #ifdef H5
         this.codeVal =
           window.location.origin +
-          "/pages/goods/receive_gift/index?id=" +
+          "/pages/goods/order_pay_status/index?order_id=" +
           this.giftData.id +
           "&spid=" +
           this.$store.state.app.uid;
@@ -109,7 +109,7 @@ export default {
         // #ifdef APP-PLUS
         this.codeVal =
           HTTP_REQUEST_URL +
-          "/pages/goods/receive_gift/index?id=" +
+          "/pages/goods/order_pay_status/index?order_id=" +
           this.giftData.id +
           "&spid=" +
           this.$store.state.app.uid;

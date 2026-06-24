@@ -18,7 +18,7 @@
                   <el-option label="全部" value="" />
                   <el-option label="普通商品" value="0" />
                   <el-option label="卡密商品" value="1" />
-                  <el-option v-if="isMvpCouponEnabled()" label="优惠券商品" value="2" />
+                  <el-option v-if="isCouponAvailable()" label="优惠券商品" value="2" />
                   <el-option label="虚拟商品" value="3" />
                 </el-select>
               </el-form-item>
@@ -174,7 +174,7 @@
             <el-dropdown-item :command="1">商品分类</el-dropdown-item>
             <el-dropdown-item :command="2">物流设置</el-dropdown-item>
             <el-dropdown-item :command="3">购买送积分</el-dropdown-item>
-            <el-dropdown-item v-if="isMvpCouponEnabled()" :command="4">购买送优惠券</el-dropdown-item>
+            <el-dropdown-item v-if="isCouponAvailable()" :command="4">购买送优惠券</el-dropdown-item>
             <el-dropdown-item :command="5">关联用户标签</el-dropdown-item>
             <el-dropdown-item :command="6">活动推荐</el-dropdown-item>
             <el-dropdown-item v-auth="['product-product-product_show']" v-if="artFrom.type === '1'" :command="7"
@@ -231,7 +231,7 @@
           <template slot-scope="scope">
             <el-tag
               class="mb5 cup"
-              v-if="isMvpMarketingActivityEnabled('bargain') && scope.row.activityExist.bargain"
+              v-if="isMarketingActivityAvailable('bargain') && scope.row.activityExist.bargain"
               type=""
               @click="activityDetail(scope.row, 0)"
               effect="dark"
@@ -240,7 +240,7 @@
             </el-tag>
             <el-tag
               class="mb5 cup"
-              v-if="isMvpMarketingActivityEnabled('combination') && scope.row.activityExist.combination"
+              v-if="isMarketingActivityAvailable('combination') && scope.row.activityExist.combination"
               type="success"
               @click="activityDetail(scope.row, 1)"
               effect="dark"
@@ -249,7 +249,7 @@
             </el-tag>
             <el-tag
               class="mb5 cup"
-              v-if="isMvpMarketingActivityEnabled('seckill') && scope.row.activityExist.seckill"
+              v-if="isMarketingActivityAvailable('seckill') && scope.row.activityExist.seckill"
               type="warning"
               @click="activityDetail(scope.row, 2)"
               effect="dark"
@@ -398,7 +398,7 @@
               <el-radio-group v-model="batchFormData.freight">
                 <!-- <el-radio :label="1">包邮</el-radio> -->
                 <el-radio :label="2">固定邮费</el-radio>
-                <el-radio v-if="isMvpProductExtrasEnabled()" :label="3">运费模板</el-radio>
+                <el-radio v-if="areProductExtrasAvailable()" :label="3">运费模板</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item label="" v-if="batchFormData.freight == 2">
@@ -437,7 +437,7 @@
                 style="width: 100%"
               />
             </el-form-item>
-            <el-form-item label="赠送优惠券：" v-if="batchType == 4 && isMvpCouponEnabled()">
+            <el-form-item label="赠送优惠券：" v-if="batchType == 4 && isCouponAvailable()">
               <div v-if="couponName.length" class="mb20">
                 <el-tag closable v-for="(item, index) in couponName" :key="index" @close="handleClose(item)">{{
                   item.title
@@ -539,7 +539,7 @@
       <div class="bg" v-db-click @click="isProductBox = false"></div>
       <goodsDetail :goodsId="goodsId"></goodsDetail>
     </div>
-    <coupon-list v-if="isMvpCouponEnabled()" ref="couponTemplates" @nameId="nameId" :couponids="batchFormData.coupon_ids"></coupon-list>
+    <coupon-list v-if="isCouponAvailable()" ref="couponTemplates" @nameId="nameId" :couponids="batchFormData.coupon_ids"></coupon-list>
     <brokerageSet ref="brokerageSet" :productId="productId"></brokerageSet>
     <vipPriceSet ref="vipPriceSet" :productId="productId"></vipPriceSet>
     <!-- 商品标签 -->
@@ -581,7 +581,7 @@ import {
 import userLabel from '@/components/labelList';
 import storeLabelList from '@/components/storeLabelList';
 import goodsLabel from '@/components/goodsLabel';
-import { isMvpCouponEnabled, isMvpMarketingActivityEnabled, isMvpProductExtrasEnabled } from '@/config/mvp';
+import { isCouponAvailable, isMarketingActivityAvailable, areProductExtrasAvailable } from '@/config/coreScope';
 
 export default {
   name: 'product_productList',
@@ -688,9 +688,9 @@ export default {
     }
   },
   methods: {
-    isMvpCouponEnabled,
-    isMvpMarketingActivityEnabled,
-    isMvpProductExtrasEnabled,
+    isCouponAvailable,
+    isMarketingActivityAvailable,
+    areProductExtrasAvailable,
     // 具体日期
     onchangeTime(e) {
       this.timeVal = e;
@@ -745,8 +745,8 @@ export default {
     },
     activityDetail(row, type) {
       const activityTypes = ['bargain', 'combination', 'seckill'];
-      if (!this.isMvpMarketingActivityEnabled(activityTypes[type])) {
-        this.$message.warning('MVP 模式下已禁用该营销活动');
+      if (!this.isMarketingActivityAvailable(activityTypes[type])) {
+        this.$message.warning('当前精简产品范围内已禁用该营销活动');
         return;
       }
       let name = '';
@@ -815,9 +815,9 @@ export default {
     batchSelect(type) {
       if (!this.ids.length) {
         this.$message.warning('请选择要修改的商品');
-      } else if (type === 4 && !this.isMvpCouponEnabled()) {
-        this.$message.warning('MVP 模式下已禁用优惠券玩法');
-      } else if (type === 2 && !this.isMvpProductExtrasEnabled()) {
+      } else if (type === 4 && !this.isCouponAvailable()) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券玩法');
+      } else if (type === 2 && !this.areProductExtrasAvailable()) {
         this.batchType = type;
         this.batchFormData.freight = 2;
         this.batchFormData.temp_id = null;
@@ -882,7 +882,7 @@ export default {
     },
     // 获取运费模板；
     productGetTemplate() {
-      if (!this.isMvpProductExtrasEnabled()) {
+      if (!this.areProductExtrasAvailable()) {
         this.templateList = [];
         return;
       }
@@ -920,8 +920,8 @@ export default {
     },
     // 添加优惠券
     addCoupon() {
-      if (!this.isMvpCouponEnabled()) {
-        this.$message.warning('MVP 模式下已禁用优惠券玩法');
+      if (!this.isCouponAvailable()) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券玩法');
         return;
       }
       this.$refs.couponTemplates.isTemplate = true;

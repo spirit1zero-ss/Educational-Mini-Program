@@ -49,7 +49,7 @@
 	import {
 		basicConfig
 	} from '@/api/public.js'
-	import { isMvpEnabled } from '@/config/mvp.js'
+	import { isCoreScopeEnabled } from '@/config/coreScope.js'
 	export default {
 		components: {
 			countDown,
@@ -200,7 +200,7 @@
 					}
 					//好友代付是否开启
 					this.cartArr[4].payStatus = res.data.friend_pay_status || 0;
-					if (isMvpEnabled()) {
+					if (isCoreScopeEnabled()) {
 						this.cartArr[1].payStatus = 0;
 						this.cartArr[2].payStatus = 0;
 						this.cartArr[3].payStatus = 0;
@@ -273,8 +273,8 @@
 			},
 			goPay(number, paytype) {
 				let that = this;
-				if (isMvpEnabled() && paytype !== 'weixin') return that.$util.Tips({
-					title: 'MVP only supports WeChat Pay'
+				if (isCoreScopeEnabled() && paytype !== 'weixin') return that.$util.Tips({
+					title: '当前订单仅支持微信支付'
 				});
 				if (!that.orderId) return that.$util.Tips({
 					title: that.$t(`请选择要支付的订单`)

@@ -85,7 +85,6 @@
 <script>
 import { mapState } from 'vuex';
 import { cascaderListApi, changeListApi } from '@/api/product';
-import { liveGoods } from '@/api/live';
 import { getProductList } from '@/api/diy';
 export default {
   name: 'index',
@@ -282,11 +281,7 @@ export default {
     // 列表
     getList() {
       this.loading = true;
-      if (!this.liveStatus) {
-        if (this.isLive) {
-          this.formValidate.is_live = 1;
-        }
-        changeListApi(this.formValidate)
+      changeListApi(this.formValidate)
           .then(async (res) => {
             let data = res.data;
             this.tableList = data.list;
@@ -311,40 +306,6 @@ export default {
             this.loading = false;
             this.$message.error(res.msg);
           });
-      } else {
-        liveGoods({
-          is_show: '1',
-          status: '1',
-          live_id: this.datas.id,
-          kerword: this.formValidate.store_name,
-          page: this.formValidate.page,
-          limit: this.formValidate.limit,
-        })
-          .then(async (res) => {
-            let data = res.data;
-            data.list.forEach((el) => {
-              el.image = el.cover_img;
-            });
-            if (this.selectIds.length) {
-              this.selectIds.map((item) => {
-                data.list.map((i) => {
-                  if (i.id == item) {
-                    this.$refs.table.toggleRowSelection(i);
-                  }
-                });
-              });
-            }
-            this.$nextTick((e) => {
-              this.tableList = data.list;
-              this.total = res.data.count;
-              this.loading = false;
-            });
-          })
-          .catch((res) => {
-            this.loading = false;
-            this.$message.error(res.msg);
-          });
-      }
     },
     ok() {
       if (this.images.length > 0) {
