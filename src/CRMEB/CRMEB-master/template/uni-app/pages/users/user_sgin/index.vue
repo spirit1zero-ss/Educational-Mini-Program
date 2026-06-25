@@ -123,8 +123,7 @@
 		changeRemindStatus
 	} from '@/api/user.js';
 	import {
-		setFormId,
-		colorChange
+		setFormId
 	} from '@/api/api.js';
 	import colors from '@/mixins/color';
 	// #ifdef MP
@@ -202,14 +201,12 @@
 				this.isShowAuth = e;
 			},
 			getColor() {
-				colorChange('color_change').then((res) => {
-					this.sginBg = `${this.imgHost}/statics/images/sgin_bg_${res.data.status}.png`;
-					this.sginTip = `${this.imgHost}/statics/images/sgin_tip_${res.data.status}.png`;
-					let theme = ['#1db0fc', '#42CA4D', '#e93323', '#ff448f', '#FE5C2D'];
-					uni.setNavigationBarColor({
-						frontColor: '#ffffff', // 必写项
-						backgroundColor: theme[res.data.status - 1] // 必写项
-					});
+				const status = 1;
+				this.sginBg = `${this.imgHost}/statics/images/sgin_bg_${status}.png`;
+				this.sginTip = `${this.imgHost}/statics/images/sgin_tip_${status}.png`;
+				uni.setNavigationBarColor({
+					frontColor: '#ffffff',
+					backgroundColor: '#1db0fc'
 				});
 			},
 			/**

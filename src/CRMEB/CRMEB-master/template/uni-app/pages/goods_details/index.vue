@@ -54,49 +54,10 @@
           <!-- #ifdef APP-PLUS || MP -->
           <view class="" :style="'width:100%;' + 'height:' + sysHeight"></view>
           <!-- #endif -->
-          <PageDesign
-            :diyData="diyData"
-            :productData="storeInfo"
-            :priceData="realPriceData"
-            :skuList="skuArr"
-            :reply="reply"
-            :replyCount="replyCount"
-            :replyChance="replyChance"
-            :productId="id"
-            :couponList="isCoreScope ? [] : couponList"
-            :activity="isCoreScope ? [] : activity"
-            :attr="attr"
-            :attrTxt="attrTxt"
-            :attrValue="attrValue"
-            :isShowPaidVip="!isCoreScope && isShowPaidVip"
-            @bindSortId="bindSortId"
-            @changeSpec="onChangeSpecFromPageDesign"
-            @showSpecModal="onShowSpecModalFromPageDesign"
-            @share="listenerActionSheet"
-            @showCoupon="couponTap"
-            @openModal="openModal"
-            @goActivity="goActivity"
-          ></PageDesign>
         </view>
         <view class="uni-p-b-98"></view>
       </view>
 
-      <productBottom
-        :diyData="diyData"
-        :storeInfo="storeInfo"
-        :is_gift="is_gift"
-        :CartCount="CartCount"
-        :noGoods="noGoods"
-        :attr="attr"
-        :presale_pay_status="presale_pay_status"
-        :animated="animated"
-        @setCollect="setCollect"
-        @goCart="goCart"
-        @goGift="goGift"
-        @joinCart="joinCart"
-        @goBuy="goBuy"
-        @share="listenerActionSheet"
-      ></productBottom>
       <!-- 组件 -->
       <productWindow
         :attr="attr"
@@ -250,7 +211,7 @@ import {
   realPrice,
 } from "@/api/store.js";
 import { getUserInfo, userShare } from "@/api/user.js";
-import { getCoupons, getThemeInfo } from "@/api/api.js";
+import { getCoupons } from "@/api/api.js";
 import { getCartCounts } from "@/api/order.js";
 import { toLogin } from "@/libs/login.js";
 import { mapGetters } from "vuex";
@@ -275,8 +236,6 @@ import { sharePoster } from "@/mixins/sharePoster";
 import homeList from "@/components/homeList";
 import specs from "./components/specs/index.vue";
 import serviceModal from "./components/serviceModal/index.vue";
-import PageDesign from "@/subpackage/diyComponents/pageDesign.vue";
-import productBottom from "@/subpackage/diyComponents/productBottom.vue";
 export default {
   components: {
     productWindow,
@@ -289,8 +248,6 @@ export default {
     homeList,
     specs,
     serviceModal,
-    PageDesign,
-    productBottom,
   },
   directives: {
     trigger: {
@@ -303,7 +260,6 @@ export default {
   data() {
     let that = this;
     return {
-      diyData: {},
       imgHost: HTTP_REQUEST_URL,
       sysHeight: sysHeight,
       noGoods: false,
@@ -462,7 +418,6 @@ export default {
     }
     // #endif
     that.getGoodsDetails();
-    that.getDiyData();
   },
   onReady: function () {
     this.isNodes++;
@@ -533,33 +488,6 @@ export default {
     // 操作菜单
     moreNav() {
       this.currentPage = !this.currentPage;
-    },
-    onChangeSpecFromPageDesign(item) {
-      if (item && item.suk) {
-        let values = item.suk.split(",");
-        if (
-          this.attr.productAttr &&
-          this.attr.productAttr.length === values.length
-        ) {
-          for (let i = 0; i < this.attr.productAttr.length; i++) {
-            this.$set(this.attr.productAttr[i], "index", values[i]);
-          }
-        }
-        this.ChangeAttr(item.suk);
-      }
-    },
-    onShowSpecModalFromPageDesign() {
-      this.$set(this.attr, "cartAttr", true);
-      this.$set(this, "isOpen", true);
-    },
-    getDiyData() {
-      let that = this;
-      let previewThemeId = uni.getStorageSync("previewThemeId");
-      let data = {};
-      if (previewThemeId) data.theme_id = previewThemeId;
-      getThemeInfo("detail", data).then((res) => {
-        that.diyData = res.data;
-      });
     },
     jumpUrl(url) {
       uni.switchTab({
@@ -1153,23 +1081,6 @@ export default {
             });
           });
         }
-      }
-    },
-    onShowSpecModalFromPageDesign() {
-      this.selecAttr();
-    },
-    onChangeSpecFromPageDesign(item) {
-      if (item && item.suk) {
-        let values = item.suk.split(",");
-        if (
-          this.attr.productAttr &&
-          this.attr.productAttr.length === values.length
-        ) {
-          for (let i = 0; i < this.attr.productAttr.length; i++) {
-            this.$set(this.attr.productAttr[i], "index", values[i]);
-          }
-        }
-        this.ChangeAttr(item.suk);
       }
     },
     /**

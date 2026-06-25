@@ -1,4 +1,6 @@
 module.exports = {
+	// 本阶段先做固定前端页面；开启后小程序预览不请求旧商城后台启动接口。
+	EDUCATION_STATIC_PREVIEW: true,
 	// 小程序 / APP请求配置
 	// #ifdef MP || APP-PLUS
 	// 请求域名 格式： https://您的域名

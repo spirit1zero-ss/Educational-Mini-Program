@@ -1,1141 +1,554 @@
 <template>
-  <!-- 首页 -->
-  <view
-    v-if="pageShow"
-    class="page"
-    :class="
-      bgTabVal == 2
-        ? 'fullsize noRepeat'
-        : bgTabVal == 1
-          ? 'repeat ysize'
-          : 'noRepeat ysize'
-    "
-    :style="{
-      backgroundColor: bgColor,
-      backgroundImage: bgPic ? `url(${bgPic})` : '',
-      minHeight: windowHeight + 'px',
-    }"
-  >
-    <view class="mvp-home-panel">
-      <view class="mvp-hero">
-        <view class="mvp-eyebrow">Training Camp</view>
-        <view class="mvp-title">训练营报名入口</view>
-        <view class="mvp-desc">查看训练营课程、完成入营测评，并跟进报名订单与推广佣金。</view>
+  <view class="home-screen">
+    <view class="hero-copy">
+      <view class="hero-pill">
+        <image class="pill-icon" src="/static/images/edu-home/icon-leaf.png" mode="aspectFit"></image>
+        <text>自主学习是AI时代的根本能力！</text>
       </view>
-      <view class="mvp-entry-grid">
-        <view
-          class="mvp-entry"
-          v-for="(item, index) in mvpHomeEntries"
-          :key="index"
-          @tap="mvpHomeJump(item)"
+      <view class="hero-title">自主学习训练营</view>
+      <view class="hero-subtitle">大道至简： 三大核心模块</view>
+    </view>
+
+    <view class="hero-visual">
+      <image class="tree-scene" src="/static/images/edu-home/tree-scene.png" mode="widthFix"></image>
+
+      <view class="module-stack">
+        <button
+          v-for="item in modules"
+          :key="item.key"
+          class="module-card"
+          :class="item.tone"
+          @tap="openModule(item.url)"
         >
-          <view class="mvp-entry-title">{{ item.title }}</view>
-          <view class="mvp-entry-desc">{{ item.desc }}</view>
-        </view>
+          <view class="connector">
+            <view class="connector-dot"></view>
+            <view class="connector-line"></view>
+          </view>
+          <view class="module-badge">{{ item.symbol }}</view>
+          <view class="module-text">
+            <view class="module-name">{{ item.name }}</view>
+            <view class="module-sub">{{ item.sub }}</view>
+            <view v-if="item.extra" class="module-extra">{{ item.extra }}</view>
+          </view>
+          <image class="module-icon" :src="item.icon" mode="aspectFit"></image>
+        </button>
       </view>
     </view>
-    <PageDesign
-      v-if="!isCoreScope"
-      :style="colorStyle"
-      :diyData="currentDiyData"
-      :isHome="true"
-      :isScrolled="isScrolled"
-      :isFixed="isFixed"
-      :productVideoStatus="confirm_video_status"
-      :belongIndex="belongIndex"
-      :errorNetwork="errorNetwork"
-      @bindSortId="bindSortId"
-      @bindHeight="bindHeighta"
-      @storeTap="storeTap"
-      @changeLogin="changeLogin"
-      @changeBarg="changeBarg"
-      @newDataStatus="newDataStatus"
-      @reconnect="reconnect"
-    >
-      <template #bottom>
-        <!-- 分类商品模块 -->
-        <view
-          class="sort-product px-20"
-          :style="{ marginTop: sortMpTop + 'px' }"
-          v-if="!styleConfig.length"
-        >
-          <view
-            class="rd-24rpx bg--w111-fff p-24 mb-24"
-            v-if="sortList.children && sortList.children.length"
-          >
-            <scroll-view
-              scroll-x="true"
-              class="white-nowrap vertical-middle w-full"
-              show-scrollbar="false"
-            >
-              <view
-                class="inline-block mr-24"
-                v-for="(item, index) in sortList.children"
-                :key="index"
-              >
-                <view
-                  class="flex-col flex-center"
-                  @tap="changeSort(item, index)"
-                >
-                  <view
-                    class="picture w-90 h-90 rd-50-p111-"
-                    :class="{ select: curSort == index }"
-                  >
-                    <image
-                      :src="item.pic"
-                      class="w-full h-full rd-50-p111-"
-                    ></image>
-                  </view>
-                  <text
-                    class="fs-24 pt-14"
-                    :class="{ 'font-num': curSort == index }"
-                    >{{ item.cate_name }}</text
-                  >
-                </view>
-              </view>
-            </scroll-view>
-          </view>
-          <waterfallsFlow
-            ref="waterfallsFlow"
-            :wfList="goodList"
-            :goDetail="'goDetail'"
-            @itemTap="goDetail"
-          ></waterfallsFlow>
-          <Loading :loaded="loaded" :loading="loading"></Loading>
-          <view v-if="goodList.length == 0 && loaded">
-            <emptyPage title="暂无商品，去看点别的吧～"></emptyPage>
-          </view>
+
+    <view class="entry-list">
+      <button
+        v-for="item in entries"
+        :key="item.key"
+        class="entry-card"
+        :class="item.tone"
+        @tap="handleEntry(item)"
+      >
+        <image class="entry-icon" :src="item.icon" mode="aspectFit"></image>
+        <view class="entry-copy">
+          <view class="entry-title">{{ item.title }}</view>
+          <view class="entry-desc">{{ item.desc }}</view>
         </view>
-        <couponWindow
-          :window="isCouponShow"
-          @onColse="couponClose"
-          :couponImage="couponObj.image"
-          :couponList="couponObj.list"
-        ></couponWindow>
-        <view class="">
-          {{ site_config }}
-        </view>
-        <!-- #ifndef APP-PLUS -->
-        <view
-          v-if="configData && configData.record_No"
-          class="site-config"
-          @click="goICP(configData.icp_url)"
-          >{{ configData.record_No }}</view
-        >
-        <view
-          class="site-config"
-          v-if="configData && configData.network_security"
-          @click="goICP(configData.network_security_url)"
-        >
-          <image class="ban" src="/static/images/beian.png" alt="" srcset="" />
-          {{ configData.network_security }}
-        </view>
-        <!-- #endif -->
-      </template>
-    </PageDesign>
-    <!-- #ifdef APP -->
-    <app-update ref="appUpdate" :force="true" :tabbar="false"></app-update>
-    <!-- #endif -->
-    <view v-if="isPreview" class="exit-preview" @click="exitPreview">
-      退出预览
+        <view class="entry-action">{{ item.action }}</view>
+        <view class="entry-chevron">›</view>
+      </button>
+    </view>
+
+    <view class="bottom-nav">
+      <button
+        v-for="item in tabs"
+        :key="item.key"
+        class="tab-button"
+        :class="{ active: item.active }"
+        @tap="handleTab(item)"
+      >
+        <image class="tab-icon" :src="item.icon" mode="aspectFit"></image>
+        <text>{{ item.label }}</text>
+      </button>
     </view>
   </view>
 </template>
 
 <script>
-const app = getApp();
-import colors from "@/mixins/color";
-import couponWindow from "@/components/couponWindow/index";
-import { getCouponV2, getCouponNewUser, getCrmebCopyRight } from "@/api/api.js";
-import { getShare } from "@/api/public.js";
-import waterfallsFlow from "@/components/WaterfallsFlow/WaterfallsFlow.vue";
-import emptyPage from "@/components/emptyPage.vue";
-// #ifdef MP
-import { getTempIds } from "@/api/api.js";
-import { SUBSCRIBE_MESSAGE } from "@/config/cache";
-// #endif
-import { mapGetters, mapMutations } from "vuex";
-import { getDiy, getDiyVersion, getThemeInfo } from "@/api/api.js";
-import { getCartCounts } from "@/api/order.js";
-import { getCategoryList, getProductslist } from "@/api/store.js";
-import { goShopDetail } from "@/libs/order.js";
-import { toLogin } from "@/libs/login.js";
-import { HTTP_REQUEST_URL } from "@/config/app";
-import Loading from "@/components/Loading/index.vue";
-import Cache from "@/utils/cache";
-import appUpdate from "@/components/update/app-update.vue";
-import { applyTheme } from "@/utils/theme.js";
-import PageDesign from "@/subpackage/diyComponents/pageDesign.vue";
-import { isCoreScopeEnabled, TRAINING_CAMP_HOME_ENTRIES } from "@/config/coreScope.js";
-
 export default {
-  computed: {
-    // #ifdef MP
-    appletStyle() {
-      return {
-        top: this.getHeight.menuButtonInfo.bottom + 8 + "px",
-        right: "10px",
-      };
-    },
-    // #endif
-    pageStyle() {
-      return {
-        backgroundColor: this.bgColor,
-        backgroundImage: this.bgPic ? `url(${this.bgPic})` : "",
-        minHeight: this.windowHeight + "px",
-      };
-    },
-    pdHeights() {
-      let H = `${this.pdHeight * 2 + 100}rpx`;
-      return {
-        height: this.isFooter ? H : "100rpx",
-      };
-    },
-    ...mapGetters(["isLogin", "uid", "cartNum"]),
-  },
-  mixins: [colors],
-  components: {
-    PageDesign,
-    Loading,
-    couponWindow,
-    waterfallsFlow,
-    emptyPage,
-    // #ifdef APP
-    appUpdate,
-    // #endif
-  },
   data() {
     return {
-      styleConfig: [],
-      loading: false,
-      loadend: false,
-      loadTitle: "下拉加载更多", //提示语
-      page: 1,
-      limit: this.$config.LIMIT,
-      numConfig: 0,
-      code: "",
-      isCouponShow: false,
-      couponObj: {},
-      couponObjs: {
-        show: false,
-      },
-      shareInfo: {},
-      sortList: "",
-      sortAll: [],
-      goodPage: 1,
-      goodList: [],
-      sid: 0,
-      curSort: 0,
-      sortMpTop: 0,
-      loaded: false,
-      loading: false,
-      domOffsetTop: 50,
-      // #ifdef APP-PLUS || MP
-      isFixed: true,
-      // #endif
-      // #ifdef H5
-      isFixed: false,
-      // #endif
-      site_config: "",
-      errorNetwork: false, // 是否断网
-      isHeaderSerch: false,
-      showHomeComb: false,
-      showCateNav: false,
-      homeCombData: {},
-      headerSerchCombData: {},
-      cateNavData: {},
-      footerConfigData: {},
-      bgColor: "",
-      bgPic: "",
-      bgTabVal: "",
-      pageShow: true,
-      windowHeight: 0,
-      imgHost: HTTP_REQUEST_URL,
-      isShowAuth: false,
-      isScrolled: false,
-      product_video_status: false,
-      confirm_video_status: false,
-      positionTop: 0,
-      isFooter: false,
-      pdHeight: 0, //自定义底部导航上下边距和
-      entryData: {
-        store_id: "",
-        latitude: "",
-        longitude: "",
-        select_store_id: "",
-      },
-      goodsIndex: [],
-      promotionIndex: [],
-      belongIndex: 0, // 进店规则归属门店排序位置；
-      isBelongStore: false, //判断是否为归属门店；
-      getHeight: this.$util.getWXStatusHeight(),
-      myApplet: true,
-      configData: Cache.get("BASIC_CONFIG"),
-      currentDiyData: {},
-      isPreview: false,
-      themeId: 0,
-      isCoreScope: isCoreScopeEnabled(),
-      mvpHomeEntries: TRAINING_CAMP_HOME_ENTRIES,
-    };
-  },
-  onLoad(options) {
-    let that = this;
-    uni.hideTabBar();
-    that.getOptions(options);
-    this.$nextTick(function () {
-      uni.getSystemInfo({
-        success: function (res) {
-          that.windowHeight = res.windowHeight;
+      modules: [
+        {
+          key: "leaf",
+          symbol: "叶",
+          tone: "leaf",
+          name: "知识",
+          sub: "学科性格开窍法",
+          icon: "/static/images/edu-home/icon-leaf.png",
+          url: "/pages/leaf/knowledge",
         },
-      });
-    });
-    const { state, scope } = options;
-    let themeId = options.theme_id;
-    // #ifdef MP
-    if (options.scene) {
-      let value = this.$util.getUrlParams(decodeURIComponent(options.scene));
-      if (value.theme_id) themeId = value.theme_id;
-    }
-    // #endif
-
-    if (themeId) {
-      this.themeId = themeId;
-      this.isPreview = true;
-      uni.setStorageSync("previewThemeId", themeId);
-      applyTheme(themeId);
-    } else {
-      let previewThemeId = uni.getStorageSync("previewThemeId");
-      if (previewThemeId) {
-        this.themeId = previewThemeId;
-        this.isPreview = true;
-      }
-    }
-    this.diyData();
-    // #ifdef H5
-    this.setOpenShare();
-    // #endif
-    // #ifdef MP
-    this.getTempIds();
-    // #endif
-    getShare().then((res) => {
-      this.shareInfo = res.data;
-    });
-    this.getCopyRight();
-    this.$eventHub.$on("confirm_video_status", () => {
-      if (this.confirm_video_status) {
-        return;
-      }
-      this.confirm_video_status = true;
-      let flag = true;
-      // #ifdef H5
-      flag = window.self == window.top;
-      // #endif
-      if (!flag) {
-        return;
-      }
-      uni.showModal({
-        content: "当前使用移动网络，是否继续播放视频？",
-        success: (res) => {
-          if (res.confirm) {
-            // 监听
-            this.SET_AUTOPLAY(true);
-            this.$eventHub.$emit("product_video_observe");
-          }
+        {
+          key: "stem",
+          symbol: "茎",
+          tone: "stem",
+          name: "习惯",
+          sub: "习惯养成",
+          extra: "SOP高效作业法",
+          icon: "/static/images/edu-home/icon-task.png",
+          url: "/pages/stem/habits",
         },
-      });
-    });
-
-    // #ifdef APP-PLUS
-    let onNetworkStatusChange = (res) => {
-      if (res.isConnected) {
-        this.diyData();
-        uni.offNetworkStatusChange(onNetworkStatusChange);
-      }
+        {
+          key: "root",
+          symbol: "根",
+          tone: "root",
+          name: "内驱",
+          sub: "慧眼读心赋能法",
+          icon: "/static/images/edu-home/icon-heart.png",
+          url: "/pages/root/inner",
+        },
+      ],
+      entries: [
+        {
+          key: "leaf-entry",
+          tone: "leaf",
+          icon: "/static/images/edu-home/icon-open.png",
+          title: "一张图让孩子学科开窍",
+          desc: "启发灵感，让学习更加生动有趣",
+          action: "测评",
+          url: "/pages/leaf/knowledge",
+        },
+        {
+          key: "stem-entry",
+          tone: "stem",
+          icon: "/static/images/edu-home/icon-clipboard.png",
+          title: "一张图养成作业好习惯",
+          desc: "运用工具，让流程更加科学高效",
+          action: "下载",
+          url: "/pages/stem/habits",
+        },
+        {
+          key: "root-entry",
+          tone: "root",
+          icon: "/static/images/edu-home/icon-shield.png",
+          title: "一张图让家长读懂孩子心",
+          desc: "读懂孩子，让内心更有自信力量！",
+          action: "测评",
+          url: "/pages/root/inner",
+        },
+        {
+          key: "plan-entry",
+          tone: "plan",
+          icon: "/static/images/edu-home/icon-calendar.png",
+          title: "21天训练营计划",
+          desc: "21天陪伴式训练，见证孩子的成长蜕变",
+          action: "去查看",
+          url: "/pages/stem/habits",
+        },
+      ],
+      tabs: [
+        {
+          key: "home",
+          label: "首页",
+          active: true,
+          icon: "/static/images/edu-home/tab-home.png",
+        },
+        {
+          key: "mine",
+          label: "我的",
+          icon: "/static/images/edu-home/tab-user.png",
+          url: "/pages/user/index",
+        },
+        {
+          key: "offline",
+          label: "线下",
+          icon: "/static/images/edu-home/tab-offline.png",
+        },
+      ],
     };
-    uni.onNetworkStatusChange(onNetworkStatusChange);
-    // #endif
-  },
-  onUnload() {
-    // 清除监听
-    uni.$off("activeFn");
-  },
-  watch: {
-    isLogin: {
-      deep: true, //深度监听设置为 true
-      handler: function (newV, oldV) {
-        // 优惠券弹窗
-        var newDates = new Date().toLocaleDateString();
-        if (newV && !isCoreScopeEnabled()) {
-          try {
-            var oldDate = uni.getStorageSync("oldDate") || "";
-          } catch {}
-          if (oldDate != newDates) {
-            this.getCoupon();
-          }
-        }
-      },
-    },
-  },
-  onShow() {
-    uni.removeStorageSync("form_type_cart");
-    // 优惠券弹窗
-    if (this.isLogin) {
-      if (!isCoreScopeEnabled()) this.getCoupon();
-      this.getCartNum();
-    }
-    // #ifdef MP
-    if (wx.canIUse("checkIsAddedToMyMiniProgram")) {
-      this.checkMyApplet();
-    } else {
-      this.myApplet = true;
-    }
-    // #endif
-  },
-  onPullDownRefresh() {
-    this.diyData();
-    uni.stopPullDownRefresh();
   },
   methods: {
-    ...mapMutations(["SET_AUTOPLAY", "SET_NEARBY"]),
-    mvpHomeJump(item) {
-      if (!item || !item.url) {
-        uni.showToast({
-          title: "入口暂不可用",
-          icon: "none",
-        });
+    openModule(url) {
+      uni.navigateTo({ url });
+    },
+    handleEntry(item) {
+      this.openModule(item.url);
+    },
+    handleTab(item) {
+      if (item.key === "home") return;
+      if (item.url) {
+        uni.navigateTo({ url: item.url });
         return;
       }
-      const option = {
-        url: item.url,
-        fail: (err) => {
-          console.error("MVP home entry navigate failed:", item.url, err);
-          uni.showToast({
-            title: "页面打开失败，请稍后再试",
-            icon: "none",
-          });
-        },
-      };
-      if (item.type === "switchTab") {
-        uni.switchTab(option);
-      } else {
-        uni.navigateTo(option);
-      }
-    },
-    checkMyApplet() {
-      wx.checkIsAddedToMyMiniProgram({
-        success: (res) => {
-          if (res.added) {
-            this.myApplet = false;
-          } else {
-            this.myApplet = true;
-          }
-        },
-        fail: () => {
-          this.myApplet = true;
-        },
+      uni.showToast({
+        title: "线下服务规划中",
+        icon: "none",
       });
     },
-    getCartNum: function () {
-      if (this.isCoreScope) return;
-      getCartCounts()
-        .then((res) => {
-          this.$store.commit("indexData/setCartNum", res.data.count + "");
-          let cartNum = res.data.count;
-          if (cartNum > 0) {
-            uni.setTabBarBadge({
-              index: 1,
-              text: cartNum > 99 ? "99+" : cartNum + "",
-            });
-          } else {
-            uni.hideTabBarRedDot({
-              index: 1,
-            });
-          }
-        })
-        .catch((err) => {
-          return this.$util.Tips({
-            title: err.msg,
-          });
-        });
-    },
-    storeTap(id) {
-      this.entryData.select_store_id = id;
-      this.entryData.store_id = "";
-      uni.removeStorageSync("rulesStoreId");
-    },
-    getCopyRight() {
-      getCrmebCopyRight()
-        .then((res) => {
-          let data = res.data;
-          uni.setStorageSync("wechatStatus", data.wechat_status);
-          if (!data.copyrightContext && !data.copyrightImage) {
-            data.copyrightImage = "/static/images/support.png";
-          }
-          uni.setStorageSync("copyNameInfo", data.copyrightContext);
-          uni.setStorageSync("copyImageInfo", data.copyrightImage);
-          // #ifdef MP
-          uni.setStorageSync(
-            "MPSiteData",
-            JSON.stringify({
-              site_logo: data.site_logo,
-              site_name: data.site_name,
-            }),
-          );
-          // #endif
-        })
-        .catch((err) => {
-          return this.$util.Tips({
-            title: err.msg,
-          });
-        });
-    },
-    getOptions(options) {
-      let that = this;
-      // #ifdef MP
-      if (options.scene) {
-        let value = that.$util.getUrlParams(decodeURIComponent(options.scene));
-        //记录推广人uid
-        if (value.spid) app.globalData.spid = value.spid;
-      }
-      // #endif
-      if (options.spid) app.globalData.spid = options.spid;
-    },
-    // 重新链接
-    reconnect() {
-      this.diyData();
-      getShare().then((res) => {
-        this.shareInfo = res.data;
-      });
-    },
-    goICP(url) {
-      // #ifdef H5
-      window.open(url);
-      // #endif
-      // #ifdef MP
-      uni.navigateTo({
-        url: `/pages/annex/web_view/index?url=${url}`,
-      });
-      // #endif
-    },
-    bindHeighta(data) {
-      // #ifdef APP-PLUS
-      this.sortMpTop = data.top + data.height;
-      // #endif
-    },
-    bindHeight(data) {
-      uni.hideLoading();
-      this.domOffsetTop = data.top;
-    },
-    // 去商品详情
-    goGoodsDetail(item) {
-      goShopDetail(item, this.uid).then((res) => {
-        uni.navigateTo({
-          url: `/pages/goods_details/index?id=${item.id}`,
-        });
-      });
-    },
-    // 分类点击
-    changeSort(item, index) {
-      if (this.curSort == index) return;
-      this.curSort = index;
-      this.sid = item.id;
-      this.goodList = [];
-      this.goodPage = 1;
-      this.loaded = false;
-      this.getGoodsList();
-    },
-    /**
-			 * @param data {
-				classPage: 0 分类id
-				microPage: 0 微页面id
-				type: 1   0 微页面 1 商品分类
-			 }*/
-    bindSortId(data) {
-      if (data.dataType.tabVal == 1) {
-        uni.navigateTo({
-          url: `/pages/goods/goods_list/index?cid=${data.classPage.id}&title=${data.classPage.name}`,
-        });
-      } else if (data.text.val == '首页') {
-        uni.switchTab({
-          url: `/pages/index/index`,
-        });
-      } else {
-        return;
-      }
-    },
-    getProductList(data) {
-      let tempObj = "";
-      this.curSort = 0;
-      this.loaded = false;
-      if (this.sortAll.length > 0) {
-        this.sortAll.forEach((el, index) => {
-          if (el.id == data) {
-            this.$set(this, "sortList", el);
-            this.sid = el.children.length ? el.children[0].id : "";
-          }
-        });
-        this.goodList = [];
-        this.goodPage = 1;
-        this.$nextTick(() => {
-          if (this.sortList != "") this.getGoodsList();
-        });
-      } else {
-        getCategoryList().then((res) => {
-          this.sortAll = res.data;
-          res.data.forEach((el, index) => {
-            if (el.id == data) {
-              this.sortList = el;
-              this.sid = el.children.length ? el.children[0].id : "";
-            }
-          });
-          this.goodList = [];
-          this.goodPage = 1;
-
-          this.$nextTick(() => {
-            if (this.sortList != "") this.getGoodsList();
-          });
-        });
-      }
-    },
-    // 商品列表
-    getGoodsList() {
-      if (this.loading || this.loaded) return;
-      this.loading = true;
-      getProductslist({
-        sid: this.sid,
-        keyword: "",
-        priceOrder: "",
-        salesOrder: "",
-        news: 0,
-        page: this.goodPage,
-        limit: 10,
-        cid: this.sortList.id,
-      }).then((res) => {
-        this.loading = false;
-        this.loaded = res.data.length < 10;
-        this.goodPage++;
-        this.goodList = this.goodList.concat(res.data);
-      });
-    },
-    // 新用户优惠券
-    getNewCoupon() {
-      const oldUser = uni.getStorageSync("oldUser") || 0;
-      if (!oldUser) {
-        getCouponNewUser().then((res) => {
-          const { data } = res;
-          if (data.show) {
-            if (data.list.length) {
-              this.isCouponShow = true;
-              this.couponObj = data;
-              uni.setStorageSync("oldUser", 1);
-            }
-          } else {
-            uni.setStorageSync("oldUser", 1);
-          }
-        });
-      }
-    },
-    // 优惠券弹窗
-    getCoupon() {
-      const tagDate = uni.getStorageSync("tagDate") || "",
-        nowDate = new Date().toLocaleDateString();
-      if (tagDate === nowDate) {
-        this.getNewCoupon();
-      } else {
-        getCouponV2().then((res) => {
-          const { data } = res;
-          if (data.list.length) {
-            this.isCouponShow = true;
-            this.couponObj = data;
-            uni.setStorageSync("tagDate", new Date().toLocaleDateString());
-          } else {
-            this.getNewCoupon();
-          }
-        });
-      }
-    },
-    // 优惠券弹窗关闭
-    couponClose() {
-      this.isCouponShow = false;
-      if (!uni.getStorageSync("oldUser")) {
-        this.getNewCoupon();
-      }
-    },
-    onLoadFun() {
-      this.isShowAuth = false;
-    },
-    // #ifdef H5
-    // 获取url后面的参数
-    getQueryString(name) {
-      var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
-      var reg_rewrite = new RegExp("(^|/)" + name + "/([^/]*)(/|$)", "i");
-      var r = window.location.search.substr(1).match(reg);
-      var q = window.location.pathname.substr(1).match(reg_rewrite);
-      if (r != null) {
-        return unescape(r[2]);
-      } else if (q != null) {
-        return unescape(q[2]);
-      } else {
-        return null;
-      }
-    },
-    // #endif
-
-    // #ifdef MP
-    getTempIds() {
-      let messageTmplIds = wx.getStorageSync(SUBSCRIBE_MESSAGE);
-      if (!messageTmplIds) {
-        getTempIds().then((res) => {
-          if (res.data)
-            wx.setStorageSync(SUBSCRIBE_MESSAGE, JSON.stringify(res.data));
-        });
-      }
-    },
-    // #endif
-    // 对象转数组
-    objToArr(data) {
-      if (!data || typeof data !== "object") return [];
-      let obj = Object.keys(data).sort();
-      let m = obj.map((key) => data[key]);
-      return m;
-    },
-    setDiyData(data) {
-      if (!data) return;
-      this.currentDiyData = data;
-      this.errorNetwork = false;
-      if (data.is_bg_color) {
-        this.bgColor = data.color_picker || "";
-      }
-      if (data.is_bg_pic) {
-        this.bgPic = data.bg_pic || "";
-        this.bgTabVal = data.bg_tab_val || "";
-      }
-      this.pageShow = 1;
-      if (data.title) {
-        uni.setNavigationBarTitle({
-          title: data.title,
-        });
-      }
-      let temp = [];
-      let goodsIndex = [];
-      let promotionIndex = [];
-      let lastArr = this.objToArr(data.value);
-      lastArr.forEach((item, index, arr) => {
-        if (!item) return;
-        if (item.name == "pageFoot") {
-          this.footerConfigData = item;
-        }
-        if (item.name === "homeComb" && !item.isHide) {
-          this.showHomeComb = true;
-          this.homeCombData = item;
-          if (item.searchConfig && item.searchConfig.tabVal) {
-            this.positionTop = uni.getWindowInfo().statusBarHeight + 43;
-          }
-        }
-        if (item.name == "headerSerch" && !item.isHide) {
-          this.isHeaderSerch = true;
-          this.headerSerchCombData = item;
-        }
-        if (item.name == "tabNav" && !item.isHide) {
-          this.showCateNav = true;
-          this.cateNavData = item;
-        }
-        if (item.name == "goodList" && !item.isHide) {
-          goodsIndex.push(index);
-        }
-        if (item.name == "promotionList" && !item.isHide) {
-          promotionIndex.push(index);
-        }
-        if (!item.isHide) {
-          temp.push(item);
-        }
-      });
-
-      function sortNumber(a, b) {
-        return (a.timestamp || 0) - (b.timestamp || 0);
-      }
-      temp.sort(sortNumber);
-      this.styleConfig = temp;
-      this.goodsIndex = goodsIndex;
-      this.promotionIndex = promotionIndex;
-    },
-    exitPreview() {
-      uni.removeStorageSync("previewThemeId");
-      this.themeId = 0;
-      this.currentDiyData = {};
-
-      this.isPreview = false;
-      applyTheme();
-      this.diyData();
-      // 去掉 theme_id 刷新当前页面
-      // uni.reLaunch({ url: "/pages/index/index" });
-    },
-    getDiyData() {
-      let data = {};
-      if (this.themeId) data.theme_id = this.themeId;
-      getThemeInfo("home", data)
-        .then((res) => {
-          uni.setStorageSync("diyData", JSON.stringify(res.data));
-          this.setDiyData(res.data);
-        })
-        .catch((error) => {
-          // #ifdef APP-PLUS
-          if (error.status) {
-            uni.hideLoading();
-            if (this.errorNetwork) {
-              uni.showToast({
-                title: "请开启网络连接",
-                icon: "none",
-                duration: 2000,
-              });
-            }
-            this.errorNetwork = true;
-          }
-          // #endif
-        });
-    },
-    diyData() {
-      // let diyData = uni.getStorageSync('diyData');
-      // if (diyData) {
-      // 	getDiyVersion(0).then((res) => {
-      // 		let diyVersion = uni.getStorageSync('diyVersion');
-      // 		if (res.data.version + '0' === diyVersion) {
-      // 			this.setDiyData(JSON.parse(diyData));
-      // 		} else {
-      // 			uni.setStorageSync('diyVersion', res.data.version + '0');
-      // 			this.getDiyData();
-      // 		}
-      // 	});
-      // } else {
-      // }
-      this.getDiyData();
-    },
-
-    changeLogin() {
-      this.getIsLogin();
-    },
-    getIsLogin() {
-      toLogin();
-    },
-    changeBarg(item) {
-      if (!this.isLogin) {
-        this.getIsLogin();
-      } else {
-        uni.navigateTo({
-          url: `/pages/goods_details/index?id=${item.id}`,
-        });
-      }
-    },
-    goDetail(item) {
-      goShopDetail(item, this.$store.state.app.uid).then((res) => {
-        uni.navigateTo({
-          url: `/pages/goods_details/index?id=${item.id}`,
-        });
-      });
-    },
-    newDataStatus(val, num) {
-      this.isFooter = val ? true : false;
-      this.pdHeight = num;
-    },
-    // #ifdef H5
-    // 微信分享；
-    setOpenShare: function () {
-      let that = this;
-      let uid = this.uid ? this.uid : 0;
-      if (that.$wechat.isWeixin()) {
-        getShare().then((res) => {
-          let data = res.data;
-          let configAppMessage = {
-            desc: data.synopsis,
-            title: data.title,
-            link: location.href + "?spid=" + uid,
-            imgUrl: data.img,
-          };
-          that.$wechat.wechatEvevt(
-            [
-              "updateAppMessageShareData",
-              "updateTimelineShareData",
-              "onMenuShareAppMessage",
-              "onMenuShareTimeline",
-            ],
-            configAppMessage,
-          );
-        });
-      }
-    },
-    // #endif
   },
-  onReachBottom() {
-    if (this.goodList.length) {
-      this.getGoodsList();
-    }
-  },
-  onPageScroll(e) {
-    if (e.scrollTop > 20) {
-      this.myApplet = false;
-    }
-    // #ifdef H5
-    if (this.isHeaderSerch) {
-      if (e.scrollTop > this.domOffsetTop) {
-        this.isFixed = true;
-      }
-      if (e.scrollTop < this.domOffsetTop) {
-        this.$nextTick(() => {
-          this.isFixed = false;
-        });
-      }
-    } else {
-      this.isFixed = false;
-    }
-    // #endif
-    if (e.scrollTop > 10) {
-      this.isScrolled = true;
-    } else {
-      this.isScrolled = false;
-    }
-    uni.$emit("scroll");
-    uni.$emit("onPageScroll", e.scrollTop);
-  },
-  //#ifdef MP
-  onShareAppMessage() {
-    let uid = this.uid ? this.uid : 0;
-    if (this.shareInfo.img) {
-      return {
-        title: this.shareInfo.title,
-        path: "/pages/index/index?spid=" + uid,
-        imageUrl: this.shareInfo.img,
-        desc: this.shareInfo.synopsis,
-      };
-    } else {
-      return {
-        title: this.shareInfo.title,
-        path: "/pages/index/index?spid=" + uid,
-        // imageUrl: this.shareInfo.img,
-        // desc: this.shareInfo.synopsis
-      };
-    }
-  },
-  //分享到朋友圈
-  onShareTimeline: function () {
-    return {
-      title: this.shareInfo.title,
-      path: "/pages/index/index",
-      imageUrl: this.shareInfo.img,
-      desc: this.shareInfo.synopsis,
-    };
-  },
-  //#endif
 };
 </script>
 
 <style lang="scss">
-.page {
-  // padding-bottom: 50px;
-  overflow-y: scroll;
-  overflow-x: hidden;
+.home-screen {
+  min-height: 100vh;
+  padding: 32rpx 30rpx 148rpx;
+  padding-top: calc(32rpx + env(safe-area-inset-top));
+  background:
+    radial-gradient(circle at 82% 6%, rgba(255, 255, 255, 0.96), transparent 20%),
+    linear-gradient(180deg, #bfeeff 0%, #eaf8ff 34%, #f4fbf2 56%, #ffffff 100%);
 }
-.myApplet {
+
+.hero-copy {
   position: relative;
-  &::after {
-    position: absolute;
-    right: 55px;
-    top: -5px;
-    content: "";
-    width: 0;
-    height: 0;
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
-    border-bottom: 7px solid #fff;
-  }
-}
-.pictrue_log_class {
-  background-color: var(--view-theme);
+  z-index: 2;
 }
 
-.mvp-home-panel {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 110rpx;
-  z-index: 50;
-  padding: 120rpx 24rpx 24rpx;
-  background: #f6f7fb;
-  overflow-y: auto;
-}
-
-.mvp-hero {
-  padding: 34rpx 30rpx;
-  border-radius: 24rpx;
-  color: #fff;
-  background: linear-gradient(135deg, #1f8a70 0%, #2563eb 100%);
-}
-
-.mvp-eyebrow {
-  font-size: 22rpx;
-  line-height: 32rpx;
-  opacity: 0.85;
-}
-
-.mvp-title {
-  margin-top: 10rpx;
-  font-size: 42rpx;
-  line-height: 56rpx;
-  font-weight: 700;
-}
-
-.mvp-desc {
-  margin-top: 14rpx;
-  max-width: 560rpx;
-  font-size: 26rpx;
-  line-height: 38rpx;
-  opacity: 0.92;
-}
-
-.mvp-entry-grid {
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 20rpx;
-}
-
-.mvp-entry {
-  width: calc(50% - 9rpx);
-  min-height: 132rpx;
-  padding: 24rpx;
-  border-radius: 18rpx;
-  background: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(31, 41, 55, 0.06);
-}
-
-.mvp-entry:nth-child(odd) {
-  margin-right: 18rpx;
-}
-
-.mvp-entry:nth-child(n + 3) {
-  margin-top: 18rpx;
-}
-
-.mvp-entry-title {
-  font-size: 30rpx;
-  line-height: 42rpx;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.mvp-entry-desc {
-  margin-top: 8rpx;
-  font-size: 24rpx;
-  line-height: 34rpx;
-  color: #6b7280;
-}
-
-.ysize {
-  background-size: 100%;
-}
-
-.fullsize {
-  background-size: 100% 100%;
-}
-
-.repeat {
-  background-repeat: repeat;
-}
-
-.noRepeat {
-  background-repeat: no-repeat;
-}
-
-.error-network {
-  position: fixed;
-  left: 0;
-  top: 0;
-  display: flex;
-  flex-direction: column;
+.hero-pill {
+  display: inline-flex;
   align-items: center;
-  width: 100%;
-  height: 100%;
-  padding-top: 40rpx;
-  background: #fff;
-
-  image {
-    width: 414rpx;
-    height: 336rpx;
-  }
-
-  .title {
-    position: relative;
-    top: -40rpx;
-    font-size: 32rpx;
-    color: #666;
-  }
-
-  .con {
-    font-size: 24rpx;
-    color: #999;
-
-    .label {
-      margin-bottom: 20rpx;
-    }
-
-    .item {
-      margin-bottom: 20rpx;
-    }
-  }
-
-  .btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 508rpx;
-    height: 86rpx;
-    margin-top: 100rpx;
-    border: 1px solid #d74432;
-    color: #e93323;
-    font-size: 30rpx;
-    border-radius: 120rpx;
-  }
+  max-width: 100%;
+  height: 56rpx;
+  padding: 0 24rpx 0 16rpx;
+  border-radius: 999rpx;
+  color: #07955b;
+  font-size: 27rpx;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10rpx 28rpx rgba(42, 118, 91, 0.08);
 }
 
-.sort-scroll {
-  background-color: #fff;
+.pill-icon {
+  width: 38rpx;
+  height: 38rpx;
+  margin-right: 10rpx;
 }
 
-.sort-product {
-  margin-top: 20rpx;
+.hero-title {
+  margin-top: 26rpx;
+  color: #061b58;
+  font-size: 74rpx;
+  line-height: 1.05;
+  font-weight: 900;
+  letter-spacing: 0;
 }
 
-.site-config {
-  margin: 40rpx 0;
-  font-size: 24rpx;
-  text-align: center;
-  color: #666;
+.hero-subtitle {
+  margin-top: 18rpx;
+  color: #29466d;
+  font-size: 34rpx;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.hero-visual {
+  position: relative;
+  height: 676rpx;
+  margin: 14rpx -30rpx 0;
+  overflow: hidden;
+}
+
+.tree-scene {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 430rpx;
+  z-index: 1;
+}
+
+.module-stack {
+  position: absolute;
+  right: 30rpx;
+  top: 38rpx;
+  width: 292rpx;
+  z-index: 3;
+}
+
+.module-card,
+.entry-card,
+.tab-button {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  line-height: normal;
+}
+
+.module-card::after,
+.entry-card::after,
+.tab-button::after {
+  border: 0;
+}
+
+.module-card {
+  position: relative;
+  width: 292rpx;
+  min-height: 150rpx;
+  padding: 26rpx 20rpx 22rpx 30rpx;
+  border-radius: 28rpx;
+  border: 2rpx solid rgba(35, 166, 105, 0.2);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12rpx 32rpx rgba(44, 90, 96, 0.12);
+  display: flex;
+  align-items: center;
+  text-align: left;
+}
+
+.module-card + .module-card {
+  margin-top: 34rpx;
+}
+
+.module-card.stem {
+  border-color: rgba(37, 116, 236, 0.24);
+}
+
+.module-card.root {
+  border-color: rgba(247, 139, 28, 0.28);
+}
+
+.connector {
+  position: absolute;
+  left: -122rpx;
+  top: 50%;
+  width: 122rpx;
+  height: 78rpx;
+  transform: translateY(-50%);
+}
+
+.connector-line {
+  position: absolute;
+  right: 0;
+  top: 34rpx;
+  width: 116rpx;
+  height: 38rpx;
+  border-left: 6rpx solid currentColor;
+  border-bottom: 6rpx solid currentColor;
+  border-radius: 0 0 0 34rpx;
+}
+
+.connector-dot {
+  position: absolute;
+  left: 0;
+  top: 25rpx;
+  width: 20rpx;
+  height: 20rpx;
+  border: 6rpx solid #ffffff;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 4rpx 10rpx rgba(28, 103, 75, 0.16);
+}
+
+.stem .connector-line {
+  top: 20rpx;
+  height: 58rpx;
+}
+
+.root .connector-line {
+  top: 0;
+  height: 76rpx;
+  border-top: 0;
+}
+
+.module-badge {
+  width: 62rpx;
+  height: 62rpx;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 31rpx;
+  font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
-  .ban {
-    width: 22rpx;
-    height: 24rpx;
-    margin-right: 10rpx;
-  }
-  &.fixed {
-    position: fixed;
-    bottom: 69px;
-    left: 0;
-    width: 100%;
-  }
+  flex-shrink: 0;
+  background: #00a665;
 }
-.exit-preview {
-  position: fixed;
-  bottom: 200rpx;
-  right: 30rpx;
-  z-index: 999;
-  background-color: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  padding: 10rpx 24rpx;
-  border-radius: 30rpx;
+
+.module-card.leaf {
+  color: #00a665;
+}
+
+.module-card.stem {
+  color: #2274ee;
+}
+
+.module-card.root {
+  color: #f38720;
+}
+
+.module-card.stem .module-badge {
+  background: #2274ee;
+}
+
+.module-card.root .module-badge {
+  background: #f38720;
+}
+
+.module-text {
+  min-width: 0;
+  flex: 1;
+  padding-left: 16rpx;
+}
+
+.module-name {
+  color: currentColor;
+  font-size: 33rpx;
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+.module-sub {
+  margin-top: 14rpx;
+  color: currentColor;
+  font-size: 25rpx;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.module-extra {
+  margin-top: 8rpx;
+  color: #22324a;
   font-size: 24rpx;
+  line-height: 1.25;
 }
-.select {
-  border: 1px solid var(--view-theme);
+
+.module-icon {
+  width: 62rpx;
+  height: 62rpx;
+  margin-left: 8rpx;
+  flex-shrink: 0;
+}
+
+.stem .module-icon,
+.root .module-icon {
+  width: 70rpx;
+  height: 70rpx;
+}
+
+.entry-list {
+  position: relative;
+  z-index: 4;
+  margin-top: 20rpx;
+}
+
+.entry-card {
+  width: 100%;
+  min-height: 132rpx;
+  margin-bottom: 20rpx;
+  padding: 20rpx 20rpx 20rpx 24rpx;
+  border-radius: 26rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16rpx 44rpx rgba(42, 72, 97, 0.1);
+  display: flex;
+  align-items: center;
+  text-align: left;
+}
+
+.entry-icon {
+  width: 88rpx;
+  height: 88rpx;
+  flex-shrink: 0;
+}
+
+.entry-copy {
+  min-width: 0;
+  flex: 1;
+  padding-left: 30rpx;
+}
+
+.entry-title {
+  color: #121826;
+  font-size: 31rpx;
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.entry-desc {
+  margin-top: 12rpx;
+  color: #697891;
+  font-size: 24rpx;
+  line-height: 1.32;
+}
+
+.entry-action {
+  min-width: 76rpx;
+  height: 48rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  border: 2rpx solid currentColor;
+  color: #03a566;
+  font-size: 24rpx;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.entry-card.stem .entry-action {
+  color: #2473ef;
+}
+
+.entry-card.root .entry-action {
+  color: #f18822;
+}
+
+.entry-card.plan .entry-action {
+  min-width: 128rpx;
+  height: 56rpx;
+  border: 0;
+  color: #ffffff;
+  font-size: 27rpx;
+  background: linear-gradient(135deg, #18bf76, #08a765);
+  box-shadow: 0 8rpx 20rpx rgba(14, 170, 98, 0.2);
+}
+
+.entry-chevron {
+  width: 30rpx;
+  margin-left: 14rpx;
+  color: #9aa8b8;
+  font-size: 52rpx;
+  line-height: 1;
+  font-weight: 300;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.entry-card.plan .entry-chevron {
+  color: #ffffff;
+  margin-left: -28rpx;
+  font-size: 44rpx;
+  z-index: 2;
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  height: 116rpx;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-radius: 34rpx 34rpx 0 0;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -12rpx 40rpx rgba(43, 73, 105, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.tab-button {
+  width: 170rpx;
+  height: 94rpx;
+  color: #75849a;
+  font-size: 23rpx;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-button.active {
+  color: #08a765;
+}
+
+.tab-icon {
+  width: 48rpx;
+  height: 48rpx;
+  margin-bottom: 6rpx;
 }
 </style>

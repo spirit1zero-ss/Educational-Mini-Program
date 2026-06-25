@@ -16,10 +16,7 @@ export default {
     };
   },
   created() {
-    this.colorStyle = uni.getStorageSync("viewColor");
-    uni.$on("ok", (data) => {
-      this.colorStyle = data;
-    });
+    this.colorStyle = "";
   },
   methods: {},
 };

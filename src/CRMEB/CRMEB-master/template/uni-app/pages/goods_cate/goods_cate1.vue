@@ -69,9 +69,6 @@
 		mapState,
 		mapGetters
 	} from "vuex"
-	import {
-		getNavigation
-	} from '@/api/public.js'
 	import pageFooter from '@/components/pageFooter/index.vue'
 	const app = getApp();
 	export default {
@@ -85,7 +82,6 @@
 				productList: [],
 				navActive: 0,
 				number: "",
-				is_diy: uni.getStorageSync('is_diy'),
 				height: 0,
 				hightArr: [],
 				toView: "",
@@ -127,9 +123,7 @@
 		},
 		methods: {
 			getNav() {
-				getNavigation().then(res => {
-					this.newData = res.data
-				})
+				this.newData = {};
 			},
 			goRouter(item) {
 				var pages = getCurrentPages();

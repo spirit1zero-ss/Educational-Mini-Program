@@ -62,9 +62,6 @@
 
 <script>
 import { mapState, mapGetters } from "vuex";
-import { getNavigation } from "@/api/public.js";
-// import {getCartCounts} from '@/api/order.js';
-import { getDiyVersion } from "@/api/api.js";
 import BaseBadge from "@/components/BaseBadge/index.vue";
 import { filterRetainedFooterNavigation, isRetiredLink } from "@/config/coreScope.js";
 export default {
@@ -189,23 +186,13 @@ export default {
       }
     },
     getNavigationInfo() {
-      getNavigation().then((res) => {
-        uni.setStorageSync("diyVersionNav", res.data);
-        this.setNavigationInfo(res.data);
-      });
+      this.showTabBar = false;
+      uni.showTabBar();
     },
     navigationInfo() {
       let footerNavigation = uni.getStorageSync("footerNavigation");
       if (footerNavigation) {
-        getDiyVersion(0).then((res) => {
-          let diyVersion = uni.getStorageSync("diyVersionNav");
-          if (res.data.version + "0" === diyVersion) {
-            this.setNavigationInfo(footerNavigation);
-          } else {
-            uni.setStorageSync("diyVersionNav", res.data.version + "0");
-            this.getNavigationInfo();
-          }
-        });
+        this.setNavigationInfo(footerNavigation);
       } else {
         this.getNavigationInfo();
       }

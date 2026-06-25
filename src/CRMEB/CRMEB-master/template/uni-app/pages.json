@@ -10,23 +10,14 @@
         "navigationBarTitleText": "",
         "navigationStyle": "custom",
         "navigationBarTextStyle": "black",
-        "app-plus": {
-          "scrollIndicator": "none"
-        },
         "mp-weixin": {
-          "componentPlaceholder": {
-            "page-design": "view"
-          }
+          "componentPlaceholder": {}
         }
       }
     },
     {
       "path": "pages/guide/index",
-      "style": {
-        "app-plus": {
-          "titleNView": false
-        }
-      }
+      "style": {}
     },
     {
       "path": "pages/assessment/index",
@@ -35,14 +26,33 @@
       }
     },
     {
+      "path": "pages/leaf/knowledge",
+      "style": {
+        "navigationBarTitleText": "叶 · 基础认知",
+        "navigationBarBackgroundColor": "#f7fbff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/stem/habits",
+      "style": {
+        "navigationBarTitleText": "茎 · 习惯养成",
+        "navigationBarBackgroundColor": "#f7fbff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/root/inner",
+      "style": {
+        "navigationBarTitleText": "根 · 慧眼读心",
+        "navigationBarBackgroundColor": "#fff8ee",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
       "path": "pages/order_addcart/order_addcart",
       "style": {
-        "navigationBarTitleText": "购物车",
-        "app-plus": {
-          "titleNView": {
-            "type": "default"
-          }
-        }
+        "navigationBarTitleText": "购物车"
       }
     },
     {
@@ -50,9 +60,7 @@
       "style": {
         "navigationBarTitleText": "个人中心",
         "mp-weixin": {
-          "componentPlaceholder": {
-            "page-design": "view"
-          }
+          "componentPlaceholder": {}
         },
         "enablePullDownRefresh": true,
         "navigationStyle": "custom",
@@ -62,565 +70,13 @@
     {
       "path": "pages/goods_cate/goods_cate",
       "style": {
-        "navigationBarTitleText": "商品分类",
-        "app-plus": {
-          "titleNView": {
-            "type": "default"
-          }
-        }
+        "navigationBarTitleText": "商品分类"
       }
     }
   ],
-  "subPackages": [
-    {
-      "root": "pages/goods_details",
-      "name": "goods_details",
-      "pages": [
-        {
-          "path": "index",
-          "style": {
-            "navigationStyle": "custom",
-            "transparentTitle": "auto",
-            "mp-weixin": {
-              "componentPlaceholder": {
-                "page-design": "view",
-                "product-bottom": "view"
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "root": "pages/goods",
-      "name": "goods",
-      "pages": [
-        {
-          "path": "goods_list/index",
-          "style": {
-            "navigationBarTitleText": "商品列表",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "goods_search/index",
-          "style": {
-            "navigationBarTitleText": "搜索商品",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "order_pay_status/index",
-          "style": {
-            "navigationBarTitleText": "支付成功",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "goods_comment_con/index",
-          "style": {
-            "navigationBarTitleText": "商品评价",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "goods_comment_list/index",
-          "style": {
-            "navigationBarTitleText": "商品评分",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "goods_logistics/index",
-          "style": {
-            "navigationBarTitleText": "物流信息",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "goods_return/index",
-          "style": {
-            "navigationBarTitleText": "申请退货",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "goods_return_list/index",
-          "style": {
-            "navigationBarTitleText": "退货列表",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "order_confirm/index",
-          "style": {
-            "navigationBarTitleText": "提交订单",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "order_details/index",
-          "style": {
-            "navigationBarTitleText": "订单详情",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "order_list/index",
-          "style": {
-            "navigationBarTitleText": "我的订单",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "order_refund_goods/index",
-          "style": {
-            "navigationBarTitleText": "退回商品",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "cashier/index",
-          "style": {
-            "navigationBarTitleText": "收银台",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "root": "pages/users",
-      "name": "users",
-      "pages": [
-        {
-          "path": "user_vip_areer/index",
-          "style": {
-            "navigationBarTitleText": "经验记录",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "privacy/index",
-          "style": {
-            "navigationBarTitleText": "隐私协议",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "wechat_login/index",
-          "style": {
-            "navigationBarTitleText": "",
-            "navigationStyle": "custom",
-            "app-plus": {
-              "scrollIndicator": "none"
-            }
-          }
-        },
-        {
-          "path": "binding_phone/index",
-          "style": {
-            "navigationBarTitleText": "",
-            "navigationStyle": "custom",
-            "app-plus": {
-              "scrollIndicator": "none"
-            }
-          }
-        },
-        {
-          "path": "retrievePassword/index",
-          "style": {
-            "navigationBarTitleText": "忘记密码",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_info/index",
-          "style": {
-            "navigationBarTitleText": "设置",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_sgin/index",
-          "style": {
-            "navigationBarTitleText": "签到",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_sgin_list/index",
-          "style": {
-            "navigationBarTitleText": "签到记录",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_bill/index",
-          "style": {
-            "navigationBarTitleText": "账单明细",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_spread_user/index",
-          "style": {
-            "navigationBarTitleText": "我的推广",
-            "navigationBarTextStyle": "black",
-            "navigationBarBackgroundColor": "#FFFFFF",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_spread_code/index",
-          "style": {
-            "navigationBarTitleText": "分销海报",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_spread_money/index",
-          "style": {
-            "navigationBarTitleText": "佣金记录",
-            "navigationBarTextStyle": "black",
-            "navigationBarBackgroundColor": "#FFFFFF",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_spread_money/receiving",
-          "style": {
-            "navigationBarTitleText": "收款",
-            "navigationBarTextStyle": "black",
-            "navigationBarBackgroundColor": "#FFFFFF",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_cash/index",
-          "style": {
-            "navigationBarTitleText": "提现",
-            "navigationBarBackgroundColor": "#FFFFFF",
-            "navigationBarTextStyle": "black",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_vip/index",
-          "style": {
-            "navigationBarTitleText": "我的等级",
-            "navigationBarBackgroundColor": "#232323",
-            "navigationBarTextStyle": "white",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_distribution_level/index",
-          "style": {
-            "navigationBarTitleText": "分销等级",
-            "navigationBarBackgroundColor": "#232323",
-            "navigationBarTextStyle": "white",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_address_list/index",
-          "style": {
-            "navigationBarTitleText": "地址管理",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_address/index",
-          "style": {
-            "navigationBarTitleText": "添加地址",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_phone/index",
-          "style": {
-            "navigationBarTitleText": "绑定手机",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_pwd_edit/index",
-          "style": {
-            "navigationBarTitleText": "修改密码",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "promoter-list/index",
-          "style": {
-            "navigationBarTitleText": "推广人列表",
-            "navigationBarBackgroundColor": "#FFFFFF",
-            "navigationBarTextStyle": "black",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "promoter-order/index",
-          "style": {
-            "navigationBarTitleText": "推广人订单",
-            "navigationBarTextStyle": "black",
-            "navigationBarBackgroundColor": "#FFFFFF",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "promoter_rank/index",
-          "style": {
-            "navigationBarTitleText": "推广人排行",
-            "navigationBarTextStyle": "black",
-            "navigationBarBackgroundColor": "#FFFFFF",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "commission_rank/index",
-          "style": {
-            "navigationBarTitleText": "佣金排行",
-            "navigationBarBackgroundColor": "#FFFFFF",
-            "navigationBarTextStyle": "black",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "user_return_list/index",
-          "style": {
-            "navigationBarTitleText": "退货列表",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "login/index",
-          "style": {
-            "navigationBarTitleText": "登录",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "auth/index",
-          "style": {
-            "navigationBarTitleText": ""
-          }
-        }
-      ]
-    },
-    {
-      "root": "pages/annex",
-      "pages": [
-        {
-          "path": "web_view/index",
-          "style": {
-            "navigationBarTitleText": "",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "vip_paid/index",
-          "style": {
-            "navigationBarTitleText": "SVIP会员",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "vip_clause/index",
-          "style": {
-            "navigationBarTitleText": "会员协议",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        },
-        {
-          "path": "vip_active/index",
-          "style": {
-            "navigationBarTitleText": "激活会员",
-            "app-plus": {
-              "titleNView": {
-                "type": "default"
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "root": "subpackage/diyComponents",
-      "name": "diyComponents",
-      "pages": [
-        {
-          "path": "pages/placeholder",
-          "style": {
-            "navigationBarTitleText": ""
-          }
-        }
-      ]
-    }
-  ],
   "tabBar": {
-    "color": "#282828",
-    "selectedColor": "#ff3366",
+    "color": "#7a8491",
+    "selectedColor": "#006d40",
     "borderStyle": "white",
     "backgroundColor": "#ffffff",
     "list": [
@@ -643,7 +99,6 @@
     "navigationBarTitleText": "加载中",
     "navigationBarBackgroundColor": "#fff",
     "backgroundColor": "#F8F8F8",
-    "titleNView": false,
     "pageOrientation": "portrait"
   },
   "condition": {

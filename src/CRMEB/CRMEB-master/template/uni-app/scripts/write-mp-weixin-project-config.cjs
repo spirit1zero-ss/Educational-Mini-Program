@@ -3,6 +3,8 @@ const path = require('path');
 
 const outputDir = path.join(__dirname, '..', 'dist', 'build', 'mp-weixin');
 const configPath = path.join(outputDir, 'project.config.json');
+const appJsonPath = path.join(outputDir, 'app.json');
+const appid = process.env.MP_WEIXIN_APPID || 'touristappid';
 
 if (!fs.existsSync(outputDir)) {
   console.warn('[write-mp-weixin-project-config] Output directory not found; skipped.');
@@ -10,7 +12,7 @@ if (!fs.existsSync(outputDir)) {
 }
 
 const config = {
-  appid: 'wx3b82801238ca1b57',
+  appid,
   compileType: 'miniprogram',
   libVersion: '3.15.2',
   miniprogramRoot: './',
@@ -27,3 +29,35 @@ const config = {
 
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n');
 console.log('[write-mp-weixin-project-config] Wrote dist/build/mp-weixin/project.config.json.');
+
+if (fs.existsSync(appJsonPath)) {
+  const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+  if (Array.isArray(appJson.subPackages) && appJson.subPackages.length === 0) {
+    delete appJson.subPackages;
+    fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2) + '\n');
+    console.log('[write-mp-weixin-project-config] Removed empty subPackages from app.json.');
+  }
+}
+
+const legacyComponentStubs = [
+  path.join('components', 'addressWindow', 'index'),
+  path.join('components', 'countDown', 'index')
+];
+
+for (const componentPath of legacyComponentStubs) {
+  const fullPath = path.join(outputDir, componentPath);
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+  if (!fs.existsSync(`${fullPath}.json`)) {
+    fs.writeFileSync(`${fullPath}.json`, JSON.stringify({ component: true }, null, 2) + '\n');
+  }
+  if (!fs.existsSync(`${fullPath}.js`)) {
+    fs.writeFileSync(`${fullPath}.js`, 'Component({});\n');
+  }
+  if (!fs.existsSync(`${fullPath}.wxml`)) {
+    fs.writeFileSync(`${fullPath}.wxml`, '<view></view>\n');
+  }
+  if (!fs.existsSync(`${fullPath}.wxss`)) {
+    fs.writeFileSync(`${fullPath}.wxss`, '');
+  }
+}
+console.log('[write-mp-weixin-project-config] Wrote legacy component stubs for DevTools cache compatibility.');

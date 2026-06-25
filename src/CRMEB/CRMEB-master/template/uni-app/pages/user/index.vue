@@ -19,20 +19,6 @@
       <!-- #endif -->
     </view>
 
-    <PageDesign
-      :style="colorStyle"
-      :diyData="currentDiyData"
-      :isHome="false"
-      :isScrolled="isScrolled"
-      :isFixed="isFixed"
-      :belongIndex="belongIndex"
-      @bindSortId="bindSortId"
-      @bindHeight="bindHeighta"
-      @storeTap="storeTap"
-      @changeLogin="changeLogin"
-      @changeBarg="changeBarg"
-      @goDetail="goDetail"
-    ></PageDesign>
     <image :src="copyRightPic" alt="" class="support"></image>
     <editUserModal
       :isShow="editModal"
@@ -50,7 +36,6 @@ import {
   setVisit,
   mpBindingPhone,
 } from "@/api/user.js";
-import { getThemeInfo } from "@/api/api.js";
 import { wechatAuthV2, silenceAuth } from "@/api/public.js";
 import { toLogin } from "@/libs/login.js";
 import { mapState, mapGetters } from "vuex";
@@ -70,14 +55,12 @@ import emptyPage from "@/components/emptyPage.vue";
 import Loading from "@/components/Loading/index.vue";
 import { getCrmebCopyRight } from "@/api/api.js";
 import { goShopDetail } from "@/libs/order.js";
-import PageDesign from "@/subpackage/diyComponents/pageDesign.vue";
 import { isCoreScopeEnabled, isRetiredLink } from "@/config/coreScope.js";
 
 export default {
   components: {
     pageFooter,
     editUserModal,
-    PageDesign,
     couponWindow,
     waterfallsFlow,
     emptyPage,
@@ -109,7 +92,6 @@ export default {
   mixins: [colors],
   data() {
     return {
-      currentDiyData: {},
       editModal: false, // 编辑头像信息
       storeMenu: [], // 商家管理
       orderMenu: [
@@ -168,7 +150,6 @@ export default {
       business_status: 0,
       member_style: 0,
       my_banner_status: 0,
-      is_diy: uni.getStorageSync("is_diy"),
       copyRightPic: require("static/images/support.png"), //版权图片
       belongIndex: 0,
       isScrolled: false,
@@ -265,7 +246,6 @@ export default {
       this.setVisit();
     }
     this.getMyMenus();
-    this.getDiyData();
     this.getCopyRight();
   },
   onPullDownRefresh() {
@@ -350,14 +330,6 @@ export default {
       let m = obj.map((key) => data[key]);
       return m;
     },
-    getDiyData() {
-      let previewThemeId = uni.getStorageSync("previewThemeId");
-      let data = {};
-      if (previewThemeId) data.theme_id = previewThemeId;
-      getThemeInfo("user", data).then((res) => {
-        this.currentDiyData = res.data;
-      });
-    },
     getWechatuserinfo() {
       //#ifdef H5
       Auth.isWeixin() && Auth.toAuth("snsapi_userinfo", "/pages/user/index");
@@ -385,7 +357,6 @@ export default {
     onLoadFun() {
       this.getUserInfo();
       this.getMyMenus();
-      this.getDiyData();
       this.setVisit();
     },
     Setting: function () {

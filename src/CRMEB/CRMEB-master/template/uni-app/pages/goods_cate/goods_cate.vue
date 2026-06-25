@@ -13,9 +13,6 @@
 	import goodsCate2 from "./goods_cate2";
 	import goodsCate3 from "./goods_cate3";
 	import {
-		getThemeInfo
-	} from "@/api/api.js";
-	import {
 		mapGetters
 	} from "vuex";
 	import {
@@ -43,7 +40,6 @@
 		data() {
 			return {
 				category: "",
-				is_diy: uni.getStorageSync("is_diy"),
 				status: 0,
 				version: "",
 				isNew: false,
@@ -92,25 +88,10 @@
 				});
 			},
 			classStyle() {
-				let previewThemeId = uni.getStorageSync("previewThemeId");
-				let data = {};
-				if (previewThemeId) data.theme_id = previewThemeId;
-				getThemeInfo("category", data).then((res) => {
-					let status = res.data.status;
-					this.category = status;
-					uni.setStorageSync("is_diy", 1);
-					this.$nextTick((e) => {
-						if (status == 2 || status == 3) {
-							uni.hideTabBar();
-						} else {
-							this.$refs.classOne.is_diy = 1;
-							if (!this.is_diy) {
-								uni.hideTabBar();
-							} else {
-								this.$refs.classOne.getNav();
-							}
-						}
-					});
+				this.category = 1;
+				this.$nextTick(() => {
+					if (this.$refs.classOne) this.$refs.classOne.getNav();
+					uni.showTabBar();
 				});
 			},
 		},

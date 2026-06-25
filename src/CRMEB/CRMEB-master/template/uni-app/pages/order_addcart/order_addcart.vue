@@ -195,7 +195,6 @@
         class="footer acea-row row-between-wrapper"
         :style="[componentStyle]"
         v-if="cartList.valid.length > 0 && canShow"
-        :class="is_diy && is_diy_set ? 'on' : ''"
       >
         <view>
           <checkbox-group @change="checkboxAllChange">
@@ -287,7 +286,6 @@ export default {
   data() {
     return {
       imgHost: HTTP_REQUEST_URL,
-      is_diy: uni.getStorageSync("is_diy"),
       canShow: false,
       cartCount: 0,
       goodsHidden: true,
@@ -329,7 +327,6 @@ export default {
       sysHeight: sysHeight,
       newData: {},
       activeRouter: "",
-      is_diy_set: false,
       adding: false,
       disabledChangeNumber: false,
       isFooter: false,
