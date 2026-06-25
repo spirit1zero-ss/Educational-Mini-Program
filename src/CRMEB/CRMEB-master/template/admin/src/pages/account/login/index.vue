@@ -244,29 +244,6 @@ export default {
         this.$store.dispatch('keepAliveNames/setCacheKeepAlive', cacheList);
       }
     },
-    checkSocket() {
-      getWorkermanUrl().then((res) => {
-        const url = res.data.admin;
-        let isNotice = false;
-        const socket = new window.WebSocket(url);
-        socket.onopen = () => {
-          isNotice = true;
-          socket.close();
-        };
-        socket.onerror = socket.onclose = () => {
-          if (!isNotice) {
-            isNotice = true;
-            this.$notify.warning({
-              title: '温馨提示',
-              message:
-                '您的【长连接】未开启，没有开启会导致系统默认客服无法使用,后台订单通知无法收到。请尽快执行命令开启！！<a href="https://doc.crmeb.com/single/v54/13667" target="_blank">点击查看开启方法</a>',
-              dangerouslyUseHTMLString: true,
-              duration: 30000,
-            });
-          }
-        };
-      });
-    },
     getExpiresTime(expiresTime) {
       const nowTimeNum = Math.round(Date.now() / 1000);
       const expiresTimeNum = expiresTime - nowTimeNum;

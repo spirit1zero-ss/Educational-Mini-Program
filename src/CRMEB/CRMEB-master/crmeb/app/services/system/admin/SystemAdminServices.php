@@ -11,22 +11,17 @@
 
 namespace app\services\system\admin;
 
-use app\jobs\CheckQueueJob;
 use app\services\BaseServices;
 use app\services\order\StoreOrderServices;
 use app\services\product\product\StoreProductReplyServices;
 use app\services\product\product\StoreProductServices;
-use app\services\system\log\SystemFileServices;
 use app\services\user\UserExtractServices;
 use crmeb\exceptions\AdminException;
 use app\dao\system\admin\SystemAdminDao;
 use app\services\system\SystemMenusServices;
-use app\services\other\CacheServices;
 use crmeb\services\CacheService;
 use crmeb\services\FormBuilder;
 use crmeb\services\workerman\ChannelService;
-use think\facade\Config;
-use think\facade\Event;
 use think\Model;
 
 /**
@@ -126,10 +121,6 @@ class SystemAdminServices extends BaseServices
         /** @var SystemMenusServices $services */
         $services = app()->make(SystemMenusServices::class);
         [$menus, $uniqueAuth] = $services->getMenusList($adminInfo->roles, (int)$adminInfo['level']);
-        $remind = Config::get('app.console_remind', false);
-        if ($remind) {
-            [$queue, $timer] = Event::until('AdminLoginListener', [$key]);
-        }
 
         //自定义事件-管理员登录
         event('CustomEventListener', ['admin_login', [
@@ -171,7 +162,6 @@ class SystemAdminServices extends BaseServices
     public function getLoginInfo()
     {
         $key = uniqid();
-        CheckQueueJob::dispatchSecs(1, [$key]);
         $data = [
             'slide' => sys_data('admin_login_slide') ?? [],
             'logo_square' => sys_config('site_logo_square'), //透明
@@ -183,16 +173,6 @@ class SystemAdminServices extends BaseServices
             'key' => $key,
             'login_captcha' => 0
         ];
-
-        try {
-            $cacheServices = app()->make(CacheServices::class);
-            if (!$cacheServices->checkDbCache('write_md5', get_crmeb_version_vode())) {
-                // 执行写入数据
-                app()->make(SystemFileServices::class)->writeMd5();
-                $cacheServices->setDbCache('write_md5', get_crmeb_version_vode());
-            }
-        } catch (\ReflectionException $e) {
-        }
 
         if (CacheService::get('login_captcha', 1) > 1) {
             $data['login_captcha'] = 1;

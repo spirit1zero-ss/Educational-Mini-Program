@@ -188,64 +188,66 @@ Object.keys(filters).forEach((key) => {
   Vue.filter(key, filters[key]);
 });
 
-// 添加统计脚本
-(function () {
-  var hm = document.createElement('script');
-  hm.src = 'https://cdn.oss.9gt.net/js/es.js?version=kyv6.0.0';
-  var s = document.getElementsByTagName('script')[0];
-  s.parentNode.insertBefore(hm, s);
-})();
-
 // 添加crmeb chat 统计
-fetch(`${settings.apiBaseURL}/custom_admin_js`)
-  .then((response) => response.text())
-  .then((content) => {
-    // 尝试解析是否为HTML（带<script>标签）
-    const isHTML = content.trim().startsWith('<script');
+const loadCustomAdminScript = () => {
+  fetch(`${settings.apiBaseURL}/custom_admin_js`)
+    .then((response) => response.text())
+    .then((content) => {
+      if (!content || !content.trim()) return;
 
-    let externalScripts = [];
-    let inlineScripts = [];
+      // 尝试解析是否为HTML（带<script>标签）
+      const isHTML = content.trim().startsWith('<script');
 
-    if (isHTML) {
-      // 情况1：带<script>标签，用DOMParser解析
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(content, 'text/html');
-      const scripts = doc.querySelectorAll('script');
+      let externalScripts = [];
+      let inlineScripts = [];
 
-      externalScripts = Array.from(scripts).filter((script) => script.src);
-      inlineScripts = Array.from(scripts).filter((script) => !script.src);
-    } else {
-      // 情况2：不带<script>标签，直接当作内联脚本处理
-      inlineScripts = [
-        {
-          textContent: content,
-        },
-      ];
-    }
+      if (isHTML) {
+        // 情况1：带<script>标签，用DOMParser解析
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        const scripts = doc.querySelectorAll('script');
 
-    // 1. 先加载所有外部脚本（如果有）
-    const loadExternalScripts = externalScripts.map((script) => {
-      return new Promise((resolve, reject) => {
-        const newScript = document.createElement('script');
-        newScript.src = script.src;
-        newScript.onload = resolve;
-        newScript.onerror = reject;
-        document.body.appendChild(newScript);
-      });
-    });
+        externalScripts = Array.from(scripts).filter((script) => script.src);
+        inlineScripts = Array.from(scripts).filter((script) => !script.src);
+      } else {
+        // 情况2：不带<script>标签，直接当作内联脚本处理
+        inlineScripts = [
+          {
+            textContent: content,
+          },
+        ];
+      }
 
-    // 2. 等外部脚本加载完成后，再执行内联脚本
-    Promise.all(loadExternalScripts)
-      .then(() => {
-        inlineScripts.forEach((script) => {
+      // 1. 先加载所有外部脚本（如果有）
+      const loadExternalScripts = externalScripts.map((script) => {
+        return new Promise((resolve, reject) => {
           const newScript = document.createElement('script');
-          newScript.textContent = script.textContent;
+          newScript.src = script.src;
+          newScript.onload = resolve;
+          newScript.onerror = reject;
           document.body.appendChild(newScript);
         });
-      })
-      .catch((error) => console.error('Failed to load external scripts:', error));
-  })
-  .catch((error) => console.error('Error fetching script:', error));
+      });
+
+      // 2. 等外部脚本加载完成后，再执行内联脚本
+      Promise.all(loadExternalScripts)
+        .then(() => {
+          inlineScripts.forEach((script) => {
+            const newScript = document.createElement('script');
+            newScript.textContent = script.textContent;
+            document.body.appendChild(newScript);
+          });
+        })
+        .catch((error) => console.error('Failed to load external scripts:', error));
+    })
+    .catch((error) => console.error('Error fetching script:', error));
+};
+
+if ('requestIdleCallback' in window) {
+  window.requestIdleCallback(loadCustomAdminScript, { timeout: 3000 });
+} else {
+  window.setTimeout(loadCustomAdminScript, 3000);
+}
 
 /* eslint-disable no-new */
 new Vue({

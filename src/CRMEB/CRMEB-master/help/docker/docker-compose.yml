@@ -52,9 +52,9 @@ services:
       - "40001:40001"
       - "40002:40002"
     working_dir: /var/www
+    command: ["php-fpm", "-F"]
     volumes:
-      - ../../crmeb:/var/www
-      - ../../crmeb/runtime:/var/www/runtime
+      - crmeb_fast_code:/var/www
     networks:
       app_net:
         ipv4_address: 192.168.10.90
@@ -85,3 +85,7 @@ networks:
       driver: default
       config:
         - subnet: 192.168.10.0/24
+volumes:
+  crmeb_fast_code:
+    external: true
+    name: crmeb_fast_code
