@@ -91,7 +91,6 @@
 </template>
 
 <script>
-import { releasedListApi } from '@/api/marketing';
 import { formatDate } from '@/utils/validate';
 
 export default {
@@ -210,21 +209,15 @@ export default {
       }
     },
     tableList() {
-      this.loading = true;
+      this.loading = false;
       this.tableFrom.receive_type = this.receiveType === 'all' ? '' : this.receiveType;
       if (this.status !== null) {
         this.tableFrom.status = this.status;
       }
-      releasedListApi(this.tableFrom).then((res) => {
-        let data = res.data;
-        this.couponList = data.list;
-        this.total = data.count;
-        this.$nextTick(() => {
-          //确保dom加载完毕
-          this.selectedIds.length && this.setChecked();
-          this.showSelectData();
-        });
-        this.loading = false;
+      this.couponList = [];
+      this.total = 0;
+      this.$nextTick(() => {
+        this.showSelectData();
       });
     },
     setChecked() {

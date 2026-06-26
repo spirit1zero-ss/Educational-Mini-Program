@@ -12,23 +12,6 @@
       ></i>
     </el-popover>
 
-    <div class="layout-navbars-breadcrumb-user-icon">
-      <el-tooltip
-        effect="light"
-        placement="bottom"
-        trigger="click"
-        v-model="isShowUserNewsPopover"
-        :width="300"
-        popper-class="el-tooltip-pupop-user-news"
-      >
-        <el-badge :is-dot="isDot" v-db-click @click.stop="openNews">
-          <i class="el-icon-bell" :title="$t('message.user.title4')"></i>
-        </el-badge>
-        <transition name="el-zoom-in-top" slot="content">
-          <UserNews v-show="isShowUserNewsPopover" @haveNews="initIsDot"></UserNews>
-        </transition>
-      </el-tooltip>
-    </div>
     <div class="layout-navbars-breadcrumb-user-icon" v-db-click @click="onScreenfullClick">
       <i
         :title="isScreenfull ? $t('message.user.title6') : $t('message.user.title5')"
@@ -61,11 +44,10 @@ import screenfull from 'screenfull';
 import { AccountLogout } from '@/api/account';
 import { removeCookies } from '@/libs/util';
 import { Session, Local } from '@/utils/storage.js';
-import UserNews from '@/layout/navBars/breadcrumb/userNews.vue';
 import Search from '@/layout/navBars/breadcrumb/search.vue';
 export default {
   name: 'layoutBreadcrumbUser',
-  components: { UserNews, Search },
+  components: { Search },
   data() {
     return {
       isScreenfull: false,

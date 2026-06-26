@@ -18,7 +18,7 @@
                   <el-option label="全部" value="" />
                   <el-option label="普通商品" value="0" />
                   <el-option label="卡密商品" value="1" />
-                  <el-option label="优惠券商品" value="2" />
+                  <el-option v-if="isCouponAvailable()" label="优惠券商品" value="2" />
                   <el-option label="虚拟商品" value="3" />
                 </el-select>
               </el-form-item>
@@ -168,16 +168,13 @@
         <router-link v-auth="['product-product-save']" :to="$routeProStr + '/product/add_product'"
           ><el-button type="primary" class="mr14">添加商品</el-button></router-link
         >
-        <el-button v-auth="['product-crawl-save']" type="success" class="mr14" v-db-click @click="onCopy"
-          >商品采集</el-button
-        >
         <el-dropdown class="bnt mr14" @command="batchSelect">
           <el-button>批量修改<i class="el-icon-arrow-down el-icon--right"></i></el-button>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item :command="1">商品分类</el-dropdown-item>
             <el-dropdown-item :command="2">物流设置</el-dropdown-item>
             <el-dropdown-item :command="3">购买送积分</el-dropdown-item>
-            <el-dropdown-item :command="4">购买送优惠券</el-dropdown-item>
+            <el-dropdown-item v-if="isCouponAvailable()" :command="4">购买送优惠券</el-dropdown-item>
             <el-dropdown-item :command="5">关联用户标签</el-dropdown-item>
             <el-dropdown-item :command="6">活动推荐</el-dropdown-item>
             <el-dropdown-item v-auth="['product-product-product_show']" v-if="artFrom.type === '1'" :command="7"
@@ -195,14 +192,7 @@
             >
           </el-dropdown-menu>
         </el-dropdown>
-        <el-dropdown class="bnt mr14" @command="goodsMove">
-          <el-button>商品迁移<i class="el-icon-arrow-down el-icon--right"></i></el-button>
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item :command="1">商品导入</el-dropdown-item>
-            <el-dropdown-item :command="2">商品导出</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
-        <el-button v-auth="['export-storeProduct']" class="export" v-db-click @click="onExports(0)">数据导出</el-button>
+        <el-button v-auth="['export-storeProduct']" class="export" v-db-click @click="onExports">数据导出</el-button>
       </div>
       <el-table
         ref="table"
@@ -241,7 +231,7 @@
           <template slot-scope="scope">
             <el-tag
               class="mb5 cup"
-              v-if="scope.row.activityExist.bargain"
+              v-if="isMarketingActivityAvailable('bargain') && scope.row.activityExist.bargain"
               type=""
               @click="activityDetail(scope.row, 0)"
               effect="dark"
@@ -250,7 +240,7 @@
             </el-tag>
             <el-tag
               class="mb5 cup"
-              v-if="scope.row.activityExist.combination"
+              v-if="isMarketingActivityAvailable('combination') && scope.row.activityExist.combination"
               type="success"
               @click="activityDetail(scope.row, 1)"
               effect="dark"
@@ -259,7 +249,7 @@
             </el-tag>
             <el-tag
               class="mb5 cup"
-              v-if="scope.row.activityExist.seckill"
+              v-if="isMarketingActivityAvailable('seckill') && scope.row.activityExist.seckill"
               type="warning"
               @click="activityDetail(scope.row, 2)"
               effect="dark"
@@ -361,16 +351,6 @@
       </div>
       <attribute :attrTemplate="attrTemplate" v-on:changeTemplate="changeTemplate"></attribute>
     </el-card>
-    <!-- 生成淘宝京东表单-->
-    <el-dialog
-      :visible.sync="modals"
-      class="Box"
-      title="复制淘宝、天猫、京东、苏宁、1688"
-      :close-on-click-modal="false"
-      width="720px"
-    >
-      <tao-bao ref="taobaos" v-if="modals" @on-close="onClose"></tao-bao>
-    </el-dialog>
     <el-dialog
       :visible.sync="batchModal"
       class="batch-box"
@@ -418,7 +398,7 @@
               <el-radio-group v-model="batchFormData.freight">
                 <!-- <el-radio :label="1">包邮</el-radio> -->
                 <el-radio :label="2">固定邮费</el-radio>
-                <el-radio :label="3">运费模板</el-radio>
+                <el-radio v-if="areProductExtrasAvailable()" :label="3">运费模板</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item label="" v-if="batchFormData.freight == 2">
@@ -457,7 +437,7 @@
                 style="width: 100%"
               />
             </el-form-item>
-            <el-form-item label="赠送优惠券：" v-if="batchType == 4">
+            <el-form-item label="赠送优惠券：" v-if="batchType == 4 && isCouponAvailable()">
               <div v-if="couponName.length" class="mb20">
                 <el-tag closable v-for="(item, index) in couponName" :key="index" @close="handleClose(item)">{{
                   item.title
@@ -559,17 +539,7 @@
       <div class="bg" v-db-click @click="isProductBox = false"></div>
       <goodsDetail :goodsId="goodsId"></goodsDetail>
     </div>
-    <coupon-list ref="couponTemplates" @nameId="nameId" :couponids="batchFormData.coupon_ids"></coupon-list>
-    <!-- 商品导入 -->
-    <el-dialog
-      :visible.sync="importShow"
-      title="商品导入"
-      width="900px"
-      :show-close="true"
-      :close-on-click-modal="false"
-    >
-      <goodsImport v-if="importShow" @close="importShow = false"></goodsImport>
-    </el-dialog>
+    <coupon-list v-if="isCouponAvailable()" ref="couponTemplates" @nameId="nameId" :couponids="batchFormData.coupon_ids"></coupon-list>
     <brokerageSet ref="brokerageSet" :productId="productId"></brokerageSet>
     <vipPriceSet ref="vipPriceSet" :productId="productId"></vipPriceSet>
     <!-- 商品标签 -->
@@ -589,12 +559,10 @@ import expandRow from './tableExpand.vue';
 import attribute from './attribute';
 import toExcel from '../../../utils/Excel.js';
 import { mapState } from 'vuex';
-import taoBao from './taoBao';
 import goodsDetail from './components/goodsDetail.vue';
 import couponList from '@/components/couponList';
-import { exportProductList, exportProductExport } from '@/api/export';
+import { exportProductList } from '@/api/export';
 import settings from '@/setting';
-import goodsImport from './components/goodsImport.vue';
 import brokerageSet from '../components/brokerageSet.vue';
 import vipPriceSet from '../components/vipPriceSet.vue';
 import {
@@ -613,17 +581,16 @@ import {
 import userLabel from '@/components/labelList';
 import storeLabelList from '@/components/storeLabelList';
 import goodsLabel from '@/components/goodsLabel';
+import { isCouponAvailable, isMarketingActivityAvailable, areProductExtrasAvailable } from '@/config/coreScope';
 
 export default {
   name: 'product_productList',
   components: {
     expandRow,
     attribute,
-    taoBao,
     goodsDetail,
     userLabel,
     couponList,
-    goodsImport,
     brokerageSet,
     vipPriceSet,
     storeLabelList,
@@ -637,8 +604,6 @@ export default {
       routePre: settings.routePre,
       pickerOptions: this.$timeOptions,
       template: false,
-      modals: false,
-      importShow: false,
       batchModal: false,
       labelShow: false,
       batchType: 1, // 批量设置类型
@@ -723,6 +688,9 @@ export default {
     }
   },
   methods: {
+    isCouponAvailable,
+    isMarketingActivityAvailable,
+    areProductExtrasAvailable,
     // 具体日期
     onchangeTime(e) {
       this.timeVal = e;
@@ -776,6 +744,11 @@ export default {
       this.getDataList();
     },
     activityDetail(row, type) {
+      const activityTypes = ['bargain', 'combination', 'seckill'];
+      if (!this.isMarketingActivityAvailable(activityTypes[type])) {
+        this.$message.warning('当前精简产品范围内已禁用该营销活动');
+        return;
+      }
       let name = '';
       if (type === 0) {
         name = 'marketing_storeBargain';
@@ -842,6 +815,13 @@ export default {
     batchSelect(type) {
       if (!this.ids.length) {
         this.$message.warning('请选择要修改的商品');
+      } else if (type === 4 && !this.isCouponAvailable()) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券玩法');
+      } else if (type === 2 && !this.areProductExtrasAvailable()) {
+        this.batchType = type;
+        this.batchFormData.freight = 2;
+        this.batchFormData.temp_id = null;
+        this.batchModal = true;
       } else if (type === 7) {
         this.onDismount();
       } else if (type === 8) {
@@ -856,7 +836,9 @@ export default {
       } else {
         this.batchType = type;
         this.batchModal = true;
-        this.productGetTemplate();
+        if (type === 2) {
+          this.productGetTemplate();
+        }
       }
     },
     batchGoodsSetting(tit, type) {
@@ -880,13 +862,6 @@ export default {
           this.$message.error(res.msg);
         });
     },
-    goodsMove(type) {
-      if (type === 1) {
-        this.onImport();
-      } else {
-        this.onExports(2);
-      }
-    },
     activeData(dataLabel) {
       this.labelShow = false;
       this.dataLabel = dataLabel;
@@ -907,6 +882,10 @@ export default {
     },
     // 获取运费模板；
     productGetTemplate() {
+      if (!this.areProductExtrasAvailable()) {
+        this.templateList = [];
+        return;
+      }
       productGetTemplateApi().then((res) => {
         this.templateList = res.data;
       });
@@ -941,6 +920,10 @@ export default {
     },
     // 添加优惠券
     addCoupon() {
+      if (!this.isCouponAvailable()) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券玩法');
+        return;
+      }
       this.$refs.couponTemplates.isTemplate = true;
       this.$refs.couponTemplates.tableList();
     },
@@ -949,18 +932,15 @@ export default {
       this.artFrom.type = this.$route.query.type.toString();
       this.getDataList();
     },
-    onImport() {
-      this.importShow = true;
-    },
     // 导出
-    async onExports(type) {
+    async onExports() {
       let [th, filekey, data, fileName] = [[], [], [], ''];
       let excelData = JSON.parse(JSON.stringify(this.artFrom));
       excelData.page = 1;
       excelData.limit = 50;
       excelData.ids = this.ids;
       for (let i = 0; i < excelData.page + 1; i++) {
-        let lebData = await this.getExcelData(excelData, type);
+        let lebData = await this.getExcelData(excelData);
         if (!fileName) fileName = lebData.filename;
         if (!filekey.length) {
           filekey = lebData.fileKey;
@@ -975,10 +955,9 @@ export default {
         }
       }
     },
-    getExcelData(excelData, type) {
-      let fun = type ? exportProductExport : exportProductList;
+    getExcelData(excelData) {
       return new Promise((resolve, reject) => {
-        fun(excelData).then((res) => {
+        exportProductList(excelData).then((res) => {
           resolve(res.data);
         });
       });
@@ -1050,18 +1029,6 @@ export default {
       }
       this.ids = ids;
       this.multipleSelection = uniqueArr;
-    },
-    // 添加淘宝商品成功
-    onClose() {
-      this.modals = false;
-    },
-    // 复制淘宝
-    onCopy() {
-      this.$router.push({
-        path: this.$routeProStr + '/product/add_product',
-        query: { type: -1 },
-      });
-      // this.modals = true
     },
     // tab选择
     onClickTab() {

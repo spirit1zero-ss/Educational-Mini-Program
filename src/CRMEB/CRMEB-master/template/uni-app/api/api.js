@@ -377,32 +377,6 @@ export function getLiveList(page, limit) {
 }
 
 /**
- * 获取首页DIY；
- */
-export function getDiy(id) {
-  return request.get(
-    `v2/diy/get_diy/default${id ? "?id=" + id : ""}`,
-    {},
-    {
-      noAuth: true,
-    },
-  );
-}
-
-/**
- * 一键换色；
- */
-export function colorChange(name) {
-  return request.get(
-    "v2/diy/color_change/" + name,
-    {},
-    {
-      noAuth: true,
-    },
-  );
-}
-
-/**
  * 获取公众号关注
  * @returns {*}
  */
@@ -499,20 +473,6 @@ export function wechatAppAuth(data) {
   });
 }
 /**
- * 获取客服类型
- * @returns {*}
- */
-export function getCustomerType(data) {
-  return request.get(
-    "get_customer_type",
-    {},
-    {
-      noAuth: true,
-    },
-  );
-}
-
-/**
  * 获取开屏广告
  * @returns {*}
  */
@@ -532,80 +492,6 @@ export function getOpenAdv(data) {
 export function getCrmebCopyRight() {
   return request.get(
     "copyright",
-    {},
-    {
-      noAuth: true,
-    },
-  );
-}
-/**
- * 获取DIY版本接口
- * @param {Object} id
- */
-export function getDiyVersion(name) {
-  return request.get(
-    `v2/diy/get_version/${name}`,
-    {},
-    {
-      noAuth: true,
-    },
-  );
-}
-/**
- * 获取主题信息接口
- * @param {Object} id
- */
-export function getThemeInfo(type, data) {
-  return request.get(`theme_info/${type}`, data || {}, {
-    noAuth: true,
-  });
-}
-
-/**
- * 获取DIY签到信息
- * @param {Object} id
- */
-export function getSign() {
-  return request.get(
-    "v2/diy/sign",
-    {},
-    {
-      noAuth: true,
-    },
-  );
-}
-/**
- * @description 获取主题商品列表
- */
-export function getThemeProduct(data) {
-  return request.get("theme/product", data, {
-    noAuth: true,
-  });
-}
-/**
- * @description 获取文章列表
- */
-export function getThemeArticle(data) {
-  return request.get("theme/article", data, {
-    noAuth: true,
-  });
-}
-/**
- * @description 获取优惠券列表
- */
-export function getThemeCoupon(data) {
-  return request.get("theme/coupon", data, {
-    noAuth: true,
-  });
-}
-
-/**
- * 获取用户信息(DIY)
- *
- */
-export function getThemeUser() {
-  return request.get(
-    "theme/user",
     {},
     {
       noAuth: true,

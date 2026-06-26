@@ -79,9 +79,9 @@
         <!-- <div class="tips">(最多10张<br />750*750)</div> -->
       </el-form-item>
     </el-col>
-    <el-col :span="24" id="selectvideo">
+    <el-col v-if="productExtrasEnabled || formValidate.video_link" :span="24" id="selectvideo">
       <el-form-item label="添加视频：" prop="video_link">
-        <div v-if="!formValidate.video_link" class="videbox" @click="addVideo">
+        <div v-if="productExtrasEnabled && !formValidate.video_link" class="videbox" @click="addVideo">
           <i class="el-icon-video-camera"></i>
         </div>
         <div class="box-video-style" v-if="formValidate.video_link">
@@ -164,6 +164,10 @@ export default {
     isCai: {
       type: Number | String,
       required: true,
+    },
+    productExtrasEnabled: {
+      type: Boolean,
+      default: true,
     },
   },
   methods: {

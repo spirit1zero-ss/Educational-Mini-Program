@@ -11,23 +11,7 @@
 let app = getApp()
 
 export function goShopDetail(item, uid) {
-	return new Promise((resolve, reject) => {
-		if (item.activity && item.activity.type === "1") {
-			uni.navigateTo({
-				url: `/pages/activity/goods_seckill_details/index?id=${item.activity.id}&time_id=${item.activity.time_id}`
-			})
-		} else if (item.activity && item.activity.type === "2") {
-			uni.navigateTo({
-				url: `/pages/activity/goods_bargain_details/index?id=${item.activity.id}&bargain=${uid}`
-			})
-		} else if (item.activity && item.activity.type === "3") {
-			uni.navigateTo({
-				url: `/pages/activity/goods_combination_details/index?id=${item.activity.id}`
-			})
-		} else {
-			resolve(item);
-		}
-	});
+	return Promise.resolve(item);
 }
 
 

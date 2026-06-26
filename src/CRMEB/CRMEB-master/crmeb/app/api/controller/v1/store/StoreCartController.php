@@ -11,7 +11,6 @@
 namespace app\api\controller\v1\store;
 
 use app\Request;
-use app\services\activity\combination\StorePinkServices;
 use app\services\order\StoreCartServices;
 
 /**
@@ -61,34 +60,14 @@ class StoreCartController
             ['uniqueId', ''],//属性唯一值
             [['new', 'd'], 0],// 1 加入购物车直接购买  0 加入购物车
             [['is_new', 'd'], 0],// 1 加入购物车直接购买  0 加入购物车
-            [['combinationId', 'd'], 0],//拼团商品编号
-            [['secKillId', 'd'], 0],//秒杀商品编号
-            [['bargainId', 'd'], 0],//砍价商品编号
-            [['advanceId', 'd'], 0],//预售商品编号
-            [['pinkId', 'd'], 0],//拼团团队ID
         ]);
         if ($where['is_new'] || $where['new']) $new = true;
         else $new = false;
         /** @var StoreCartServices $cartService */
         $cartService = app()->make(StoreCartServices::class);
         if (!$where['productId'] || !is_numeric($where['productId'])) return app('json')->fail('参数错误');
-        $type = 0;
-        if ($where['secKillId']) {
-            $type = 1;
-        } elseif ($where['bargainId']) {
-            $type = 2;
-        } elseif ($where['combinationId']) {
-            $type = 3;
-            if ($where['pinkId']) {
-                /** @var StorePinkServices $pinkServices */
-                $pinkServices = app()->make(StorePinkServices::class);
-                if ($pinkServices->isPinkStatus($where['pinkId'])) return app('json')->fail('拼团已到期');
-            }
-        } elseif ($where['advanceId']) {
-            $type = 6;
-        }
-        if ($type == 0) $cartService->checkVipGoodsBuy($request->user(), $where['productId']);
-        $res = $cartService->setCart($request->uid(), $where['productId'], $where['cartNum'], $where['uniqueId'], $type, $new, $where['combinationId'], $where['secKillId'], $where['bargainId'], $where['advanceId']);
+        $cartService->checkVipGoodsBuy($request->user(), $where['productId']);
+        $res = $cartService->setCart($request->uid(), $where['productId'], $where['cartNum'], $where['uniqueId'], 0, $new);
         if (!$res) return app('json')->fail('添加失败');
         else  return app('json')->success(['cartId' => $res]);
     }

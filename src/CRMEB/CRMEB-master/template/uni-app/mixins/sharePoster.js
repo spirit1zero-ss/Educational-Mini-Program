@@ -11,10 +11,6 @@ import { imageBase64 } from "@/api/public";
 import {
   getProductCode, // 普通商品小程序code
 } from "@/api/store.js";
-import {
-  scombinationCode, // 拼团code
-  seckillCode, // 秒杀
-} from "@/api/activity.js";
 import i18n from "../utils/lang.js";
 let sysHeight = uni.getWindowInfo().statusBarHeight + "px";
 export const sharePoster = {
@@ -134,13 +130,7 @@ export const sharePoster = {
       that.$set(that, "canvasStatus", true);
       let arr2;
       // #ifdef MP
-      let met =
-        type === "scombination"
-          ? scombinationCode(that.id)
-          : type === "seckill"
-          ? seckillCode(that.id, { time_id: this.time_id })
-          : getProductCode(that.id);
-      met
+      getProductCode(that.id)
         .then((res) => {
           uni.downloadFile({
             url: that.setDomain(res.data.code),

@@ -1,5 +1,5 @@
 {
-  "description": "CRMEB MVP preview project",
+  "description": "CRMEB training camp mini program",
   "packOptions": {
     "ignore": [],
     "include": []
@@ -34,8 +34,8 @@
   "compileType": "miniprogram",
   "miniprogramRoot": "./",
   "libVersion": "3.15.2",
-  "appid": "wx8520a4023628cf3f",
-  "projectname": "CRMEB-MVP",
+  "appid": "touristappid",
+  "projectname": "CRMEB-Training-Camp",
   "condition": {
     "search": {
       "current": -1,

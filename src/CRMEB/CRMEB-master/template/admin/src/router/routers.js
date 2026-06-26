@@ -16,14 +16,12 @@ import user from './modules/user';
 import setting from './modules/setting';
 import agent from './modules/agent';
 import finance from './modules/finance';
-import cms from './modules/cms';
 import marketing from './modules/marketing';
-import app from './modules/app';
 import system from './modules/system';
 import LayoutMain from '@/layout';
 import statistic from './modules/statistic';
 import frameOut from './modules/frameOut';
-import division from './modules/division';
+import education from './modules/education';
 import settings from '@/setting';
 import crud from './modules/crud';
 
@@ -159,7 +157,6 @@ const frameIn = [
   },
   index,
   agent,
-  cms,
   product,
   marketing,
   order,
@@ -167,9 +164,8 @@ const frameIn = [
   finance,
   setting,
   system,
-  app,
   statistic,
-  division,
+  education,
   ...routers,
   crud,
 ];
@@ -178,7 +174,7 @@ const frameIn = [
  * 在主框架之外显示
  */
 
-const frameOuts = frameOut;
+const frameOuts = frameOut.filter((route) => route.name === 'login' || route.name === 'order-print-print');
 
 /**
  * 错误页面

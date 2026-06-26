@@ -2,7 +2,7 @@
   <div class="custom-box" v-if="visibleComponents && visibleComponents.length">
     <common_wrapper :config="configObj">
       <!-- Unified List Mode -->
-      <div v-if="['article', 'coupon', 'goods'].includes(selectTypeValue) && listData.length > 0">
+      <div v-if="isListMode && listData.length > 0">
         <div class="custom-box-list" :style="getContainerStyle(currentDisplayMode, currentColumnStyle)">
           <div
             v-for="(dataItem, dataIndex) in listData"
@@ -123,6 +123,7 @@
 <script>
 import { mapState } from 'vuex';
 import { getArticleList, getCouponList, getThemeProduct } from '@/api/diy';
+import { isCouponAvailable } from '@/config/coreScope';
 
 export default {
   name: 'home_custom_component',
@@ -145,7 +146,12 @@ export default {
   computed: {
     ...mapState('mobildConfig', ['defaultArray']),
     selectTypeValue() {
-      return this.configObj.selectType ? this.configObj.selectType.activeValue : 'user';
+      const selectType = this.configObj.selectType ? this.configObj.selectType.activeValue : 'user';
+      if (!this.isCouponAvailable() && selectType === 'coupon') return 'user';
+      return selectType;
+    },
+    isListMode() {
+      return ['article', 'coupon', 'goods'].includes(this.selectTypeValue);
     },
     currentDisplayMode() {
       if (this.selectTypeValue === 'article') return this.configObj.articleDisplayMode;
@@ -683,6 +689,7 @@ export default {
     });
   },
   methods: {
+    isCouponAvailable,
     setConfig(data) {
       if (!data) return;
       this.configObj = data;
@@ -696,13 +703,17 @@ export default {
       this.bgColorRight = data.moduleColor.color[1].item;
       if (this.selectTypeValue === 'article') {
         this.fetchArticleList();
-      } else if (this.selectTypeValue === 'coupon') {
+      } else if (this.selectTypeValue === 'coupon' && this.isCouponAvailable()) {
         this.fetchCouponList();
       } else if (this.selectTypeValue === 'goods') {
         this.fetchGoodsList();
       }
     },
     fetchCouponList() {
+      if (!this.isCouponAvailable()) {
+        this.listData = [];
+        return;
+      }
       if (!this.configObj.couponDataSource) return;
       let params = {
         limit: this.configObj.couponNum.val,

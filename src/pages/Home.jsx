@@ -1,84 +1,139 @@
-import { BookOpen, ChevronRight, Heart, TreePine } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import Card from '../components/Card.jsx';
-import PrimaryButton from '../components/PrimaryButton.jsx';
-import TreeModel from '../components/TreeModel.jsx';
+import {
+  CalendarDays,
+  Heart,
+  Home as HomeIcon,
+  Leaf,
+  Sprout,
+  ShieldCheck,
+  Target,
+  UserRound
+} from 'lucide-react';
+import treeScene from '../CRMEB/CRMEB-master/template/uni-app/static/images/edu-home/tree-scene.png';
+import iconClipboard from '../CRMEB/CRMEB-master/template/uni-app/static/images/edu-home/icon-clipboard.png';
+import iconOpen from '../CRMEB/CRMEB-master/template/uni-app/static/images/edu-home/icon-open.png';
 
-const entries = [
+const modules = [
   {
-    icon: Heart,
-    title: '读懂孩子心',
-    text: '真正读懂孩子的天赋、性格与内驱力',
-    button: '立即测评',
-    to: '/assessment/heart',
-    color: 'text-rose-500',
-    variant: 'primary'
+    key: 'leaf',
+    badge: '叶',
+    title: '知识',
+    lines: ['学科性格开窍法'],
+    tone: 'green',
+    icon: <Sprout size={54} strokeWidth={2.4} />
   },
   {
-    icon: BookOpen,
-    title: '学科测评',
-    text: '发现孩子的学习潜能与突破方向',
-    button: '开始测评',
-    to: '/assessment/subject',
-    color: 'text-growthBlue',
-    variant: 'green'
+    key: 'stem',
+    badge: '茎',
+    title: '习惯',
+    lines: ['习惯养成', 'SOP高效作业法'],
+    tone: 'blue',
+    image: iconClipboard
   },
   {
-    icon: TreePine,
-    title: '自主学习训练营',
-    text: '从内驱力、习惯到学科开窍的成长闭环',
-    button: '查看详情',
-    to: '/camp',
-    color: 'text-growthGreen',
-    variant: 'orange'
+    key: 'root',
+    badge: '根',
+    title: '内驱',
+    lines: ['慧眼读心赋能法'],
+    tone: 'orange',
+    icon: <Heart size={62} fill="currentColor" strokeWidth={1.7} />
   }
 ];
 
+const entries = [
+  {
+    icon: iconOpen,
+    title: '一张图让孩子学科开窍',
+    desc: '启发灵感，让学习更加生动有趣',
+    action: '测评',
+    tone: 'green'
+  },
+  {
+    icon: iconClipboard,
+    title: '一张图养成作业好习惯',
+    desc: '运用工具，让流程更加科学高效',
+    action: '下载',
+    tone: 'blue'
+  },
+  {
+    title: '一张图让家长读懂孩子心',
+    desc: '读懂孩子，让内心更有自信力量！',
+    action: '测评',
+    tone: 'orange',
+    icon: ShieldCheck
+  },
+  {
+    title: '21天训练营计划',
+    desc: '21天陪伴式训练，见证孩子的成长蜕变',
+    action: '去查看',
+    tone: 'solid',
+    icon: CalendarDays
+  }
+];
+
+const tabs = [
+  { label: '首页', active: true, icon: HomeIcon },
+  { label: '我的', active: false, icon: UserRound },
+  { label: '线下', active: false, icon: Target }
+];
+
 export default function Home() {
-  const navigate = useNavigate();
-
   return (
-    <main className="min-h-screen px-5 pt-5">
-      <div className="mx-auto max-w-[430px] space-y-5">
-        <Card className="overflow-hidden bg-gradient-to-br from-[#edf5ff] via-white to-[#ecfff5] p-4">
-          <div className="mb-3 flex items-start justify-between gap-4">
-            <div>
-              <p className="mb-1 text-sm font-bold text-growthBlue">成长型教育 H5 Demo</p>
-              <h1 className="text-[28px] font-black leading-tight text-slate-950">自主学习训练营</h1>
-              <p className="mt-1 text-sm font-medium leading-6 text-slate-600">帮助孩子建立自主学习能力</p>
-            </div>
-            <div className="rounded-2xl bg-white px-3 py-2 text-center shadow-sm">
-              <p className="text-xl">🌳</p>
-              <p className="text-[11px] font-bold text-slate-500">成长树</p>
-            </div>
+    <main className="home-preview-page">
+      <section className="home-artboard" aria-label="自主学习训练营首页视觉预览">
+        <div className="hero-area">
+          <div className="hero-pill">
+            <Leaf size={25} fill="currentColor" strokeWidth={2.2} />
+            <span>自主学习是AI时代的根本能力！</span>
           </div>
-          <TreeModel />
-        </Card>
 
-        <section className="space-y-4">
+          <h1 className="hero-title">自主学习训练营</h1>
+          <p className="hero-subtitle">大道至简：三大核心模块</p>
+
+          <img className="tree-scene" src={treeScene} alt="" />
+
+          <div className="module-stack" aria-label="三大核心模块">
+            {modules.map((item) => (
+              <button className={`module-card module-${item.tone}`} key={item.key} type="button">
+                <span className="module-badge">{item.badge}</span>
+                <span className="module-copy">
+                  <strong>{item.title}</strong>
+                  {item.lines.map((line) => (
+                    <em key={line}>{line}</em>
+                  ))}
+                </span>
+                <span className="module-icon">
+                  {item.image ? <img src={item.image} alt="" /> : item.icon}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <section className="entry-list" aria-label="首页入口">
           {entries.map((entry) => (
-            <Card key={entry.title} className="p-4">
-              <div className="flex h-full flex-col justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-slate-50 ${entry.color}`}>
-                    <entry.icon size={25} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <h2 className="text-lg font-black text-slate-900">{entry.title}</h2>
-                      <ChevronRight className="text-slate-300" size={20} />
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">{entry.text}</p>
-                  </div>
-                </div>
-                <PrimaryButton variant={entry.variant} onClick={() => navigate(entry.to)}>
-                  {entry.button}
-                </PrimaryButton>
-              </div>
-            </Card>
+            <button className={`entry-card entry-${entry.tone}`} key={entry.title} type="button">
+              <span className="entry-icon">
+                {typeof entry.icon === 'string' ? <img src={entry.icon} alt="" /> : <entry.icon size={66} strokeWidth={2.4} />}
+              </span>
+              <span className="entry-copy">
+                <strong>{entry.title}</strong>
+                <em>{entry.desc}</em>
+              </span>
+              <span className="entry-action">{entry.action}</span>
+              <span className="entry-chevron" aria-hidden="true">›</span>
+            </button>
           ))}
         </section>
-      </div>
+
+        <nav className="visual-tabbar" aria-label="底部导航">
+          {tabs.map((tab) => (
+            <button className={`tab-item${tab.active ? ' is-active' : ''}`} key={tab.label} type="button">
+              <tab.icon size={34} strokeWidth={2.5} />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+      </section>
     </main>
   );
 }

@@ -174,16 +174,10 @@ Route::group('user', function () {
 
     /** 用户注销 */
     Route::group(function () {
-        Route::get('cancel_list', 'v1.user.UserCancel/getCancelList')->option(['real_name' => '用户注销列表']);
-        Route::post('cancel/set_mark', 'v1.user.UserCancel/setMark')->option(['real_name' => '注销列表备注']);
-        Route::get('cancel/agree/:id', 'v1.user.UserCancel/agreeCancel')->option(['real_name' => '同意注销']);
-        Route::get('cancel/refuse/:id', 'v1.user.UserCancel/refuseCancel')->option(['real_name' => '拒绝注销']);
     })->option(['parent' => 'user', 'cate_name' => '用户注销']);
 
     /** 新人礼 */
     Route::group(function () {
-        Route::get('new_gift', 'v1.user.User/getNewGift')->option(['real_name' => '获取新人礼']);
-        Route::post('new_gift/save', 'v1.user.User/saveNewGift')->option(['real_name' => '保存新人礼']);
     })->option(['parent' => 'user', 'cate_name' => '新人礼']);
 
 })->middleware([

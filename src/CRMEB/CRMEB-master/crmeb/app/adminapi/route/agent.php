@@ -87,21 +87,6 @@ Route::group('agent', function () {
 
     /** 事业部 */
     Route::group(function () {
-        Route::get('division/list', 'v1.agent.Division/divisionList')->name('divisionList')->option(['real_name' => '事业部列表']);//事业部/代理商/员工列表
-        Route::get('division/down_list', 'v1.agent.Division/divisionDownList')->name('divisionDownList')->option(['real_name' => '下级列表']);//下级列表
-        Route::get('division/create/:uid', 'v1.agent.Division/divisionCreate')->name('divisionCreate')->option(['real_name' => '添加事业部']);//添加事业部
-        Route::post('division/save', 'v1.agent.Division/divisionSave')->name('divisionSave')->option(['real_name' => '事业部保存']);//事业部保存
-        Route::get('division/agent/create/:uid', 'v1.agent.Division/divisionAgentCreate')->name('divisionAgentCreate')->option(['real_name' => '添加事业部']);//添加代理商
-        Route::post('division/agent/save', 'v1.agent.Division/divisionAgentSave')->name('divisionAgentSave')->option(['real_name' => '事业部保存']);//代理商保存
-        Route::put('division/set_status/:status/:uid', 'v1.agent.Division/setDivisionStatus')->name('setDivisionStatus')->option(['real_name' => '状态切换']);//状态切换
-        Route::delete('division/del/:type/:uid', 'v1.agent.Division/delDivision')->name('delDivision')->option(['real_name' => '删除代理商']);//状态切换
-        Route::get('division/staff/create/:uid', 'v1.agent.Division/divisionStaffCreate')->name('divisionStaffCreate')->option(['real_name' => '添加事业部']);//添加代理商
-        Route::post('division/staff/save', 'v1.agent.Division/divisionStaffSave')->name('divisionStaffSave')->option(['real_name' => '事业部保存']);//代理商保存
-        Route::get('division/agent_apply/list', 'v1.agent.Division/AdminApplyList')->name('AdminApplyList')->option(['real_name' => '代理商申请列表']);//代理商申请列表
-        Route::get('division/examine_apply/:id/:type', 'v1.agent.Division/examineApply')->name('examineApply')->option(['real_name' => '审核表单']);//审核表单
-        Route::post('division/apply_agent/save', 'v1.agent.Division/applyAgentSave')->name('applyAgentSave')->option(['real_name' => '提交审核']);//提交审核
-        Route::delete('division/del_apply/:id', 'v1.agent.Division/delApply')->name('delApply')->option(['real_name' => '删除审核']);//删除审核
-        Route::get('division/statistics', 'v1.agent.Division/divisionStatistics')->name('divisionStatistics')->option(['real_name' => '事业部统计']);//事业部统计
     })->option(['parent' => 'agent', 'cate_name' => '事业部']);
 
     /** 分销员申请 */

@@ -67,7 +67,6 @@ Route::group('order', function () {
     //修改不退款理由
     Route::put('no_refund/:id', 'v1.order.StoreOrder/update_un_refund')->name('StoreOrderorUpdateNoRefund')->option(['real_name' => '修改不退款理由']);
     //线下支付
-    Route::post('pay_offline/:id', 'v1.order.StoreOrder/pay_offline')->name('StoreOrderorPayOffline')->option(['real_name' => '线下支付']);
     //获取退积分表格
     Route::get('refund_integral/:id', 'v1.order.StoreOrder/refund_integral')->name('StoreOrderorRefundIntegral')->option(['real_name' => '获取退积分表单']);
     //修改退积分
@@ -83,49 +82,19 @@ Route::group('order', function () {
     //面单默认配置信息
     Route::get('sheet_info', 'v1.order.StoreOrder/getDeliveryInfo')->option(['real_name' => '面单默认配置信息']);
     //获取线下付款二维码
-    Route::get('offline_scan', 'v1.order.OtherOrder/offline_scan')->name('OfflineScan')->option(['real_name' => '获取线下付款二维码']);
     //线下收银列表
-    Route::get('scan_list', 'v1.order.OtherOrder/scan_list')->name('ScanList')->option(['real_name' => '线下收银列表']);
     //发票列表头部统计
-    Route::get('invoice/chart', 'v1.order.StoreOrderInvoice/chart')->name('StoreOrderorInvoiceChart')->option(['real_name' => '发票列表头部统计']);
     //申请发票列表
-    Route::get('invoice/list', 'v1.order.StoreOrderInvoice/list')->name('StoreOrderorInvoiceList')->option(['real_name' => '申请发票列表']);
     //设置发票状态
-    Route::post('invoice/set/:id', 'v1.order.StoreOrderInvoice/set_invoice')->name('StoreOrderorInvoiceSet')->option(['real_name' => '设置发票状态']);
     //开票订单详情
-    Route::get('invoice_order_info/:id', 'v1.order.StoreOrderInvoice/orderInfo')->name('StoreOrderorInvoiceOrderInfo')->option(['real_name' => '开票订单详情']);
     //获取发票开具页面iframe地址
-    Route::get('invoice_issuance_url/:id', 'v1.order.StoreOrderInvoice/invoiceIssuanceUrl')->name('invoiceIssuanceUrl')->option(['real_name' => '获取发票开具页面iframe地址']);
     //保存发票信息
-    Route::post('save_invoice_info/:id', 'v1.order.StoreOrderInvoice/saveInvoiceInfo')->name('saveInvoiceInfo')->option(['real_name' => '保存发票信息']);
     //电子发票分类
-    Route::get('invoice_category', 'v1.order.StoreOrderInvoice/invoiceCategory')->name('invoiceCategory')->option(['real_name' => '电子发票分类']);
     //开具发票
-    Route::post('invoice_issuance', 'v1.order.StoreOrderInvoice/invoiceIssuance')->name('invoiceIssuance')->option(['real_name' => '开具发票']);
     //查看发票详情
-    Route::get('invoice_info/:id', 'v1.order.StoreOrderInvoice/invoiceInfo')->name('invoiceInfo')->option(['real_name' => '查看发票详情']);
     //开具负数发票
-    Route::get('red_invoice_issuance/:id', 'v1.order.StoreOrderInvoice/redInvoiceIssuance')->name('redInvoiceIssuance')->option(['real_name' => '开具负数发票']);
     //下载发票
-    Route::get('down_invoice/:id', 'v1.order.StoreOrderInvoice/downInvoice')->name('downInvoice')->option(['real_name' => '下载发票']);
     //电子发票配置
-    Route::get('elec_invoice_config', 'v1.order.StoreOrderInvoice/elecInvoiceConfig')->name('elecInvoiceConfig')->option(['real_name' => '电子发票配置']);
-    //配送员列表
-    Route::get('delivery/index', 'v1.order.DeliveryService/index')->option(['real_name' => '配送员列表']);
-    //新增配送表单
-    Route::get('delivery/add', 'v1.order.DeliveryService/add')->option(['real_name' => '新增配送表单']);
-    //保存新建的数据
-    Route::post('delivery/save', 'v1.order.DeliveryService/save')->option(['real_name' => '保存新建的配送员']);
-    //编辑配送员表单
-    Route::get('delivery/:id/edit', 'v1.order.DeliveryService/edit')->option(['real_name' => '编辑配送员表单']);
-    //保存编辑的数据
-    Route::put('delivery/update/:id', 'v1.order.DeliveryService/update')->option(['real_name' => '修改配送员']);
-    //删除
-    Route::delete('delivery/del/:id', 'v1.order.DeliveryService/delete')->option(['real_name' => '删除配送员']);
-    //修改状态
-    Route::get('delivery/set_status/:id/:status', 'v1.order.DeliveryService/set_status')->option(['real_name' => '修改配送员状态']);
-    //订单列表获取配送员
-    Route::get('delivery/list', 'v1.order.DeliveryService/get_delivery_list')->option(['real_name' => '订单列表获取配送员']);
     //电子面单模板列表
     Route::get('expr/temp', 'v1.order.StoreOrder/expr_temp')->option(['real_name' => '电子面单模板列表']);
     //打印发货单

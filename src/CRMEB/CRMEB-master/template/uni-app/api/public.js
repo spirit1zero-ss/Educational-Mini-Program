@@ -243,15 +243,6 @@ export function wechatAuthV2(code, spread) {
   );
 }
 
-/**
- * 获取组件底部菜单
- * @param data object 获取组件底部菜单
- */
-export function getNavigation(data) {
-  return request.get("theme/navigation", data, {
-    noAuth: true,
-  });
-}
 export function getSubscribe() {
   return request.get(
     "subscribe",
@@ -276,19 +267,6 @@ export function getUpdateInfo(type) {
   );
 }
 
-/**
- * 获取首页DIY数据版本号
- *
- */
-export function getVersion(name) {
-  return request.get(
-    `v2/diy/get_version/${name}`,
-    {},
-    {
-      noAuth: true,
-    },
-  );
-}
 /**
  * 获取商品分类版本号
  *

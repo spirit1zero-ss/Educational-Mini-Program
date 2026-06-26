@@ -14,6 +14,7 @@ namespace app\services\pay;
 use app\services\order\OtherOrderServices;
 use app\services\order\StoreOrderSuccessServices;
 use app\services\user\UserRechargeServices;
+use think\facade\Log;
 
 /**
  * 支付成功回调 所有的异步通知回调都会走下面的三个方法,不在取分微信/支付宝支付回调
@@ -34,13 +35,37 @@ class PayNotifyServices
     public function wechatProduct(string $order_id = null, string $trade_no = null, string $payType = PayServices::WEIXIN_PAY)
     {
         try {
+            Log::info('pay_product_notify_start', [
+                'order_id' => $order_id,
+                'trade_no' => $trade_no,
+                'pay_type' => $payType,
+            ]);
             /** @var StoreOrderSuccessServices $services */
             $services = app()->make(StoreOrderSuccessServices::class);
             $orderInfo = $services->getOne(['order_id' => $order_id]);
-            if (!$orderInfo) return true;
-            if ($orderInfo->paid) return true;
-            return $services->paySuccess($orderInfo->toArray(), $payType, ['trade_no' => $trade_no]);
+            if (!$orderInfo) {
+                Log::warning('pay_product_notify_order_missing', ['order_id' => $order_id]);
+                return true;
+            }
+            if ($orderInfo->paid) {
+                Log::info('pay_product_notify_already_paid', [
+                    'order_id' => $order_id,
+                    'id' => $orderInfo->id ?? 0,
+                ]);
+                return true;
+            }
+            $res = $services->paySuccess($orderInfo->toArray(), $payType, ['trade_no' => $trade_no]);
+            Log::info('pay_product_notify_finish', [
+                'order_id' => $order_id,
+                'id' => $orderInfo->id ?? 0,
+                'result' => (bool)$res,
+            ]);
+            return $res;
         } catch (\Exception $e) {
+            Log::error('pay_product_notify_error', [
+                'order_id' => $order_id,
+                'error' => $e->getMessage(),
+            ]);
             return false;
         }
     }

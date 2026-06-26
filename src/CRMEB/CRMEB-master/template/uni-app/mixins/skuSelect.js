@@ -333,7 +333,7 @@ export default {
 				if(item.cart_button == 0){
 					if(item.is_presale_product){
 						uni.navigateTo({
-							url: `/pages/activity/goods_details/index?id=${item.id}&type=6`
+							url: `/pages/goods_details/index?id=${item.id}`
 						})
 					}else{
 						//num:表示从首页点击进来的
@@ -359,7 +359,7 @@ export default {
 				if(item.cart_button == 0){
 					if(item.is_presale_product){
 						uni.navigateTo({
-							url: `/pages/activity/goods_details/index?id=${item.id}&type=6`
+							url: `/pages/goods_details/index?id=${item.id}`
 						})
 					}else{
 						uni.navigateTo({

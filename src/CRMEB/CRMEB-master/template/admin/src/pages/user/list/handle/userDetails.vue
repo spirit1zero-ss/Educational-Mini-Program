@@ -24,7 +24,7 @@
               <userEditForm ref="editForm" :userId="userId" @success="getDetails(userId)" v-if="isEdit"></userEditForm>
               <user-info :ps-info="psInfo" v-else></user-info>
             </el-tab-pane>
-            <el-tab-pane :name="item.val" v-for="(item, index) in list" :key="index" :label="item.label">
+            <el-tab-pane :name="item.val" v-for="(item, index) in retainedList" :key="index" :label="item.label">
               <template>
                 <el-table
                   class="mt20"
@@ -76,6 +76,7 @@
 import { detailsApi, infoApi } from '@/api/user';
 import userInfo from './userInfo';
 import userEditForm from './userEditForm';
+import { isCouponAvailable } from '@/config/coreScope';
 
 export default {
   name: 'userDetails',
@@ -110,7 +111,14 @@ export default {
     };
   },
   created() {},
+  computed: {
+    retainedList() {
+      if (this.isCouponAvailable()) return this.list;
+      return this.list.filter((item) => item.val !== 'coupon');
+    },
+  },
   methods: {
+    isCouponAvailable,
     edit() {
       this.activeName = 'user';
       this.isEdit = !this.isEdit;
@@ -146,6 +154,11 @@ export default {
         });
     },
     changeTab(tab) {
+      if (tab.name === 'coupon' && !this.isCouponAvailable()) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券玩法');
+        this.activeName = 'user';
+        return;
+      }
       this.activeName = tab.name;
       this.changeType();
     },
@@ -155,6 +168,13 @@ export default {
       this.userFrom.type = this.activeName;
       this.isEdit = false;
       if (this.activeName == 'user') return;
+      if (this.userFrom.type === 'coupon' && !this.isCouponAvailable()) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券玩法');
+        this.activeName = 'user';
+        this.userFrom.type = 'order';
+        this.loading = false;
+        return;
+      }
       if (this.userFrom.type === '') {
         this.userFrom.type = 'order';
       }

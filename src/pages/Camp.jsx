@@ -1,8 +1,11 @@
 import { CalendarCheck, MessageCircleQuestion, Radio, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getTrainingProducts } from '../api/training.js';
 import Card from '../components/Card.jsx';
 import PrimaryButton from '../components/PrimaryButton.jsx';
 import TreeModel from '../components/TreeModel.jsx';
+import useCrmebData from '../hooks/useCrmebData.js';
+import { trainingProducts } from '../data/mockData.js';
 
 const stages = [
   { title: '第一阶段', subtitle: '内驱力建设', items: ['读懂孩子内心', '建设家庭能量场'], color: 'bg-blue-50 text-growthBlue' },
@@ -18,6 +21,9 @@ const services = [
 
 export default function Camp() {
   const navigate = useNavigate();
+  const { data: products, status } = useCrmebData(getTrainingProducts, trainingProducts, []);
+  const mainProduct = products[0] || trainingProducts[0];
+  const visibleProducts = (products.length ? products : trainingProducts).slice(0, 4);
 
   return (
     <main className="min-h-screen px-5 pt-5">
@@ -26,8 +32,18 @@ export default function Camp() {
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-bold text-growthBlue">21天成长计划</p>
-              <h1 className="mt-2 text-3xl font-black leading-tight text-slate-950">自主学习训练营</h1>
-              <p className="mt-3 text-sm leading-6 text-slate-600">从内驱力开始，带孩子长出稳定的学习能力。</p>
+              <h1 className="mt-2 text-3xl font-black leading-tight text-slate-950">{mainProduct.title}</h1>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                从内驱力开始，带孩子长出稳定的学习能力。
+              </p>
+              <div className="mt-4 flex items-center gap-2">
+                <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-warmOrange shadow-sm">
+                  {mainProduct.price}
+                </span>
+                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-bold text-slate-500">
+                  {status === 'live' ? '已连接CRMEB' : '演示数据'}
+                </span>
+              </div>
             </div>
             <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white text-2xl shadow-sm">
               🌳
@@ -53,6 +69,44 @@ export default function Camp() {
               </div>
             </Card>
           ))}
+        </section>
+
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xl font-black text-slate-950">后台商品</h2>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-600">
+              {status === 'live' ? '来自CRMEB后台' : '演示数据'}
+            </span>
+          </div>
+          <div className="space-y-3">
+            {visibleProducts.map((product) => (
+              <Card key={product.id || product.title} className="p-3">
+                <div className="flex gap-3">
+                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-[#eaf2ff] to-[#eafff4]">
+                    {product.image ? (
+                      <img src={product.image} alt={product.title} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-2xl">🌱</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="line-clamp-2 text-base font-black leading-5 text-slate-950">{product.title}</h3>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-lg font-black text-warmOrange">{product.price}</span>
+                      <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-500">
+                        已售 {product.sales || 0}
+                      </span>
+                    </div>
+                    {(product.startTime || product.endTime) && (
+                      <p className="mt-2 text-xs font-bold text-slate-500">
+                        {product.startTime || '待定'} - {product.endTime || '长期'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </section>
 
         <Card className="p-5">

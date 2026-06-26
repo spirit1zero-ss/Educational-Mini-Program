@@ -284,7 +284,6 @@
           <el-button v-auth="['admin-user-save']" type="primary" v-db-click @click="edit({ uid: 0 })"
             >添加用户</el-button
           >
-          <el-button v-auth="['admin-user-coupon']" v-db-click @click="onSend">发送优惠券</el-button>
           <el-button
             v-auth="['admin-wechat-news']"
             class="greens mr10"
@@ -429,21 +428,9 @@
     <!-- 编辑表单 积分余额-->
     <edit-from ref="edits" :FromData="FromData" @submitFail="submitFail"></edit-from>
     <!-- 发送优惠券-->
-    <send-from ref="sends" :userIds="ids.toString()"></send-from>
     <!-- 会员详情-->
     <user-details ref="userDetails"></user-details>
     <!--发送图文消息 -->
-    <el-dialog :visible.sync="modal13" title="发送消息" width="1200px" class="modelBox">
-      <news-category
-        v-if="modal13"
-        :isShowSend="isShowSend"
-        :userIds="ids.toString()"
-        :scrollerHeight="scrollerHeight"
-        :contentTop="contentTop"
-        :contentWidth="contentWidth"
-        :maxCols="maxCols"
-      ></news-category>
-    </el-dialog>
     <!--修改推广人-->
     <el-dialog :visible.sync="promoterShow" title="修改推广人" width="540px" :show-close="true">
       <el-form ref="formInline" :model="formInline" label-width="100px" @submit.native.prevent>
@@ -541,9 +528,7 @@ import {
 import { agentSpreadApi } from '@/api/agent';
 import { exportUserList } from '@/api/export';
 import editFrom from '../../../components/from/from';
-import sendFrom from '@/components/sendCoupons/index';
 import userDetails from './handle/userDetails';
-import newsCategory from '@/components/newsCategory/index';
 import customerInfo from '@/components/customerInfo';
 import { cityList } from '@/api/app';
 import { membershipDataListApi } from '@/api/membershipLevel';
@@ -553,9 +538,7 @@ export default {
   components: {
     expandRow,
     editFrom,
-    sendFrom,
     userDetails,
-    newsCategory,
     customerInfo,
     userLabel,
     userEdit,
@@ -1216,6 +1199,10 @@ export default {
     },
     // 点击发送优惠券
     onSend() {
+      if (!this.isCouponAvailable()) {
+        this.$message.warning('当前精简产品范围内已禁用优惠券玩法');
+        return;
+      }
       if (this.ids.length === 0) {
         this.$message.warning('请选择要发送优惠券的用户');
       } else {

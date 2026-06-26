@@ -79,6 +79,9 @@ class StoreOrderComputedServices extends BaseServices
      */
     public function computedOrder(int $uid, array $userInfo = [], array $cartGroup, int $addressId, string $payType, bool $useIntegral = false, int $couponId = 0, bool $isCreate = false, int $shippingType = 1, int $is_gift = 0)
     {
+        if ($shippingType == 2 && !(int)sys_config('store_self_mention')) {
+            $shippingType = 1;
+        }
         $offlinePayStatus = (int)sys_config('offline_pay_status') ?? (int)2;
         $systemPayType = PayServices::PAY_TYPE;
         if ($offlinePayStatus == 2) unset($systemPayType['offline']);

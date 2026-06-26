@@ -31,7 +31,6 @@
 │   ├── express //物流查询
 │   ├── pay //支付
 │   ├── printer //打印机
-│   ├── copyproduct //采集商品
 │   ├── serve //服务平台
 │   ├── sms //短信
 │   ├── template //模版消息

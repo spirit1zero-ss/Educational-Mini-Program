@@ -14,10 +14,6 @@ namespace app\services\product\product;
 
 use app\dao\product\product\StoreProductDao;
 use app\Request;
-use app\services\activity\bargain\StoreBargainServices;
-use app\services\activity\combination\StoreCombinationServices;
-use app\services\activity\coupon\StoreCouponUserServices;
-use app\services\activity\seckill\StoreSeckillServices;
 use app\services\BaseServices;
 use app\services\activity\coupon\StoreCouponIssueServices;
 use app\services\order\StoreCartServices;
@@ -37,9 +33,7 @@ use app\services\user\UserSearchServices;
 use app\services\user\UserServices;
 use crmeb\exceptions\AdminException;
 use app\jobs\ProductLogJob;
-use app\jobs\ProductCopyJob;
 use crmeb\exceptions\ApiException;
-use crmeb\services\FileService;
 use crmeb\services\GroupDataService;
 use think\facade\Config;
 
@@ -179,30 +173,13 @@ class StoreProductServices extends BaseServices
 
     public function getActivityExist($productIds)
     {
-        if (!count($productIds)) return [];
-        $seckill = app()->make(StoreSeckillServices::class)->getProductExist($productIds);
-        $bargain = app()->make(StoreBargainServices::class)->getProductExist($productIds);
-        $combination = app()->make(StoreCombinationServices::class)->getProductExist($productIds);
         $activityExist = [];
         foreach ($productIds as $productId) {
-            $activityExist[$productId]['seckill'] = false;
-            $activityExist[$productId]['bargain'] = false;
-            $activityExist[$productId]['combination'] = false;
-            foreach ($seckill as $key1 => $item1) {
-                if ($productId == $key1) {
-                    $activityExist[$productId]['seckill'] = true;
-                }
-            }
-            foreach ($bargain as $key2 => $item2) {
-                if ($productId == $key2) {
-                    $activityExist[$productId]['bargain'] = true;
-                }
-            }
-            foreach ($combination as $key3 => $item3) {
-                if ($productId == $key3) {
-                    $activityExist[$productId]['combination'] = true;
-                }
-            }
+            $activityExist[$productId] = [
+                'seckill' => false,
+                'bargain' => false,
+                'combination' => false,
+            ];
         }
         return $activityExist;
     }
@@ -466,6 +443,7 @@ class StoreProductServices extends BaseServices
      */
     public function getAttr(array $data, int $id, int $type)
     {
+        $this->applyCoreProductDefaults($data);
         /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
         $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
         /** @var StoreProductVirtualServices $virtualService */
@@ -606,12 +584,17 @@ class StoreProductServices extends BaseServices
         if (count($data['slider_image']) < 1) throw new AdminException('请选择商品轮播图');
         if ($data['is_limit'] == 1 && $data['min_qty'] > $data['limit_num']) throw new AdminException('起购数量不能大于限购数量');
 
+        $this->applyCoreProductDefaults($data);
         $detail = $data['attrs'];
         $attr = $data['items'];
         $cate_id = $data['cate_id'];
         $coupon_ids = $data['coupon_ids'];
         $description = $data['description'];
         $type = $data['type'];
+        if ((int)$type === -1) {
+            $type = 0;
+            $data['is_copy'] = 0;
+        }
         $data['recommend_list'] = count($data['recommend_list']) ? implode(',', array_column($data['recommend_list'], 'product_id')) : '';
         $data['is_vip'] = in_array(0, $data['is_sub']) ? 1 : 0;
         $data['is_sub'] = in_array(1, $data['is_sub']) ? 1 : 0;
@@ -703,7 +686,6 @@ class StoreProductServices extends BaseServices
         $data['activity'] = implode(',', $data['activity']);
         $data['cate_id'] = implode(',', $data['cate_id']);
         $data['label_id'] = implode(',', $data['label_id']);
-        $slider_image = $data['slider_image'];
         $data['image'] = $data['slider_image'][0];
         $data['slider_image'] = json_encode($data['slider_image']);
         $data['stock'] = array_sum(array_column($detail, 'stock'));
@@ -718,13 +700,8 @@ class StoreProductServices extends BaseServices
         $storeProductCouponServices = app()->make(StoreProductCouponServices::class);
         /** @var StoreCategoryServices $storeCategoryServices */
         $storeCategoryServices = app()->make(StoreCategoryServices::class);
-        $is_copy = $data['is_copy'] ?? 0;
         unset($data['is_copy']);
-        $descriptionImages = [];
-        if (isset($data['description_images'])) {
-            $descriptionImages = $data['description_images'];
-        }
-        $this->transaction(function () use ($id, $is_copy, $data, $descriptionImages, $description, $cate_id, $storeDescriptionServices, $storeProductCateServices, $storeProductAttrServices, $storeProductCouponServices, $storeCategoryServices, $detail, $attr, $coupon_ids, $type, $slider_image) {
+        $this->transaction(function () use ($id, $data, $description, $cate_id, $storeDescriptionServices, $storeProductCateServices, $storeProductAttrServices, $storeProductCouponServices, $storeCategoryServices, $detail, $attr, $coupon_ids) {
             if ($data['spec_type'] == 0) {
                 $attr = [
                     [
@@ -791,47 +768,6 @@ class StoreProductServices extends BaseServices
                 if (!empty($coupon_ids)) $storeProductCouponServices->setCoupon($res->id, $coupon_ids);
                 if (!$attrRes) throw new AdminException('添加失败');
 
-                //采集商品下载图片
-                if ($type == -1) {
-                    $s_image_down = [];
-                    //下载商品轮播图
-                    foreach ($slider_image as $s_image) {
-                        if (sys_config('queue_open', 0) == 1) {
-                            ProductCopyJob::dispatch('copySliderImage', [$res->id, $s_image, count($slider_image)]);
-                        } else {
-                            //下载图片
-                            $s_image_down[] = app()->make(CopyTaobaoServices::class)->downloadCopyImage(!is_int(strpos($s_image, 'http')) ? 'http://' . ltrim($s_image, '\//') : $s_image);
-                        }
-                    }
-
-                    //下载商品详情图
-                    preg_match_all('#<img.*?src="([^"]*)"[^>]*>#i', $description, $match);
-                    foreach ($match[1] as $d_image) {
-                        if (sys_config('queue_open', 0) == 1) {
-                            ProductCopyJob::dispatch('copyDescriptionImage', [$res->id, $description, $d_image, count($match[1])]);
-                        } else {
-                            $d_img = app()->make(CopyTaobaoServices::class)->downloadCopyImage(!is_int(strpos($d_image, 'http')) ? 'http://' . ltrim($d_image, '\//') : $d_image);
-                            $description = str_replace($d_image, $d_img, $description);
-                        }
-                    }
-
-                    //下载商品规格图
-                    $productAttrValue = app()->make(StoreProductAttrValueServices::class);
-                    $attrValueList = $productAttrValue->getColumn(['product_id' => $res->id, 'type' => 0], 'image', 'id');
-                    foreach ($attrValueList as $value_id => $value_image) {
-                        if (sys_config('queue_open', 0) == 1) {
-                            ProductCopyJob::dispatch('copyAttrImage', [$value_id, $value_image]);
-                        } else {
-                            $v_img = app()->make(CopyTaobaoServices::class)->downloadCopyImage(!is_int(strpos($value_image, 'http')) ? 'http://' . ltrim($value_image, '\//') : $value_image);
-                            $productAttrValue->update($value_id, ['image' => $v_img]);
-                        }
-                    }
-
-                    if (sys_config('queue_open', 0) == 0) {
-                        $this->update($res->id, ['slider_image' => $s_image_down ? json_encode($s_image_down) : '', 'image' => $s_image_down[0]]);
-                        $storeDescriptionServices->saveDescription((int)$res->id, $description);
-                    }
-                }
             }
         });
     }
@@ -969,6 +905,49 @@ class StoreProductServices extends BaseServices
         }
         $result = ['attr' => $attrList, 'value' => $valueList];
         return compact('result', 'attrGroup', 'valueGroup');
+    }
+
+    /**
+     * Normalize retired product-extra fields to the supported product shape.
+     * This protects the save endpoint from crafted requests that bypass frontend guards.
+     *
+     * @param array $data
+     * @return void
+     */
+    private function applyCoreProductDefaults(array &$data): void
+    {
+        $data['is_virtual'] = 0;
+        $data['virtual_type'] = 0;
+        $data['video_link'] = '';
+        $data['temp_id'] = 0;
+        if (($data['freight'] ?? 0) == 3) {
+            $data['freight'] = 2;
+        }
+
+        $resetSku = function (&$item) {
+            if (!is_array($item)) {
+                return;
+            }
+            $item['is_virtual'] = 0;
+            $item['virtual_list'] = [];
+            $item['disk_info'] = '';
+            $item['coupon_id'] = 0;
+            $item['coupon_name'] = '';
+        };
+
+        if (isset($data['attrs']) && is_array($data['attrs'])) {
+            foreach ($data['attrs'] as &$item) {
+                $resetSku($item);
+            }
+            unset($item);
+        }
+
+        if (isset($data['items']) && is_array($data['items'])) {
+            foreach ($data['items'] as &$item) {
+                $resetSku($item);
+            }
+            unset($item);
+        }
     }
 
     /**
@@ -1172,38 +1151,6 @@ class StoreProductServices extends BaseServices
      */
     public function checkActivity($id = 0, $return = false)
     {
-        if ($id) {
-            /** @var StoreSeckillServices $storeSeckillService */
-            $storeSeckillService = app()->make(StoreSeckillServices::class);
-            $res1 = $storeSeckillService->count(['product_id' => $id, 'is_del' => 0]);
-            if ($res1) {
-                if ($return) {
-                    return false;
-                } else {
-                    throw new AdminException('商品参与秒杀活动开启，无法进行此操作');
-                }
-            }
-            /** @var StoreBargainServices $storeBargainService */
-            $storeBargainService = app()->make(StoreBargainServices::class);
-            $res2 = $storeBargainService->count(['product_id' => $id, 'is_del' => 0]);
-            if ($res2) {
-                if ($return) {
-                    return false;
-                } else {
-                    throw new AdminException('商品参与砍价活动开启，无法进行此操作');
-                }
-            }
-            /** @var StoreCombinationServices $storeCombinationService */
-            $storeCombinationService = app()->make(StoreCombinationServices::class);
-            $res3 = $storeCombinationService->count(['product_id' => $id, 'is_del' => 0]);
-            if ($res3) {
-                if ($return) {
-                    return false;
-                } else {
-                    throw new AdminException('商品参与拼团活动开启，无法进行此操作');
-                }
-            }
-        }
         return true;
     }
 
@@ -1337,45 +1284,12 @@ class StoreProductServices extends BaseServices
     public function getActivityList(array $list, bool $status = true, $seckillIdsList = false, $pinkIdsList = false, $bargrainIdsList = false)
     {
         if (!$list) return [];
-        if ($status) {
-            $productIds = array_column($list, 'id');
-        } else {
-            $productIds = [$list['id']];
-            $list = [$list];
-        }
-        if ($seckillIdsList === false) {
-            /** @var StoreSeckillServices $storeSeckillService */
-            $storeSeckillService = app()->make(StoreSeckillServices::class);
-            $seckillIdsList = $storeSeckillService->getSeckillIdsArray($productIds, ['id', 'time_id', 'product_id']);
-        }
-        if ($pinkIdsList === false) {
-            /** @var StoreCombinationServices $storeCombinationServices */
-            $storeCombinationServices = app()->make(StoreCombinationServices::class);
-            $pinkIdsList = $storeCombinationServices->getPinkIdsArray($productIds, ['id']);
-        }
-        if ($bargrainIdsList === false) {
-            /** @var StoreBargainServices $storeBargainServices */
-            $storeBargainServices = app()->make(StoreBargainServices::class);
-            $bargrainIdsList = $storeBargainServices->getBargainIdsArray($productIds, ['id']);
-        }
-
-        /** @var StoreCouponIssueServices $couponIssueServices */
-        $couponIssueServices = app()->make(StoreCouponIssueServices::class);
-
+        if (!$status) return [];
         foreach ($list as &$item) {
-            $seckillId = array_filter($seckillIdsList, function ($val) use ($item) {
-                if ($val['product_id'] === $item['id']) {
-                    return $val;
-                }
-            });
-            $item['activity'] = $this->activity($item['activity'], $item['id'], $pinkIdsList[$item['id']] ?? 0, $seckillId, $bargrainIdsList[$item['id']] ?? 0, $status);
-            $item['checkCoupon'] = $couponIssueServices->checkProductCoupon($item['id']);
+            $item['activity'] = [];
+            $item['checkCoupon'] = false;
         }
-        if ($status) {
-            return $list;
-        } else {
-            return $list[0]['activity'];
-        }
+        return $list;
     }
 
     /**
@@ -1643,9 +1557,7 @@ class StoreProductServices extends BaseServices
         $data['mapKey'] = sys_config('tengxun_map_key');
         $data['store_self_mention'] = (int)sys_config('store_self_mention') ?? 0; //门店自提是否开启
         $data['activity'] = $this->getActivityList($data['storeInfo'], false);
-        /** @var StoreCouponIssueServices $couponService */
-        $couponService = app()->make(StoreCouponIssueServices::class);
-        $data['coupons'] = $couponService->getIssueCouponList($uid, ['product_id' => $id, 'type' => -1])['list'];
+        $data['coupons'] = [];
         $data['routine_contact_type'] = sys_config('routine_contact_type', 0);
         //浏览记录
         ProductLogJob::dispatch(['visit', ['uid' => $uid, 'product_id' => $id]]);
@@ -1961,17 +1873,6 @@ class StoreProductServices extends BaseServices
             $memberCardService = app()->make(MemberCardServices::class);
             $vipStatus = $memberCardService->isOpenMemberCard('vip_price');
             $seckillIdsList = $pinkIdsList = $bargrainIdsList = false;
-            if (count($fields) > 1) {
-                /** @var StoreSeckillServices $storeSeckillService */
-                $storeSeckillService = app()->make(StoreSeckillServices::class);
-                $seckillIdsList = $storeSeckillService->getSeckillIdsArray([], ['id', 'time_id', 'product_id']);
-                /** @var StoreCombinationServices $storeCombinationServices */
-                $storeCombinationServices = app()->make(StoreCombinationServices::class);
-                $pinkIdsList = $storeCombinationServices->getPinkIdsArray([], ['id']);
-                /** @var StoreBargainServices $storeBargainServices */
-                $storeBargainServices = app()->make(StoreBargainServices::class);
-                $bargrainIdsList = $storeBargainServices->getBargainIdsArray([], ['id']);
-            }
             [$page, $limit] = $this->getPageValue();
             $where['vip_user'] = $uid ? app()->make(UserServices::class)->value(['uid' => $uid], 'is_money_level') : 0;
             foreach ($fields as $field) {
@@ -2215,398 +2116,6 @@ class StoreProductServices extends BaseServices
         return '';
     }
 
-    /**
-     * 商品批量设置
-     * @param $data
-     * @return bool
-     * @throws \Exception
-     */
-    public function batchSetting($data)
-    {
-        $ids = $data['ids'];
-        $batchData = [];
-        if (!count($ids)) throw new AdminException('请选择商品');
-        switch ($data['type']) {
-            case 1: // 修改分类
-                $cate_id = $data['cate_id'];
-                if (!count($cate_id)) throw new AdminException('请选择分类');
-                /** @var StoreCategoryServices $storeCategoryServices */
-                $storeCategoryServices = app()->make(StoreCategoryServices::class);
-                $cateGory = $storeCategoryServices->getColumn([['id', 'IN', $cate_id]], 'id,pid', 'id');
-                if (!$cateGory) throw new AdminException('分类不存在');
-                $time = time();
-                $cateData = [];
-                foreach ($cate_id as $cid) {
-                    if ($cid && isset($cateGory[$cid]['pid'])) {
-                        foreach ($ids as $product_id) {
-                            $cateData[$product_id][] = ['product_id' => $product_id, 'cate_id' => $cid, 'cate_pid' => $cateGory[$cid]['pid'], 'status' => 1, 'add_time' => $time];
-                        }
-                    }
-                }
-                /** @var StoreProductCateServices $storeProductCateServices */
-                $storeProductCateServices = app()->make(StoreProductCateServices::class);
-                foreach ($ids as $product_id) {
-                    $storeProductCateServices->change($product_id, $cateData[$product_id]);
-                    $this->dao->update($product_id, ['cate_id' => implode(',', $cate_id)]);
-                }
-                break;
-            case 2:
-                foreach ($ids as $product_id) {
-                    if ($this->dao->value(['id' => $product_id], 'virtual_type') == 0) {
-                        $batchData[] = [
-                            'id' => $product_id,
-                            'logistics' => implode(',', $data['logistics']),
-                            'freight' => $data['freight'],
-                            'postage' => $data['freight'] == 2 ? $data['postage'] : 0,
-                            'temp_id' => $data['freight'] == 3 ? $data['temp_id'] : 0
-                        ];
-                    }
-                }
-                if (count($batchData)) $this->dao->saveAll($batchData);
-                break;
-            case 3:
-                foreach ($ids as $product_id) {
-                    $batchData[] = [
-                        'id' => $product_id,
-                        'give_integral' => $data['give_integral']
-                    ];
-                }
-                if (count($batchData)) $this->dao->saveAll($batchData);
-                break;
-            case 4:
-                /** @var StoreProductCouponServices $storeProductCouponServices */
-                $storeProductCouponServices = app()->make(StoreProductCouponServices::class);
-                foreach ($ids as $product_id) {
-                    if (!empty($data['coupon_ids'])) {
-                        $storeProductCouponServices->setCoupon($product_id, $data['coupon_ids']);
-                    } else {
-                        $storeProductCouponServices->delete(['product_id' => $product_id]);
-                    }
-                }
-                break;
-            case 5:
-                foreach ($ids as $product_id) {
-                    $batchData[] = [
-                        'id' => $product_id,
-                        'label_id' => implode(',', $data['label_id'])
-                    ];
-                }
-                if (count($batchData)) $this->dao->saveAll($batchData);
-                break;
-            case 6:
-                foreach ($ids as $product_id) {
-                    $batchData[] = [
-                        'id' => $product_id,
-                        'is_hot' => in_array('is_hot', $data['recommend']) ? 1 : 0,
-                        'is_benefit' => in_array('is_benefit', $data['recommend']) ? 1 : 0,
-                        'is_new' => in_array('is_new', $data['recommend']) ? 1 : 0,
-                        'is_good' => in_array('is_good', $data['recommend']) ? 1 : 0,
-                        'is_best' => in_array('is_best', $data['recommend']) ? 1 : 0
-                    ];
-                }
-                if (count($batchData)) $this->dao->saveAll($batchData);
-                break;
-            case 9:
-                foreach ($ids as $product_id) {
-                    $batchData[] = [
-                        'id' => $product_id,
-                        'label_list' => implode(',', $data['label_list'])
-                    ];
-                }
-                if (count($batchData)) $this->dao->saveAll($batchData);
-                break;
-            case 10:
-                $productVirtualInfo = $this->dao->getColumn(['id' => $ids], 'virtual_type', 'id');
-                foreach ($ids as $product_id) {
-                    if ($productVirtualInfo[$product_id] == 0) {
-                        $batchData[] = [
-                            'id' => $product_id,
-                            'is_gift' => $data['is_gift'],
-                            'gift_price' => $data['gift_price'],
-                        ];
-                    }
-                }
-                if (count($batchData)) $this->dao->saveAll($batchData);
-                break;
-            default:
-                return true;
-        }
-        return true;
-    }
-
-    /**
-     * 商品迁移导出
-     * @param $where
-     * @return array
-     * @throws \ReflectionException
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\DbException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @author wuhaotian
-     * @email 442384644@qq.com
-     * @date 2024/10/9
-     */
-    public function productExportList($where)
-    {
-        [$page, $limit] = $this->getPageValue();
-        $cateIds = [];
-        if (isset($where['cate_id']) && $where['cate_id']) {
-            /** @var StoreCategoryServices $storeCategory */
-            $storeCategory = app()->make(StoreCategoryServices::class);
-            $cateIds = $storeCategory->getColumn(['pid' => $where['cate_id']], 'id');
-        }
-        if ($cateIds) {
-            $cateIds[] = $where['cate_id'];
-            $where['cate_id'] = $cateIds;
-        }
-        $productList = $this->dao->getList($where, $page, $limit);
-        $header = [
-            '商品编号',
-            '商品名称',
-            '商品类型',
-            '商品分类(一级)',
-            '商品分类(二级)',
-            '商品单位',
-            '商品图片',
-            '商品视频',
-            '商品详情',
-            '已售数量',
-            '起购数量',
-            '规格类型',
-            '规格类型值',
-            '规格名称',
-            '规格值组合',
-            '规格图片',
-            '售价',
-            '划线价',
-            '成本价',
-            '库存',
-            '重量',
-            '体积',
-            '商品编码',
-            '条形码',
-            '商品简介',
-            '商品关键字',
-            '商品口令',
-            '购买送积分'
-        ];
-        $filename = '商品迁移数据_' . date('YmdHis', time());
-        $virtualType = ['普通商品', '卡密/网盘', '优惠券', '虚拟商品'];
-        $export = $fileKey = [];
-        if (!empty($productList)) {
-            $productList = array_column($productList, null, 'id');
-            $productIds = array_column($productList, 'id');
-            $descriptionArr = app()->make(StoreDescriptionServices::class)->getColumn([['product_id', 'in', $productIds], ['type', '=', 0]], 'description', 'product_id');
-            $cateIds = implode(',', array_column($productList, 'cate_id'));
-            /** @var StoreCategoryServices $categoryService */
-            $categoryService = app()->make(StoreCategoryServices::class);
-            $cateList = $categoryService->getCateParentAndChildName($cateIds);
-            $attrResultArr = app()->make(StoreProductAttrResultServices::class)->getColumn([['product_id', 'in', $productIds], ['type', '=', 0]], 'result', 'product_id');
-            $i = 0;
-            foreach ($attrResultArr as $product_id => &$attrResult) {
-                $attrResult = json_decode($attrResult, true);
-                foreach ($attrResult['value'] as &$value) {
-                    $productInfo = $productList[$product_id];
-                    $cateName = array_filter($cateList, function ($val) use ($productInfo) {
-                        if (in_array($val['id'], explode(',', $productInfo['cate_id']))) {
-                            return $val;
-                        }
-                    });
-                    $skuArr = array_combine(array_column($attrResult['attr'], 'value'), $value['detail']);
-                    $attrArr = [];
-                    foreach ($attrResult['attr'] as $attrArray) {
-                        // 将每个子数组的 'value' 和 'detail' 组合成字符串
-                        if (isset($attrArray['detail'][0]['value'])) {
-                            $attrArray['detail'] = array_column($attrArray['detail'], 'value');
-                        }
-                        $detailString = implode(',', $attrArray['detail']); // 将 detail 数组转换为逗号分隔的字符串
-                        $attrArr[] = $attrArray['value'] . '=' . $detailString;
-                    }
-                    $attrString = implode(';', $attrArr);
-                    $one_data = [
-                        'id' => intval($product_id),
-                        'store_name' => $productInfo['store_name'],
-                        'virtual_type' => $virtualType[$productInfo['virtual_type']],
-                        'cate_name_one' => reset($cateName)['one'] ?? '',
-                        'cate_name_two' => reset($cateName)['two'] ?? '',
-                        'unit_name' => $productInfo['unit_name'],
-                        'slider_image' => implode(';', $productInfo['slider_image']),
-                        'video_link' => $productInfo['video_link'],
-                        'description' => htmlspecialchars_decode($descriptionArr[$productInfo['id']]),
-                        'ficti' => intval($productInfo['ficti']),
-                        'min_qty' => intval($productInfo['min_qty']),
-                        'spec_type' => intval($productInfo['spec_type']) == 1 ? '多规格' : '单规格',
-                        'sku_type_value' => $attrString,
-                        'sku_name' => implode(',', $value['detail']),
-                        'sku_value' => implode(';', array_map(function ($key, $value) {
-                            return "$key=$value";
-                        }, array_keys($skuArr), $skuArr)),
-                        'pic' => $value['pic'],
-                        'price' => floatval($value['price']),
-                        'ot_price' => floatval($value['ot_price']),
-                        'cost' => floatval($value['cost']),
-                        'stock' => intval($value['stock']),
-                        'volume' => intval($value['volume'] ?? 0),
-                        'weight' => intval($value['weight'] ?? 0),
-                        'bar_code' => $value['bar_code'] ?? '',
-                        'bar_code_number' => $value['bar_code_number'] ?? '',
-                        'store_info' => $productInfo['store_info'],
-                        'keyword' => $productInfo['keyword'],
-                        'command_word' => $productInfo['command_word'],
-                        'give_integral' => $productInfo['give_integral'],
-                    ];
-                    $export[] = $one_data;
-                    if ($i == 0) {
-                        $fileKey = array_keys($one_data);
-                    }
-                    $i++;
-                }
-            }
-        }
-        return compact('header', 'fileKey', 'export', 'filename');
-    }
-
-    public function productImport($file)
-    {
-        $all = $success = $fail = 0;
-        $file = public_path() . substr($file, 1);
-        // 获取文件后缀
-        $suffix = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        if (!in_array($suffix, ['xls', 'xlsx'])) {
-            return app('json')->fail('文件格式不正确，请上传xls或xlsx格式的文件！');
-        }
-        $importData = app()->make(FileService::class)->readExcel($file, 'product', 1, ucfirst($suffix));
-        if (!$importData) {
-            throw new AdminException('导入数据为空');
-        }
-        $productCateServices = app()->make(StoreCategoryServices::class);
-        $productData = $issetProductArr = [];
-        $virtualType = ['普通商品' => 0, '卡密/网盘' => 1, '优惠券' => 2, '虚拟商品' => 3];
-        $productAttrValueServices = app()->make(StoreProductAttrValueServices::class);
-        $barCodeArr = array_unique($productAttrValueServices->getColumn(['type' => 0], 'bar_code', 'id'));
-        $barCodeNumberArr = array_unique($productAttrValueServices->getColumn(['type' => 0], 'bar_code_number', 'id'));
-        foreach ($importData as $sku) {
-            if ($sku['id'] == null) continue;
-            if (!isset($productData[$sku['id']])) {
-                $productData[$sku['id']]['disk_info'] = '';
-                $productData[$sku['id']]['logistics'] = [1, 2];
-                $productData[$sku['id']]['freight'] = 2;
-                $productData[$sku['id']]['postage'] = 0;
-                $productData[$sku['id']]['recommend'] = [];
-                $productData[$sku['id']]['presale'] = 0;
-                $productData[$sku['id']]['is_limit'] = 0;
-                $productData[$sku['id']]['limit_type'] = 0;
-                $productData[$sku['id']]['limit_num'] = 0;
-                $productData[$sku['id']]['video_open'] = $sku['video_link'] != '' ? 1 : 0;
-                $productData[$sku['id']]['vip_product'] = 0;
-                $productData[$sku['id']]['custom_form'] = [];
-                $productData[$sku['id']]['store_name'] = $sku['store_name'];
-                $productData[$sku['id']]['cate_id'] = $productCateServices->getCateId($sku['cate_name_one'] ?? '', $sku['cate_name_two'] ?? '');
-                $productData[$sku['id']]['keyword'] = $sku['keyword'] ?? '';
-                $productData[$sku['id']]['unit_name'] = $sku['unit_name'] ?? '';
-                $productData[$sku['id']]['store_info'] = $sku['store_info'] ?? '';
-                $productData[$sku['id']]['image'] = '';
-                $productData[$sku['id']]['recommend_image'] = '';
-                $productData[$sku['id']]['slider_image'] = explode(';', $sku['slider_image']);
-                $productData[$sku['id']]['description'] = $sku['description'] ?? '';
-                $productData[$sku['id']]['ficti'] = $sku['ficti'] ?? 0;
-                $productData[$sku['id']]['give_integral'] = $sku['give_integral'] ?? 0;
-                $productData[$sku['id']]['sort'] = 0;
-                $productData[$sku['id']]['is_show'] = 0;
-                $productData[$sku['id']]['is_hot'] = 0;
-                $productData[$sku['id']]['is_benefit'] = 0;
-                $productData[$sku['id']]['is_best'] = 0;
-                $productData[$sku['id']]['is_new'] = 0;
-                $productData[$sku['id']]['is_good'] = 0;
-                $productData[$sku['id']]['is_postage'] = 0;
-                $productData[$sku['id']]['is_sub'] = [];
-                $productData[$sku['id']]['recommend_list'] = [];
-                $productData[$sku['id']]['virtual_type'] = $virtualType[$sku['virtual_type']];
-                $productData[$sku['id']]['spec_type'] = $sku['spec_type'] == '多规格' ? 1 : 0;
-                $productData[$sku['id']]['is_virtual'] = 0;
-                $productData[$sku['id']]['video_link'] = is_null($sku['video_link']) ? '' : $sku['video_link'];
-                $productData[$sku['id']]['temp_id'] = '';
-                $productData[$sku['id']]['activity'] = ['默认', '秒杀', '砍价', '拼团'];
-                $productData[$sku['id']]['couponName'] = [];
-                $productData[$sku['id']]['coupon_ids'] = [];
-                $productData[$sku['id']]['command_word'] = $sku['command_word'] ?? '';
-                $productData[$sku['id']]['min_qty'] = $sku['min_qty'];
-                $productData[$sku['id']]['type'] = 0;
-                $productData[$sku['id']]['is_copy'] = 0;
-                $productData[$sku['id']]['label_id'] = [];
-                $productData[$sku['id']]['params_list'] = [];
-                $productData[$sku['id']]['label_list'] = [];
-                $productData[$sku['id']]['protection_list'] = [];
-            }
-            $detail = [];
-            foreach (explode(';', $sku['sku_value']) as $pair) {
-                list($key, $value) = explode('=', $pair);
-                $detail[$key] = $value;
-            }
-            if ($sku['bar_code'] != '' && in_array($sku['bar_code'], $barCodeArr)) {
-                $issetProductArr[] = $sku['id'];
-            }
-            if ($sku['bar_code_number'] != '' && in_array($sku['bar_code_number'], $barCodeNumberArr)) {
-                $issetProductArr[] = $sku['id'];
-            }
-            $productData[$sku['id']]['attrs'][] = [
-                'attr_arr' => explode(',', $sku['sku_name']),
-                'detail' => $detail,
-                'price' => $sku['price'],
-                'pic' => $sku['pic'],
-                'ot_price' => $sku['ot_price'] ?? 0,
-                'cost' => $sku['cost'],
-                'stock' => $sku['stock'],
-                'is_show' => 1,
-                'is_default_select' => 0,
-                'is_virtual' => 0,
-                'brokerage' => 0,
-                'brokerage_two' => 0,
-                'vip_price' => 0,
-                'vip_proportion' => 0,
-                'unique' => '',
-                'weight' => $sku['weight'],
-                'volume' => $sku['volume'],
-                'bar_code' => $sku['bar_code'],
-                'bar_code_number' => $sku['bar_code_number'],
-            ];
-            $items = [];
-            $pairs = explode(';', $sku['sku_type_value']);
-            foreach ($pairs as $pair) {
-                // 将每个部分按等号分割成 key 和 value
-                list($key, $values) = explode('=', $pair);
-                // 将 value 部分按逗号分割为数组
-                $detailArray = explode(',', $values);
-                $detail = [];
-                foreach ($detailArray as &$det) {
-                    $detail[] = [
-                        'value' => $det,
-                        'pic' => '',
-                    ];
-                }
-                // 重新构建原始数组的结构
-                $items[] = [
-                    'value' => $key,
-                    'detail' => $detail
-                ];
-            }
-            $productData[$sku['id']]['items'] = $items;
-        }
-        $all = count($productData);
-        foreach (array_unique($issetProductArr) as $issetProduct) {
-            if (isset($productData[$issetProduct])) {
-                unset($productData[$issetProduct]);
-            }
-        }
-        $success = count($productData);
-        $jump = $all - $success;
-        foreach ($productData as $info) {
-            $this->save(0, $info);
-        }
-        $fail = 0;
-        return compact('all', 'success', 'jump', 'fail');
-    }
-
     public function otherInfo($id, $type)
     {
         $storeInfo = $this->dao->get($id, ['id', 'is_sub', 'is_vip', 'vip_product', 'vip_product_type']);
@@ -2709,42 +2218,6 @@ class StoreProductServices extends BaseServices
         if (!$levelDiscount && $isMember && $productIsVip) {
             $realPrice = $memberPrice;
             $isVip = 1;
-        }
-        /** @var StoreProductServices $storeProductService */
-        $storeProductService = app()->make(StoreProductServices::class);
-        /** @var StoreCategoryServices $storeCategoryService */
-        $storeCategoryService = app()->make(StoreCategoryServices::class);
-        $cateId = $storeProductService->value(['id' => $id], 'cate_id');
-        $cateId = explode(',', (string)$cateId);
-        $cateId = array_merge($cateId, $storeCategoryService->cateIdByPid($cateId));
-        $cateId = array_diff($cateId, [0]);
-        $list = app()->make(StoreCouponIssueServices::class)->getPcIssueCouponList($uid, $cateId, $id);
-        usort($list, function ($a, $b) {
-            return $b['coupon_price'] - $a['coupon_price'];
-        });
-        $time = time();
-        foreach ($list as $item) {
-            // 优惠券不在使用时间范围内
-            if ($item['start_use_time'] != 0 && ($item['start_use_time'] > $time || $item['end_use_time'] < $time)) {
-                continue;
-            }
-            // 用户未登录或者不是付费会员跳过付费会员券
-            if ($item['receive_type'] == 4 && !$isMember) {
-                continue;
-            }
-            // 判断用户是否还能领取或者已经领取未使用
-            if ($uid) {
-                $canUserCoupon = app()->make(StoreCouponUserServices::class)->getUserCouponCanUse($uid, $item['id'], $item['receive_limit']);
-                if (!$canUserCoupon) {
-                    continue;
-                }
-            }
-            // 满足优惠券使用门槛
-            if ($realPrice >= $item['use_min_price']) {
-                $realPrice = bcsub($realPrice, $item['coupon_price'], 2);
-                if ($realPrice < 0) $realPrice = 0;
-                break;
-            }
         }
         return ['real_price' => $realPrice, 'price' => $price, 'is_vip' => $isVip, 'product_is_vip' => $productIsVip, 'member_price' => $memberPrice, 'level_price' => $levelPrice, 'user_is_member' => $isMember, 'ot_price' => $otPrice];
     }

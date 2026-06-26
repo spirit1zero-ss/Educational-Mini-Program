@@ -1,5 +1,5 @@
 <script>
-import { HTTP_REQUEST_URL } from "./config/app";
+import { EDUCATION_STATIC_PREVIEW, HTTP_REQUEST_URL } from "./config/app";
 import {
   getShopConfig,
   silenceAuth,
@@ -10,13 +10,12 @@ import {
 import Auth from "@/libs/wechat.js";
 import Routine from "./libs/routine.js";
 import { silenceBindingSpread } from "@/utils";
-import { getCrmebCopyRight, getThemeInfo } from "@/api/api.js";
+import { getCrmebCopyRight } from "@/api/api.js";
 import { getLangJson, getLangVersion } from "@/api/user.js";
 import { mapGetters } from "vuex";
 import colors from "@/mixins/color.js";
 import Cache from "@/utils/cache";
 import { debug } from "util";
-import { applyTheme } from "@/utils/theme.js";
 
 export default {
   globalData: {
@@ -59,6 +58,8 @@ export default {
     },
   },
   onShow() {
+    if (EDUCATION_STATIC_PREVIEW) return;
+
     const queryData = uni.getEnterOptionsSync(); // uni-app版本 3.5.1+ 支持
     if (queryData.query.spread) {
       this.$Cache.set("spread", queryData.query.spread);
@@ -113,9 +114,11 @@ export default {
   async onLaunch(option) {
     uni.hideTabBar();
     let that = this;
-    basicConfig().then((res) => {
-      uni.setStorageSync("BASIC_CONFIG", res.data);
-    });
+    if (!EDUCATION_STATIC_PREVIEW) {
+      basicConfig().then((res) => {
+        uni.setStorageSync("BASIC_CONFIG", res.data);
+      });
+    }
     // #ifdef H5
     if (
       option.query.hasOwnProperty("mdType") &&
@@ -129,20 +132,20 @@ export default {
       this.remoteRegister(option.query.remote_token);
     }
     // #endif
-    let previewThemeId = uni.getStorageSync("previewThemeId");
-    applyTheme(previewThemeId);
-    getLangVersion().then((res) => {
-      let version = res.data.version;
-      if (version != uni.getStorageSync("LANG_VERSION")) {
-        getLangJson().then((res) => {
-          let value = Object.keys(res.data)[0];
-          Cache.set("locale", Object.keys(res.data)[0]);
-          this.$i18n.setLocaleMessage(value, res.data[value]);
-          uni.setStorageSync("localeJson", res.data);
-        });
-      }
-      uni.setStorageSync("LANG_VERSION", version);
-    });
+    if (!EDUCATION_STATIC_PREVIEW) {
+      getLangVersion().then((res) => {
+        let version = res.data.version;
+        if (version != uni.getStorageSync("LANG_VERSION")) {
+          getLangJson().then((res) => {
+            let value = Object.keys(res.data)[0];
+            Cache.set("locale", Object.keys(res.data)[0]);
+            this.$i18n.setLocaleMessage(value, res.data[value]);
+            uni.setStorageSync("localeJson", res.data);
+          });
+        }
+        uni.setStorageSync("LANG_VERSION", version);
+      });
+    }
 
     // #ifdef APP-PLUS || H5
     uni.getSystemInfo({
@@ -288,15 +291,16 @@ export default {
       .catch((error) => console.error("Error fetching script:", error));
 
     // #endif
-    getCrmebCopyRight().then((res) => {
-      uni.setStorageSync("copyRight", res.data);
-    });
+    if (!EDUCATION_STATIC_PREVIEW) {
+      getCrmebCopyRight().then((res) => {
+        uni.setStorageSync("copyRight", res.data);
+      });
+    }
   },
   onHide() {
     // #ifdef H5
     this.$Cache.clear("snsapiKey");
     // #endif
-    this.$Cache.clear("previewThemeId");
   },
   methods: {
     remoteRegister(remote_token) {

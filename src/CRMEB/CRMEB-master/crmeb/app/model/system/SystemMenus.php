@@ -256,11 +256,11 @@ class SystemMenus extends BaseModel
         });
     }
     /**
-     * MVP admin menu hidden path/auth matcher.
+     * Retired admin menu path/auth matcher.
      * @param Model $query
      * @param array $value
      */
-    public function searchMvpHiddenMenuAttr($query, $value)
+    public function searchRetiredMenuAttr($query, $value)
     {
         if (!is_array($value) || !$value) {
             return;

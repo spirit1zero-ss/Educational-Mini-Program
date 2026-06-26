@@ -89,6 +89,17 @@ class OrderCreateAfterJob extends BaseJobs
                 $orderData['division_brokerage'] = $orderComputed->getOrderSumPrice($cartInfo, 'division_brokerage', false);
             }
             $createService->update(['id' => $orderId], $orderData);
+            Log::info('order_brokerage_precomputed', [
+                'id' => $orderId,
+                'order_id' => $orderInfo['order_id'] ?? '',
+                'uid' => $uid,
+                'spread_uid' => $orderData['spread_uid'] ?? 0,
+                'spread_two_uid' => $orderData['spread_two_uid'] ?? 0,
+                'one_brokerage' => $orderData['one_brokerage'] ?? 0,
+                'two_brokerage' => $orderData['two_brokerage'] ?? 0,
+                'activity' => (bool)$activity,
+                'is_commission' => (int)$isCommission,
+            ]);
         } catch (\Throwable $e) {
             Log::error('计算订单实际优惠、积分、邮费、佣金失败，原因：' . $e->getMessage());
         }

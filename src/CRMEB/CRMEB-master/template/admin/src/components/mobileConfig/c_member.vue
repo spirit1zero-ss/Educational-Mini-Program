@@ -854,7 +854,7 @@ export default {
               icon: 'icon-yue',
               info: [
                 { title: '标题', value: '余额', tips: '选填，不超过4个字', max: 4 },
-                { title: '链接', value: '/pages/users/user_money/index', tips: '请输入链接', max: 100 },
+                { title: '链接', value: '/pages/user/index', tips: '请输入链接', max: 100 },
               ],
             },
             {
@@ -862,7 +862,7 @@ export default {
               icon: 'icon-jifen',
               info: [
                 { title: '标题', value: '积分', tips: '选填，不超过4个字', max: 4 },
-                { title: '链接', value: '/pages/users/user_integral/index', tips: '请输入链接', max: 100 },
+                { title: '链接', value: '/pages/user/index', tips: '请输入链接', max: 100 },
               ],
             },
             {
@@ -870,7 +870,7 @@ export default {
               icon: 'icon-youhuiquan',
               info: [
                 { title: '标题', value: '优惠券', tips: '选填，不超过4个字', max: 4 },
-                { title: '链接', value: '/pages/users/user_coupon/index', tips: '请输入链接', max: 100 },
+                { title: '链接', value: '/pages/user/index', tips: '请输入链接', max: 100 },
               ],
             },
             {

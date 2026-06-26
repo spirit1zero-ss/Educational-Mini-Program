@@ -49,15 +49,10 @@ Route::group('finance', function () {
     /** 充值 */
     Route::group(function () {
         //充值记录列表
-        Route::get('recharge', 'v1.finance.UserRecharge/index')->option(['real_name' => '充值记录列表']);
         //删除记录
-        Route::delete('recharge/:id', 'v1.finance.UserRecharge/delete')->option(['real_name' => '删除充值记录']);
         //获取用户充值数据
-        Route::get('recharge/user_recharge', 'v1.finance.UserRecharge/user_recharge')->option(['real_name' => '获取用户充值数据']);
         //退款表单
-        Route::get('recharge/:id/refund_edit', 'v1.finance.UserRecharge/refund_edit')->option(['real_name' => '充值退款表单']);
         //退款
-        Route::put('recharge/:id', 'v1.finance.UserRecharge/refund_update')->option(['real_name' => '充值退款']);
     })->option(['parent' => 'finance', 'cate_name' => '充值']);
 
 

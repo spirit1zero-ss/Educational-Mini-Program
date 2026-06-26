@@ -1,7 +1,9 @@
 import { ChevronRight, FileClock, FolderHeart, Gift, GraduationCap, HandCoins, UsersRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getCurrentUser } from '../api/training.js';
 import Card from '../components/Card.jsx';
 import { user } from '../data/mockData.js';
+import useCrmebData from '../hooks/useCrmebData.js';
 
 const menus = [
   { label: '我的测评', icon: FileClock, to: '/profile/archive' },
@@ -14,22 +16,28 @@ const menus = [
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { data: profile, status } = useCrmebData(getCurrentUser, user, []);
 
   return (
     <main className="min-h-screen px-5 pt-5">
       <div className="mx-auto max-w-[430px] space-y-5">
         <Card className="bg-gradient-to-br from-growthBlue to-[#6dd3c7] p-5 text-white">
           <div className="flex items-center gap-4">
-            <img src={user.avatar} alt={user.name} className="h-16 w-16 rounded-3xl object-cover ring-4 ring-white/30" />
+            <img src={profile.avatar} alt={profile.name} className="h-16 w-16 rounded-3xl object-cover ring-4 ring-white/30" />
             <div>
-              <h1 className="text-2xl font-black">{user.name}</h1>
-              <p className="mt-1 inline-flex rounded-full bg-white/20 px-3 py-1 text-xs font-bold">{user.level}</p>
+              <h1 className="text-2xl font-black">{profile.name}</h1>
+              <div className="mt-1 flex flex-wrap gap-2">
+                <p className="inline-flex rounded-full bg-white/20 px-3 py-1 text-xs font-bold">{profile.level}</p>
+                <p className="inline-flex rounded-full bg-white/20 px-3 py-1 text-xs font-bold">
+                  {status === 'live' ? 'CRMEB账号' : '演示账号'}
+                </p>
+              </div>
             </div>
           </div>
         </Card>
 
         <Card className="grid grid-cols-2 gap-px overflow-hidden bg-slate-100 p-px">
-          {user.stats.map((stat) => (
+          {profile.stats.map((stat) => (
             <div key={stat.label} className="bg-white p-4 text-center">
               <p className="text-xl font-black text-slate-950">{stat.value}</p>
               <p className="mt-1 text-xs font-bold text-slate-400">{stat.label}</p>
