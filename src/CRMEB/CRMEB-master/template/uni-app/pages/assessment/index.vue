@@ -217,7 +217,7 @@ export default {
     },
     goTrainingCamp() {
       uni.navigateTo({
-        url: "/pages/goods/goods_list/index?searchValue=训练营&title=训练营",
+        url: "/pages/stem/habits",
       });
     },
     submit() {

@@ -16,10 +16,6 @@
       }
     },
     {
-      "path": "pages/guide/index",
-      "style": {}
-    },
-    {
       "path": "pages/assessment/index",
       "style": {
         "navigationBarTitleText": "入营测评"
@@ -48,52 +44,8 @@
         "navigationBarBackgroundColor": "#fff8ee",
         "navigationBarTextStyle": "black"
       }
-    },
-    {
-      "path": "pages/order_addcart/order_addcart",
-      "style": {
-        "navigationBarTitleText": "购物车"
-      }
-    },
-    {
-      "path": "pages/user/index",
-      "style": {
-        "navigationBarTitleText": "个人中心",
-        "mp-weixin": {
-          "componentPlaceholder": {}
-        },
-        "enablePullDownRefresh": true,
-        "navigationStyle": "custom",
-        "navigationBarTextStyle": "black"
-      }
-    },
-    {
-      "path": "pages/goods_cate/goods_cate",
-      "style": {
-        "navigationBarTitleText": "商品分类"
-      }
     }
   ],
-  "tabBar": {
-    "color": "#7a8491",
-    "selectedColor": "#006d40",
-    "borderStyle": "white",
-    "backgroundColor": "#ffffff",
-    "list": [
-      {
-        "pagePath": "pages/index/index",
-        "iconPath": "static/images/1-001.png",
-        "selectedIconPath": "static/images/1-002.png",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/user/index",
-        "iconPath": "static/images/4-001.png",
-        "selectedIconPath": "static/images/4-002.png",
-        "text": "我的"
-      }
-    ]
-  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "加载中",

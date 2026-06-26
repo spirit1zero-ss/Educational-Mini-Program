@@ -106,7 +106,7 @@ export default {
         uni.navigateBack();
         return;
       }
-      uni.switchTab({
+      uni.reLaunch({
         url: "/pages/index/index",
       });
     },

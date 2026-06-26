@@ -20,18 +20,6 @@ Vue.prototype.$config = configs;
 Vue.prototype.$Cache = Cache;
 Vue.prototype.$eventHub = new Vue();
 Vue.config.productionTip = false
-import pageLoading from './components/pageLoading.vue'
-import skeleton from './components/skeleton/index.vue'
-import easyLoadimage from '@/components/easy-loadimage/easy-loadimage.vue'
-import BaseMoney from './components/BaseMoney.vue';
-import BaseTag from './components/BaseTag.vue';
-import BaseDrawer from '@/components/tuiDrawer/tui-drawer.vue'
-Vue.component('skeleton', skeleton)
-Vue.component('pageLoading', pageLoading)
-Vue.component('easyLoadimage', easyLoadimage)
-Vue.component('BaseMoney', BaseMoney)
-Vue.component('BaseTag', BaseTag)
-Vue.component('baseDrawer', BaseDrawer)
 import ActivePermission from './libs/permission.js';
 Vue.prototype.$permission = ActivePermission;
 import {

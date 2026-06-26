@@ -38,26 +38,3 @@ if (fs.existsSync(appJsonPath)) {
     console.log('[write-mp-weixin-project-config] Removed empty subPackages from app.json.');
   }
 }
-
-const legacyComponentStubs = [
-  path.join('components', 'addressWindow', 'index'),
-  path.join('components', 'countDown', 'index')
-];
-
-for (const componentPath of legacyComponentStubs) {
-  const fullPath = path.join(outputDir, componentPath);
-  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-  if (!fs.existsSync(`${fullPath}.json`)) {
-    fs.writeFileSync(`${fullPath}.json`, JSON.stringify({ component: true }, null, 2) + '\n');
-  }
-  if (!fs.existsSync(`${fullPath}.js`)) {
-    fs.writeFileSync(`${fullPath}.js`, 'Component({});\n');
-  }
-  if (!fs.existsSync(`${fullPath}.wxml`)) {
-    fs.writeFileSync(`${fullPath}.wxml`, '<view></view>\n');
-  }
-  if (!fs.existsSync(`${fullPath}.wxss`)) {
-    fs.writeFileSync(`${fullPath}.wxss`, '');
-  }
-}
-console.log('[write-mp-weixin-project-config] Wrote legacy component stubs for DevTools cache compatibility.');
