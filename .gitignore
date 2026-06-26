@@ -1,6 +1,5 @@
 node_modules/
 dist/
-.playwright-cli/
 .wechat-local-data/
 src/CRMEB/CRMEB-master/template/uni-app/.npm-cache/
 src/CRMEB/CRMEB-master/template/admin/.npm-cache/
