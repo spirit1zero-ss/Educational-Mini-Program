@@ -2,25 +2,61 @@
   <!-- 基础信息 -->
   <el-row :gutter="24">
     <el-col :span="24">
-      <el-form-item label="商品类型：" props="is_virtual">
+      <el-form-item label="商品类型：">
         <div
           class="virtual"
-          :class="formValidate.virtual_type == item.id ? 'virtual_boder' : 'virtual_boder2'"
-          v-for="(item, index) in goodsType"
+          :class="formValidate.validity_type == item.id ? 'virtual_boder' : 'virtual_boder2'"
+          v-for="(item, index) in validityOptions"
           :key="index"
           v-db-click
-          @click="virtualbtn(item.id, 2)"
-          v-show="
-            (formValidate.id && formValidate.virtual_type == item.id) ||
-            (isCai == -1 && index == 0 && !formValidate.id) ||
-            (isCai == 0 && !formValidate.id)
-          "
+          @click="selectValidity(item.id)"
         >
           <div class="virtual_top">{{ item.tit }}</div>
           <div class="virtual_bottom">({{ item.tit2 }})</div>
-          <div v-if="formValidate.virtual_type == item.id" class="virtual_san"></div>
-          <div v-if="formValidate.virtual_type == item.id" class="virtual_dui">✓</div>
+          <div v-if="formValidate.validity_type == item.id" class="virtual_san"></div>
+          <div v-if="formValidate.validity_type == item.id" class="virtual_dui">✓</div>
         </div>
+      </el-form-item>
+    </el-col>
+
+    <el-col :span="24" v-if="formValidate.validity_type == 1">
+      <el-form-item label="失效方式：">
+        <el-radio-group v-model="formValidate.expire_mode">
+          <el-radio :label="1">固定到期日（全场过期失效）</el-radio>
+          <el-radio :label="2">购买后N天（按用户购买时间起算）</el-radio>
+        </el-radio-group>
+      </el-form-item>
+    </el-col>
+    <el-col :span="24" v-if="formValidate.validity_type == 1 && formValidate.expire_mode == 1">
+      <el-form-item label="到期日期：">
+        <el-date-picker
+          class="input_width"
+          v-model="formValidate.valid_end_date"
+          type="datetime"
+          placeholder="选择到期日期时间"
+          value-format="yyyy-MM-dd HH:mm:ss"
+          format="yyyy-MM-dd HH:mm:ss"
+        ></el-date-picker>
+        <div class="tips-info">超过该时间后，全场该商品过期失效（可见但不可购买）</div>
+      </el-form-item>
+    </el-col>
+    <el-col :span="24" v-if="formValidate.validity_type == 1 && formValidate.expire_mode == 2">
+      <el-form-item label="有效天数：">
+        <el-input-number class="input_width" v-model="formValidate.valid_days" :min="1" :step="1" />
+        <span style="margin-left: 8px">天</span>
+        <div class="tips-info">用户购买后 N 天内有效，按每个用户的购买时间分别起算</div>
+      </el-form-item>
+    </el-col>
+    <el-col :span="24">
+      <el-form-item label="类型名称：">
+        <el-input
+          class="input_width"
+          v-model="formValidate.validity_name"
+          placeholder="可选，留空使用默认名称"
+          maxlength="64"
+          show-word-limit
+        />
+        <div class="tips-info">自定义商品类型显示名称，留空则为「长期有效商品 / 有限期商品」</div>
       </el-form-item>
     </el-col>
 
@@ -140,6 +176,15 @@ export default {
   components: {
     useLabel,
   },
+  data() {
+    return {
+      // 商品仅保留两种有效期类型
+      validityOptions: [
+        { tit: '长期有效商品', id: 0, tit2: '永久有效' },
+        { tit: '有限期商品', id: 1, tit2: '到期失效' },
+      ],
+    };
+  },
   props: {
     formValidate: {
       type: Object,
@@ -171,6 +216,15 @@ export default {
     },
   },
   methods: {
+    selectValidity(id) {
+      this.formValidate.validity_type = id;
+      if (id === 0) {
+        // 长期有效：清空有限期配置
+        this.formValidate.expire_mode = 1;
+        this.formValidate.valid_end_date = '';
+        this.formValidate.valid_days = 30;
+      }
+    },
     virtualbtn(id, type) {
       this.$emit('virtualbtn', id, type);
     },
