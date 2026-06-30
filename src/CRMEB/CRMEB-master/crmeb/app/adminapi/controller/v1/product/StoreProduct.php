@@ -268,6 +268,12 @@ class StoreProduct extends AuthController
             ['protection_list', []],//商品保障
             ['is_gift', 0],//是否礼品
             ['gift_price', 0],//礼品附加费
+            ['validity_type', 0],//商品有效期类型 0长期有效 1有限期
+            ['validity_name', ''],//商品类型自定义名称
+            ['expire_mode', 0],//有限期失效方式 1固定到期日 2购买后N天
+            ['valid_end_date', ''],//固定到期日（日期字符串或时间戳）
+            ['valid_end_time', 0],//固定到期日时间戳
+            ['valid_days', 0],//购买后有效天数
         ]);
         $this->service->save((int)$id, $data);
         return app('json')->success('保存成功');

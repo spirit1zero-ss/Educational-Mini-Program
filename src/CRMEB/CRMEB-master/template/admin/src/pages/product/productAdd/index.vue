@@ -517,6 +517,12 @@ export default {
         recommend_list: [],
         params_list: [], //商品参数
         virtual_type: 0,
+        // 有效期类型：0 长期有效商品；1 有限期商品
+        validity_type: 0,
+        validity_name: '', //类型自定义名称（可选，留空使用默认名）
+        expire_mode: 1, //有限期失效方式：1 固定到期日；2 购买后N天
+        valid_end_date: '', //固定到期日（日期字符串）
+        valid_days: 30, //购买后有效天数
         // is_sub: 0,
         id: 0,
         spec_type: 0,
@@ -1106,8 +1112,22 @@ export default {
       if (!this.isCoreScope) return data;
       return data.filter((item) => item !== 0);
     },
+    // 保证有效期字段存在且类型正确（兼容旧缓存草稿/复制商品）
+    ensureValidityDefaults() {
+      if (!this.formValidate) return;
+      const f = this.formValidate;
+      f.validity_type = Number(f.validity_type) === 1 ? 1 : 0;
+      f.validity_name = f.validity_name || '';
+      f.expire_mode = Number(f.expire_mode) === 2 ? 2 : 1;
+      f.valid_end_date = f.valid_end_date || '';
+      f.valid_days = Number(f.valid_days) > 0 ? Number(f.valid_days) : 30;
+      // 始终保持旧的种类字段为普通商品
+      f.virtual_type = 0;
+      f.is_virtual = 0;
+    },
     applyCoreProductMarketingDefaults() {
       if (!this.isCoreScope || !this.formValidate) return;
+      this.ensureValidityDefaults();
       this.formValidate.vip_product = 0;
       this.formValidate.vip_product_type = 0;
       this.formValidate.give_integral = 0;

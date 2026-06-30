@@ -78,7 +78,7 @@ class StoreCartServices extends BaseServices
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function getUserProductCartListV1($uid, $cartIds = '', bool $new, $addr = [], int $shipping_type = 1, $is_gift = 0)
+    public function getUserProductCartListV1($uid, $cartIds, bool $new, $addr = [], int $shipping_type = 1, $is_gift = 0)
     {
         if ($new) {
             $cartIds = explode(',', $cartIds);
@@ -137,7 +137,7 @@ class StoreCartServices extends BaseServices
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function checkProductStock(int $uid, int $cartNum, string $unique, int $type = 0, $productId, int $seckillId = 0, int $bargainId = 0, int $combinationId = 0, int $advanceId = 0)
+    public function checkProductStock(int $uid, int $cartNum, string $unique, int $type, $productId, int $seckillId = 0, int $bargainId = 0, int $combinationId = 0, int $advanceId = 0)
     {
         /** @var StoreProductAttrValueServices $attrValueServices */
         $attrValueServices = app()->make(StoreProductAttrValueServices::class);
@@ -150,6 +150,8 @@ class StoreCartServices extends BaseServices
         if (!$productInfo) {
             throw new ApiException('该商品已下架或删除');
         }
+        //有限期商品（固定到期日）过期后不可购买
+        $productServices->assertProductPurchasable($productInfo->toArray());
         $attrInfo = $attrValueServices->getOne(['unique' => $unique, 'type' => 0]);
         if (!$unique || !$attrInfo || $attrInfo['product_id'] != $productId) {
             throw new ApiException('请选择有效的商品属性');

@@ -28752,6 +28752,11 @@ CREATE TABLE IF NOT EXISTS `eb_store_product` (
   `protection_list` varchar(255) NOT NULL DEFAULT '' COMMENT '商品保障',
   `is_gift` int(1) NOT NULL DEFAULT '0' COMMENT '是否是礼品',
   `gift_price` decimal(12,2) NOT NULL DEFAULT '0.00' COMMENT '礼品附加费',
+  `validity_type` tinyint(1) NOT NULL DEFAULT '0' COMMENT '商品有效期类型 0长期有效 1有限期',
+  `validity_name` varchar(64) NOT NULL DEFAULT '' COMMENT '商品类型自定义名称',
+  `expire_mode` tinyint(1) NOT NULL DEFAULT '0' COMMENT '有限期失效方式 0无 1固定到期日 2购买后N天',
+  `valid_end_time` int(11) NOT NULL DEFAULT '0' COMMENT '固定到期日时间戳',
+  `valid_days` int(11) NOT NULL DEFAULT '0' COMMENT '购买后有效天数',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `cate_id` (`cate_id`) USING BTREE,
   KEY `is_hot` (`is_hot`) USING BTREE,
@@ -33773,7 +33778,7 @@ INSERT INTO `eb_system_config` (`id`, `menu_name`, `type`, `input_type`, `config
 (189, 'balance_func_status', 'radio', 'input', 28, '1=>开启\n0=>关闭\n', 1, '', 0, 0, '0', '余额功能启用', '商城余额功能启用或者关闭', 5, 1, 0, 0, 0),
 (190, 'brokerage_func_status', 'radio', '', 72, '1=>开启\n0=>关闭', 0, '', 0, 0, '0', '分销启用', '商城分销功能开启|关闭', 100, 1, 0, 0, 0),
 (191, 'order_give_integral', 'text', 'input', 11, '', 0, '', 100, 0, '\"1\"', '下单赠送积分', '下单支付金额按比例赠送积分（实际支付1元赠送多少积分）', 0, 1, 0, 0, 0),
-(193, 'member_func_status', 'radio', '', 45, '1=>开启\n0=>关闭', 0, '', 0, 0, '0', '用户等级启用', '商城用户等级功能开启|关闭', 0, 1, 0, 0, 0),
+(193, 'member_func_status', 'radio', '', 45, '1=>开启\n0=>关闭', 0, '', 0, 0, '1', '用户等级启用', '商城用户等级功能开启|关闭', 0, 1, 0, 0, 0),
 (194, 'member_price_status', 'radio', 'input', 67, '1=>开启\n0=>关闭', 1, '', 0, 0, '\"1\"', '商品付费会员价', '商品付费会员价是否展示', 0, 1, 0, 0, 0),
 (195, 'store_user_mobile', 'radio', 'input', 105, '1=>强制\n0=>不强制', 1, '', 0, 0, '0', '强制手机号登录', '用户在授权之后强制绑定手机号，可以实现用户多端统一', 95, 1, 0, 0, 0),
 (196, 'order_give_exp', 'text', 'input', 45, '', 1, '', 0, 0, '\"0\"', '订单赠送经验', '下单赠送用户经验比例（实际支付1元赠送多少经验）', 0, 1, 0, 0, 0),
@@ -51516,12 +51521,12 @@ CREATE TABLE IF NOT EXISTS `eb_system_user_level` (
 -- 转存表中的数据 `eb_system_user_level`
 --
 
+-- exp_num 表示升级到该等级所需的“累计购买商品件数”；discount=100 表示不打折（保留原折扣体系，后台可改）
 INSERT INTO `eb_system_user_level` (`id`, `mer_id`, `name`, `money`, `valid_date`, `is_forever`, `is_pay`, `is_show`, `grade`, `discount`, `image`, `icon`, `explain`, `add_time`, `is_del`, `exp_num`) VALUES
-(1, 0, 'V1', '0.00', 0, 1, 0, 1, 1, '99.00', '/statics/system_images/user_level_1_bgimg.jpeg', '/statics/system_images/user_level_1_icon.jpeg', 'V1', 1553824639, 0, 500),
-(2, 0, 'V2', '0.00', 0, 1, 0, 1, 2, '97.00', '/statics/system_images/user_level_2_bgimg.jpeg', '/statics/system_images/user_level_2_icon.jpeg', 'V2', 1553824742, 0, 1000),
-(3, 0, 'V3', '0.00', 0, 1, 0, 1, 3, '95.00', '/statics/system_images/user_level_3_bgimg.jpeg', '/statics/system_images/user_level_3_icon.jpeg', 'V3', 1553824797, 0, 3000),
-(4, 0, 'V4', '0.00', 0, 1, 0, 1, 4, '93.00', '/statics/system_images/user_level_4_bgimg.jpeg', '/statics/system_images/user_level_4_icon.jpeg', 'V4', 1553824837, 0, 8000),
-(5, 0, 'V5', '0.00', 0, 1, 0, 1, 5, '70.00', '/statics/system_images/user_level_5_bgimg.jpeg', '/statics/system_images/user_level_5_icon.jpeg', 'V5', 1553824871, 0, 15000);
+(1, 0, '会员', '0.00', 0, 1, 0, 1, 1, '100.00', '/statics/system_images/user_level_1_bgimg.jpeg', '/statics/system_images/user_level_1_icon.jpeg', '首次成功购买商品即成为会员', 1553824639, 0, 1),
+(2, 0, '高级会员', '0.00', 0, 1, 0, 1, 2, '100.00', '/statics/system_images/user_level_2_bgimg.jpeg', '/statics/system_images/user_level_2_icon.jpeg', '累计购买满20件商品成为高级会员', 1553824742, 0, 20),
+(3, 0, '专家', '0.00', 0, 1, 0, 1, 3, '100.00', '/statics/system_images/user_level_3_bgimg.jpeg', '/statics/system_images/user_level_3_icon.jpeg', '累计购买满50件商品成为专家', 1553824797, 0, 50),
+(4, 0, '合伙人', '0.00', 0, 1, 0, 1, 4, '100.00', '/statics/system_images/user_level_4_bgimg.jpeg', '/statics/system_images/user_level_4_icon.jpeg', '累计购买满100件商品成为合伙人', 1553824837, 0, 100);
 
 -- --------------------------------------------------------
 
