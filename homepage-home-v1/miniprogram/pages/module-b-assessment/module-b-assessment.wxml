@@ -1,0 +1,44 @@
+<view class="page">
+  <custom-nav title="读懂孩子心测评" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="intro">
+        <view class="intro-title">一张图让家长读懂孩子心</view>
+        <view class="intro-subtitle">读懂孩子，让内心更有自信力量</view>
+      </view>
+
+      <view class="question-panel">
+        <view class="question-copy">
+          <view class="question-title">凭第一感觉选择</view>
+          <view class="question-desc">孩子看到这张图时，最可能先出现哪种反应？</view>
+        </view>
+        <image class="question-image" src="{{heroImage}}" mode="aspectFit"></image>
+        <view class="question-tip">没有标准答案，按你最了解孩子的感觉选即可。</view>
+      </view>
+
+      <view class="section-heading">
+        <view class="section-title">选择一个最接近的答案</view>
+        <view class="section-note">完成后会生成孩子的内心需求解读</view>
+      </view>
+
+      <view class="choice-grid">
+        <choice-card
+          wx:for="{{options}}"
+          wx:key="type"
+          option="{{item}}"
+          selected="{{selectedType === item.type}}"
+          bind:select="onSelect"
+        ></choice-card>
+      </view>
+
+      <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+
+  <sticky-action
+    text="查看测评结果"
+    disabled="{{!selectedType}}"
+    bind:primary="onViewResult"
+  ></sticky-action>
+</view>

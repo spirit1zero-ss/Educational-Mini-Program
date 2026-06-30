@@ -1,0 +1,58 @@
+<view class="page">
+  <custom-nav title="学习习惯" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="hero">
+        <view class="hero-title">学习方法比学科知识更重要！</view>
+      </view>
+
+      <block wx:for="{{articleBlocks}}" wx:key="id">
+        <view wx:if="{{item.type === 'quote'}}" class="quote-card">
+          <view class="quote-mark quote-mark--left">“</view>
+          <view class="quote-text">{{item.text}}</view>
+          <view class="quote-mark quote-mark--right">”</view>
+        </view>
+
+        <view wx:elif="{{item.type === 'definition'}}" class="definition-card">
+          <view class="definition-icon-wrap">
+            <image class="definition-icon" src="{{iconBase}}{{item.icon}}" mode="aspectFit"></image>
+          </view>
+          <view class="definition-copy">
+            <text>{{item.prefix}}</text><text class="highlight">{{item.highlight}}</text>
+          </view>
+        </view>
+
+        <view wx:elif="{{item.type === 'section'}}" class="article-card">
+          <view class="section-head">
+            <view class="section-index">{{item.index}}</view>
+            <view class="section-title">{{item.title}}</view>
+          </view>
+
+          <view wx:if="{{item.lines}}">
+            <view class="paragraph" wx:for="{{item.lines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
+          </view>
+
+          <view wx:if="{{item.noteLines}}" class="note-box">
+            <image class="note-icon" src="{{iconBase}}callout-star.png" mode="aspectFit"></image>
+            <view class="note-text">
+              <view wx:for="{{item.noteLines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
+            </view>
+          </view>
+
+        </view>
+      </block>
+
+      <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+
+  <view class="assessment-bar" bindtap="onDownloadTap">
+    <image class="assessment-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
+    <view class="assessment-copy">
+      <view class="assessment-title">点击下载表格</view>
+      <view class="assessment-subtitle">SOP高效作业流程规范表格</view>
+    </view>
+    <view class="assessment-arrow">›</view>
+  </view>
+</view>

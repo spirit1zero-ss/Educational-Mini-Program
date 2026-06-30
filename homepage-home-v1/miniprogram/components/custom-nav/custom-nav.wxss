@@ -1,0 +1,33 @@
+.custom-nav {
+  position: relative;
+  min-height: 88px;
+  background: rgba(247, 250, 245, 0.96);
+}
+
+.nav-back-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54rpx;
+  height: 54rpx;
+  border-radius: 50%;
+  background: rgba(31, 107, 87, 0.08);
+}
+
+.nav-back-stroke {
+  width: 18rpx;
+  height: 18rpx;
+  margin-left: 6rpx;
+  border-left: 4rpx solid #1f6b57;
+  border-bottom: 4rpx solid #1f6b57;
+  border-radius: 2rpx;
+  transform: rotate(45deg);
+}
+
+.nav-home-text {
+  color: #1f6b57;
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}

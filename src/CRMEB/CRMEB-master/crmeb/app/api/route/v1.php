@@ -220,6 +220,15 @@ Route::group(function () {
     })->option(['mark' => 'education', 'mark_name' => '教育模块']);
 
     Route::group(function () {
+        Route::get('miniapp/mine/overview', 'v1.miniapp.MineController/overview')->name('miniappMineOverview')->option(['real_name' => 'Miniapp mine overview']);
+        Route::post('miniapp/referral/poster', 'v1.miniapp.MineController/poster')->name('miniappReferralPoster')->option(['real_name' => 'Miniapp referral poster']);
+        Route::post('miniapp/redeem-code/use', 'v1.miniapp.MineController/redeemCode')->name('miniappRedeemCodeUse')->option(['real_name' => 'Miniapp redeem code']);
+        Route::get('miniapp/referral/invites', 'v1.miniapp.MineController/invites')->name('miniappReferralInvites')->option(['real_name' => 'Miniapp referral invites']);
+        Route::get('miniapp/referral/income', 'v1.miniapp.MineController/income')->name('miniappReferralIncome')->option(['real_name' => 'Miniapp referral income']);
+        Route::get('miniapp/training-camp/orders', 'v1.miniapp.MineController/orders')->name('miniappTrainingCampOrders')->option(['real_name' => 'Miniapp training camp orders']);
+    })->option(['mark' => 'miniapp', 'mark_name' => 'Miniapp native']);
+
+    Route::group(function () {
         /** 分销员申请 */
         Route::get('user/spread/apply/info', 'v1.user.SpreadApplyController/applyInfo')->name('申请信息');//申请信息
         Route::post('user/spread/apply/:id', 'v1.user.SpreadApplyController/applyPromoter')->name('申请分销员');//申请分销员
@@ -293,6 +302,7 @@ Route::group(function () {
 
     Route::group(function () {
         //小程序登陆
+        Route::post('miniapp/auth/login', 'v1.miniapp.AuthController/login')->name('miniappAuthLogin')->option(['real_name' => 'Miniapp login']);
         Route::post('wechat/mp_auth', 'v1.wechat.AuthController/mp_auth')->name('mpAuth')->option(['real_name' => '小程序登陆']);//小程序登陆
         Route::get('wechat/get_logo', 'v1.wechat.AuthController/get_logo')->name('getLogo')->option(['real_name' => '小程序登陆授权展示logo']);//小程序登陆授权展示logo
         Route::get('wechat/temp_ids', 'v1.wechat.AuthController/temp_ids')->name('wechatTempIds')->option(['real_name' => '小程序订阅消息']);//小程序订阅消息

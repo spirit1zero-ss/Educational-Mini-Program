@@ -1,0 +1,48 @@
+@import "../module-3-habit/module-3-habit.wxss";
+
+.doc-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 28rpx 24rpx;
+}
+
+.doc-icon {
+  width: 72rpx;
+  height: 72rpx;
+  flex: 0 0 auto;
+}
+
+.doc-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-title {
+  color: #105035;
+  font-size: 28rpx;
+  line-height: 38rpx;
+  font-weight: 900;
+}
+
+.doc-desc {
+  margin-top: 6rpx;
+  color: #68746d;
+  font-size: 23rpx;
+  line-height: 32rpx;
+}
+
+.doc-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 86rpx;
+  height: 52rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  background: #0f5a3d;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 800;
+  flex: 0 0 auto;
+}

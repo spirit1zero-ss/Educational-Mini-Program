@@ -1,0 +1,76 @@
+<view class="page">
+  <view class="custom-nav" style="{{navStyle}}">
+    <view class="nav-title">自主学习训练营</view>
+  </view>
+
+  <scroll-view class="home-scroll" style="{{scrollStyle}}" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="intro">
+        <view class="intro-kicker">21天成长模型</view>
+        <view class="intro-title">自主学习是 AI 时代的根本能力</view>
+        <view class="intro-subtitle">内驱力、学习习惯、学科开窍，三大能力一起生长</view>
+      </view>
+
+      <view class="model-panel">
+        <image class="tree-image" src="../../assets/home-tree-rounded-sparse-roots-v3.png" mode="aspectFill"></image>
+
+        <view class="module-stack">
+          <view
+            class="module-card {{item.className}}"
+            wx:for="{{modules}}"
+            wx:key="key"
+            bindtap="onModuleTap"
+            data-item="{{item}}"
+          >
+            <view class="module-dot"></view>
+            <view class="module-copy">
+              <view class="module-title">{{item.title}}</view>
+              <view class="module-subtitle">{{item.subtitle}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="section-heading">
+        <view class="section-title">先从一个入口开始</view>
+        <view class="section-note">测评和工具会帮你看清孩子当前的成长入口</view>
+      </view>
+
+      <view class="action-list">
+        <view
+          class="action-card action-card--{{item.type}}"
+          wx:for="{{actions}}"
+          wx:key="key"
+          bindtap="onActionTap"
+          data-item="{{item}}"
+        >
+          <view class="action-copy">
+            <view class="action-title">{{item.title}}</view>
+            <view class="action-desc">{{item.desc}}</view>
+          </view>
+          <view class="action-button">{{item.actionText}}</view>
+        </view>
+      </view>
+
+      <view class="camp-strip" bindtap="onCampTap">
+        <view class="camp-copy">
+          <view class="camp-title">21天线上特训营</view>
+          <view class="camp-desc">直播课 + 打卡陪跑 + 答疑</view>
+        </view>
+        <view class="camp-price">399元</view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="bottom-tab">
+    <view
+      class="tab-item {{item.key === 'home' ? 'tab-item--active' : ''}}"
+      wx:for="{{tabs}}"
+      wx:key="key"
+      bindtap="onTabTap"
+      data-key="{{item.key}}"
+    >
+      <view class="tab-text">{{item.text}}</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,44 @@
+<view class="page">
+  <custom-nav title="学科开窍测评" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="intro">
+        <view class="intro-title">一张图让孩子学科开窍</view>
+        <view class="intro-subtitle">启发灵感，让学习更加生动有趣</view>
+      </view>
+
+      <view class="question-panel">
+        <view class="question-copy">
+          <view class="question-title">凭第一感觉选择</view>
+          <view class="question-desc">你认为图中红、蓝、黄分别对应哪一门学科？</view>
+        </view>
+        <image class="question-image" src="{{heroImage}}" mode="aspectFit"></image>
+        <view class="question-tip">没有标准答案，按直觉选即可。</view>
+      </view>
+
+      <view class="section-heading">
+        <view class="section-title">选择一个最接近的答案</view>
+        <view class="section-note">完成后会生成孩子的学科潜能解读</view>
+      </view>
+
+      <view class="choice-grid">
+        <choice-card
+          wx:for="{{options}}"
+          wx:key="type"
+          option="{{item}}"
+          selected="{{selectedType === item.type}}"
+          bind:select="onSelect"
+        ></choice-card>
+      </view>
+
+      <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+
+  <sticky-action
+    text="查看测评结果"
+    disabled="{{!selectedType}}"
+    bind:primary="onViewResult"
+  ></sticky-action>
+</view>
