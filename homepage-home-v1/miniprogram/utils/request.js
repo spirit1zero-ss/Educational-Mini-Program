@@ -5,6 +5,8 @@ const {
   REFERRER_KEY
 } = require('../config/api')
 
+let loginTask = null
+
 function buildUrl(url) {
   if (/^https?:\/\//i.test(url)) {
     return url
@@ -74,8 +76,22 @@ function saveAuth(data) {
   return data
 }
 
-function login() {
-  return wxLogin().then((code) => {
+function login(options) {
+  const force = options && options.force
+  const token = wx.getStorageSync(TOKEN_KEY)
+
+  if (token && !force) {
+    return Promise.resolve({
+      token,
+      user: wx.getStorageSync(USER_KEY) || null
+    })
+  }
+
+  if (loginTask) {
+    return loginTask
+  }
+
+  loginTask = wxLogin().then((code) => {
     const referrerUid = wx.getStorageSync(REFERRER_KEY) || ''
 
     return rawRequest({
@@ -90,7 +106,15 @@ function login() {
         'Form-type': 'routine'
       }
     }).then((body) => saveAuth(body.data || {}))
+  }).then((data) => {
+    loginTask = null
+    return data
+  }).catch((error) => {
+    loginTask = null
+    throw error
   })
+
+  return loginTask
 }
 
 function request(options) {

@@ -6,7 +6,8 @@ const CAMP_ORDERS_PATH = '/pages/camp-orders/camp-orders'
 const {
   getMineOverview,
   createReferralPoster,
-  useRedeemCode
+  useRedeemCode,
+  createTrainingCampMemberOrder
 } = require('../../api/mine')
 
 Page({
@@ -14,9 +15,12 @@ Page({
     navStyle: '',
     scrollStyle: '',
     overviewLoading: false,
+    orderSubmitting: false,
     isMember: false,
     memberStatusText: '当前未开通会员',
     memberUid: '',
+    memberPlans: [],
+    selectedMemberPlan: null,
     trainingCamp: {
       productId: '',
       title: '21天自主学习训练营',
@@ -141,10 +145,59 @@ Page({
       return
     }
 
-    wx.navigateTo({
-      url: CAMP_PATH,
-      fail: () => this.showComingSoon('训练营报名')
+    if (this.data.orderSubmitting) return
+
+    const plan = this.data.selectedMemberPlan || (this.data.trainingCamp && this.data.trainingCamp.memberPlan) || {}
+    if (!plan.mcId) {
+      wx.showToast({
+        title: '\u6682\u65e0\u53ef\u62a5\u540d\u5957\u9910',
+        icon: 'none'
+      })
+      return
+    }
+
+    wx.showModal({
+      title: '\u786e\u8ba4\u62a5\u540d',
+      content: `${plan.title || '\u8bad\u7ec3\u8425\u4f1a\u5458'} ${plan.priceText || this.data.trainingCamp.priceText}`,
+      confirmText: '\u521b\u5efa\u8ba2\u5355',
+      success: (result) => {
+        if (result.confirm) {
+          this.createMemberOrder(plan)
+        }
+      }
     })
+  },
+
+  createMemberOrder(plan) {
+    this.setData({ orderSubmitting: true })
+    wx.showLoading({ title: '\u521b\u5efa\u4e2d' })
+
+    createTrainingCampMemberOrder({
+      mcId: plan.mcId,
+      payType: 'weixin'
+    })
+      .then((response) => {
+        wx.hideLoading()
+        const order = response.data || {}
+        wx.showModal({
+          title: '\u8ba2\u5355\u5df2\u521b\u5efa',
+          content: order.orderId
+            ? `\u8ba2\u5355\u53f7\uff1a${order.orderId}\n\u652f\u4ed8\u4e0b\u4e00\u6b65\u63a5\u5165`
+            : (order.message || '\u652f\u4ed8\u4e0b\u4e00\u6b65\u63a5\u5165'),
+          showCancel: false,
+          confirmText: '\u77e5\u9053\u4e86'
+        })
+      })
+      .catch((error) => {
+        wx.hideLoading()
+        wx.showToast({
+          title: (error && error.message) || '\u8ba2\u5355\u521b\u5efa\u5931\u8d25',
+          icon: 'none'
+        })
+      })
+      .then(() => {
+        this.setData({ orderSubmitting: false })
+      })
   },
 
   onPosterTap() {
@@ -166,6 +219,7 @@ Page({
         const query = [
           `uid=${encodeURIComponent(this.data.memberUid)}`,
           poster.posterUrl ? `posterUrl=${encodeURIComponent(poster.posterUrl)}` : '',
+          poster.codeUrl ? `codeUrl=${encodeURIComponent(poster.codeUrl)}` : '',
           poster.sharePath ? `sharePath=${encodeURIComponent(poster.sharePath)}` : ''
         ].filter(Boolean).join('&')
 
@@ -381,10 +435,16 @@ Page({
     const isMember = !!member.isMember
     const trainingCamp = (extra && extra.trainingCamp) || this.data.trainingCamp
     const referral = (extra && extra.referral) || {}
+    const memberPlans = Array.isArray(trainingCamp.memberPlans) ? trainingCamp.memberPlans : this.data.memberPlans
+    const selectedMemberPlan = trainingCamp.memberPlan && trainingCamp.memberPlan.mcId
+      ? trainingCamp.memberPlan
+      : (memberPlans.filter((item) => !item.isFree)[0] || memberPlans[0] || null)
 
     this.setData({
       isMember,
       memberUid: member.uid || '',
+      memberPlans,
+      selectedMemberPlan,
       memberStatusText: member.statusText || (isMember ? '训练营会员' : '当前未开通会员'),
       benefitText: member.benefitText || trainingCamp.benefitText || (isMember ? '会员权益已生效' : '报名后开通会员权益'),
       trainingCamp,

@@ -37,6 +37,21 @@ class MineController
         return app('json')->success($this->services->useRedeemCode((int)$request->uid(), $code));
     }
 
+    public function memberPlans(Request $request)
+    {
+        return app('json')->success($this->services->getMemberPlans());
+    }
+
+    public function createMemberOrder(Request $request)
+    {
+        [$mcId, $payType] = $request->postMore([
+            ['mcId', 0],
+            ['payType', 'weixin'],
+        ], true);
+
+        return app('json')->success($this->services->createTrainingCampMemberOrder((int)$request->uid(), (int)$mcId, $payType));
+    }
+
     public function invites(Request $request)
     {
         [$grade, $sort, $keyword] = $request->getMore([

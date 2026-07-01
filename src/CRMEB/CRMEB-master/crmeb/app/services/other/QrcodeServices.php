@@ -332,6 +332,64 @@ class QrcodeServices extends BaseServices
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
      */
+    public function getMiniappMemberInviteCode(string $memberUid, string $page = 'pages/home/home', bool $isSaveAttach = true)
+    {
+        /** @var SystemAttachmentServices $systemAttachmentService */
+        $systemAttachmentService = app()->make(SystemAttachmentServices::class);
+        $memberUid = trim($memberUid);
+        $page = trim($page) ?: 'pages/home/home';
+        if ($memberUid === '') {
+            return false;
+        }
+
+        $scene = 'ref=' . $memberUid;
+        $namePath = 'member_invite_' . $memberUid . '_' . md5($page) . '.jpg';
+        try {
+            if (!$isSaveAttach) {
+                $imageInfo = '';
+            } else {
+                $imageInfo = $systemAttachmentService->getOne(['name' => $namePath]);
+            }
+            $siteUrl = sys_config('site_url');
+            if (!$imageInfo) {
+                $res = MiniProgramService::appCodeUnlimitService($scene, $page, 280);
+                if (!$res) return false;
+                if ($res->getSize() < 100) return 'unpublished';
+                $uploadType = (int)sys_config('upload_type', 1);
+                $upload = UploadService::init();
+                $res = (string)EntityBody::factory($res);
+                $res = $upload->to('routine/member/invite-code')->validate()->setAuthThumb(false)->stream($res, $namePath);
+                if ($res === false) {
+                    return false;
+                }
+                $imageInfo = $upload->getUploadInfo();
+                $imageInfo['image_type'] = $uploadType;
+                if ($imageInfo['image_type'] == 1) $remoteImage = PosterServices::remoteImage($siteUrl . $imageInfo['dir']);
+                else $remoteImage = PosterServices::remoteImage($imageInfo['dir']);
+                if (!$remoteImage['status']) return false;
+                if ($isSaveAttach) {
+                    $systemAttachmentService->save([
+                        'name' => $imageInfo['name'],
+                        'att_dir' => $imageInfo['dir'],
+                        'satt_dir' => $imageInfo['thumb_path'],
+                        'att_size' => $imageInfo['size'],
+                        'att_type' => $imageInfo['type'],
+                        'image_type' => $imageInfo['image_type'],
+                        'module_type' => 2,
+                        'time' => time(),
+                        'pid' => 1,
+                        'type' => 2
+                    ]);
+                }
+                $url = $imageInfo['dir'];
+            } else $url = $imageInfo['att_dir'];
+            if ($imageInfo['image_type'] == 1) $url = $siteUrl . $url;
+            return $url;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
     public function qrCodeForever($thirdId = 0, $thirdType = 'spread', $page = '', $qrCodeLink = '')
     {
         $qrcode = $this->dao->getOne(['third_id' => $thirdId, 'third_type' => $thirdType]);

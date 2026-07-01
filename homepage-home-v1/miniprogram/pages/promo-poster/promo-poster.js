@@ -169,6 +169,10 @@ Page({
     if (options && options.uid) {
       this.setData({ memberUid: options.uid })
     }
+
+    if (options && options.codeUrl) {
+      this.setData({ codeImage: decodeURIComponent(options.codeUrl) })
+    }
   },
 
   showShareMenu() {
@@ -252,7 +256,7 @@ Page({
 
     return getCanvasNode(this).then((canvas) => Promise.all([
       loadCanvasImage(canvas, POSTER_BG_CANVAS_SOURCES, 1024, 1792),
-      loadCanvasImage(canvas, CODE_IMAGE_CANVAS_SOURCES, 220, 220)
+      loadCanvasImage(canvas, [this.data.codeImage].concat(CODE_IMAGE_CANVAS_SOURCES), 220, 220)
     ]).then(([posterBg, codeImage]) => new Promise((resolve, reject) => {
       canvas.width = CANVAS_WIDTH * CANVAS_PIXEL_RATIO
       canvas.height = CANVAS_HEIGHT * CANVAS_PIXEL_RATIO

@@ -223,6 +223,8 @@ Route::group(function () {
         Route::get('miniapp/mine/overview', 'v1.miniapp.MineController/overview')->name('miniappMineOverview')->option(['real_name' => 'Miniapp mine overview']);
         Route::post('miniapp/referral/poster', 'v1.miniapp.MineController/poster')->name('miniappReferralPoster')->option(['real_name' => 'Miniapp referral poster']);
         Route::post('miniapp/redeem-code/use', 'v1.miniapp.MineController/redeemCode')->name('miniappRedeemCodeUse')->option(['real_name' => 'Miniapp redeem code']);
+        Route::get('miniapp/training-camp/member-plans', 'v1.miniapp.MineController/memberPlans')->name('miniappTrainingCampMemberPlans')->option(['real_name' => 'Miniapp training camp member plans']);
+        Route::post('miniapp/training-camp/member-order', 'v1.miniapp.MineController/createMemberOrder')->name('miniappTrainingCampMemberOrder')->option(['real_name' => 'Miniapp training camp member order']);
         Route::get('miniapp/referral/invites', 'v1.miniapp.MineController/invites')->name('miniappReferralInvites')->option(['real_name' => 'Miniapp referral invites']);
         Route::get('miniapp/referral/income', 'v1.miniapp.MineController/income')->name('miniappReferralIncome')->option(['real_name' => 'Miniapp referral income']);
         Route::get('miniapp/training-camp/orders', 'v1.miniapp.MineController/orders')->name('miniappTrainingCampOrders')->option(['real_name' => 'Miniapp training camp orders']);

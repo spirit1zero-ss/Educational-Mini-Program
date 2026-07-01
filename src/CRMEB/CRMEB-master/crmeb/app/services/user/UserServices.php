@@ -41,6 +41,7 @@ use crmeb\services\FormBuilder as Form;
 use crmeb\services\FormBuilder;
 use crmeb\services\app\WechatService;
 use think\Exception;
+use think\facade\Db;
 use think\facade\Route as Url;
 
 /**
@@ -433,9 +434,53 @@ class UserServices extends BaseServices
 
     /**
      * 设置用户分组
-     * @param $uids
-     * @param int $group_id
      */
+    public function recordPendingMemberReferrer(int $uid, int $spreadUid, int $ttl = 2592000): bool
+    {
+        if ($uid <= 0 || $spreadUid <= 0 || $uid === $spreadUid) {
+            return false;
+        }
+
+        $userInfo = $this->getUserInfo($uid, 'uid,spread_uid,is_ever_level,is_money_level,overdue_time,level');
+        if (!$userInfo || (int)$userInfo['spread_uid'] > 0 || $this->isTrainingCampMemberUser($userInfo)) {
+            return false;
+        }
+
+        $now = time();
+        Db::name('miniapp_member_referrer_locks')
+            ->where('uid', $uid)
+            ->where('status', 0)
+            ->where('expires_at', '<', $now)
+            ->update(['status' => 2]);
+
+        $existing = Db::name('miniapp_member_referrer_locks')
+            ->where('uid', $uid)
+            ->whereIn('status', [0, 1])
+            ->order('id', 'asc')
+            ->find();
+        if ($existing) {
+            return false;
+        }
+
+        $spreadUser = $this->getUserInfo($spreadUid, 'uid,spread_uid,is_ever_level,is_money_level,overdue_time,level');
+        if (!$spreadUser || !$this->isTrainingCampMemberUser($spreadUser)) {
+            return false;
+        }
+
+        $userSpreadUid = (int)($spreadUser['spread_uid'] ?? 0);
+        if ((int)$userInfo['uid'] === $spreadUid || (int)$userInfo['uid'] === $userSpreadUid) {
+            return false;
+        }
+
+        return (bool)Db::name('miniapp_member_referrer_locks')->insert([
+            'uid' => $uid,
+            'spread_uid' => $spreadUid,
+            'status' => 0,
+            'locked_at' => time(),
+            'expires_at' => time() + $ttl,
+        ]);
+    }
+
     public function setUserGroup($uids, int $group_id)
     {
         return $this->dao->batchUpdate($uids, ['group_id' => $group_id], 'uid');
@@ -2043,8 +2088,13 @@ class UserServices extends BaseServices
         $setData['overdue_time'] = $overdue_time;
         $setData['is_ever_level'] = $is_ever_level;
         $setData['is_money_level'] = $is_money_level ?: 0;
+        $setData['is_promoter'] = 1;
         // if ($user_info['level'] == 0) $setData['level'] = 1;
-        return $this->dao->update(['uid' => $user_id], $setData);
+        $res = $this->dao->update(['uid' => $user_id], $setData);
+        if ($res) {
+            $this->bindPendingMemberReferrer($user_id);
+        }
+        return $res;
     }
 
     /**
@@ -2056,6 +2106,77 @@ class UserServices extends BaseServices
      * @throws \think\db\exception\DbException
      * @throws \think\db\exception\ModelNotFoundException
      */
+    private function bindPendingMemberReferrer(int $uid): bool
+    {
+        if ($uid <= 0) {
+            return false;
+        }
+
+        $now = time();
+        Db::name('miniapp_member_referrer_locks')
+            ->where('uid', $uid)
+            ->where('status', 0)
+            ->where('expires_at', '<', $now)
+            ->update(['status' => 2]);
+
+        $pending = Db::name('miniapp_member_referrer_locks')
+            ->where('uid', $uid)
+            ->where('status', 0)
+            ->where('expires_at', '>=', $now)
+            ->order('id', 'asc')
+            ->find();
+        if (!$pending || empty($pending['spread_uid'])) {
+            return false;
+        }
+
+        $userInfo = $this->getUserInfo($uid, 'uid,spread_uid');
+        if (!$userInfo || (int)$userInfo['spread_uid'] > 0) {
+            Db::name('miniapp_member_referrer_locks')->where('id', $pending['id'])->update(['status' => 3]);
+            return false;
+        }
+
+        $spreadUid = (int)$pending['spread_uid'];
+        if ($spreadUid <= 0 || $spreadUid === $uid) {
+            Db::name('miniapp_member_referrer_locks')->where('id', $pending['id'])->update(['status' => 3]);
+            return false;
+        }
+
+        $spreadInfo = $this->getUserInfo($spreadUid, 'uid,spread_uid,division_id,agent_id,staff_id');
+        if (!$spreadInfo || (int)$spreadInfo['spread_uid'] === $uid) {
+            Db::name('miniapp_member_referrer_locks')->where('id', $pending['id'])->update(['status' => 3]);
+            return false;
+        }
+
+        return (bool)$this->transaction(function () use ($uid, $spreadUid, $spreadInfo, $pending, $now) {
+            $res = $this->dao->update($uid, [
+                'spread_uid' => $spreadUid,
+                'spread_time' => $now,
+                'division_id' => $spreadInfo['division_id'] ?? 0,
+                'agent_id' => $spreadInfo['agent_id'] ?? 0,
+                'staff_id' => $spreadInfo['staff_id'] ?? 0,
+            ], 'uid');
+
+            if ($res) {
+                Db::name('miniapp_member_referrer_locks')->where('id', $pending['id'])->update([
+                    'status' => 1,
+                    'bound_at' => $now,
+                ]);
+            }
+
+            return $res;
+        });
+    }
+
+    private function isTrainingCampMemberUser($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        $overdueTime = (int)($user['overdue_time'] ?? 0);
+        $isPaidLevel = (int)($user['is_money_level'] ?? 0) > 0 && ($overdueTime === 0 || $overdueTime > time());
+        return (int)($user['is_ever_level'] ?? 0) > 0 || $isPaidLevel || (int)($user['level'] ?? 0) > 0;
+    }
+
     public function offMemberLevel($uid, $userInfo = [])
     {
         if (!$uid) return false;
