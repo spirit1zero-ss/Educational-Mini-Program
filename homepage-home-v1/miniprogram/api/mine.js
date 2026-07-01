@@ -1,17 +1,54 @@
 const { get, post } = require('../utils/request')
+const { isMiniappFrontendMockEnabled } = require('../config/api')
+const {
+  shouldUseMockFallback,
+  getMockMineOverview,
+  useMockRedeemCode,
+  createMockReferralPoster
+} = require('../utils/mock-miniapp')
 
-function getMineOverview() {
-  return get('/api/miniapp/mine/overview')
-}
-
-function createReferralPoster(data) {
-  return post('/api/miniapp/referral/poster', data || {
-    page: 'pages/home/home'
+function withMineMockFallback(requestTask, fallback) {
+  return requestTask.catch((error) => {
+    if (shouldUseMockFallback(error)) {
+      return fallback(error)
+    }
+    throw error
   })
 }
 
+function getMineOverview() {
+  if (isMiniappFrontendMockEnabled()) {
+    return getMockMineOverview()
+  }
+
+  return withMineMockFallback(
+    get('/api/miniapp/mine/overview'),
+    () => getMockMineOverview()
+  )
+}
+
+function createReferralPoster(data) {
+  if (isMiniappFrontendMockEnabled()) {
+    return createMockReferralPoster(data)
+  }
+
+  return withMineMockFallback(
+    post('/api/miniapp/referral/poster', data || {
+      page: 'pages/home/home'
+    }),
+    () => createMockReferralPoster()
+  )
+}
+
 function useRedeemCode(code) {
-  return post('/api/miniapp/redeem-code/use', { code })
+  if (isMiniappFrontendMockEnabled()) {
+    return useMockRedeemCode(code)
+  }
+
+  return withMineMockFallback(
+    post('/api/miniapp/redeem-code/use', { code }),
+    () => useMockRedeemCode(code)
+  )
 }
 
 function getMemberPlans() {

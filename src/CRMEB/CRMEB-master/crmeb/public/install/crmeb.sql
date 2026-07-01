@@ -27395,6 +27395,7 @@ CREATE TABLE IF NOT EXISTS `eb_member_card_batch` (
   `use_start_time` int(10) UNSIGNED NOT NULL DEFAULT '7' COMMENT '体验开始时间',
   `use_end_time` int(10) NOT NULL DEFAULT '0' COMMENT '体验结束时间',
   `use_day` int(10) NOT NULL DEFAULT '0' COMMENT '体验天数',
+  `expire_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '兑换截止时间',
   `use_num` int(11) UNSIGNED NOT NULL DEFAULT '0' COMMENT '使用',
   `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否生效,控制此批次所有卡0：不生效；1：生效',
   `sort` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '排序',

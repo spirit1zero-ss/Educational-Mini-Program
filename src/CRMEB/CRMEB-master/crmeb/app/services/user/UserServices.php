@@ -2098,6 +2098,34 @@ class UserServices extends BaseServices
     }
 
     /**
+     * Set a user as a permanent paid member.
+     *
+     * @param int $userId
+     * @param int $source 1: paid purchase, 2: redeem code
+     * @return mixed
+     */
+    public function setPermanentMember(int $userId, int $source = 1)
+    {
+        if (!$userId) throw new ApiException('用户不存在');
+        if (!in_array($source, [1, 2], true)) {
+            throw new ApiException('会员来源错误');
+        }
+        $userInfo = $this->getUserInfo($userId, 'uid');
+        if (!$userInfo) throw new ApiException('用户不存在');
+        $setData = [
+            'is_ever_level' => 1,
+            'is_money_level' => $source,
+            'overdue_time' => 0,
+            'is_promoter' => 1,
+        ];
+        $res = $this->dao->update(['uid' => $userId], $setData);
+        if ($res) {
+            $this->bindPendingMemberReferrer($userId);
+        }
+        return $res;
+    }
+
+    /**
      * 会员过期改变状态，变为普通会员
      * @param $uid
      * @param $userInfo

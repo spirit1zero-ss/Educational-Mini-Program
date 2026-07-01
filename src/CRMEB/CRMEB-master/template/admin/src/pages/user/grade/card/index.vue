@@ -39,9 +39,9 @@
             <span>{{ scope.row.title }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="体验天数" min-width="100">
+        <el-table-column label="兑换截止" min-width="150">
           <template slot-scope="scope">
-            <span>{{ scope.row.use_day }}</span>
+            <span>{{ scope.row.expire_time_text || '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column label="发卡总数量" min-width="100">
@@ -127,16 +127,13 @@
               class="perW10"
             />
           </el-form-item>
-          <el-form-item label="体验天数：">
-            <el-input-number
-              :controls="false"
-              placeholder="请输入体验天数"
-              element-id="sort"
-              :precision="0"
-              :max="100000"
-              :min="1"
-              v-model="formValidate.use_day"
-              class="perW10"
+          <el-form-item label="兑换截止：">
+            <el-date-picker
+              v-model="formValidate.expire_time"
+              type="datetime"
+              value-format="yyyy-MM-dd HH:mm:ss"
+              placeholder="请选择兑换截止时间"
+              class="w100"
             />
           </el-form-item>
           <el-form-item label="是否激活：">
@@ -180,7 +177,13 @@
 <script>
 import { mapState } from 'vuex';
 import cardList from './list.vue';
-import { userMemberBatch, memberBatchSave, memberBatchSetValue, exportMemberCard, userMemberScan } from '@/api/user';
+import {
+  userMemberBatch,
+  memberBatchSave,
+  memberBatchSetValue,
+  exportMemberCard,
+  userMemberScan,
+} from '@/api/user';
 import { exportmberCardList } from '@/api/export.js';
 
 export default {
@@ -212,6 +215,7 @@ export default {
         title: '',
         total_num: 1,
         use_day: 1,
+        expire_time: '',
         status: 1,
         remark: '',
       },
@@ -308,6 +312,7 @@ export default {
       this.modal = true;
       this.formValidate.id = 0;
       this.formValidate.title = '';
+      this.formValidate.expire_time = '';
     },
     // 提交批次
     onSubmit() {

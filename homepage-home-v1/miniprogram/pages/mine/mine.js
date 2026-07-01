@@ -36,6 +36,7 @@ Page({
     showRedeemModal: false,
     redeemCode: '',
     redeemSubmitting: false,
+    mockRedeemHint: '\u672c\u5730\u6a21\u62df\u7801\uff1aDEV-MEMBER-2026',
     stats: [
       { key: 'invited', value: '0人', label: '已邀请' },
       { key: 'reward', value: '0元', label: '预计奖励' },
@@ -110,7 +111,7 @@ Page({
 
   onLoad() {
     this.setNavigationMetrics()
-    this.loadMineOverview()
+    this.loadMineOverviewAfterAuth()
   },
 
   onShow() {
@@ -328,6 +329,8 @@ Page({
   },
 
   onRedeemSubmit() {
+    if (this.data.redeemSubmitting) return
+
     const code = this.data.redeemCode
 
     if (!code) {
@@ -342,7 +345,8 @@ Page({
 
     useRedeemCode(code)
       .then((response) => {
-        const member = response.data && response.data.member
+        const payload = response.data || {}
+        const member = payload.member
 
         this.setData({
           redeemSubmitting: false,
@@ -350,7 +354,9 @@ Page({
           redeemCode: ''
         })
 
-        if (member) {
+        if (payload.overview) {
+          this.applyOverviewData(payload.overview)
+        } else if (member) {
           this.applyMemberData(member)
         }
 
@@ -391,11 +397,22 @@ Page({
     })
   },
 
+  loadMineOverviewAfterAuth(options) {
+    const app = typeof getApp === 'function' ? getApp() : null
+    const authReady = app && app.globalData && app.globalData.authReady
+
+    if (authReady && typeof authReady.then === 'function') {
+      return authReady.catch(() => null).then(() => this.loadMineOverview(options))
+    }
+
+    return this.loadMineOverview(options)
+  },
+
   loadMineOverview(options) {
     const silent = options && options.silent
 
     if (this.data.overviewLoading) {
-      return
+      return Promise.resolve()
     }
 
     this.setData({ overviewLoading: true })
@@ -404,7 +421,7 @@ Page({
       wx.showNavigationBarLoading && wx.showNavigationBarLoading()
     }
 
-    getMineOverview()
+    return getMineOverview()
       .then((response) => {
         this.applyOverviewData(response.data || {})
       })
@@ -427,7 +444,8 @@ Page({
 
     this.applyMemberData(member, {
       trainingCamp,
-      referral
+      referral,
+      benefitText: data.benefitText
     })
   },
 
@@ -435,10 +453,14 @@ Page({
     const isMember = !!member.isMember
     const trainingCamp = (extra && extra.trainingCamp) || this.data.trainingCamp
     const referral = (extra && extra.referral) || {}
+    const benefitText = (extra && extra.benefitText) || ''
     const memberPlans = Array.isArray(trainingCamp.memberPlans) ? trainingCamp.memberPlans : this.data.memberPlans
     const selectedMemberPlan = trainingCamp.memberPlan && trainingCamp.memberPlan.mcId
       ? trainingCamp.memberPlan
       : (memberPlans.filter((item) => !item.isFree)[0] || memberPlans[0] || null)
+    const invitedCount = referral.invitedCount !== undefined ? referral.invitedCount : (referral.inviteCount || 0)
+    const incomeAmount = referral.estimatedRewardText || (referral.incomeAmount ? `${referral.incomeAmount}元` : '0元')
+    const withdrawableAmount = referral.withdrawableAmountText || (referral.availableAmount ? `${referral.availableAmount}元` : '0元')
 
     this.setData({
       isMember,
@@ -446,13 +468,13 @@ Page({
       memberPlans,
       selectedMemberPlan,
       memberStatusText: member.statusText || (isMember ? '训练营会员' : '当前未开通会员'),
-      benefitText: member.benefitText || trainingCamp.benefitText || (isMember ? '会员权益已生效' : '报名后开通会员权益'),
+      benefitText: member.benefitText || benefitText || trainingCamp.benefitText || (isMember ? '会员权益已生效' : '报名后开通会员权益'),
       trainingCamp,
       posterCtaText: referral.posterCtaText || (isMember ? '生成推广海报' : '开通后生成推广海报'),
       stats: [
-        { key: 'invited', value: `${referral.invitedCount || 0}人`, label: '已邀请' },
-        { key: 'reward', value: referral.estimatedRewardText || '0元', label: '预计奖励' },
-        { key: 'withdraw', value: referral.withdrawableAmountText || '0元', label: '可提现' }
+        { key: 'invited', value: `${invitedCount}人`, label: '已邀请' },
+        { key: 'reward', value: incomeAmount, label: '预计奖励' },
+        { key: 'withdraw', value: withdrawableAmount, label: '可提现' }
       ]
     })
   }

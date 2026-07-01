@@ -115,6 +115,7 @@
       <view class="redeem-tips">
         <view class="redeem-tip">兑换成功后将自动开通会员权益</view>
         <view class="redeem-tip">兑换码仅可按后台规则使用</view>
+        <view class="redeem-tip redeem-tip--mock" wx:if="{{mockRedeemHint}}">{{mockRedeemHint}}</view>
       </view>
 
       <view

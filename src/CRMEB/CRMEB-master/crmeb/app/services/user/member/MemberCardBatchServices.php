@@ -45,6 +45,8 @@ class MemberCardBatchServices extends BaseServices
         if ($list) {
             foreach ($list as &$v) {
                 $v['add_time'] = date('Y-m-d H:i:s', $v['add_time']);
+                $v['expire_time_text'] = !empty($v['expire_time']) ? date('Y-m-d H:i:s', $v['expire_time']) : '';
+                $v['is_expired'] = !empty($v['expire_time']) && $v['expire_time'] < time() ? 1 : 0;
                 //$v['qrcode'] = json_decode($v['qrcode'], true);
             }
         }
@@ -62,8 +64,12 @@ class MemberCardBatchServices extends BaseServices
         if (!$data['total_num']) throw new AdminException('请填写要生成卡的数量');
         if (!is_numeric($data['total_num']) || $data['total_num'] < 0) throw new AdminException('卡片数量只能为正整数');
         if ($data['total_num'] > 6000) throw new AdminException('单次制卡数量最高不得超过6000张');
-        if (!$data['use_day'] || !is_numeric($data['use_day'])) throw new AdminException('请填写免费使用天数');
-        if ($data['use_day'] < 0) throw new AdminException('免费使用天数只能为正整数');
+        $data['use_day'] = 0;
+        if (empty($data['expire_time'])) throw new AdminException('请填写兑换截止时间');
+        $expireTime = is_numeric($data['expire_time']) ? (int)$data['expire_time'] : strtotime($data['expire_time']);
+        if (!$expireTime) throw new AdminException('兑换截止时间格式错误');
+        if ($expireTime <= time()) throw new AdminException('兑换截止时间不能早于当前时间');
+        $data['expire_time'] = $expireTime;
         /**
          * 具体时间段试用，业务需要打开即可
          */
@@ -83,7 +89,6 @@ class MemberCardBatchServices extends BaseServices
 //        if ($use_end_time < $use_start_time) throw new AdminException("体验结束时间不能小于体验开始时间");
 //        $data['use_start_time'] = $use_start_time;
 //        $data['use_end_time'] = $use_end_time;
-        $data['use_day'] = abs(ceil($data['use_day']));
         $data['total_num'] = abs(ceil($data['total_num']));
         $data['add_time'] = time();
         $this->transaction(function () use ($id, $data) {
