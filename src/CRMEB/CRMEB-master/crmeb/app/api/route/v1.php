@@ -152,7 +152,7 @@ Route::group(function () {
         Route::post('order/cancel', 'v1.order.StoreOrderController/cancel')->name('orderCancel')->option(['real_name' => '订单取消']); //订单取消
         Route::post('cart/num', 'v1.store.StoreCartController/num')->name('cartNum')->option(['real_name' => '购物车修改商品数量']); //购物车 修改商品数量
         Route::get('cart/count', 'v1.store.StoreCartController/count')->name('cartCount')->option(['real_name' => '购物车数量']);
-    })->option(['mark' => 'cart', 'mark_name' => '购物车']);
+    })->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['mark' => 'cart', 'mark_name' => '购物车']);
 
     Route::group(function () {
         Route::post('order/confirm', 'v1.order.StoreOrderController/confirm')->name('orderConfirm')->option(['real_name' => '订单确认']);
@@ -171,7 +171,7 @@ Route::group(function () {
         Route::post('order/pay', 'v1.order.StoreOrderController/pay')->name('orderPay')->option(['real_name' => '订单支付']);
         Route::post('order/product', 'v1.order.StoreOrderController/product')->name('orderProduct')->option(['real_name' => '订单商品信息']);
         Route::get('order/cashier/:orderId/[:type]', 'v1.order.StoreOrderController/cashier')->name('orderCashier')->option(['real_name' => '订单收银台']);
-    })->option(['mark' => 'order', 'mark_name' => '订单']);
+    })->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['mark' => 'order', 'mark_name' => '订单']);
 
     Route::group(function () {
         Route::post('spread/people', 'v1.user.UserController/spread_people')->name('spreadPeople')->option(['real_name' => '推荐用户']);
@@ -205,7 +205,7 @@ Route::group(function () {
         Route::post('order/refund/cancel/:uni', 'v1.order.StoreOrderRefundController/cancelApply')->name('cancelApply')->option(['real_name' => '取消退款申请']);
         Route::post('order/refund/express', 'v1.order.StoreOrderRefundController/applyExpress')->name('refundExpress')->option(['real_name' => '填写退货物流']);
         Route::get('order/refund/del/:uni', 'v1.order.StoreOrderRefundController/delRefund')->name('delRefund')->option(['real_name' => '删除退款单']);
-    })->option(['mark' => 'refund', 'mark_name' => '售后']);
+    })->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['mark' => 'refund', 'mark_name' => '售后']);
 
     Route::group(function () {
         /** 佣金相关 */
@@ -243,7 +243,7 @@ Route::group(function () {
         Route::get('index', 'v1.PublicController/index')->name('index')->option(['real_name' => '首页']);//首页
         Route::get('site_config', 'v1.PublicController/getSiteConfig')->name('getSiteConfig')->option(['real_name' => '获取网站配置']);//获取网站配置
         //DIY接口
-        Route::get('home/products', 'v1.PublicController/home_products_list')->name('homeProductsList')->option(['real_name' => '获取首页推荐不同类型商品的轮播图和商品']);//获取首页推荐不同类型商品的轮播图和商品
+        Route::get('home/products', 'v1.PublicController/home_products_list')->name('homeProductsList')->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['real_name' => '获取首页推荐不同类型商品的轮播图和商品']);//获取首页推荐不同类型商品的轮播图和商品
 
 
     })->option(['mark' => 'index', 'mark_name' => '主页接口']);
@@ -264,7 +264,7 @@ Route::group(function () {
         Route::get('reply/config/:id', 'v1.store.StoreProductController/reply_config')->name('replyConfig')->option(['real_name' => '商品评价数量和好评度']);//商品评价数量和好评度
         Route::get('product/code/:id', 'v1.store.StoreProductController/code')->name('productCode')->option(['real_name' => '商品分享二维码']);//商品分享二维码 推广员
         Route::get('product/real_price/:id/:unique', 'v1.store.StoreProductController/realPrice')->name('realPrice')->option(['real_name' => '商品到手价']);//商品到手价
-    })->option(['mark' => 'product', 'mark_name' => '商品']);
+    })->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['mark' => 'product', 'mark_name' => '商品']);
 
     Route::group(function () {
 

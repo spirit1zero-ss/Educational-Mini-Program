@@ -200,6 +200,11 @@ Page({
       return
     }
 
+    if (key === 'poster') {
+      this.onPosterTap()
+      return
+    }
+
     if (key === 'invite') {
       wx.navigateTo({
         url: `${INVITE_RECORDS_PATH}?uid=${this.data.memberUid}`,

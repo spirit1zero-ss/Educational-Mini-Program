@@ -22,7 +22,7 @@
             <view class="price-chip">{{trainingCamp.priceText}}</view>
             <view class="benefit-text">{{benefitText}}</view>
           </view>
-          <view class="signup-button {{isMember ? 'signup-button--member' : ''}}" bindtap="onHeroActionTap">{{trainingCamp.ctaText}}</view>
+          <view class="signup-button" wx:if="{{!isMember}}" bindtap="onHeroActionTap">{{trainingCamp.ctaText}}</view>
         </view>
       </view>
 

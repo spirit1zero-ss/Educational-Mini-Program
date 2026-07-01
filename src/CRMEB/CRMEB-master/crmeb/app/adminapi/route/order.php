@@ -106,6 +106,7 @@ Route::group('order', function () {
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
+    \app\adminapi\middleware\ProductChainMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class
 ])->option(['mark' => 'order', 'mark_name' => '订单管理']);
@@ -133,6 +134,7 @@ Route::group('refund', function () {
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
+    \app\adminapi\middleware\ProductChainMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class
 ])->option(['mark' => 'refund', 'mark_name' => '退款订单']);

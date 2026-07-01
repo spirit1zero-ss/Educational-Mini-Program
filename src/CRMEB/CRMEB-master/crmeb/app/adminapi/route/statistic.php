@@ -44,14 +44,14 @@ Route::group('statistic', function () {
         Route::get('product/get_product_ranking', 'v1.statistic.ProductStatistic/getProductRanking')->option(['real_name' => '商品排行']);
         //商品数据导出
         Route::get('product/get_excel', 'v1.statistic.ProductStatistic/getExcel')->option(['real_name' => '商品数据导出']);
-    })->option(['parent' => 'statistic', 'cate_name' => '商品统计']);
+    })->middleware(\app\adminapi\middleware\ProductChainMiddleware::class)->option(['parent' => 'statistic', 'cate_name' => '商品统计']);
 
     /** 交易统计 */
     Route::group(function () {
         //今日营业额统计
         Route::get('trade/top_trade', 'v1.statistic.TradeStatistic/topTrade')->option(['real_name' => '今日营业额统计']);
         Route::get('trade/bottom_trade', 'v1.statistic.TradeStatistic/bottomTrade')->option(['real_name' => '交易统计底部数据']);
-    })->option(['parent' => 'statistic', 'cate_name' => '交易统计']);
+    })->middleware(\app\adminapi\middleware\ProductChainMiddleware::class)->option(['parent' => 'statistic', 'cate_name' => '交易统计']);
 
     /** 订单统计 */
     Route::group(function () {
@@ -63,7 +63,7 @@ Route::group('statistic', function () {
         Route::get('order/get_channel', 'v1.statistic.OrderStatistic/getChannel')->option(['real_name' => '订单来源']);
         //订单类型
         Route::get('order/get_type', 'v1.statistic.OrderStatistic/getType')->option(['real_name' => '订单类型']);
-    })->option(['parent' => 'statistic', 'cate_name' => '订单统计']);
+    })->middleware(\app\adminapi\middleware\ProductChainMiddleware::class)->option(['parent' => 'statistic', 'cate_name' => '订单统计']);
 
     /** 资金流水 */
     Route::group(function () {

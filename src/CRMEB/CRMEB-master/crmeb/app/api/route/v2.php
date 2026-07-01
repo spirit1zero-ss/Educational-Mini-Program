@@ -40,10 +40,10 @@ Route::group('v2', function () {
     //需要授权
     Route::group(function () {
 
-        Route::post('reset_cart', 'v2.store.StoreCartController/resetCart')->name('resetCart')->option(['real_name' => '清除购物车', 'mark' => 'cart', 'mark_name' => '购物车']);
-        Route::get('cart_list', 'v2.store.StoreCartController/getCartList')->option(['real_name' => '获取购物车列表', 'mark' => 'cart', 'mark_name' => '购物车']);
-        Route::get('get_attr/:id/:type', 'v2.store.StoreProductController/getProductAttr')->option(['real_name' => '获取商品规格', 'mark' => 'cart', 'mark_name' => '购物车']);
-        Route::post('set_cart_num', 'v2.store.StoreCartController/setCartNum')->option(['real_name' => '获取购物车数量', 'mark' => 'cart', 'mark_name' => '购物车']);
+        Route::post('reset_cart', 'v2.store.StoreCartController/resetCart')->name('resetCart')->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['real_name' => '清除购物车', 'mark' => 'cart', 'mark_name' => '购物车']);
+        Route::get('cart_list', 'v2.store.StoreCartController/getCartList')->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['real_name' => '获取购物车列表', 'mark' => 'cart', 'mark_name' => '购物车']);
+        Route::get('get_attr/:id/:type', 'v2.store.StoreProductController/getProductAttr')->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['real_name' => '获取商品规格', 'mark' => 'cart', 'mark_name' => '购物车']);
+        Route::post('set_cart_num', 'v2.store.StoreCartController/setCartNum')->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['real_name' => '获取购物车数量', 'mark' => 'cart', 'mark_name' => '购物车']);
 
 
         //清除搜索记录
