@@ -32,7 +32,7 @@ Route::group(function () {
             Route::put('category/:id', 'StoreCategory/update')->option(['real_name' => '修改分类']);
             Route::delete('category/:id', 'StoreCategory/delete')->option(['real_name' => '删除分类']);
             Route::put('category/set_show/:id/:is_show', 'StoreCategory/set_show')->option(['real_name' => '修改分类状态']);
-        })->option(['mark' => 'category', 'mark_name' => '商品分类']);
+        })->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['mark' => 'category', 'mark_name' => '商品分类']);
 
         Route::group(function () {
             //商品
@@ -42,7 +42,7 @@ Route::group(function () {
             Route::get('product/:id', 'StoreProduct/read')->option(['real_name' => '获取商品']);
             Route::put('product/set_show/:id/:is_show', 'StoreProduct/set_show')->option(['real_name' => '修改商品状态']);
             Route::put('product/stock/upload', 'StoreProduct/uploadStock')->option(['real_name' => '同步商品库存']);
-        })->option(['mark' => 'product', 'mark_name' => '商品']);
+        })->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['mark' => 'product', 'mark_name' => '商品']);
 
         Route::group(function () {
             //订单
@@ -57,7 +57,7 @@ Route::group(function () {
             Route::put('order/split_delivery/:order_id', 'StoreOrder/splitDelivery')->name('StoreOrderSplitDelivery')->option(['real_name' => '拆单发送货']);
             Route::put('order/invoice/:order_id', 'StoreOrder/setInvoice')->option(['real_name' => '修改订单发票']);
             Route::put('order/invoice_status/:order_id', 'StoreOrder/setInvoiceStatus')->option(['real_name' => '修改订单发票状态']);
-        })->option(['mark' => 'order', 'mark_name' => '订单']);
+        })->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['mark' => 'order', 'mark_name' => '订单']);
 
         Route::group(function () {
             //售后订单
@@ -67,7 +67,7 @@ Route::group(function () {
             Route::put('refund/agree/:order_id', 'RefundOrder/agree')->option(['real_name' => '商家同意退款']);
             Route::put('refund/refuse/:order_id', 'RefundOrder/refuse')->option(['real_name' => '商家拒绝退款']);
             Route::get('refund/:order_id', 'RefundOrder/read')->option(['real_name' => '售后订单详情']);
-        })->option(['mark' => 'refund', 'mark_name' => '售后']);
+        })->middleware(\app\api\middleware\ProductChainMiddleware::class)->option(['mark' => 'refund', 'mark_name' => '售后']);
 
         Route::group(function () {
             //优惠券

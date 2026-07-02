@@ -78,6 +78,7 @@ class MemberCardController
     public function draw_member_card(Request $request)
     {
         $data = $request->postMore([
+            ['code', ''],
             ['member_card_code', ''],
             ['member_card_pwd', ''],
             ['from', 'weixin'],
@@ -98,6 +99,11 @@ class MemberCardController
      * @throws DbException
      * @throws ModelNotFoundException
      */
+    public function redeem(Request $request)
+    {
+        return $this->draw_member_card($request);
+    }
+
     public function memberCouponList(Request $request)
     {
         /** @var StoreCouponUserServices $couponUserService */

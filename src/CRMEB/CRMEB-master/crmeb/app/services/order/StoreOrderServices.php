@@ -88,6 +88,28 @@ class StoreOrderServices extends BaseServices
     }
 
     /**
+     * 统计用户累计已购商品件数（已支付且未退款的有效订单）
+     * 用于会员等级升级判断：累计购买商品数量越多，等级越高
+     * @param int $uid 用户uid
+     * @return int 累计已购商品件数
+     */
+    public function getUserPayProductNum(int $uid): int
+    {
+        if (!$uid) {
+            return 0;
+        }
+        //仅统计：已支付(paid=1)、未退款(refund_status=0)、用户未删除(is_del=0)、后台未删除(is_system_del=0)的订单
+        $num = $this->dao->sum([
+            'uid' => $uid,
+            'paid' => 1,
+            'refund_status' => 0,
+            'is_del' => 0,
+            'is_system_del' => 0,
+        ], 'total_num');
+        return (int)$num;
+    }
+
+    /**
      * 获取列表
      * @param array $where
      * @param array $field

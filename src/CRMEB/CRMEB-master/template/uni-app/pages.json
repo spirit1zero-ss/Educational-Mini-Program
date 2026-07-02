@@ -14,36 +14,6 @@
           "componentPlaceholder": {}
         }
       }
-    },
-    {
-      "path": "pages/assessment/index",
-      "style": {
-        "navigationBarTitleText": "入营测评"
-      }
-    },
-    {
-      "path": "pages/leaf/knowledge",
-      "style": {
-        "navigationBarTitleText": "叶 · 基础认知",
-        "navigationBarBackgroundColor": "#f7fbff",
-        "navigationBarTextStyle": "black"
-      }
-    },
-    {
-      "path": "pages/stem/habits",
-      "style": {
-        "navigationBarTitleText": "茎 · 习惯养成",
-        "navigationBarBackgroundColor": "#f7fbff",
-        "navigationBarTextStyle": "black"
-      }
-    },
-    {
-      "path": "pages/root/inner",
-      "style": {
-        "navigationBarTitleText": "根 · 慧眼读心",
-        "navigationBarBackgroundColor": "#fff8ee",
-        "navigationBarTextStyle": "black"
-      }
     }
   ],
   "globalStyle": {

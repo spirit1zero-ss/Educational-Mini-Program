@@ -65,6 +65,7 @@ class MemberCardBatch extends AuthController
             ['use_day', 1],
             ['total_num', 1],
             ['status', 0],
+            ['expire_time', ''],
             ['remark', '']
         ]);
         $this->services->save((int)$id, $data);

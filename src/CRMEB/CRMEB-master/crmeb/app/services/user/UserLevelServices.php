@@ -14,6 +14,7 @@ namespace app\services\user;
 
 use app\services\BaseServices;
 use app\dao\user\UserLevelDao;
+use app\services\order\StoreOrderServices;
 use app\services\system\SystemUserLevelServices;
 use crmeb\exceptions\AdminException;
 use crmeb\exceptions\ApiException;
@@ -332,6 +333,9 @@ class UserLevelServices extends BaseServices
 
     /**
      * 检测用户会员升级
+     * 等级与“累计购买商品件数”联动：达到某等级所需的购买件数即自动升级；
+     * 退款导致件数回落且低于某等级门槛时自动撤销该等级（降级）。
+     * 升级门槛在后台“用户等级”中配置（exp_num 字段表示升级所需购买商品件数）。
      * @param $uid
      * @return bool
      */
@@ -347,10 +351,33 @@ class UserLevelServices extends BaseServices
         if (!$user) {
             throw new ApiException('没有此用户，无法检测升级用户等级');
         }
+
+        //升级指标：order_num=按累计已购商品件数（默认，与购买数量联动）；exp=按经验值（兼容旧逻辑）
+        $metric = sys_config('member_level_metric', 'order_num');
+        if ($metric === 'exp') {
+            $levelValue = (float)$user['exp'];
+        } else {
+            /** @var StoreOrderServices $storeOrderServices */
+            $storeOrderServices = app()->make(StoreOrderServices::class);
+            $levelValue = (float)$storeOrderServices->getUserPayProductNum($uid);
+        }
+
         /** @var SystemUserLevelServices $systemUserLevel */
         $systemUserLevel = app()->make(SystemUserLevelServices::class);
-        $userAllLevel = $systemUserLevel->getList([['is_del', '=', 0], ['is_show', '=', 1], ['exp_num', '<=', (float)$user['exp']]]);
+        //已达到门槛的等级（exp_num 表示升级所需购买商品件数 / 经验值）
+        $userAllLevel = $systemUserLevel->getList([['is_del', '=', 0], ['is_show', '=', 1], ['exp_num', '<=', $levelValue]]);
+        $reachedLevelIds = $userAllLevel ? array_column($userAllLevel, 'id') : [];
+
+        //退款导致件数回落时，撤销不再满足门槛的已授予等级（降级）
+        $grantedLevelIds = $this->dao->getColumn(['uid' => $uid, 'status' => 1, 'is_del' => 0], 'level_id');
+        $invalidLevelIds = array_diff($grantedLevelIds, $reachedLevelIds);
+        if ($invalidLevelIds) {
+            $this->dao->update([['uid', '=', $uid], ['level_id', 'IN', $invalidLevelIds]], ['status' => 0]);
+        }
+
         if (!$userAllLevel) {
+            //一个等级门槛都未达到：清空当前等级
+            $userServices->update($uid, ['level' => 0], 'uid');
             return true;
         }
         $data = [];

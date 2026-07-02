@@ -150,6 +150,38 @@ if (!function_exists('sys_config')) {
     }
 }
 
+if (!function_exists('product_chain_enabled')) {
+    /**
+     * Ordinary shop/product/cart/order chain switch.
+     * Defaults to disabled so the miniapp can run on member/training-camp flows only.
+     */
+    function product_chain_enabled(): bool
+    {
+        return (int)sys_config('product_chain_enabled', 0) === 1;
+    }
+}
+
+if (!function_exists('product_chain_admin_menu_patterns')) {
+    /**
+     * Admin menu fragments hidden while the ordinary product chain is disabled.
+     */
+    function product_chain_admin_menu_patterns(): array
+    {
+        if (product_chain_enabled()) {
+            return [];
+        }
+
+        return [
+            '/product', 'product/', 'product-', 'store_product', 'store-product',
+            '/order', 'order/', 'order-', 'store_order', 'store-order',
+            '/refund', 'refund/', 'refund-', 'store_refund', 'store-refund',
+            'cart/', 'cart-', 'store_cart', 'store-cart',
+            'product_list', 'order_list', 'order_delivery_list', 'verify_order',
+            'product/get_', 'order/get_', 'trade/top_trade', 'trade/bottom_trade',
+        ];
+    }
+}
+
 if (!function_exists('sys_data')) {
     /**
      * 获取系统单个数据
@@ -174,6 +206,10 @@ if (!function_exists('retired_admin_menu_patterns')) {
             $configFile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'retired.php';
             $config = is_file($configFile) ? include $configFile : [];
             $patterns = $config['admin_menu_patterns'] ?? [];
+        }
+
+        if (function_exists('product_chain_admin_menu_patterns')) {
+            $patterns = array_merge((array)$patterns, product_chain_admin_menu_patterns());
         }
 
         return array_values(array_filter(array_unique(array_map('strval', (array)$patterns))));

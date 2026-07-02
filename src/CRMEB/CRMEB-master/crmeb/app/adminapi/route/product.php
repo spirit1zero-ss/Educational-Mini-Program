@@ -155,6 +155,7 @@ Route::group('product', function () {
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
+    \app\adminapi\middleware\ProductChainMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class
 ])->option(['mark' => 'product', 'mark_name' => '商品管理']);

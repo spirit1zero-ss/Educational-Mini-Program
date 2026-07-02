@@ -1,0 +1,34 @@
+<view class="page">
+  <custom-nav title="读懂孩子心测评" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="intro">
+        <view class="intro-title">一张图让家长读懂孩子心</view>
+        <view class="intro-subtitle">读懂孩子，让内心更有自信力量</view>
+      </view>
+
+      <view class="question-panel">
+        <view class="question-copy">
+          <view class="question-title">看图选一个孩子</view>
+          <view class="question-desc">从左到右分别是 A、B、C，选择最像孩子当前状态的一位。</view>
+        </view>
+
+        <view class="image-wrap">
+          <image class="question-image" src="{{imageSrc}}" mode="aspectFill"></image>
+          <view
+            class="image-marker image-marker--{{item.type}}"
+            wx:for="{{options}}"
+            wx:key="type"
+            bindtap="onSelect"
+            data-type="{{item.type}}"
+          >{{item.type}}</view>
+        </view>
+
+        <view class="question-tip">点击 A/B/C 后先确认选择，确认后才会显示结果。</view>
+      </view>
+
+      <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+</view>

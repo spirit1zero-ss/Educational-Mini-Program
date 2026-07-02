@@ -97,6 +97,10 @@ class StoreOrderSuccessServices extends BaseServices
         $orderInfo['send_name'] = $orderInfo['real_name'];
         //订单支付成功后置事件
         event('OrderPaySuccessListener', [$orderInfo]);
+        //用户会员升级事件：支付成功后按累计已购商品件数自动升级（首单支付成功即成为会员）
+        if (!empty($orderInfo['uid'])) {
+            event('UserLevelListener', [(int)$orderInfo['uid']]);
+        }
         Log::info('order_pay_success_event_dispatched', [
             'id' => $orderInfo['id'] ?? 0,
             'order_id' => $orderInfo['order_id'] ?? '',

@@ -1,0 +1,50 @@
+<view class="page">
+  <custom-nav title="读懂孩子心测评结果" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="result-card">
+        <view class="result-topline">
+          <view class="result-tag">你的结果</view>
+          <view class="result-type">{{result.type}}</view>
+        </view>
+        <view class="result-title">{{result.title}}</view>
+        <view class="result-intro">{{result.intro}}</view>
+        <view class="combo-strip">{{result.combo}}</view>
+      </view>
+
+      <view class="subject-panel">
+        <view class="section-title">三层内心线索</view>
+        <view class="trait-list">
+          <view class="trait-item" wx:for="{{subjectTraits}}" wx:key="subject">
+            <view class="trait-subject">{{item.subject}}</view>
+            <view class="trait-copy">
+              <view class="trait-title">{{item.trait}}</view>
+              <view class="trait-desc">{{item.desc}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="reading-panel">
+        <view class="section-title">读心解读</view>
+        <view class="reading-body">{{result.body}}</view>
+      </view>
+
+      <view class="suggest-panel">
+        <view class="suggest-label">建议行动</view>
+        <view class="suggest-title">{{result.suggested}}</view>
+        <view class="suggest-desc">用 21 天，把亲子沟通变成孩子内心的自信力量。</view>
+      </view>
+
+      <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+
+  <sticky-action
+    text="了解 21 天读心赋能训练"
+    secondaryText="重新测评"
+    bind:primary="onCamp"
+    bind:secondary="onRestart"
+  ></sticky-action>
+</view>

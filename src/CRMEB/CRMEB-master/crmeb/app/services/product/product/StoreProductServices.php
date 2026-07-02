@@ -61,6 +61,13 @@ class StoreProductServices extends BaseServices
 
     protected $productType = ['普通商品', '卡密商品', '优惠券商品', '虚拟商品'];
 
+    /**
+     * 商品有效期类型默认名称
+     * 0 = 长期有效商品；1 = 有限期商品
+     * @var array
+     */
+    protected $validityTypeNames = ['长期有效商品', '有限期商品'];
+
 
     public function __construct(StoreProductDao $dao)
     {
@@ -300,6 +307,11 @@ class StoreProductServices extends BaseServices
         $productInfo['label_id'] = $userLabelServices->getLabelList(['ids' => $label_id], ['id', 'label_name']);
         $productInfo['give_integral'] = floatval($productInfo['give_integral']);
         $productInfo['presale_time'] = $productInfo['presale_start_time'] == 0 ? [] : [date('Y-m-d H:i:s', $productInfo['presale_start_time']), date('Y-m-d H:i:s', $productInfo['presale_end_time'])];
+        //有效期：保留原始可编辑字段，并补充日期选择器所需的格式化到期日
+        $productInfo['validity_type'] = (int)($productInfo['validity_type'] ?? 0);
+        $productInfo['expire_mode'] = (int)($productInfo['expire_mode'] ?? 0);
+        $productInfo['valid_days'] = (int)($productInfo['valid_days'] ?? 0);
+        $productInfo['valid_end_date'] = !empty($productInfo['valid_end_time']) ? date('Y-m-d H:i:s', (int)$productInfo['valid_end_time']) : '';
         $productInfo['description'] = $storeDescriptionServices->getDescription(['product_id' => $id, 'type' => 0]);
         $productInfo['custom_form'] = json_decode($productInfo['custom_form'], true);
         $productInfo['params_list'] = json_decode($productInfo['params_list'], true) ?? [];
@@ -585,6 +597,7 @@ class StoreProductServices extends BaseServices
         if ($data['is_limit'] == 1 && $data['min_qty'] > $data['limit_num']) throw new AdminException('起购数量不能大于限购数量');
 
         $this->applyCoreProductDefaults($data);
+        $this->normalizeValidity($data);
         $detail = $data['attrs'];
         $attr = $data['items'];
         $cate_id = $data['cate_id'];
@@ -908,6 +921,160 @@ class StoreProductServices extends BaseServices
     }
 
     /**
+     * 归一化并校验商品有效期相关字段（新增/编辑保存时调用）
+     *
+     * 商品仅保留两种类型：
+     *   validity_type = 0 长期有效商品
+     *   validity_type = 1 有限期商品（需配置失效方式）
+     *     expire_mode = 1 固定到期日（valid_end_time 时间戳，过期后全场不可购买）
+     *     expire_mode = 2 购买后 N 天（valid_days，按用户购买时间起算）
+     * validity_name 为可选的自定义类型名称，支持前端传入覆盖默认名称。
+     *
+     * @param array $data
+     * @return void
+     */
+    public function normalizeValidity(array &$data): void
+    {
+        $validityType = (int)($data['validity_type'] ?? 0);
+        if (!in_array($validityType, [0, 1], true)) {
+            throw new AdminException('商品有效期类型有误');
+        }
+
+        $validityName = trim((string)($data['validity_name'] ?? ''));
+        // 防止存储型XSS：去除标签与尖括号
+        $validityName = str_replace(['<', '>'], '', strip_tags($validityName));
+        if (mb_strlen($validityName) > 64) {
+            throw new AdminException('商品类型名称不能超过64个字符');
+        }
+
+        if ($validityType === 0) {
+            $data['validity_type'] = 0;
+            $data['validity_name'] = $validityName;
+            $data['expire_mode'] = 0;
+            $data['valid_end_time'] = 0;
+            $data['valid_days'] = 0;
+            unset($data['valid_end_date']);
+            return;
+        }
+
+        $expireMode = (int)($data['expire_mode'] ?? 0);
+        if (!in_array($expireMode, [1, 2], true)) {
+            throw new AdminException('请选择有限期商品的失效方式');
+        }
+
+        $validEndTime = 0;
+        $validDays = 0;
+        if ($expireMode === 1) {
+            // 固定到期日：兼容前端传入日期字符串或时间戳
+            if (isset($data['valid_end_date']) && $data['valid_end_date'] !== '') {
+                $validEndTime = is_numeric($data['valid_end_date'])
+                    ? (int)$data['valid_end_date']
+                    : (int)strtotime((string)$data['valid_end_date']);
+            } elseif (!empty($data['valid_end_time'])) {
+                $validEndTime = is_numeric($data['valid_end_time'])
+                    ? (int)$data['valid_end_time']
+                    : (int)strtotime((string)$data['valid_end_time']);
+            }
+            if ($validEndTime <= 0) {
+                throw new AdminException('请配置有效期截止日期');
+            }
+        } else {
+            $validDays = (int)($data['valid_days'] ?? 0);
+            if ($validDays <= 0) {
+                throw new AdminException('请配置购买后有效天数');
+            }
+        }
+
+        $data['validity_type'] = 1;
+        $data['validity_name'] = $validityName;
+        $data['expire_mode'] = $expireMode;
+        $data['valid_end_time'] = $validEndTime;
+        $data['valid_days'] = $validDays;
+        unset($data['valid_end_date']);
+    }
+
+    /**
+     * 获取商品有效期类型显示名称（优先自定义名称）
+     * @param array $info
+     * @return string
+     */
+    public function getValidityName($info): string
+    {
+        $name = trim((string)($info['validity_name'] ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+        $type = (int)($info['validity_type'] ?? 0);
+        return $this->validityTypeNames[$type] ?? $this->validityTypeNames[0];
+    }
+
+    /**
+     * 判断有限期商品是否已过期
+     * 仅“固定到期日”方式可在下单前判定为不可购买；
+     * “购买后N天”按用户维度计算，不影响商品本身的可售状态。
+     * @param array $info
+     * @return bool
+     */
+    public function isProductExpired($info): bool
+    {
+        if ((int)($info['validity_type'] ?? 0) !== 1) {
+            return false;
+        }
+        if ((int)($info['expire_mode'] ?? 0) === 1) {
+            $end = (int)($info['valid_end_time'] ?? 0);
+            return $end > 0 && time() > $end;
+        }
+        return false;
+    }
+
+    /**
+     * 为商品数据注入有效期展示信息（前端可见但过期不可选）
+     * @param array $info
+     * @return array
+     */
+    public function attachValidityInfo($info): array
+    {
+        $validityType = (int)($info['validity_type'] ?? 0);
+        $expireMode = (int)($info['expire_mode'] ?? 0);
+        $validEndTime = (int)($info['valid_end_time'] ?? 0);
+        $validDays = (int)($info['valid_days'] ?? 0);
+        $isExpired = $this->isProductExpired($info);
+
+        $info['validity_type'] = $validityType;
+        $info['validity_name'] = $this->getValidityName($info);
+        $info['expire_mode'] = $expireMode;
+        $info['valid_end_time'] = $validEndTime;
+        $info['valid_end_date'] = $validEndTime > 0 ? date('Y-m-d H:i:s', $validEndTime) : '';
+        $info['valid_days'] = $validDays;
+        $info['is_expired'] = $isExpired ? 1 : 0;
+
+        if ($validityType === 0) {
+            $info['validity_desc'] = '长期有效';
+        } elseif ($expireMode === 1) {
+            $info['validity_desc'] = $isExpired
+                ? ('已过期（' . $info['valid_end_date'] . '）')
+                : ('有效期至 ' . $info['valid_end_date']);
+        } elseif ($expireMode === 2) {
+            $info['validity_desc'] = '购买后 ' . $validDays . ' 天内有效';
+        } else {
+            $info['validity_desc'] = '';
+        }
+        return $info;
+    }
+
+    /**
+     * 下单前断言商品可购买，过期的固定有效期商品不可下单
+     * @param array $info
+     * @return void
+     */
+    public function assertProductPurchasable($info): void
+    {
+        if ($this->isProductExpired($info)) {
+            throw new ApiException('该商品已过期，无法购买');
+        }
+    }
+
+    /**
      * Normalize retired product-extra fields to the supported product shape.
      * This protects the save endpoint from crafted requests that bypass frontend guards.
      *
@@ -1184,7 +1351,7 @@ class StoreProductServices extends BaseServices
         }
         [$page, $limit] = $this->getPageValue();
         $where['vip_user'] = $uid ? app()->make(UserServices::class)->value(['uid' => $uid], 'is_money_level') : 0;
-        $list = $this->dao->getSearchList($where, $page, $limit, ['id,store_name,cate_id,image,IFNULL(sales, 0) + IFNULL(ficti, 0) as sales,price,stock,activity,ot_price,spec_type,recommend_image,unit_name,is_vip,vip_price,is_virtual,presale,custom_form,virtual_type,min_qty,label_list']);
+        $list = $this->dao->getSearchList($where, $page, $limit, ['id,store_name,cate_id,image,IFNULL(sales, 0) + IFNULL(ficti, 0) as sales,price,stock,activity,ot_price,spec_type,recommend_image,unit_name,is_vip,vip_price,is_virtual,presale,custom_form,virtual_type,min_qty,label_list,validity_type,validity_name,expire_mode,valid_end_time,valid_days']);
         /** @var MemberCardServices $memberCardService */
         $memberCardService = app()->make(MemberCardServices::class);
         $vipStatus = $memberCardService->isOpenMemberCard('vip_price');
@@ -1214,6 +1381,10 @@ class StoreProductServices extends BaseServices
                 $item['vip_price'] = 0;
             }
             $item['cart_button'] = $item['is_virtual'] || $item['virtual_type'] == 3 || $item['presale'] || json_decode($item['custom_form'], true) ? 0 : 1;
+            $item = $this->attachValidityInfo($item);
+            if ($item['is_expired']) {
+                $item['cart_button'] = 0;
+            }
             if (count($item['star'])) {
                 $item['star'] = bcdiv((string)array_sum(array_column($item['star'], 'product_score')), (string)count($item['star']), 1);
             } else {
@@ -1451,6 +1622,12 @@ class StoreProductServices extends BaseServices
 
         //有自定义表单或预售或虚拟不展示加入购物车按钮
         $storeInfo['cart_button'] = $storeInfo['custom_form'] || $storeInfo['presale'] || $storeInfo['is_virtual'] || $storeInfo['virtual_type'] == 3 ? 0 : 1;
+
+        //有效期信息：商品过期后仍可见但不可购买
+        $storeInfo = $this->attachValidityInfo($storeInfo);
+        if ($storeInfo['is_expired']) {
+            $storeInfo['cart_button'] = 0;
+        }
 
         /** @var StoreProductAttrServices $storeProductAttrServices */
         $storeProductAttrServices = app()->make(StoreProductAttrServices::class);

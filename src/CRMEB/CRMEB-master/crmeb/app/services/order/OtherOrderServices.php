@@ -298,7 +298,7 @@ class OtherOrderServices extends BaseServices
             case 1:
             case 2:
                 $type = "pay_member";
-                $res1 = $userServices->setMemberOverdueTime($orderInfo['vip_day'], $orderInfo['uid'], 1, $orderInfo['member_type']);
+                $res1 = $userServices->setPermanentMember($orderInfo['uid'], 1);
                 break;
             case 3:
                 $type = "offline_scan";
@@ -427,8 +427,8 @@ class OtherOrderServices extends BaseServices
                 if ($isCanGetFree['is_record'] == 1) throw new ApiException('您已经领取过免费会员');
                 $memberPrice = 0.00; //会员卡价格
                 $isFree = 1; //代表免费
-                $isPermanent = 0; //代表非永久
-                $overdueTime = bcadd(bcmul(abs($newMemberRight[$mcId]['vip_day']), "86400", 0), time(), 0);
+                $isPermanent = 1;
+                $overdueTime = 0;
                 break;
             case "month":
             case "year":
@@ -436,8 +436,8 @@ class OtherOrderServices extends BaseServices
             case "owner":
                 $memberPrice = $price;
                 $isFree = 0;
-                $isPermanent = 0;
-                $overdueTime = bcadd(bcmul(abs($newMemberRight[$mcId]['vip_day']), '86400', 0), time(), 0);
+                $isPermanent = 1;
+                $overdueTime = 0;
                 break;
             case "ever":
                 $memberPrice = $price;
