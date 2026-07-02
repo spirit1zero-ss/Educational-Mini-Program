@@ -745,8 +745,16 @@ class PublicController
         $data['yue_pay_status'] = sys_config('yue_pay_status') == 1 && sys_config('balance_func_status') != 0; //余额是否启用
         $data['offline_pay_status'] = sys_config('offline_pay_status') == 1; //线下是否启用
         $data['friend_pay_status'] = sys_config('friend_pay_status') == 1; //好友是否启用
-        $data['wechat_auth_switch'] = (int)in_array(1, sys_config('routine_auth_type')); //微信登录开关
-        $data['phone_auth_switch'] = (int)in_array(2, sys_config('routine_auth_type')); //手机号登录开关
+        $routineAuthType = sys_config('routine_auth_type');
+        if (!is_array($routineAuthType)) {
+            $decodedRoutineAuthType = is_string($routineAuthType) ? json_decode($routineAuthType, true) : null;
+            $routineAuthType = is_array($decodedRoutineAuthType) ? $decodedRoutineAuthType : explode(',', (string)$routineAuthType);
+        }
+        $routineAuthType = array_values(array_filter($routineAuthType, static function ($item) {
+            return $item !== '' && $item !== null;
+        }));
+        $data['wechat_auth_switch'] = (int)in_array(1, $routineAuthType); //微信登录开关
+        $data['phone_auth_switch'] = (int)in_array(2, $routineAuthType); //手机号登录开关
         $data['wechat_status'] = sys_config('wechat_appid') != '' && sys_config('wechat_appsecret') != ''; //公众号是否配置
         $data['site_func'] = sys_config('model_checkbox', ['seckill', 'bargain', 'combination']);
         return app('json')->success($data);

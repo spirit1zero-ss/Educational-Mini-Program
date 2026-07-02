@@ -1054,9 +1054,7 @@ export default {
         appId: arr[arr.length - 1], // 此为生活缴费appid
         path: arr[0], // 此为生活缴费首页路径
         envVersion: "release",
-        success: (res) => {
-          console.log("打开成功", res);
-        },
+        success: () => {},
         fail: (err) => {},
       });
       //#endif

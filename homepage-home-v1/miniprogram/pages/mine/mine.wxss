@@ -528,11 +528,6 @@
   content: "";
 }
 
-.redeem-tip--mock {
-  color: #9a6f22;
-  font-weight: 700;
-}
-
 .redeem-submit {
   display: flex;
   align-items: center;

@@ -15,6 +15,10 @@ function walk(dir, accept = () => true) {
   });
 }
 
+function readExistingFile(path) {
+  return existsSync(path) ? readFileSync(path, 'utf8') : null;
+}
+
 const routeFiles = [
   ...walk(join(backend, 'app', 'api', 'route'), (path) => path.endsWith('.php')),
   ...walk(join(backend, 'app', 'adminapi', 'route'), (path) => path.endsWith('.php')),
@@ -174,7 +178,8 @@ const adminDefaultFiles = [
   join(adminFrontend, 'pages', 'system', 'group', 'visualization.vue'),
 ];
 for (const path of adminDefaultFiles) {
-  const source = readFileSync(path, 'utf8');
+  const source = readExistingFile(path);
+  if (source === null) continue;
   for (const link of retiredMiniProgramLinks) {
     assert.equal(source.includes(link), false, `${relative(root, path)} still contains retired default link: ${link}`);
   }
@@ -192,7 +197,8 @@ for (const path of [
   join(adminFrontend, 'components', 'mobilePage', 'index.js'),
   join(adminFrontend, 'components', 'mobileConfig', 'index.js'),
 ]) {
-  const source = readFileSync(path, 'utf8');
+  const source = readExistingFile(path);
+  if (source === null) continue;
   assert.equal(source.includes('require.context'), false, `${relative(root, path)} still dynamically registers every decoration component`);
   for (const fragment of ['home_bargain', 'home_coupon', 'home_pink', 'home_seckill', 'points_mall', 'wechat_live']) {
     assert.equal(source.includes(fragment), false, `${relative(root, path)} still registers retired decoration component: ${fragment}`);
@@ -214,7 +220,8 @@ const coreMiniProgramFiles = [
   join(uniFrontend, 'subpackage', 'diyComponents', 'homeUserInfor.vue'),
 ];
 for (const path of coreMiniProgramFiles) {
-  const source = readFileSync(path, 'utf8');
+  const source = readExistingFile(path);
+  if (source === null) continue;
   for (const link of retiredMiniProgramLinks) {
     assert.equal(source.includes(link), false, `${relative(root, path)} still links to retired mini program page: ${link}`);
   }
@@ -228,7 +235,8 @@ const retiredCodeFragments = [
   [join(adminFrontend, 'api', 'marketing.js'), 'marketing/integral/order/'],
 ];
 for (const [path, fragment] of retiredCodeFragments) {
-  const source = readFileSync(path, 'utf8');
+  const source = readExistingFile(path);
+  if (source === null) continue;
   assert.equal(source.includes(fragment), false, `${relative(root, path)} still contains retired code fragment: ${fragment}`);
 }
 

@@ -42,9 +42,12 @@
                 <view class="referral-title">推荐人 UID：{{memberUid}}</view>
                 <view class="referral-desc">好友报名后，您可获得推广奖励</view>
               </view>
-              <view class="code-card">
+              <view class="code-card" wx:if="{{codeImage}}">
                 <image class="code-image" src="{{codeImage}}" mode="aspectFit"></image>
                 <view class="code-title">扫码报名</view>
+              </view>
+              <view class="code-card code-card--empty" wx:else>
+                <view class="code-empty-text">报名码生成失败</view>
               </view>
             </view>
           </view>

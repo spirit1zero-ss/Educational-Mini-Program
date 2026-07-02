@@ -867,7 +867,7 @@ export default {
             this.$message.error(err.msg);
           });
       } catch (error) {
-        console.log(error);
+        this.$message.error(error.message || '操作失败');
       }
     },
     onClick(params) {
@@ -1114,7 +1114,6 @@ export default {
       parent.children.splice(index, 1);
     },
     onMouseOver(root, node, data, e, d) {
-      console.log(root, node, data);
     },
     //
     onDel(node) {

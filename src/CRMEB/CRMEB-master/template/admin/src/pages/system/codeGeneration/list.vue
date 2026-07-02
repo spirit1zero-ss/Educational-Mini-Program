@@ -293,7 +293,7 @@ export default {
           //链接失败后EventSource会每隔三秒左右重新发起链接
         };
       } else {
-        console.log('暂不支持EventSource');
+        this.$message.warning('当前浏览器暂不支持 EventSource');
       }
     },
     // 跳转到组合数据列表页面
@@ -400,7 +400,7 @@ export default {
             that.catchFun(res);
           });
       } catch (error) {
-        console.log(error);
+        this.$message.error(error.message || '编辑器打开失败');
       }
     },
     /**
@@ -446,7 +446,7 @@ export default {
           });
         });
       } catch (error) {
-        console.log(error);
+        this.$message.error(error.message || '编辑器初始化失败');
       }
     },
 

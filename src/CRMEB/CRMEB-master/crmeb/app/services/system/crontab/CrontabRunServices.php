@@ -263,11 +263,6 @@ class CrontabRunServices
      */
     public function customTimer($customCode = '')
     {
-        try {
-            eval($customCode);
-            $this->crontabLog(' 自定义定时器执行成功');
-        } catch (\Throwable $e) {
-            $this->crontabLog('自定义定时器执行失败,失败原因:' . $e->getMessage());
-        }
+        $this->crontabLog('自定义 PHP 代码定时器已禁用，跳过执行');
     }
 }

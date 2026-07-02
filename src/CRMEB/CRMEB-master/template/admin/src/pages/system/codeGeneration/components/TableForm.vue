@@ -604,9 +604,7 @@ export default {
       });
     },
     getCrudAssociationTableName(name) {
-      crudAssociationTableName(name).then((res) => {
-        console.log(res);
-      });
+      return crudAssociationTableName(name);
     },
     del(row, index) {
       this.tableField.splice(index, 1);

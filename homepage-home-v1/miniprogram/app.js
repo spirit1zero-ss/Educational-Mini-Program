@@ -1,9 +1,4 @@
 const { REFERRER_KEY, login } = require('./utils/request')
-const { isMiniappFrontendMockEnabled } = require('./config/api')
-const {
-  ensureMockLogin,
-  shouldUseMockFallback
-} = require('./utils/mock-miniapp')
 
 App({
   globalData: {
@@ -43,18 +38,10 @@ App({
   },
 
   silentLogin() {
-    if (isMiniappFrontendMockEnabled()) {
-      this.globalData.authReady = ensureMockLogin()
-      return this.globalData.authReady
-    }
-
     this.globalData.authReady = login({
       force: true
     }).catch((error) => {
       console.warn('miniapp silent login failed', error)
-      if (shouldUseMockFallback(error)) {
-        return ensureMockLogin()
-      }
       return null
     })
 

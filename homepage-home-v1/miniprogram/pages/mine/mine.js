@@ -36,7 +36,6 @@ Page({
     showRedeemModal: false,
     redeemCode: '',
     redeemSubmitting: false,
-    mockRedeemHint: '\u672c\u5730\u6a21\u62df\u7801\uff1aDEV-MEMBER-2026',
     stats: [
       { key: 'invited', value: '0人', label: '已邀请' },
       { key: 'reward', value: '0元', label: '预计奖励' },
@@ -217,6 +216,14 @@ Page({
       .then((response) => {
         wx.hideLoading()
         const poster = response.data || {}
+        if (!poster.codeUrl) {
+          wx.showToast({
+            title: '报名码生成失败',
+            icon: 'none'
+          })
+          return
+        }
+
         const query = [
           `uid=${encodeURIComponent(this.data.memberUid)}`,
           poster.posterUrl ? `posterUrl=${encodeURIComponent(poster.posterUrl)}` : '',

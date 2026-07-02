@@ -314,7 +314,6 @@ export default {
       });
     },
     beforeUpload(file) {
-      console.log(file);
     },
     creatQrCode(url) {
       this.$refs.qrCodeUrl.innerHTML = '';
@@ -341,7 +340,6 @@ export default {
       this.dialogVisible = true;
     },
     handleDownload(file) {
-      console.log(file);
     },
     async fileChange(file, fileList) {
       if (isPicUpload(file)) {

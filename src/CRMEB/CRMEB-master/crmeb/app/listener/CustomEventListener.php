@@ -20,8 +20,8 @@ class CustomEventListener
         [$mark, $data] = $event;
         try {
             $list = app()->make(SystemEventServices::class)->selectList(['mark' => $mark, 'is_del' => 0, 'is_open' => 1])->toArray();
-            foreach ($list as $item) {
-                eval(json_decode($item['customCode']));
+            if ($list) {
+                Log::write('自定义事件 PHP 代码执行已禁用:' . $mark, 'listener');
             }
         } catch (\Throwable $e) {
             $listener_log_open = config("log.listener_log", false);

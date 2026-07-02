@@ -106,7 +106,6 @@ export default {
   methods: {
     //初始化函数
     imgLoad(msg) {
-      console.log('工具初始化函数=====' + msg);
     },
     //图片缩放
     changeScale(num) {

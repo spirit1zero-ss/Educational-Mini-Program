@@ -24,7 +24,7 @@ service.interceptors.request.use(
         }
       }
     } catch (error) {
-      console.log(error);
+      return Promise.reject(error);
     }
 
     const token = getCookies('token');

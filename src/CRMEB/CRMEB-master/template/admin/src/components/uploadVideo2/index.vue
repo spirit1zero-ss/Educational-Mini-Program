@@ -409,7 +409,6 @@ export default {
       if (evfile.target.files[0].type !== 'video/mp4') {
         return that.$message.error('只能上传mp4文件');
       }
-      debugger;
       let types = {
         key: evfile.target.files[0].name,
         contentType: evfile.target.files[0].type,

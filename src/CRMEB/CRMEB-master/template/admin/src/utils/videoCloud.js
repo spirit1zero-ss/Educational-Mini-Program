@@ -288,7 +288,8 @@ export default {
     return new Promise((resolve, reject) => {
       ossUpload(r.data.upload_url, formData)
         .then((res) => {
-          console.log(res);
+          videoIng(false, 0);
+          resolve(r.data);
         })
         .catch((err) => {
           videoIng(true, 100);

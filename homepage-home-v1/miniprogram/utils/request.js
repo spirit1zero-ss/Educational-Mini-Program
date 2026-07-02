@@ -1,6 +1,5 @@
 const {
   getApiBaseUrl,
-  isMiniappFrontendMockEnabled,
   TOKEN_KEY,
   USER_KEY,
   REFERRER_KEY
@@ -14,6 +13,9 @@ function buildUrl(url) {
   }
 
   const baseUrl = getApiBaseUrl().replace(/\/$/, '')
+  if (!baseUrl || !/^https:\/\//i.test(baseUrl)) {
+    throw new Error('请先配置 HTTPS API 地址')
+  }
   const path = url.charAt(0) === '/' ? url : `/${url}`
   return `${baseUrl}${path}`
 }
@@ -78,10 +80,6 @@ function saveAuth(data) {
 }
 
 function login(options) {
-  if (isMiniappFrontendMockEnabled()) {
-    return require('./mock-miniapp').ensureMockLogin()
-  }
-
   const force = options && options.force
   const token = wx.getStorageSync(TOKEN_KEY)
 

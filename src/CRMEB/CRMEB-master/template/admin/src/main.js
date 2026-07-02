@@ -140,7 +140,6 @@ Vue.use(Viewer, {
 //       options.duration = 2000;
 //       options.showClose = false;
 //     }
-//     console.log(options);
 //     // options.type = type || 'info';
 //     return Element.Message(options);
 //   };
@@ -191,12 +190,17 @@ Object.keys(filters).forEach((key) => {
 // 添加crmeb chat 统计
 const loadCustomAdminScript = () => {
   fetch(`${settings.apiBaseURL}/custom_admin_js`)
-    .then((response) => response.text())
+    .then((response) => {
+      if (!response.ok) return '';
+      return response.text();
+    })
     .then((content) => {
       if (!content || !content.trim()) return;
+      const trimmedContent = content.trim();
+      if (trimmedContent.startsWith('<') && !trimmedContent.startsWith('<script')) return;
 
       // 尝试解析是否为HTML（带<script>标签）
-      const isHTML = content.trim().startsWith('<script');
+      const isHTML = trimmedContent.startsWith('<script');
 
       let externalScripts = [];
       let inlineScripts = [];

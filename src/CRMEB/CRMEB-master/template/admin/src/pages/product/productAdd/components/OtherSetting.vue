@@ -201,7 +201,6 @@ export default {
       this.$emit('addProtection');
     },
     // customMessBtn(e) {
-    //   console.log(e);
     //   this.$emit('customMessBtn', e);
     // },
     delcustom(index) {

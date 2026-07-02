@@ -3,14 +3,9 @@ const CANVAS_WIDTH = 670
 const CANVAS_HEIGHT = 1110
 const CANVAS_PIXEL_RATIO = 2
 const POSTER_BG = '/assets/promo-poster/promo-poster-bg.png'
-const CODE_IMAGE = '/assets/promo-poster/miniapp-code-placeholder.png'
 const POSTER_BG_CANVAS_SOURCES = [
   '../../assets/promo-poster/promo-poster-bg.png',
   '/assets/promo-poster/promo-poster-bg.png'
-]
-const CODE_IMAGE_CANVAS_SOURCES = [
-  '../../assets/promo-poster/miniapp-code-placeholder.png',
-  '/assets/promo-poster/miniapp-code-placeholder.png'
 ]
 
 function getCanvasNode(page) {
@@ -138,8 +133,7 @@ Page({
     navStyle: '',
     scrollStyle: '',
     posterBg: POSTER_BG,
-    // TODO: Replace with a backend-generated mini program code for the inviter UID.
-    codeImage: CODE_IMAGE,
+    codeImage: '',
     shareImagePath: '',
     posterSaving: false,
     memberUid: 'A10293',
@@ -254,9 +248,13 @@ Page({
       return Promise.resolve(this.data.shareImagePath)
     }
 
+    if (!this.data.codeImage) {
+      return Promise.reject(new Error('missing mini program code image'))
+    }
+
     return getCanvasNode(this).then((canvas) => Promise.all([
       loadCanvasImage(canvas, POSTER_BG_CANVAS_SOURCES, 1024, 1792),
-      loadCanvasImage(canvas, [this.data.codeImage].concat(CODE_IMAGE_CANVAS_SOURCES), 220, 220)
+      loadCanvasImage(canvas, this.data.codeImage, 220, 220)
     ]).then(([posterBg, codeImage]) => new Promise((resolve, reject) => {
       canvas.width = CANVAS_WIDTH * CANVAS_PIXEL_RATIO
       canvas.height = CANVAS_HEIGHT * CANVAS_PIXEL_RATIO

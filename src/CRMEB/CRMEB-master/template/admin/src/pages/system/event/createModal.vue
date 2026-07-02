@@ -38,6 +38,12 @@
         <el-form-item label="执行代码：">
           <el-row :gutter="10">
             <el-col :span="24">
+              <el-alert
+                class="mb10"
+                type="warning"
+                :closable="false"
+                title="自定义 PHP 代码执行已禁用，请留空。"
+              ></el-alert>
               <div ref="container" id="container" class="monaco-editor"></div>
               <!-- <div class="copy-tag">
                 <el-tag
@@ -153,11 +159,11 @@ export default {
             autoIndent: true, // 自动布局
             tabSize: 4, // tab缩进长度
             autoClosingOvertype: 'always',
-            readOnly: false,
+            readOnly: true,
           });
         });
       } catch (error) {
-        console.log(error);
+        this.$message.error(error.message || '编辑器初始化失败');
       }
     },
     eventTask() {
@@ -190,9 +196,7 @@ export default {
     eventInfo(id) {
       if (!id) {
         this.modal = true;
-        this.initEditor(
-          "<?php\n\n//示例代码\n//参数使用实例  $data['uid']\n\n//直接写入数据库\n\\think\\facade\\Db::name('cache')->insert(['key' => 'custom_event_' . rand(), 'result' => $data['nickname'] . rand(), 'expire_time' => 0]);\n\n//调用系统方法\napp()->make(\\app\\services\\other\\CacheServices::class)->setDbCache('custom_event_' . rand(), $data['nickname']);",
-        );
+        this.initEditor('');
         return;
       }
       eventInfo(id).then((res) => {

@@ -206,7 +206,6 @@ export default {
         this.parentWidth = this.defaultWidth;
         // this.parentWidth = parentDiv.clientWidth;
         this.parentHeight = parentDiv.clientHeight;
-        // console.log("this.parentWidth", this.parentWidth, this.parentHeight)
       });
     },
     closeModal() {

@@ -13,6 +13,17 @@
  * 任一断言失败将以非 0 退出码结束。
  */
 
+if (!function_exists('mb_strlen')) {
+    function mb_strlen($string, $encoding = null): int
+    {
+        $string = (string)$string;
+        if (preg_match_all('/./us', $string, $matches) !== false) {
+            return count($matches[0]);
+        }
+        return strlen($string);
+    }
+}
+
 final class ValidityLogic
 {
     public $validityTypeNames = ['长期有效商品', '有限期商品'];

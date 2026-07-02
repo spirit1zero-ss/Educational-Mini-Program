@@ -51,7 +51,6 @@ export default {
   },
   mounted() {
     // this.$nextTick(() => {
-    //   console.log(this.configObj,'this.configObj');
     //   this.defaults = this.configObj;
     //   this.configData = this.configObj[this.configNme];
     // });

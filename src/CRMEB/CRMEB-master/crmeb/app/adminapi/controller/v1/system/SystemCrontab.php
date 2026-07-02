@@ -90,7 +90,7 @@ class SystemCrontab extends AuthController
             $adminInfo = $this->request->adminInfo();
             if (!$adminInfo) return app('json')->fail('非法操作');
             if ($adminInfo['level'] != 0) return app('json')->fail('仅超级管理员可以操作定时任务');
-            if (!$this->isSafePhpCode($data['customCode'])) return app('json')->fail('自定义内容存在危险代码，请检查代码');
+            if (trim($data['customCode']) !== '') return app('json')->fail('自定义 PHP 代码执行已禁用');
         }
         $this->services->saveTimer($data);
         return app('json')->success('保存成功');
