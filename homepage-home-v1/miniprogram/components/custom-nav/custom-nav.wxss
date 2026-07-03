@@ -24,6 +24,18 @@
   transform: rotate(45deg);
 }
 
+.nav-title {
+  max-width: 300rpx;
+  overflow: hidden;
+  color: #1d2b26;
+  font-size: 30rpx;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .nav-home-text {
   color: #1f6b57;
   font-size: 26rpx;

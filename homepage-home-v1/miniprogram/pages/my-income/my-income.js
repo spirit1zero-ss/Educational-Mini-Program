@@ -102,8 +102,9 @@ Page({
     wx.showNavigationBarLoading()
 
     getIncomeRecords({ type: 3 })
-      .then((data) => {
-        const source = Array.isArray(data && data.list) ? data.list : []
+      .then((response) => {
+        const data = response && response.data ? response.data : {}
+        const source = Array.isArray(data.list) ? data.list : []
         if (!source.length) {
           this.updateFilteredRecords()
           return
@@ -140,7 +141,10 @@ Page({
           records,
           statusTabs,
           summary: this.data.summary.map((item) => {
-            if (item.key === 'available') return Object.assign({}, item, { value: available.toFixed(2) })
+            const backendSummary = data.summary || {}
+            if (item.key === 'available') return Object.assign({}, item, { value: `${backendSummary.availableAmount || available.toFixed(2)}元` })
+            if (item.key === 'pending') return Object.assign({}, item, { value: `${backendSummary.pendingAmount || '0.00'}元` })
+            if (item.key === 'settled') return Object.assign({}, item, { value: `${backendSummary.settledAmount || backendSummary.totalAmount || '0.00'}元` })
             return item
           })
         }, () => {

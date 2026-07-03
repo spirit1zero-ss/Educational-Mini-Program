@@ -4,14 +4,30 @@
   <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <view class="content">
       <view class="intro">
-        <view class="intro-title">一张图让家长读懂孩子心</view>
-        <view class="intro-subtitle">读懂孩子，让内心更有自信力量</view>
+        <view class="intro-title">一张图读懂孩子心</view>
+        <view class="intro-subtitle">相由心生，看图识人</view>
+      </view>
+
+      <view class="mind-brief">
+        <view class="tag-row">
+          <view class="tag-pill">相由心生</view>
+          <view class="tag-pill">看图识人</view>
+        </view>
+        <view class="pain-card">
+          <view class="pain-title">孩子为什么会这样？</view>
+          <view class="pain-text">孩子为什么一说就哭？一遇到困难就退缩？一不顺心就发脾气？被人骂了只会生闷气？</view>
+          <view class="pain-strong">家长，你需要读懂孩子的心了！</view>
+        </view>
+        <view class="method-card">
+          <view class="method-title">只有读懂了孩子，才能因材施教，才能让孩子自信、有内驱力！</view>
+          <view class="method-text">《慧眼读心赋能法》运用传统文化的核心智慧，让家长一听就懂、一学就会、一用就灵！</view>
+        </view>
       </view>
 
       <view class="question-panel">
         <view class="question-copy">
-          <view class="question-title">看图选一个孩子</view>
-          <view class="question-desc">从左到右分别是 A、B、C，选择最像孩子当前状态的一位。</view>
+          <view class="question-title">先观察三位小朋友</view>
+          <view class="question-desc">首先，家长请观察图中三位小朋友，您认为您的孩子更像是哪种类型的孩子？</view>
         </view>
 
         <view class="image-wrap">
@@ -25,7 +41,7 @@
           >{{item.type}}</view>
         </view>
 
-        <view class="question-tip">点击 A/B/C 后先确认选择，确认后才会显示结果。</view>
+        <view class="question-tip">从左到右分别是 A、B、C。点击最像孩子的一位，确认后查看对应的内心需求解读。</view>
       </view>
 
       <view class="bottom-spacer"></view>

@@ -1,4 +1,5 @@
 const CAMP_PATH = '/pages/module-5-camp/module-5-camp'
+const { getTrainingCampOrders } = require('../../api/mine')
 
 Page({
   data: {
@@ -56,7 +57,7 @@ Page({
 
   onLoad() {
     this.setNavigationMetrics()
-    this.updateFilteredOrders()
+    this.loadTrainingCampOrders()
   },
 
   setNavigationMetrics() {
@@ -86,6 +87,60 @@ Page({
       : orders.filter((item) => item.status === activeStatus)
 
     this.setData({ filteredOrders })
+  },
+
+  loadTrainingCampOrders() {
+    wx.showNavigationBarLoading()
+
+    getTrainingCampOrders()
+      .then((response) => {
+        const data = response && response.data ? response.data : {}
+        const source = Array.isArray(data.list) ? data.list : []
+        const orders = source.map((item, index) => ({
+          id: String(item.id || index),
+          title: item.title || '21天自主学习训练营',
+          buyer: item.buyer || item.nickname || '',
+          phone: item.phone || '',
+          orderNo: item.orderNo || item.order_id || '',
+          time: item.time || item.add_time || '',
+          amount: item.amountText || (item.amount ? `${item.amount}元` : '0元'),
+          status: item.status || 'pending',
+          statusText: item.statusText || (item.status === 'paid' ? '已支付' : '待支付')
+        }))
+        const summary = data.summary || {}
+        const paidCount = Number(summary.paidCount || orders.filter((item) => item.status === 'paid').length)
+        const pendingCount = Number(summary.pendingCount || orders.filter((item) => item.status === 'pending').length)
+        const closedCount = Number(summary.closedCount || orders.filter((item) => item.status === 'closed').length)
+        const totalCount = Number(summary.totalCount || orders.length)
+        const paidAmount = summary.paidAmount || orders
+          .filter((item) => item.status === 'paid')
+          .reduce((sum, item) => sum + Number(String(item.amount).replace('元', '') || 0), 0)
+          .toFixed(2)
+
+        this.setData({
+          orders,
+          summary: [
+            { key: 'total', value: `${totalCount}单`, label: '累计订单' },
+            { key: 'paid', value: `${paidCount}单`, label: '已支付' },
+            { key: 'amount', value: `${paidAmount}元`, label: '实付金额' }
+          ],
+          statusTabs: [
+            { key: 'all', text: '全部', count: totalCount },
+            { key: 'paid', text: '已支付', count: paidCount },
+            { key: 'pending', text: '待支付', count: pendingCount },
+            { key: 'closed', text: '已关闭', count: closedCount }
+          ]
+        }, () => {
+          this.updateFilteredOrders()
+        })
+      })
+      .catch((error) => {
+        console.warn('[camp-orders] load backend orders failed:', error)
+        this.updateFilteredOrders()
+      })
+      .finally(() => {
+        wx.hideNavigationBarLoading()
+      })
   },
 
   onBackTap() {

@@ -1,0 +1,42 @@
+<view class="page">
+  <custom-nav title="会员权益" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="summary-card">
+        <view class="summary-head">
+          <view>
+            <view class="summary-kicker">训练营会员</view>
+            <view class="summary-title">开通后获得完整陪跑服务</view>
+            <view class="summary-desc">直播课、打卡督导、答疑支持和专属推广权益，围绕 21 天自主学习训练营统一生效。</view>
+          </view>
+          <image class="summary-icon" src="{{heroIcon}}" mode="aspectFit"></image>
+        </view>
+        <view class="summary-actions">
+          <view class="ghost-button" bindtap="onCampTap">查看训练营</view>
+          <view class="primary-button" bindtap="onPayTap">立即报名 399元</view>
+        </view>
+      </view>
+
+      <view class="section-card">
+        <view class="section-title">会员包含权益</view>
+        <view class="benefit-list">
+          <view class="benefit-row" wx:for="{{benefits}}" wx:key="title">
+            <view class="benefit-icon-wrap">
+              <image class="benefit-icon" src="{{item.icon}}" mode="aspectFit"></image>
+            </view>
+            <view class="benefit-copy">
+              <view class="benefit-title">{{item.title}}</view>
+              <view class="benefit-desc">{{item.desc}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="section-card note-card">
+        <view class="section-title">服务说明</view>
+        <view class="note-line" wx:for="{{serviceNotes}}" wx:key="*this">{{item}}</view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

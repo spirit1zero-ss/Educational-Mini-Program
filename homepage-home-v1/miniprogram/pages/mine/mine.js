@@ -3,6 +3,9 @@ const PROMO_POSTER_PATH = '/pages/promo-poster/promo-poster'
 const INVITE_RECORDS_PATH = '/pages/invite-records/invite-records'
 const MY_INCOME_PATH = '/pages/my-income/my-income'
 const CAMP_ORDERS_PATH = '/pages/camp-orders/camp-orders'
+const MEMBER_BENEFITS_PATH = '/pages/member-benefits/member-benefits'
+const REFERRAL_RULES_PATH = '/pages/referral-rules/referral-rules'
+const OFFLINE_PATH = '/pages/offline/offline'
 const {
   getMineOverview,
   createReferralPoster,
@@ -103,7 +106,7 @@ Page({
         text: '线下',
         icon: '../../assets/mine/tab-offline.svg',
         activeIcon: '../../assets/mine/tab-offline-active.svg',
-        path: ''
+        path: OFFLINE_PATH
       }
     ]
   },
@@ -129,12 +132,12 @@ Page({
 
       this.setData({
         navStyle: `height:${navHeight}px;padding-top:${menu.top}px;padding-right:${rightPadding}px;`,
-        scrollStyle: `height:calc(100vh - ${navHeight}px - 120rpx);`
+        scrollStyle: `height:calc(100vh - ${navHeight}px - 120rpx - env(safe-area-inset-bottom));`
       })
     } catch (error) {
       this.setData({
         navStyle: `height:${fallbackNavHeight}px;padding-top:44px;padding-right:110px;`,
-        scrollStyle: `height:calc(100vh - ${fallbackNavHeight}px - 120rpx);`
+        scrollStyle: `height:calc(100vh - ${fallbackNavHeight}px - 120rpx - env(safe-area-inset-bottom));`
       })
     }
   },
@@ -307,7 +310,20 @@ Page({
       return
     }
 
-    this.showComingSoon(labels[key])
+    if (key === 'benefit') {
+      wx.navigateTo({
+        url: MEMBER_BENEFITS_PATH,
+        fail: () => this.showComingSoon(labels[key])
+      })
+      return
+    }
+
+    if (key === 'rules') {
+      wx.navigateTo({
+        url: REFERRAL_RULES_PATH,
+        fail: () => this.showComingSoon(labels[key])
+      })
+    }
   },
 
   openRedeemModal() {

@@ -8,6 +8,20 @@ const POSTER_BG_CANVAS_SOURCES = [
   '/assets/promo-poster/promo-poster-bg.png'
 ]
 
+function resolveImageSource(src) {
+  if (!/^https?:\/\//i.test(src)) {
+    return Promise.resolve(src)
+  }
+
+  return new Promise((resolve, reject) => {
+    wx.getImageInfo({
+      src,
+      success: (result) => resolve(result.path || src),
+      fail: reject
+    })
+  })
+}
+
 function getCanvasNode(page) {
   return new Promise((resolve, reject) => {
     wx.createSelectorQuery()
@@ -30,11 +44,35 @@ function getCanvasNode(page) {
 }
 
 function loadCanvasImage(canvas, sources, fallbackWidth, fallbackHeight) {
-  const candidates = Array.isArray(sources) ? sources : [sources]
+  const candidates = (Array.isArray(sources) ? sources : [sources]).filter(Boolean)
 
   return new Promise((resolve, reject) => {
+    if (!candidates.length) {
+      reject(new Error('canvas image source is empty'))
+      return
+    }
+
     const image = canvas.createImage()
     let index = 0
+    const loadNext = (error) => {
+      if (error) {
+        console.warn('[promo-poster] canvas image retry:', candidates[index - 1], error)
+      }
+
+      if (index >= candidates.length) {
+        console.error('[promo-poster] canvas image load failed:', candidates[candidates.length - 1], error)
+        reject(error)
+        return
+      }
+
+      const source = candidates[index]
+      index += 1
+      resolveImageSource(source)
+        .then((resolvedSource) => {
+          image.src = resolvedSource
+        })
+        .catch(loadNext)
+    }
 
     image.onload = () => {
       resolve({
@@ -43,20 +81,8 @@ function loadCanvasImage(canvas, sources, fallbackWidth, fallbackHeight) {
         height: image.height || fallbackHeight
       })
     }
-    image.onerror = (error) => {
-      const failedSrc = candidates[index]
-      index += 1
-
-      if (index < candidates.length) {
-        console.warn('[promo-poster] canvas image retry:', failedSrc, error)
-        image.src = candidates[index]
-        return
-      }
-
-      console.error('[promo-poster] canvas image load failed:', failedSrc, error)
-      reject(error)
-    }
-    image.src = candidates[index]
+    image.onerror = loadNext
+    loadNext()
   })
 }
 
@@ -134,6 +160,7 @@ Page({
     scrollStyle: '',
     posterBg: POSTER_BG,
     codeImage: '',
+    sharePath: '',
     shareImagePath: '',
     posterSaving: false,
     memberUid: 'A10293',
@@ -165,7 +192,12 @@ Page({
     }
 
     if (options && options.codeUrl) {
-      this.setData({ codeImage: decodeURIComponent(options.codeUrl) })
+      const codeImage = decodeURIComponent(options.codeUrl)
+      this.setData({ codeImage })
+    }
+
+    if (options && options.sharePath) {
+      this.setData({ sharePath: decodeURIComponent(options.sharePath) })
     }
   },
 
@@ -429,7 +461,7 @@ Page({
   onShareAppMessage() {
     return {
       title: '21天自主学习训练营',
-      path: `/pages/home/home?ref=${encodeURIComponent(this.data.memberUid)}`,
+      path: this.data.sharePath || `/pages/home/home?ref=${encodeURIComponent(this.data.memberUid)}`,
       imageUrl: this.data.shareImagePath || this.data.posterBg
     }
   },

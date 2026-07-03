@@ -120,9 +120,14 @@ Page({
   },
 
   onJoinTap() {
-    wx.showToast({
-      title: "社群报名准备中",
-      icon: "none"
+    wx.navigateTo({
+      url: "/pages/camp-checkout/camp-checkout",
+      fail: () => {
+        wx.showToast({
+          title: "支付页面打开失败",
+          icon: "none"
+        });
+      }
     });
   }
 });

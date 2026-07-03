@@ -245,11 +245,27 @@ class MiniappServices extends BaseServices
             ->whereIn('type', $this->memberIncomeTypes())
             ->where('pm', 1)
             ->sum('number');
+        $pendingAmount = Db::name('user_brokerage')
+            ->where('uid', $uid)
+            ->whereIn('type', $this->memberIncomeTypes())
+            ->where('pm', 1)
+            ->where('frozen_time', '>', time())
+            ->sum('number');
+        $settledAmount = Db::name('user_brokerage')
+            ->where('uid', $uid)
+            ->whereIn('type', $this->memberIncomeTypes())
+            ->where('pm', 1)
+            ->where(function ($query) {
+                $query->where('frozen_time', '<=', time())->whereOr('frozen_time', 0);
+            })
+            ->sum('number');
 
         return [
             'summary' => [
                 'totalAmount' => $this->formatAmount($totalAmount),
-                'availableAmount' => $this->formatAmount($totalAmount),
+                'availableAmount' => $this->formatAmount($settledAmount),
+                'pendingAmount' => $this->formatAmount($pendingAmount),
+                'settledAmount' => $this->formatAmount($settledAmount),
             ],
             'list' => $list,
             'count' => $count,
@@ -259,9 +275,59 @@ class MiniappServices extends BaseServices
     public function getTrainingCampOrders(int $uid): array
     {
         $this->requireMemberUser($uid);
+        /** @var UserServices $userServices */
+        $userServices = app()->make(UserServices::class);
+        $firstLevelUids = $userServices->getUserSpredadUids($uid, 1);
+        $secondLevelUids = sys_config('brokerage_level', 2) == 2 ? $userServices->getUserSpredadUids($uid, 2) : [];
+        $targetUids = array_values(array_unique(array_filter(array_map('intval', array_merge($firstLevelUids, $secondLevelUids)))));
+        if (!$targetUids) {
+            return [
+                'summary' => [
+                    'totalCount' => 0,
+                    'paidCount' => 0,
+                    'pendingCount' => 0,
+                    'closedCount' => 0,
+                    'paidAmount' => '0.00',
+                ],
+                'list' => [],
+                'count' => 0,
+            ];
+        }
+
+        [$page, $limit, $defaultLimit] = $this->getPageValue();
+        $limit = $limit ?: $defaultLimit;
+        $baseQuery = Db::name('other_order')
+            ->alias('o')
+            ->leftJoin('user u', 'u.uid = o.uid')
+            ->whereIn('o.uid', $targetUids)
+            ->where('o.is_del', 0)
+            ->where('o.member_type', '<>', '');
+        $count = (clone $baseQuery)->count();
+        $paidCount = (clone $baseQuery)->where('o.paid', 1)->count();
+        $pendingCount = (clone $baseQuery)->where('o.paid', 0)->count();
+        $paidAmount = (clone $baseQuery)->where('o.paid', 1)->sum('o.pay_price');
+        $rows = $baseQuery
+            ->field('o.id,o.uid,o.order_id,o.member_type,o.pay_type,o.paid,o.pay_price,o.member_price,o.pay_time,o.add_time,o.is_free,o.is_permanent,o.vip_day,u.nickname,u.phone')
+            ->order('o.id', 'desc')
+            ->page($page ?: 1, $limit)
+            ->select()
+            ->toArray();
+        $firstMap = array_fill_keys($firstLevelUids, 1);
+        $list = array_map(function ($item) use ($firstMap) {
+            $grade = isset($firstMap[(int)($item['uid'] ?? 0)]) ? 1 : 2;
+            return $this->formatTrainingCampOrder($item, $grade);
+        }, $rows);
+
         return [
-            'list' => [],
-            'count' => 0,
+            'summary' => [
+                'totalCount' => $count,
+                'paidCount' => $paidCount,
+                'pendingCount' => $pendingCount,
+                'closedCount' => 0,
+                'paidAmount' => $this->formatAmount($paidAmount),
+            ],
+            'list' => $list,
+            'count' => $count,
         ];
     }
 
@@ -443,13 +509,13 @@ class MiniappServices extends BaseServices
 
     private function memberIncomeTypes(): array
     {
-        return ['one_member_brokerage', 'two_member_brokerage'];
+        return ['get_member_brokerage', 'get_self_member_brokerage', 'get_two_member_brokerage', 'one_member_brokerage', 'two_member_brokerage'];
     }
 
     private function formatIncomeRecord(array $item): array
     {
         $type = (string)($item['type'] ?? '');
-        $typeText = $type === 'two_member_brokerage'
+        $typeText = in_array($type, ['get_two_member_brokerage', 'two_member_brokerage'], true)
             ? $this->zh('\u4e8c\u7ea7\u4f1a\u5458\u4f63\u91d1')
             : $this->zh('\u4e00\u7ea7\u4f1a\u5458\u4f63\u91d1');
         $isFrozen = (int)($item['frozen_time'] ?? 0) > time();
@@ -472,6 +538,37 @@ class MiniappServices extends BaseServices
             'isFrozen' => $isFrozen,
             'frozenTime' => $this->formatOverdueTime((int)($item['frozen_time'] ?? 0)),
             'linkId' => (int)($item['link_id'] ?? 0),
+        ];
+    }
+
+    private function formatTrainingCampOrder(array $item, int $grade): array
+    {
+        $paid = (int)($item['paid'] ?? 0) === 1;
+        $status = $paid ? 'paid' : 'pending';
+        $time = $paid && !empty($item['pay_time']) ? (int)$item['pay_time'] : (int)($item['add_time'] ?? 0);
+        $buyer = trim((string)($item['nickname'] ?? ''));
+        if ($buyer === '') {
+            $buyer = $this->zh('\u7528\u6237') . (int)($item['uid'] ?? 0);
+        }
+
+        return [
+            'id' => (string)($item['id'] ?? ''),
+            'uid' => (int)($item['uid'] ?? 0),
+            'memberUid' => $this->encodeMemberUid((int)($item['uid'] ?? 0)),
+            'grade' => $grade,
+            'title' => $this->zh('\u0032\u0031\u5929\u81ea\u4e3b\u5b66\u4e60\u8bad\u7ec3\u8425'),
+            'buyer' => $buyer,
+            'phone' => $item['phone'] ?? '',
+            'orderNo' => $item['order_id'] ?? '',
+            'time' => $this->formatOverdueTime($time),
+            'add_time' => $this->formatOverdueTime((int)($item['add_time'] ?? 0)),
+            'payTime' => $this->formatOverdueTime((int)($item['pay_time'] ?? 0)),
+            'amount' => $this->formatAmount($item['pay_price'] ?? 0),
+            'amountText' => $this->formatAmount($item['pay_price'] ?? 0) . $this->zh('\u5143'),
+            'memberType' => $item['member_type'] ?? '',
+            'payType' => $item['pay_type'] ?? '',
+            'status' => $status,
+            'statusText' => $paid ? $this->zh('\u5df2\u652f\u4ed8') : $this->zh('\u5f85\u652f\u4ed8'),
         ];
     }
 

@@ -1,5 +1,7 @@
 const { RESULT_MAP, SUBJECT_TRAITS } = require("../../utils/module-a-results");
 
+const CAMP_PATH = "/pages/module-5-camp/module-5-camp";
+
 Page({
   data: {
     result: RESULT_MAP.A,
@@ -36,9 +38,14 @@ Page({
   },
 
   onCamp() {
-    wx.showToast({
-      title: "训练营页面待接入",
-      icon: "none"
+    wx.navigateTo({
+      url: CAMP_PATH,
+      fail: () => {
+        wx.showToast({
+          title: "训练营页面打开失败",
+          icon: "none"
+        });
+      }
     });
   }
 });
