@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "node --test ../../tests/contracts/retired-surface.contract.mjs"
+    "test": "node ../../tests/miniprogram-smoke.mjs"
   },
   "keywords": [],
   "author": "",

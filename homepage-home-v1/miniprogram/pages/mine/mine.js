@@ -3,6 +3,7 @@ const PROMO_POSTER_PATH = '/pages/promo-poster/promo-poster'
 const INVITE_RECORDS_PATH = '/pages/invite-records/invite-records'
 const MY_INCOME_PATH = '/pages/my-income/my-income'
 const CAMP_ORDERS_PATH = '/pages/camp-orders/camp-orders'
+const CAMP_CHECKOUT_PATH = '/pages/camp-checkout/camp-checkout'
 const MEMBER_BENEFITS_PATH = '/pages/member-benefits/member-benefits'
 const REFERRAL_RULES_PATH = '/pages/referral-rules/referral-rules'
 const OFFLINE_PATH = '/pages/offline/offline'
@@ -148,25 +149,13 @@ Page({
       return
     }
 
-    if (this.data.orderSubmitting) return
-
-    const plan = this.data.selectedMemberPlan || (this.data.trainingCamp && this.data.trainingCamp.memberPlan) || {}
-    if (!plan.mcId) {
-      wx.showToast({
-        title: '\u6682\u65e0\u53ef\u62a5\u540d\u5957\u9910',
-        icon: 'none'
-      })
-      return
-    }
-
-    wx.showModal({
-      title: '\u786e\u8ba4\u62a5\u540d',
-      content: `${plan.title || '\u8bad\u7ec3\u8425\u4f1a\u5458'} ${plan.priceText || this.data.trainingCamp.priceText}`,
-      confirmText: '\u521b\u5efa\u8ba2\u5355',
-      success: (result) => {
-        if (result.confirm) {
-          this.createMemberOrder(plan)
-        }
+    wx.navigateTo({
+      url: CAMP_CHECKOUT_PATH,
+      fail: () => {
+        wx.showToast({
+          title: '支付页面打开失败',
+          icon: 'none'
+        })
       }
     })
   },
