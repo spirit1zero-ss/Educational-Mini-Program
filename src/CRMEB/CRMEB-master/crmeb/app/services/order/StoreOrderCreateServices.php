@@ -323,9 +323,6 @@ class StoreOrderCreateServices extends BaseServices
 
         // 订单创建成功后置事件
         event('OrderCreateAfterListener', [$order, compact('cartInfo', 'priceData', 'addressId', 'cartIds', 'news'), $uid, $key, $combinationId, $seckillId, $bargainId]);
-        // 推送订单
-        event('OutPushListener', ['order_create_push', ['order_id' => (int)$order['id']]]);
-
         //自定义事件-订单创建事件
         event('CustomEventListener', ['order_create', [
             'uid' => $uid,
