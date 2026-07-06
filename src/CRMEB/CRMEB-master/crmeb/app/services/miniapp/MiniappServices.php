@@ -16,6 +16,12 @@ use think\facade\Db;
 
 class MiniappServices extends BaseServices
 {
+    private const REFERRAL_POSTER_PAGES = [
+        'pages/home/home',
+        'pages/module-5-camp/module-5-camp',
+        'pages/camp-checkout/camp-checkout',
+    ];
+
     public function login(string $code, string $referrerUid = ''): array
     {
         if ($code === '') {
@@ -150,7 +156,7 @@ class MiniappServices extends BaseServices
         $user = $this->requireMemberUser($uid);
         $member = $this->formatMember($user);
 
-        $page = $page ?: 'pages/home/home';
+        $page = $this->normalizeReferralPosterPage($page);
         $memberUid = $member['uid'];
         /** @var QrcodeServices $qrcodeServices */
         $qrcodeServices = app()->make(QrcodeServices::class);
@@ -594,6 +600,21 @@ class MiniappServices extends BaseServices
         }
 
         return $spreadUid;
+    }
+
+    private function normalizeReferralPosterPage(string $page): string
+    {
+        $page = trim($page);
+        if ($page === '') {
+            return 'pages/home/home';
+        }
+
+        $page = str_replace('\\', '/', $page);
+        $page = ltrim(explode('?', $page, 2)[0], '/');
+
+        return in_array($page, self::REFERRAL_POSTER_PAGES, true)
+            ? $page
+            : 'pages/home/home';
     }
 
     private function decodeMemberUid(string $memberUid): int
