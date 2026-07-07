@@ -26,6 +26,7 @@ Route::group('marketing', function () {
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
+    \app\adminapi\middleware\RetiredAdminApiMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class,
 ])->option(['mark' => 'marketing', 'mark_name' => '积分与签到']);
