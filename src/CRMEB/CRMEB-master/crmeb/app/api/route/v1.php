@@ -24,8 +24,6 @@ Route::group(function () {
     ->option(['mark' => 'miniapp_auth', 'mark_name' => 'Miniapp auth']);
 
 Route::group(function () {
-    Route::post('education/assessment_records', 'v1.education.AssessmentRecordController/save')->name('educationAssessmentRecordSave')->option(['real_name' => 'Education assessment record save']);
-
     Route::get('miniapp/mine/overview', 'v1.miniapp.MineController/overview')->name('miniappMineOverview')->option(['real_name' => 'Miniapp mine overview']);
     Route::post('miniapp/referral/poster', 'v1.miniapp.MineController/poster')->name('miniappReferralPoster')->option(['real_name' => 'Miniapp referral poster']);
     Route::post('miniapp/redeem-code/use', 'v1.miniapp.MineController/redeemCode')->name('miniappRedeemCodeUse')->option(['real_name' => 'Miniapp redeem code']);

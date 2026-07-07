@@ -29,6 +29,7 @@ return [
         '/app', 'routine/ci', 'routine/download', 'routine/scheme',
         'wechat_qrcode', 'system/upgrade', 'system/crud',
         'system/file', 'file/', 'upload', 'video_upload', 'online_upload',
+        '/education', 'education/', 'education-assessment', 'admin-education',
     ],
 
     // Reversible denylist for retired admin API surfaces. Removing a fragment
@@ -53,5 +54,6 @@ return [
         'system/clear/',
         'system/replace_site_url',
         'export/userPoint',
+        'education/assessment_records',
     ],
 ];

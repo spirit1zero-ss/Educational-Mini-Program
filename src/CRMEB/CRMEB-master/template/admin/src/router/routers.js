@@ -21,7 +21,6 @@ import system from './modules/system';
 import LayoutMain from '@/layout';
 import statistic from './modules/statistic';
 import frameOut from './modules/frameOut';
-import education from './modules/education';
 import settings from '@/setting';
 import crud from './modules/crud';
 
@@ -165,7 +164,6 @@ const frameIn = [
   setting,
   system,
   statistic,
-  education,
   ...routers,
   crud,
 ];
