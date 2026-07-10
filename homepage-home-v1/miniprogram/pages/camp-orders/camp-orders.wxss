@@ -52,6 +52,12 @@
   line-height: 36rpx;
 }
 
+.order-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
 .order-action {
   display: flex;
   align-items: center;
@@ -64,6 +70,16 @@
   font-size: 22rpx;
   font-weight: 800;
   line-height: 54rpx;
+}
+
+.order-action--ghost {
+  background: #fff8ea;
+  color: #9a6f22;
+}
+
+.order-action--disabled {
+  background: #eef1ee;
+  color: #8f9a92;
 }
 
 .status-badge--paid {

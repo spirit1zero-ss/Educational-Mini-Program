@@ -1,7 +1,7 @@
 const { get, post } = require('../utils/request')
 
-function getMineOverview() {
-  return get('/api/miniapp/mine/overview')
+function getMineOverview(options) {
+  return get('/api/miniapp/mine/overview', {}, options || {})
 }
 
 function createReferralPoster(data) {
@@ -22,6 +22,14 @@ function createTrainingCampMemberOrder(data) {
   return post('/api/miniapp/training-camp/member-order', data || {})
 }
 
+function payTrainingCampMemberOrder(data) {
+  return post('/api/miniapp/training-camp/member-order/pay', data || {})
+}
+
+function cancelTrainingCampMemberOrder(data) {
+  return post('/api/miniapp/training-camp/member-order/cancel', data || {})
+}
+
 function getInviteRecords(data) {
   return get('/api/miniapp/referral/invites', data)
 }
@@ -34,13 +42,25 @@ function getTrainingCampOrders(data) {
   return get('/api/miniapp/training-camp/orders', data)
 }
 
+function getTrainingCampRegistration() {
+  return get('/api/miniapp/training-camp/registration')
+}
+
+function saveTrainingCampRegistration(data) {
+  return post('/api/miniapp/training-camp/registration', data || {})
+}
+
 module.exports = {
   getMineOverview,
   createReferralPoster,
   useRedeemCode,
   getMemberPlans,
   createTrainingCampMemberOrder,
+  payTrainingCampMemberOrder,
+  cancelTrainingCampMemberOrder,
   getInviteRecords,
   getIncomeRecords,
-  getTrainingCampOrders
+  getTrainingCampOrders,
+  getTrainingCampRegistration,
+  saveTrainingCampRegistration
 }

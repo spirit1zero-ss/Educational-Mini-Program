@@ -525,6 +525,14 @@ export function memberRecord(data) {
   });
 }
 
+export function trainingCampRegistrationList(data) {
+  return request({
+    url: '/user/member/registration',
+    method: 'get',
+    params: data,
+  });
+}
+
 /**
  * 会员权益
  */

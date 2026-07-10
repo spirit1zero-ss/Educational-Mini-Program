@@ -169,6 +169,8 @@ Route::group('user', function () {
         Route::post('member_agreement/save/:id', 'v1.user.member.MemberCardBatch/save_member_agreement')->option(['real_name' => '会员协议']);
         //获取会员协议
         Route::get('member/agreement', 'v1.user.member.MemberCardBatch/getAgreement')->option(['real_name' => '获取会员协议']);
+        //训练营报名登记表
+        Route::get('member/registration', 'v1.user.member.TrainingCampRegistration/index')->option(['real_name' => '训练营报名登记表']);
     })->option(['parent' => 'user', 'cate_name' => '付费会员']);
 
 

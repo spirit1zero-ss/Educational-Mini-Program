@@ -67,7 +67,9 @@
           <image class="list-icon" src="{{item.icon}}" mode="aspectFit"></image>
           <view class="list-copy">
             <view class="list-title">{{item.title}}</view>
-            <view class="list-desc">{{item.desc}}</view>
+            <view class="list-desc">
+              {{item.key === 'registration' ? (registrationCompleted ? '已填写，可随时修改' : '待填写孩子信息') : item.desc}}
+            </view>
           </view>
           <view class="chevron">›</view>
         </view>

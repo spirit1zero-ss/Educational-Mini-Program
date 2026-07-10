@@ -7,6 +7,7 @@
     "pages/my-income/my-income",
     "pages/camp-orders/camp-orders",
     "pages/camp-checkout/camp-checkout",
+    "pages/member-registration/member-registration",
     "pages/member-benefits/member-benefits",
     "pages/referral-rules/referral-rules",
     "pages/offline/offline",

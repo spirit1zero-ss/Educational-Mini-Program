@@ -3,7 +3,7 @@
 ## Product Design Target
 
 - Product: 自主学习训练营 WeChat Mini Program homepage
-- Reference mockup: `design/homepage-approved-mockup.png`
+- Reference mockup: external archive (not stored in this repository)
 - Goal: Explain the three-part growth model first, then route users into exactly three actions: two assessments and one download.
 - Visual tone: clean mini program, friendly education, parent-trustworthy, light sage/white surfaces, restrained deep green accents.
 

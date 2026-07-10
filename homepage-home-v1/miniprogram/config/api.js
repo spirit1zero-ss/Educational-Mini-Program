@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = ''
+const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8011'
 
 function getApiBaseUrl() {
   return wx.getStorageSync('miniapp_api_base_url') || DEFAULT_API_BASE_URL

@@ -4,6 +4,7 @@ namespace app\api\controller\v1\miniapp;
 
 use app\Request;
 use app\services\miniapp\MiniappServices;
+use app\services\miniapp\TrainingCampRegistrationServices;
 
 class MineController
 {
@@ -52,6 +53,25 @@ class MineController
         return app('json')->success($this->services->createTrainingCampMemberOrder((int)$request->uid(), (int)$mcId, $payType));
     }
 
+    public function payMemberOrder(Request $request)
+    {
+        [$orderId, $payType] = $request->postMore([
+            ['orderId', ''],
+            ['payType', 'weixin'],
+        ], true);
+
+        return app('json')->success($this->services->payTrainingCampMemberOrder((int)$request->uid(), $orderId, $payType));
+    }
+
+    public function cancelMemberOrder(Request $request)
+    {
+        [$orderId] = $request->postMore([
+            ['orderId', ''],
+        ], true);
+
+        return app('json')->success('订单已取消', $this->services->cancelTrainingCampMemberOrder((int)$request->uid(), $orderId));
+    }
+
     public function invites(Request $request)
     {
         [$grade, $sort, $keyword] = $request->getMore([
@@ -75,5 +95,24 @@ class MineController
     public function orders(Request $request)
     {
         return app('json')->success($this->services->getTrainingCampOrders((int)$request->uid()));
+    }
+
+    public function registration(Request $request, TrainingCampRegistrationServices $services)
+    {
+        return app('json')->success($services->getForMiniapp((int)$request->uid()));
+    }
+
+    public function saveRegistration(Request $request, TrainingCampRegistrationServices $services)
+    {
+        $data = $request->postMore([
+            ['child_name', ''],
+            ['child_age', 0],
+            ['child_gender', ''],
+            ['problems', []],
+            ['other_problem', ''],
+            ['contact_phone', ''],
+        ]);
+
+        return app('json')->success('登记信息已保存', $services->saveForMiniapp((int)$request->uid(), $data));
     }
 }

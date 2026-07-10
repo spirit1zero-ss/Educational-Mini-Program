@@ -5,6 +5,7 @@ const MY_INCOME_PATH = '/pages/my-income/my-income'
 const CAMP_ORDERS_PATH = '/pages/camp-orders/camp-orders'
 const CAMP_CHECKOUT_PATH = '/pages/camp-checkout/camp-checkout'
 const MEMBER_BENEFITS_PATH = '/pages/member-benefits/member-benefits'
+const MEMBER_REGISTRATION_PATH = '/pages/member-registration/member-registration'
 const REFERRAL_RULES_PATH = '/pages/referral-rules/referral-rules'
 const OFFLINE_PATH = '/pages/offline/offline'
 const {
@@ -13,6 +14,7 @@ const {
   useRedeemCode,
   createTrainingCampMemberOrder
 } = require('../../api/mine')
+const { hasAuthToken, clearAuth } = require('../../utils/request')
 
 Page({
   data: {
@@ -21,6 +23,8 @@ Page({
     overviewLoading: false,
     orderSubmitting: false,
     isMember: false,
+    registrationCompleted: false,
+    registrationCanOpen: false,
     memberStatusText: '当前未开通会员',
     memberUid: '',
     memberPlans: [],
@@ -69,6 +73,18 @@ Page({
     ],
     listItems: [
       {
+        key: 'registration',
+        title: '会员登记表',
+        desc: '填写孩子信息与主要问题',
+        icon: '../../assets/mine/icon-member-status.svg'
+      },
+      {
+        key: 'order',
+        title: '训练营订单',
+        desc: '查看报名与支付状态',
+        icon: '../../assets/mine/icon-camp-order.svg'
+      },
+      {
         key: 'redeem',
         title: '兑换码',
         desc: '输入兑换码开通权益',
@@ -114,11 +130,11 @@ Page({
 
   onLoad() {
     this.setNavigationMetrics()
-    this.loadMineOverviewAfterAuth()
+    this.loadMineOverviewIfAuthed()
   },
 
   onShow() {
-    if (this.data.navStyle) {
+    if (this.data.navStyle && hasAuthToken()) {
       this.loadMineOverview({ silent: true })
     }
   },
@@ -246,7 +262,7 @@ Page({
       order: '训练营订单'
     }
 
-    if (!this.data.isMember && ['poster', 'invite', 'income', 'order'].indexOf(key) >= 0) {
+    if (!this.data.isMember && ['poster', 'invite', 'income'].indexOf(key) >= 0) {
       wx.showToast({
         title: '开通会员后可使用',
         icon: 'none'
@@ -292,6 +308,34 @@ Page({
       redeem: '兑换码',
       benefit: '会员权益',
       rules: '分销规则'
+    }
+
+    if (key === 'registration') {
+      if (!hasAuthToken() || !this.data.registrationCanOpen) {
+        wx.showToast({
+          title: '支付成功后填写登记表',
+          icon: 'none'
+        })
+        wx.navigateTo({
+          url: CAMP_CHECKOUT_PATH,
+          fail: () => this.showComingSoon('报名支付')
+        })
+        return
+      }
+
+      wx.navigateTo({
+        url: MEMBER_REGISTRATION_PATH,
+        fail: () => this.showComingSoon('会员登记表')
+      })
+      return
+    }
+
+    if (key === 'order') {
+      wx.navigateTo({
+        url: CAMP_ORDERS_PATH,
+        fail: () => this.showComingSoon('训练营订单')
+      })
+      return
     }
 
     if (key === 'redeem') {
@@ -409,12 +453,9 @@ Page({
     })
   },
 
-  loadMineOverviewAfterAuth(options) {
-    const app = typeof getApp === 'function' ? getApp() : null
-    const authReady = app && app.globalData && app.globalData.authReady
-
-    if (authReady && typeof authReady.then === 'function') {
-      return authReady.catch(() => null).then(() => this.loadMineOverview(options))
+  loadMineOverviewIfAuthed(options) {
+    if (!hasAuthToken()) {
+      return Promise.resolve()
     }
 
     return this.loadMineOverview(options)
@@ -433,11 +474,16 @@ Page({
       wx.showNavigationBarLoading && wx.showNavigationBarLoading()
     }
 
-    return getMineOverview()
+    return getMineOverview({ retryAuth: false })
       .then((response) => {
         this.applyOverviewData(response.data || {})
       })
       .catch((error) => {
+        if (error && (error.statusCode === 401 || error.statusCode === 403)) {
+          clearAuth()
+          return
+        }
+
         wx.showToast({
           title: (error && error.message) || '会员状态获取失败',
           icon: 'none'
@@ -453,11 +499,13 @@ Page({
     const member = data.member || {}
     const trainingCamp = Object.assign({}, this.data.trainingCamp, data.trainingCamp || {})
     const referral = data.referral || {}
+    const registration = data.registration || {}
 
     this.applyMemberData(member, {
       trainingCamp,
       referral,
-      benefitText: data.benefitText
+      benefitText: data.benefitText,
+      registration
     })
   },
 
@@ -466,6 +514,7 @@ Page({
     const trainingCamp = (extra && extra.trainingCamp) || this.data.trainingCamp
     const referral = (extra && extra.referral) || {}
     const benefitText = (extra && extra.benefitText) || ''
+    const registration = (extra && extra.registration) || {}
     const memberPlans = Array.isArray(trainingCamp.memberPlans) ? trainingCamp.memberPlans : this.data.memberPlans
     const selectedMemberPlan = trainingCamp.memberPlan && trainingCamp.memberPlan.mcId
       ? trainingCamp.memberPlan
@@ -476,6 +525,8 @@ Page({
 
     this.setData({
       isMember,
+      registrationCompleted: !!registration.completed,
+      registrationCanOpen: !!registration.canRegister,
       memberUid: member.uid || '',
       memberPlans,
       selectedMemberPlan,

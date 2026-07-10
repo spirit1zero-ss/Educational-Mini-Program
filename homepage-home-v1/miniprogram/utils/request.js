@@ -13,7 +13,8 @@ function buildUrl(url) {
   }
 
   const baseUrl = getApiBaseUrl().replace(/\/$/, '')
-  if (!baseUrl || !/^https:\/\//i.test(baseUrl)) {
+  const isLocalHttp = /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(baseUrl)
+  if (!baseUrl || (!/^https:\/\//i.test(baseUrl) && !isLocalHttp)) {
     throw new Error('请先配置 HTTPS API 地址')
   }
   const path = url.charAt(0) === '/' ? url : `/${url}`
@@ -77,6 +78,15 @@ function saveAuth(data) {
   }
 
   return data
+}
+
+function hasAuthToken() {
+  return !!wx.getStorageSync(TOKEN_KEY)
+}
+
+function clearAuth() {
+  wx.removeStorageSync(TOKEN_KEY)
+  wx.removeStorageSync(USER_KEY)
 }
 
 function login(options) {
@@ -171,6 +181,8 @@ module.exports = {
   get,
   post,
   login,
+  hasAuthToken,
+  clearAuth,
   TOKEN_KEY,
   USER_KEY,
   REFERRER_KEY
