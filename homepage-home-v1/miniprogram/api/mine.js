@@ -1,54 +1,17 @@
 const { get, post } = require('../utils/request')
-const { isMiniappFrontendMockEnabled } = require('../config/api')
-const {
-  shouldUseMockFallback,
-  getMockMineOverview,
-  useMockRedeemCode,
-  createMockReferralPoster
-} = require('../utils/mock-miniapp')
 
-function withMineMockFallback(requestTask, fallback) {
-  return requestTask.catch((error) => {
-    if (shouldUseMockFallback(error)) {
-      return fallback(error)
-    }
-    throw error
-  })
-}
-
-function getMineOverview() {
-  if (isMiniappFrontendMockEnabled()) {
-    return getMockMineOverview()
-  }
-
-  return withMineMockFallback(
-    get('/api/miniapp/mine/overview'),
-    () => getMockMineOverview()
-  )
+function getMineOverview(options) {
+  return get('/api/miniapp/mine/overview', {}, options || {})
 }
 
 function createReferralPoster(data) {
-  if (isMiniappFrontendMockEnabled()) {
-    return createMockReferralPoster(data)
-  }
-
-  return withMineMockFallback(
-    post('/api/miniapp/referral/poster', data || {
-      page: 'pages/home/home'
-    }),
-    () => createMockReferralPoster()
-  )
+  return post('/api/miniapp/referral/poster', data || {
+    page: 'pages/home/home'
+  })
 }
 
 function useRedeemCode(code) {
-  if (isMiniappFrontendMockEnabled()) {
-    return useMockRedeemCode(code)
-  }
-
-  return withMineMockFallback(
-    post('/api/miniapp/redeem-code/use', { code }),
-    () => useMockRedeemCode(code)
-  )
+  return post('/api/miniapp/redeem-code/use', { code })
 }
 
 function getMemberPlans() {
@@ -57,6 +20,14 @@ function getMemberPlans() {
 
 function createTrainingCampMemberOrder(data) {
   return post('/api/miniapp/training-camp/member-order', data || {})
+}
+
+function payTrainingCampMemberOrder(data) {
+  return post('/api/miniapp/training-camp/member-order/pay', data || {})
+}
+
+function cancelTrainingCampMemberOrder(data) {
+  return post('/api/miniapp/training-camp/member-order/cancel', data || {})
 }
 
 function getInviteRecords(data) {
@@ -71,13 +42,25 @@ function getTrainingCampOrders(data) {
   return get('/api/miniapp/training-camp/orders', data)
 }
 
+function getTrainingCampRegistration() {
+  return get('/api/miniapp/training-camp/registration')
+}
+
+function saveTrainingCampRegistration(data) {
+  return post('/api/miniapp/training-camp/registration', data || {})
+}
+
 module.exports = {
   getMineOverview,
   createReferralPoster,
   useRedeemCode,
   getMemberPlans,
   createTrainingCampMemberOrder,
+  payTrainingCampMemberOrder,
+  cancelTrainingCampMemberOrder,
   getInviteRecords,
   getIncomeRecords,
-  getTrainingCampOrders
+  getTrainingCampOrders,
+  getTrainingCampRegistration,
+  saveTrainingCampRegistration
 }

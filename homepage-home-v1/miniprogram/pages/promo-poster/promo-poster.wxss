@@ -254,10 +254,27 @@
 
 .code-card {
   width: 156rpx;
+  min-height: 176rpx;
   padding: 14rpx 10rpx 12rpx;
   border-radius: 22rpx;
   background: #ffffff;
   box-shadow: 0 10rpx 24rpx rgba(47, 107, 67, 0.1);
+}
+
+.code-card--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6f8f4;
+  color: #6e7a72;
+  text-align: center;
+}
+
+.code-empty-text {
+  padding: 0 12rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 32rpx;
 }
 
 .code-title {

@@ -164,7 +164,6 @@ export default {
       if (start % 2) {
         start = start - 1;
       }
-      // console.log(start, end, 'start end')
 
       this.top = top;
       this.bottom = bottom;

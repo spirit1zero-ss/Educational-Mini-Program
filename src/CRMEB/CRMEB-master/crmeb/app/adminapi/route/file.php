@@ -55,6 +55,7 @@ Route::group('file', function () {
 })->middleware([
     \app\http\middleware\AllowOriginMiddleware::class,
     \app\adminapi\middleware\AdminAuthTokenMiddleware::class,
+    \app\adminapi\middleware\RetiredAdminApiMiddleware::class,
     \app\adminapi\middleware\AdminCheckRoleMiddleware::class,
     \app\adminapi\middleware\AdminLogMiddleware::class
 ])->option(['mark' => 'file', 'mark_name' => '素材管理']);

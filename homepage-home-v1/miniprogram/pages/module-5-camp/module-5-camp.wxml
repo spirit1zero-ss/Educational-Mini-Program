@@ -103,8 +103,8 @@
   <view class="assessment-bar" bindtap="onJoinTap">
     <image class="assessment-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
     <view class="assessment-copy">
-      <view class="assessment-title">加入我们的社群</view>
-      <view class="assessment-subtitle">21天真正掌握自主学习的乐趣</view>
+      <view class="assessment-title">立即报名 399元</view>
+      <view class="assessment-subtitle">确认订单后使用微信支付</view>
     </view>
     <view class="assessment-arrow">›</view>
   </view>

@@ -387,7 +387,7 @@ class UpgradeController
     {
         $unique = uniqid();
         //读取配置文件，并替换真实配置数据1
-        $strConfig = file_get_contents(root_path() . 'public/install/.env');
+        $strConfig = file_get_contents(root_path() . 'database/install/env.template');
         $strConfig = str_replace('#DB_HOST#', Env::get('DATABASE.HOSTNAME', ''), $strConfig);
         $strConfig = str_replace('#DB_NAME#', Env::get('DATABASE.DATABASE', ''), $strConfig);
         $strConfig = str_replace('#DB_USER#', Env::get('DATABASE.USERNAME', ''), $strConfig);

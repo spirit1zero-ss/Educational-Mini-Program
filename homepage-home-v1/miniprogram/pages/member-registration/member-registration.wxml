@@ -1,0 +1,125 @@
+<view class="page">
+  <custom-nav title="会员登记表" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="form-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="hero">
+        <view class="hero-title">完善报名信息</view>
+        <view class="hero-desc">用于老师了解孩子情况，后续可在“我的”里修改。</view>
+        <view class="status-chip {{completed ? 'status-chip--done' : ''}}">
+          {{completed ? '已填写，可继续修改' : (canRegister ? '待填写' : '支付成功后填写')}}
+        </view>
+      </view>
+
+      <view class="access-card" wx:if="{{!loading && !canRegister}}">
+        <view class="access-title">完成支付后填写</view>
+        <view class="access-desc">登记表用于已报名训练营的会员。请先完成订单支付，再回来填写孩子信息。</view>
+        <button class="access-button" bindtap="onGoOrders">查看训练营订单</button>
+      </view>
+
+      <view class="form-card" wx:if="{{canRegister}}">
+        <view class="field">
+          <view class="field-label">孩子姓名</view>
+          <input
+            class="text-input"
+            value="{{form.child_name}}"
+            maxlength="20"
+            placeholder="请输入孩子姓名"
+            placeholder-class="placeholder"
+            bindinput="onInput"
+            data-field="child_name"
+          />
+        </view>
+
+        <view class="field">
+          <view class="field-label">年龄</view>
+          <input
+            class="text-input"
+            value="{{form.child_age}}"
+            type="number"
+            maxlength="2"
+            placeholder="请输入年龄"
+            placeholder-class="placeholder"
+            bindinput="onInput"
+            data-field="child_age"
+          />
+        </view>
+
+        <view class="field">
+          <view class="field-label">性别</view>
+          <radio-group class="choice-row" bindchange="onGenderChange">
+            <label
+              class="choice-pill {{form.child_gender === item.value ? 'choice-pill--active' : ''}}"
+              wx:for="{{genderOptions}}"
+              wx:key="value"
+            >
+              <radio class="native-control" value="{{item.value}}" checked="{{form.child_gender === item.value}}" />
+              <text>{{item.label}}</text>
+            </label>
+          </radio-group>
+        </view>
+
+        <view class="field">
+          <view class="field-label">希望解决的主要问题</view>
+          <checkbox-group class="problem-list" bindchange="onProblemsChange">
+            <label
+              class="problem-item {{problemMap[item.key] ? 'problem-item--active' : ''}}"
+              wx:for="{{problemOptions}}"
+              wx:key="key"
+            >
+              <checkbox class="native-control" value="{{item.key}}" checked="{{problemMap[item.key]}}" />
+              <text>{{item.label}}</text>
+            </label>
+          </checkbox-group>
+        </view>
+
+        <view class="field" wx:if="{{problemMap.other}}">
+          <view class="field-label">其它问题说明</view>
+          <textarea
+            class="textarea"
+            value="{{form.other_problem}}"
+            maxlength="100"
+            placeholder="请简单说明其它问题"
+            placeholder-class="placeholder"
+            bindinput="onInput"
+            data-field="other_problem"
+          ></textarea>
+          <view class="counter">{{form.other_problem.length || 0}}/100</view>
+        </view>
+
+        <view class="field">
+          <view class="field-label">联系电话</view>
+          <input
+            class="text-input"
+            value="{{form.contact_phone}}"
+            type="number"
+            maxlength="11"
+            placeholder="请输入联系电话"
+            placeholder-class="placeholder"
+            bindinput="onInput"
+            data-field="contact_phone"
+          />
+        </view>
+      </view>
+
+      <view class="tips-card" wx:if="{{canRegister}}">
+        <view class="tips-title">信息安全</view>
+        <view class="tips-line">本页只保存文字信息，不上传图片或附件。</view>
+        <view class="tips-line">信息仅用于训练营服务沟通和后续跟进。</view>
+      </view>
+
+      <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+
+  <view class="submit-bar" wx:if="{{canRegister}}">
+    <button
+      class="submit-button {{submitting ? 'submit-button--disabled' : ''}}"
+      loading="{{submitting}}"
+      disabled="{{submitting}}"
+      bindtap="onSubmit"
+    >
+      {{submitting ? '保存中...' : '保存登记信息'}}
+    </button>
+  </view>
+</view>

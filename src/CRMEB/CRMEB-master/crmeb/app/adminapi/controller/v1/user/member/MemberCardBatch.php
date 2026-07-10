@@ -109,8 +109,9 @@ class MemberCardBatch extends AuthController
      * @param AgreementServices $agreementServices
      * @return mixed
      */
-    public function save_member_agreement($id = 0, AgreementServices $agreementServices)
+    public function save_member_agreement($id = 0, ?AgreementServices $agreementServices = null)
     {
+        $agreementServices = $agreementServices ?: app()->make(AgreementServices::class);
         $data = $this->request->postMore([
             ['type', 1],
             ['title', ""],

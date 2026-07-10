@@ -214,7 +214,7 @@ class OtherOrderServices extends BaseServices
      * @return mixed
      * @throws \Exception
      */
-    public function createOrder(int $uid, string $channelType, $memberType = false, string $payPrice, string $payType, $type, $money, $mcId)
+    public function createOrder(int $uid, string $channelType, $memberType = false, string $payPrice = '0', string $payType = '', $type = 0, $money = 0, $mcId = 0)
     {
         /** @var StoreOrderCreateServices $storeOrderCreateService */
         $storeOrderCreateService = app()->make(StoreOrderCreateServices::class);

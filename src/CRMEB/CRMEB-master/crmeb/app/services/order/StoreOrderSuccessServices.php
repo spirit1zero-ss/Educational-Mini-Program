@@ -113,9 +113,6 @@ class StoreOrderSuccessServices extends BaseServices
         event('NoticeListener', [$orderInfo, 'order_pay_success']);
         //支付成功给客服发送消息
         event('NoticeListener', [$orderInfo, 'admin_pay_success_code']);
-        // 推送订单
-        event('OutPushListener', ['order_pay_push', ['order_id' => (int)$orderInfo['id']]]);
-
         //自定义消息-订单支付成功
         $orderInfo['time'] = date('Y-m-d H:i:s');
         $orderInfo['phone'] = $orderInfo['user_phone'];

@@ -1,6 +1,6 @@
 # Product Design QA
 
-source visual truth path: `homepage-home-v1/design-reference/accepted-mine-page-mockup.png`
+source visual truth path: external archive (not stored in this repository)
 
 implementation screenshot path: not captured in this environment
 

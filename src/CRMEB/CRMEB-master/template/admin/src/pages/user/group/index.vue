@@ -88,7 +88,7 @@ export default {
       this.$modalForm(groupAddApi(0))
         .then(() => this.getList())
         .catch(() => {
-          console.log('error');
+          return false;
         });
     },
     // 分组列表

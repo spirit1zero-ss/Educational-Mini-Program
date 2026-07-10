@@ -3,12 +3,18 @@ const PROMO_POSTER_PATH = '/pages/promo-poster/promo-poster'
 const INVITE_RECORDS_PATH = '/pages/invite-records/invite-records'
 const MY_INCOME_PATH = '/pages/my-income/my-income'
 const CAMP_ORDERS_PATH = '/pages/camp-orders/camp-orders'
+const CAMP_CHECKOUT_PATH = '/pages/camp-checkout/camp-checkout'
+const MEMBER_BENEFITS_PATH = '/pages/member-benefits/member-benefits'
+const MEMBER_REGISTRATION_PATH = '/pages/member-registration/member-registration'
+const REFERRAL_RULES_PATH = '/pages/referral-rules/referral-rules'
+const OFFLINE_PATH = '/pages/offline/offline'
 const {
   getMineOverview,
   createReferralPoster,
   useRedeemCode,
   createTrainingCampMemberOrder
 } = require('../../api/mine')
+const { hasAuthToken, clearAuth } = require('../../utils/request')
 
 Page({
   data: {
@@ -17,6 +23,8 @@ Page({
     overviewLoading: false,
     orderSubmitting: false,
     isMember: false,
+    registrationCompleted: false,
+    registrationCanOpen: false,
     memberStatusText: '当前未开通会员',
     memberUid: '',
     memberPlans: [],
@@ -36,7 +44,6 @@ Page({
     showRedeemModal: false,
     redeemCode: '',
     redeemSubmitting: false,
-    mockRedeemHint: '\u672c\u5730\u6a21\u62df\u7801\uff1aDEV-MEMBER-2026',
     stats: [
       { key: 'invited', value: '0人', label: '已邀请' },
       { key: 'reward', value: '0元', label: '预计奖励' },
@@ -65,6 +72,18 @@ Page({
       }
     ],
     listItems: [
+      {
+        key: 'registration',
+        title: '会员登记表',
+        desc: '填写孩子信息与主要问题',
+        icon: '../../assets/mine/icon-member-status.svg'
+      },
+      {
+        key: 'order',
+        title: '训练营订单',
+        desc: '查看报名与支付状态',
+        icon: '../../assets/mine/icon-camp-order.svg'
+      },
       {
         key: 'redeem',
         title: '兑换码',
@@ -104,18 +123,18 @@ Page({
         text: '线下',
         icon: '../../assets/mine/tab-offline.svg',
         activeIcon: '../../assets/mine/tab-offline-active.svg',
-        path: ''
+        path: OFFLINE_PATH
       }
     ]
   },
 
   onLoad() {
     this.setNavigationMetrics()
-    this.loadMineOverviewAfterAuth()
+    this.loadMineOverviewIfAuthed()
   },
 
   onShow() {
-    if (this.data.navStyle) {
+    if (this.data.navStyle && hasAuthToken()) {
       this.loadMineOverview({ silent: true })
     }
   },
@@ -130,12 +149,12 @@ Page({
 
       this.setData({
         navStyle: `height:${navHeight}px;padding-top:${menu.top}px;padding-right:${rightPadding}px;`,
-        scrollStyle: `height:calc(100vh - ${navHeight}px - 120rpx);`
+        scrollStyle: `height:calc(100vh - ${navHeight}px - 120rpx - env(safe-area-inset-bottom));`
       })
     } catch (error) {
       this.setData({
         navStyle: `height:${fallbackNavHeight}px;padding-top:44px;padding-right:110px;`,
-        scrollStyle: `height:calc(100vh - ${fallbackNavHeight}px - 120rpx);`
+        scrollStyle: `height:calc(100vh - ${fallbackNavHeight}px - 120rpx - env(safe-area-inset-bottom));`
       })
     }
   },
@@ -146,25 +165,13 @@ Page({
       return
     }
 
-    if (this.data.orderSubmitting) return
-
-    const plan = this.data.selectedMemberPlan || (this.data.trainingCamp && this.data.trainingCamp.memberPlan) || {}
-    if (!plan.mcId) {
-      wx.showToast({
-        title: '\u6682\u65e0\u53ef\u62a5\u540d\u5957\u9910',
-        icon: 'none'
-      })
-      return
-    }
-
-    wx.showModal({
-      title: '\u786e\u8ba4\u62a5\u540d',
-      content: `${plan.title || '\u8bad\u7ec3\u8425\u4f1a\u5458'} ${plan.priceText || this.data.trainingCamp.priceText}`,
-      confirmText: '\u521b\u5efa\u8ba2\u5355',
-      success: (result) => {
-        if (result.confirm) {
-          this.createMemberOrder(plan)
-        }
+    wx.navigateTo({
+      url: CAMP_CHECKOUT_PATH,
+      fail: () => {
+        wx.showToast({
+          title: '支付页面打开失败',
+          icon: 'none'
+        })
       }
     })
   },
@@ -217,6 +224,14 @@ Page({
       .then((response) => {
         wx.hideLoading()
         const poster = response.data || {}
+        if (!poster.codeUrl) {
+          wx.showToast({
+            title: '报名码生成失败',
+            icon: 'none'
+          })
+          return
+        }
+
         const query = [
           `uid=${encodeURIComponent(this.data.memberUid)}`,
           poster.posterUrl ? `posterUrl=${encodeURIComponent(poster.posterUrl)}` : '',
@@ -247,7 +262,7 @@ Page({
       order: '训练营订单'
     }
 
-    if (!this.data.isMember && ['poster', 'invite', 'income', 'order'].indexOf(key) >= 0) {
+    if (!this.data.isMember && ['poster', 'invite', 'income'].indexOf(key) >= 0) {
       wx.showToast({
         title: '开通会员后可使用',
         icon: 'none'
@@ -295,12 +310,53 @@ Page({
       rules: '分销规则'
     }
 
+    if (key === 'registration') {
+      if (!hasAuthToken() || !this.data.registrationCanOpen) {
+        wx.showToast({
+          title: '支付成功后填写登记表',
+          icon: 'none'
+        })
+        wx.navigateTo({
+          url: CAMP_CHECKOUT_PATH,
+          fail: () => this.showComingSoon('报名支付')
+        })
+        return
+      }
+
+      wx.navigateTo({
+        url: MEMBER_REGISTRATION_PATH,
+        fail: () => this.showComingSoon('会员登记表')
+      })
+      return
+    }
+
+    if (key === 'order') {
+      wx.navigateTo({
+        url: CAMP_ORDERS_PATH,
+        fail: () => this.showComingSoon('训练营订单')
+      })
+      return
+    }
+
     if (key === 'redeem') {
       this.openRedeemModal()
       return
     }
 
-    this.showComingSoon(labels[key])
+    if (key === 'benefit') {
+      wx.navigateTo({
+        url: MEMBER_BENEFITS_PATH,
+        fail: () => this.showComingSoon(labels[key])
+      })
+      return
+    }
+
+    if (key === 'rules') {
+      wx.navigateTo({
+        url: REFERRAL_RULES_PATH,
+        fail: () => this.showComingSoon(labels[key])
+      })
+    }
   },
 
   openRedeemModal() {
@@ -397,12 +453,9 @@ Page({
     })
   },
 
-  loadMineOverviewAfterAuth(options) {
-    const app = typeof getApp === 'function' ? getApp() : null
-    const authReady = app && app.globalData && app.globalData.authReady
-
-    if (authReady && typeof authReady.then === 'function') {
-      return authReady.catch(() => null).then(() => this.loadMineOverview(options))
+  loadMineOverviewIfAuthed(options) {
+    if (!hasAuthToken()) {
+      return Promise.resolve()
     }
 
     return this.loadMineOverview(options)
@@ -421,11 +474,16 @@ Page({
       wx.showNavigationBarLoading && wx.showNavigationBarLoading()
     }
 
-    return getMineOverview()
+    return getMineOverview({ retryAuth: false })
       .then((response) => {
         this.applyOverviewData(response.data || {})
       })
       .catch((error) => {
+        if (error && (error.statusCode === 401 || error.statusCode === 403)) {
+          clearAuth()
+          return
+        }
+
         wx.showToast({
           title: (error && error.message) || '会员状态获取失败',
           icon: 'none'
@@ -441,11 +499,13 @@ Page({
     const member = data.member || {}
     const trainingCamp = Object.assign({}, this.data.trainingCamp, data.trainingCamp || {})
     const referral = data.referral || {}
+    const registration = data.registration || {}
 
     this.applyMemberData(member, {
       trainingCamp,
       referral,
-      benefitText: data.benefitText
+      benefitText: data.benefitText,
+      registration
     })
   },
 
@@ -454,6 +514,7 @@ Page({
     const trainingCamp = (extra && extra.trainingCamp) || this.data.trainingCamp
     const referral = (extra && extra.referral) || {}
     const benefitText = (extra && extra.benefitText) || ''
+    const registration = (extra && extra.registration) || {}
     const memberPlans = Array.isArray(trainingCamp.memberPlans) ? trainingCamp.memberPlans : this.data.memberPlans
     const selectedMemberPlan = trainingCamp.memberPlan && trainingCamp.memberPlan.mcId
       ? trainingCamp.memberPlan
@@ -464,6 +525,8 @@ Page({
 
     this.setData({
       isMember,
+      registrationCompleted: !!registration.completed,
+      registrationCanOpen: !!registration.canRegister,
       memberUid: member.uid || '',
       memberPlans,
       selectedMemberPlan,

@@ -4,7 +4,9 @@ namespace app\services\miniapp;
 
 use app\services\BaseServices;
 use app\services\order\OtherOrderServices;
+use app\services\order\OtherOrderStatusServices;
 use app\services\other\QrcodeServices;
+use app\services\pay\OrderPayServices;
 use app\services\pay\PayServices;
 use app\services\user\member\MemberCardServices;
 use app\services\user\UserServices;
@@ -16,6 +18,14 @@ use think\facade\Db;
 
 class MiniappServices extends BaseServices
 {
+    private const PENDING_MEMBER_ORDER_TTL = 1800;
+
+    private const REFERRAL_POSTER_PAGES = [
+        'pages/home/home',
+        'pages/module-5-camp/module-5-camp',
+        'pages/camp-checkout/camp-checkout',
+    ];
+
     public function login(string $code, string $referrerUid = ''): array
     {
         if ($code === '') {
@@ -63,6 +73,7 @@ class MiniappServices extends BaseServices
 
         return [
             'member' => $member,
+            'registration' => app()->make(TrainingCampRegistrationServices::class)->getSummaryForMiniapp($uid),
             'trainingCamp' => [
                 'productId' => $defaultPlan['mcId'] ? 'member-card-' . $defaultPlan['mcId'] : 'training-camp-21-days',
                 'memberPlan' => $defaultPlan,
@@ -117,6 +128,13 @@ class MiniappServices extends BaseServices
         /** @var OtherOrderServices $otherOrderServices */
         $otherOrderServices = app()->make(OtherOrderServices::class);
         $payType = $payType ?: PayServices::WEIXIN_PAY;
+        $this->expirePendingTrainingCampOrders($uid);
+
+        $pendingOrder = $this->getPendingTrainingCampOrder($uid);
+        if ($pendingOrder) {
+            return $this->formatTrainingCampOrderAction($pendingOrder, 'pending_reused');
+        }
+
         $order = $otherOrderServices->createOrder(
             $uid,
             $user['user_type'] ?? 'routine',
@@ -132,17 +150,53 @@ class MiniappServices extends BaseServices
             throw new ApiException('Membership order creation failed');
         }
 
+        return $this->formatTrainingCampOrderAction($order, 'created');
+    }
+
+    public function payTrainingCampMemberOrder(int $uid, string $orderId, string $payType = PayServices::WEIXIN_PAY): array
+    {
+        $this->requireUser($uid);
+        $this->expirePendingTrainingCampOrders($uid);
+        $order = $this->getTrainingCampOrderByOrderId($uid, $orderId);
+        if (!$order) {
+            throw new ApiException('Order does not exist');
+        }
+        if ((int)($order['is_del'] ?? 0) === 1) {
+            throw new ApiException('Order has been closed');
+        }
+        if ((int)($order['paid'] ?? 0) === 1) {
+            throw new ApiException('Order has been paid');
+        }
+
+        /** @var OrderPayServices $orderPayServices */
+        $orderPayServices = app()->make(OrderPayServices::class);
+        $payment = $orderPayServices->beforePay($order, $payType ?: PayServices::WEIXIN_PAY);
+
         return [
-            'orderId' => $order['order_id'] ?? '',
-            'id' => (int)($order['id'] ?? 0),
-            'memberType' => $order['member_type'] ?? $plan['type'],
-            'mcId' => (int)$plan['mcId'],
-            'payPrice' => $this->formatAmount($order['pay_price'] ?? $plan['price']),
-            'payType' => $payType,
-            'status' => 'created',
-            'needPay' => true,
-            'message' => $this->zh('\u4f1a\u5458\u8ba2\u5355\u5df2\u521b\u5efa\uff0c\u652f\u4ed8\u5c06\u5728\u4e0b\u4e00\u6b65\u63a5\u5165'),
+            'order' => $this->formatTrainingCampOrderAction($order, 'paying'),
+            'payment' => $payment,
         ];
+    }
+
+    public function cancelTrainingCampMemberOrder(int $uid, string $orderId): array
+    {
+        $this->requireUser($uid);
+        $order = $this->getTrainingCampOrderByOrderId($uid, $orderId);
+        if (!$order) {
+            throw new ApiException('Order does not exist');
+        }
+        if ((int)($order['paid'] ?? 0) === 1) {
+            throw new ApiException('Paid order cannot be cancelled');
+        }
+        if ((int)($order['is_del'] ?? 0) === 1) {
+            return $this->formatTrainingCampOrderAction($order, 'closed');
+        }
+
+        Db::name('other_order')->where('id', (int)$order['id'])->update(['is_del' => 1]);
+        $this->saveTrainingCampOrderStatus($order, 'cancel_member_order', $this->zh('\u7528\u6237\u53d6\u6d88\u8ba2\u5355'));
+        $order['is_del'] = 1;
+
+        return $this->formatTrainingCampOrderAction($order, 'closed');
     }
 
     public function createReferralPoster(int $uid, string $page = ''): array
@@ -150,7 +204,7 @@ class MiniappServices extends BaseServices
         $user = $this->requireMemberUser($uid);
         $member = $this->formatMember($user);
 
-        $page = $page ?: 'pages/home/home';
+        $page = $this->normalizeReferralPosterPage($page);
         $memberUid = $member['uid'];
         /** @var QrcodeServices $qrcodeServices */
         $qrcodeServices = app()->make(QrcodeServices::class);
@@ -245,11 +299,27 @@ class MiniappServices extends BaseServices
             ->whereIn('type', $this->memberIncomeTypes())
             ->where('pm', 1)
             ->sum('number');
+        $pendingAmount = Db::name('user_brokerage')
+            ->where('uid', $uid)
+            ->whereIn('type', $this->memberIncomeTypes())
+            ->where('pm', 1)
+            ->where('frozen_time', '>', time())
+            ->sum('number');
+        $settledAmount = Db::name('user_brokerage')
+            ->where('uid', $uid)
+            ->whereIn('type', $this->memberIncomeTypes())
+            ->where('pm', 1)
+            ->where(function ($query) {
+                $query->where('frozen_time', '<=', time())->whereOr('frozen_time', 0);
+            })
+            ->sum('number');
 
         return [
             'summary' => [
                 'totalAmount' => $this->formatAmount($totalAmount),
-                'availableAmount' => $this->formatAmount($totalAmount),
+                'availableAmount' => $this->formatAmount($settledAmount),
+                'pendingAmount' => $this->formatAmount($pendingAmount),
+                'settledAmount' => $this->formatAmount($settledAmount),
             ],
             'list' => $list,
             'count' => $count,
@@ -258,10 +328,124 @@ class MiniappServices extends BaseServices
 
     public function getTrainingCampOrders(int $uid): array
     {
-        $this->requireMemberUser($uid);
+        $this->requireUser($uid);
+        $this->expirePendingTrainingCampOrders($uid);
+
+        [$page, $limit, $defaultLimit] = $this->getPageValue();
+        $limit = $limit ?: $defaultLimit;
+        $baseQuery = Db::name('other_order')
+            ->alias('o')
+            ->leftJoin('user u', 'u.uid = o.uid')
+            ->where('o.uid', $uid)
+            ->where('o.member_type', '<>', '')
+            ->where(function ($query) {
+                $query->where('o.is_del', 0)
+                    ->whereOr(function ($query) {
+                        $query->where('o.is_del', 1)->where('o.paid', 0);
+                    });
+            });
+        $count = (clone $baseQuery)->count();
+        $paidCount = (clone $baseQuery)->where('o.paid', 1)->where('o.is_del', 0)->count();
+        $pendingCount = (clone $baseQuery)->where('o.paid', 0)->where('o.is_del', 0)->count();
+        $closedCount = (clone $baseQuery)->where('o.paid', 0)->where('o.is_del', 1)->count();
+        $paidAmount = (clone $baseQuery)->where('o.paid', 1)->where('o.is_del', 0)->sum('o.pay_price');
+        $rows = $baseQuery
+            ->field('o.id,o.uid,o.order_id,o.member_type,o.pay_type,o.paid,o.pay_price,o.member_price,o.pay_time,o.add_time,o.is_free,o.is_permanent,o.vip_day,o.is_del,u.nickname,u.phone')
+            ->order('o.id', 'desc')
+            ->page($page ?: 1, $limit)
+            ->select()
+            ->toArray();
+        $list = array_map(function ($item) {
+            return $this->formatTrainingCampOrder($item, 0);
+        }, $rows);
+
         return [
-            'list' => [],
-            'count' => 0,
+            'summary' => [
+                'totalCount' => $count,
+                'paidCount' => $paidCount,
+                'pendingCount' => $pendingCount,
+                'closedCount' => $closedCount,
+                'paidAmount' => $this->formatAmount($paidAmount),
+            ],
+            'list' => $list,
+            'count' => $count,
+        ];
+    }
+
+    private function getPendingTrainingCampOrder(int $uid): ?array
+    {
+        $row = Db::name('other_order')
+            ->where('uid', $uid)
+            ->where('paid', 0)
+            ->where('is_del', 0)
+            ->where('member_type', '<>', '')
+            ->order('id', 'desc')
+            ->find();
+
+        return $row ?: null;
+    }
+
+    private function getTrainingCampOrderByOrderId(int $uid, string $orderId): ?array
+    {
+        $orderId = trim($orderId);
+        if ($orderId === '') {
+            throw new ApiException('Missing order id');
+        }
+        $row = Db::name('other_order')
+            ->where('uid', $uid)
+            ->where('order_id', $orderId)
+            ->where('member_type', '<>', '')
+            ->find();
+
+        return $row ?: null;
+    }
+
+    private function expirePendingTrainingCampOrders(int $uid): void
+    {
+        $deadline = time() - self::PENDING_MEMBER_ORDER_TTL;
+        $orders = Db::name('other_order')
+            ->where('uid', $uid)
+            ->where('paid', 0)
+            ->where('is_del', 0)
+            ->where('member_type', '<>', '')
+            ->where('add_time', '<', $deadline)
+            ->select()
+            ->toArray();
+
+        foreach ($orders as $order) {
+            Db::name('other_order')->where('id', (int)$order['id'])->update(['is_del' => 1]);
+            $this->saveTrainingCampOrderStatus($order, 'timeout_member_order', $this->zh('\u8ba2\u5355\u8d85\u65f6\u81ea\u52a8\u5173\u95ed'));
+        }
+    }
+
+    private function saveTrainingCampOrderStatus(array $order, string $changeType, string $message): void
+    {
+        /** @var OtherOrderStatusServices $statusService */
+        $statusService = app()->make(OtherOrderStatusServices::class);
+        $statusService->save([
+            'oid' => (int)($order['id'] ?? 0),
+            'change_type' => $changeType,
+            'change_message' => $message,
+            'change_time' => time(),
+            'shop_type' => (int)($order['type'] ?? 1),
+        ]);
+    }
+
+    private function formatTrainingCampOrderAction(array $order, string $status): array
+    {
+        return [
+            'orderId' => $order['order_id'] ?? '',
+            'id' => (int)($order['id'] ?? 0),
+            'memberType' => $order['member_type'] ?? '',
+            'payPrice' => $this->formatAmount($order['pay_price'] ?? 0),
+            'payType' => $order['pay_type'] ?? PayServices::WEIXIN_PAY,
+            'status' => $status,
+            'needPay' => (int)($order['paid'] ?? 0) === 0 && (int)($order['is_del'] ?? 0) === 0,
+            'message' => $status === 'closed'
+                ? $this->zh('\u8ba2\u5355\u5df2\u5173\u95ed')
+                : ($status === 'pending_reused'
+                    ? $this->zh('\u5df2\u6709\u5f85\u652f\u4ed8\u8ba2\u5355\uff0c\u8bf7\u7ee7\u7eed\u652f\u4ed8')
+                    : $this->zh('\u4f1a\u5458\u8ba2\u5355\u5df2\u521b\u5efa\uff0c\u652f\u4ed8\u5c06\u5728\u4e0b\u4e00\u6b65\u63a5\u5165')),
         ];
     }
 
@@ -443,13 +627,13 @@ class MiniappServices extends BaseServices
 
     private function memberIncomeTypes(): array
     {
-        return ['one_member_brokerage', 'two_member_brokerage'];
+        return ['get_member_brokerage', 'get_self_member_brokerage', 'get_two_member_brokerage', 'one_member_brokerage', 'two_member_brokerage'];
     }
 
     private function formatIncomeRecord(array $item): array
     {
         $type = (string)($item['type'] ?? '');
-        $typeText = $type === 'two_member_brokerage'
+        $typeText = in_array($type, ['get_two_member_brokerage', 'two_member_brokerage'], true)
             ? $this->zh('\u4e8c\u7ea7\u4f1a\u5458\u4f63\u91d1')
             : $this->zh('\u4e00\u7ea7\u4f1a\u5458\u4f63\u91d1');
         $isFrozen = (int)($item['frozen_time'] ?? 0) > time();
@@ -475,6 +659,40 @@ class MiniappServices extends BaseServices
         ];
     }
 
+    private function formatTrainingCampOrder(array $item, int $grade): array
+    {
+        $paid = (int)($item['paid'] ?? 0) === 1;
+        $closed = (int)($item['is_del'] ?? 0) === 1;
+        $status = $closed ? 'closed' : ($paid ? 'paid' : 'pending');
+        $time = $paid && !empty($item['pay_time']) ? (int)$item['pay_time'] : (int)($item['add_time'] ?? 0);
+        $buyer = trim((string)($item['nickname'] ?? ''));
+        if ($buyer === '') {
+            $buyer = $this->zh('\u7528\u6237') . (int)($item['uid'] ?? 0);
+        }
+
+        return [
+            'id' => (string)($item['id'] ?? ''),
+            'uid' => (int)($item['uid'] ?? 0),
+            'memberUid' => $this->encodeMemberUid((int)($item['uid'] ?? 0)),
+            'grade' => $grade,
+            'title' => $this->zh('\u0032\u0031\u5929\u81ea\u4e3b\u5b66\u4e60\u8bad\u7ec3\u8425'),
+            'buyer' => $buyer,
+            'phone' => $item['phone'] ?? '',
+            'orderNo' => $item['order_id'] ?? '',
+            'time' => $this->formatOverdueTime($time),
+            'add_time' => $this->formatOverdueTime((int)($item['add_time'] ?? 0)),
+            'payTime' => $this->formatOverdueTime((int)($item['pay_time'] ?? 0)),
+            'amount' => $this->formatAmount($item['pay_price'] ?? 0),
+            'amountText' => $this->formatAmount($item['pay_price'] ?? 0) . $this->zh('\u5143'),
+            'memberType' => $item['member_type'] ?? '',
+            'payType' => $item['pay_type'] ?? '',
+            'status' => $status,
+            'statusText' => $closed ? $this->zh('\u5df2\u5173\u95ed') : ($paid ? $this->zh('\u5df2\u652f\u4ed8') : $this->zh('\u5f85\u652f\u4ed8')),
+            'canPay' => $status === 'pending',
+            'canCancel' => $status === 'pending',
+        ];
+    }
+
     private function isTrainingCampMember(array $user): bool
     {
         $overdueTime = (int)($user['overdue_time'] ?? 0);
@@ -497,6 +715,21 @@ class MiniappServices extends BaseServices
         }
 
         return $spreadUid;
+    }
+
+    private function normalizeReferralPosterPage(string $page): string
+    {
+        $page = trim($page);
+        if ($page === '') {
+            return 'pages/home/home';
+        }
+
+        $page = str_replace('\\', '/', $page);
+        $page = ltrim(explode('?', $page, 2)[0], '/');
+
+        return in_array($page, self::REFERRAL_POSTER_PAGES, true)
+            ? $page
+            : 'pages/home/home';
     }
 
     private function decodeMemberUid(string $memberUid): int

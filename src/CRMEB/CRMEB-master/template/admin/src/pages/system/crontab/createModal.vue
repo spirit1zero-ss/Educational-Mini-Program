@@ -284,7 +284,7 @@ export default {
           });
         });
       } catch (error) {
-        console.log(error);
+        this.$message.error(error.message || '编辑器初始化失败');
       }
     },
     timerTask() {

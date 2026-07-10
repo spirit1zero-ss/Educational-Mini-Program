@@ -3,10 +3,8 @@
     <el-card :bordered="false" shadow="never">
       <el-alert type="warning" :closable="false">
         <template slot="title">
-          自定义事件说明：<br />
-          1、新增的事件会在对应的事件类型相关的流程中触发，例：选择用户登录，则在用户登录时执行代码。<br />
-          2、可以使用对应事件类型中对应的参数，例：$data['nickname']、$data['phone']等。<br />
-          3、调用类的时候请写入完整路径，例：\think\facade\Db、\app\services\other\CacheServices::class等。<br />
+          自定义事件 PHP 代码执行已禁用。<br />
+          已创建的事件仍会保留记录和开启状态，但不会执行自定义 PHP 代码。<br />
         </template>
       </el-alert>
       <el-button type="primary" v-db-click @click="addTask" class="mt14">新增系统事件</el-button>

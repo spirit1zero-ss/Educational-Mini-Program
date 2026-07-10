@@ -378,7 +378,7 @@ export default {
           }
           this.currentTab(this.selBoxList.length - 1, this.configData);
         } catch (error) {
-          console.log(error);
+          return false;
         }
 
         this.selPicBox = this.selBoxList.length ? this.selBoxList.length - 1 : 0;

@@ -1,5 +1,5 @@
 <view class="page">
-  <custom-nav title="读懂孩子心测评结果" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+  <custom-nav title="测评结果" showBack="{{true}}" showHome="{{true}}"></custom-nav>
 
   <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <view class="content">

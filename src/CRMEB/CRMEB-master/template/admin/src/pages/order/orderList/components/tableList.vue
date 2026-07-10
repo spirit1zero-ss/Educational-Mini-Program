@@ -4,18 +4,18 @@
       <el-tab-pane name="null" label="全部"></el-tab-pane>
       <el-tab-pane
         name="0"
-        :label="orderChartType.un_paid > 0 ? `待支�?${orderChartType.un_paid})` : `待支付`"
+        :label="orderChartType.un_paid > 0 ? `待支付(${orderChartType.un_paid})` : `待支付`"
       ></el-tab-pane>
       <el-tab-pane
         name="1"
-        :label="orderChartType.un_send > 0 ? `待发�?${orderChartType.un_send})` : `待发货`"
+        :label="orderChartType.un_send > 0 ? `待发货(${orderChartType.un_send})` : `待发货`"
       ></el-tab-pane>
       <el-tab-pane v-if="isStorePickupAvailable()" name="5" label="待核销"></el-tab-pane>
-      <el-tab-pane name="2" label="待收�?></el-tab-pane>
-      <el-tab-pane name="3" label="待评�?></el-tab-pane>
-      <el-tab-pane name="4" label="已完�?></el-tab-pane>
-      <el-tab-pane name="-2" label="已退�?></el-tab-pane>
-      <el-tab-pane name="-4" label="已删�?></el-tab-pane>
+      <el-tab-pane name="2" label="待收货"></el-tab-pane>
+      <el-tab-pane name="3" label="待评价"></el-tab-pane>
+      <el-tab-pane name="4" label="已完成"></el-tab-pane>
+      <el-tab-pane name="-2" label="已退款"></el-tab-pane>
+      <el-tab-pane name="-4" label="已删除"></el-tab-pane>
     </el-tabs>
     <div class="acea-row">
       <el-button v-if="isStorePickupAvailable()" v-auth="['order-write']" type="primary" v-db-click @click="writeOff">订单核销</el-button>
@@ -25,7 +25,7 @@
       </el-upload> -->
       <el-button v-auth="['order-dels']" v-db-click @click="delAll">批量删除</el-button>
       <el-button v-auth="['export-storeOrder']" class="export" v-db-click @click="exportList">订单导出</el-button>
-      <!-- <el-button class="export" v-db-click @click="exportDeliveryList">发货单导�?/el-button> -->
+      <!-- <el-button class="export" v-db-click @click="exportDeliveryList">发货单导出</el-button> -->
     </div>
     <el-table
       :data="orderList"
@@ -42,15 +42,15 @@
         </template>
       </el-table-column>
       <el-table-column type="selection" width="55"> </el-table-column>
-      <el-table-column label="订单�?| 类型" width="200">
+      <el-table-column label="订单号 | 类型" width="200">
         <template slot-scope="scope">
           <div>{{ scope.row.order_id }}</div>
           <div class="pink_name" :style="{ color: scope.row.color }">{{ scope.row.pink_name }}</div>
-          <span v-if="scope.row.is_del === 1" style="color: #ed4014; display: block">用户已删�?/span>
+          <span v-if="scope.row.is_del === 1" style="color: #ed4014; display: block">用户已删除</span>
           <span v-if="scope.row.is_cancel === 1 && scope.row.is_del === 0" style="color: #ed4014; display: block"
-            >用户已取�?/span
+            >用户已取消</span
           >
-          <span v-if="scope.row.refund_type === 6" style="color: #ed4014; display: block">订单已退�?/span>
+          <span v-if="scope.row.refund_type === 6" style="color: #ed4014; display: block">订单已退款</span>
         </template>
       </el-table-column>
       <el-table-column label="商品信息" min-width="250">
@@ -66,21 +66,21 @@
             <el-tooltip placement="top" :open-delay="300">
               <div slot="content">
                 <div>
-                  <span>商品名称�?/span>
+                  <span>商品名称：</span>
                   <span>{{ item.cart_info.productInfo.store_name || '--' }}</span>
                 </div>
                 <div>
-                  <span>规格名称�?/span>
+                  <span>规格名称：</span>
                   <span>{{
                     item.cart_info.productInfo.attrInfo ? item.cart_info.productInfo.attrInfo.suk : '---'
                   }}</span>
                 </div>
                 <div>
-                  <span>支付价格�?/span>
+                  <span>支付价格：</span>
                   <span>¥{{ item.cart_info.truePrice || '--' }}</span>
                 </div>
                 <div>
-                  <span>购买数量�?/span>
+                  <span>购买数量：</span>
                   <span>{{ item.cart_info.cart_num || '--' }}</span>
                 </div>
               </div>
@@ -96,7 +96,7 @@
       </el-table-column>
       <el-table-column label="实际支付" min-width="100">
         <template slot-scope="scope">
-          <span>{{ scope.row.paid ? scope.row.pay_price : '未支�? }}</span>
+          <span>{{ scope.row.paid ? scope.row.pay_price : '未支付' }}</span>
         </template>
       </el-table-column>
       <el-table-column label="支付方式" min-width="100">
@@ -109,7 +109,7 @@
           <span>{{ scope.row._pay_time || '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="订单状�? min-width="100">
+      <el-table-column label="订单状态" min-width="100">
         <template slot-scope="scope">
           <div v-html="scope.row.status_name.status_name" class="pt5"></div>
           <div v-if="!scope.row.is_all_refund && scope.row.refund.length" class="trip">部分退款中</div>
@@ -162,7 +162,7 @@
             "
           />
           <a v-db-click @click="delivery(scope.row)" v-if="scope.row._status === 4 && !scope.row.split.length"
-            >配送信�?/a
+            >配送信息</a
           >
           <el-divider direction="vertical" v-if="scope.row._status === 4 && !scope.row.split.length" />
           <a
@@ -221,14 +221,14 @@
                 <el-dropdown-item
                   command="5"
                   v-show="scope.row.paid == 1 && scope.row.refund_status == 0 && !scope.row.refund.length"
-                  >立即退�?/el-dropdown-item
+                  >立即退款</el-dropdown-item
                 >
                 <!--                            <el-dropdown-item command="6"  v-show='scope.row._status !==1 && (scope.row.use_integral > 0 && scope.row.use_integral >= scope.row.back_integral) '>退积分</el-dropdown-item>-->
-                <!--                            <el-dropdown-item command="7"  v-show='scope.row._status === 3'>不退�?/el-dropdown-item>-->
-                <el-dropdown-item command="8" v-show="scope.row._status === 4">已收�?/el-dropdown-item>
+                <!--                            <el-dropdown-item command="7"  v-show='scope.row._status === 3'>不退款</el-dropdown-item>-->
+                <el-dropdown-item command="8" v-show="scope.row._status === 4">已收货</el-dropdown-item>
                 <el-dropdown-item command="9">删除订单</el-dropdown-item>
-                <el-dropdown-item command="12" v-show="scope.row.kuaidi_label">快递面单打�?/el-dropdown-item>
-                <el-dropdown-item command="13" v-show="scope.row.paid">配货单打�?/el-dropdown-item>
+                <el-dropdown-item command="12" v-show="scope.row.kuaidi_label">快递面单打印</el-dropdown-item>
+                <el-dropdown-item command="13" v-show="scope.row.paid">配货单打印</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
           </template>
@@ -238,7 +238,7 @@
     <div class="acea-row row-right page">
       <pagination v-if="total" :total="total" :page.sync="page.page" :limit.sync="page.limit" @pagination="getList" />
     </div>
-    <!-- 编辑 退�?退积分 不退�?->
+    <!-- 编辑 退款 退积分 不退款 -->
     <edit-from ref="edits" :FromData="FromData" @submitFail="submitFail"></edit-from>
     <!-- 详情 -->
     <details-from ref="details" :orderDatalist="orderDatalist" :orderId="orderId"></details-from>
@@ -297,7 +297,7 @@
           <el-input
             style="width: 414px"
             type="text"
-            placeholder="请输�?2位核销�?
+            placeholder="请输入12位核销码"
             v-model.number="writeOffFrom.code"
           />
         </el-form-item>
@@ -319,12 +319,12 @@
         <el-button class="export" type="primary">批量发货</el-button>
       </el-upload> -->
       <el-alert type="warning" :closable="false">
-        <p>步骤一 导出发货�?/p>
-        <p>步骤�?发货单中填写物流单号</p>
-        <p>步骤�?将发货单上传</p>
+        <p>步骤一 导出发货单</p>
+        <p>步骤二 发货单中填写物流单号</p>
+        <p>步骤三 将发货单上传</p>
       </el-alert>
       <div class="acea-row row-middle mb10 mt10">
-        <el-button v-db-click @click="exportDeliveryList">导出发货�?/el-button>
+        <el-button v-db-click @click="exportDeliveryList">导出发货单</el-button>
         <div class="pl20 tips"></div>
       </div>
       <el-upload
@@ -337,7 +337,7 @@
         :before-upload="beforeUpload"
       >
         <i class="el-icon-upload"></i>
-        <div class="el-upload__text">批量发货�?拖入上传�?em>点击上传</em></div>
+        <div class="el-upload__text">批量发货单拖入上传，<em>点击上传</em></div>
       </el-upload>
     </el-dialog>
     <orderAddress ref="address" :addressData="addressData" @submitSuccess="submitSuccess"></orderAddress>

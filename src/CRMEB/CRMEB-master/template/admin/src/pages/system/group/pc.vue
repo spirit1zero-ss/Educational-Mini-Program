@@ -585,7 +585,6 @@ export default {
       this.tabList.list.splice(index, 1);
     },
     menuDelete(index) {
-      console.log(index);
       this.menuList.splice(index, 1);
     },
     // 友情链接

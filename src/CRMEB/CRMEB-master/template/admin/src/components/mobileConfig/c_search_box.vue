@@ -161,7 +161,6 @@ export default {
   },
   watch: {
     num(nVal) {
-      // debugger;
       let value = JSON.parse(JSON.stringify(this.$store.state.mobildConfig.defaultArray[nVal]));
       this.configObj = value;
     },

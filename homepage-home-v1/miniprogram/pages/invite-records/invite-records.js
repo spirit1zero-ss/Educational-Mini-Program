@@ -129,8 +129,9 @@ Page({
     wx.showNavigationBarLoading()
 
     getInviteRecords({ grade: 0 })
-      .then((data) => {
-        const source = Array.isArray(data && data.list) ? data.list : []
+      .then((response) => {
+        const data = response && response.data ? response.data : {}
+        const source = Array.isArray(data.list) ? data.list : []
         if (!source.length) {
           this.updateFilteredRecords()
           return
@@ -138,7 +139,7 @@ Page({
 
         const records = source.map((item, index) => {
           const orderCount = Number(item.orderCount || item.order_count || 0)
-          const status = orderCount > 0 ? 'registered' : 'pending'
+          const status = item.status || (orderCount > 0 ? 'registered' : 'pending')
 
           return {
             id: String(item.uid || item.id || index),
@@ -148,7 +149,7 @@ Page({
             time: item.time || item.add_time || '',
             source: item.source || '',
             status,
-            statusText: status === 'registered' ? '\u5df2\u62a5\u540d' : '\u5f85\u8f6c\u5316',
+            statusText: item.statusText || (status === 'registered' ? '\u5df2\u62a5\u540d' : '\u5f85\u8f6c\u5316'),
             reward: item.reward || item.number || '',
             rewardState: item.rewardState || ''
           }

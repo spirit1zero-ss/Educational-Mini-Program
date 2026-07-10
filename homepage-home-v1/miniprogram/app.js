@@ -1,15 +1,9 @@
-const { REFERRER_KEY, login } = require('./utils/request')
-const { isMiniappFrontendMockEnabled } = require('./config/api')
-const {
-  ensureMockLogin,
-  shouldUseMockFallback
-} = require('./utils/mock-miniapp')
+const { REFERRER_KEY } = require('./utils/request')
 
 App({
   globalData: {
     menuButton: null,
-    referrerUid: '',
-    authReady: null
+    referrerUid: ''
   },
 
   onLaunch(options) {
@@ -18,7 +12,6 @@ App({
     }
 
     this.captureReferrer(options)
-    this.silentLogin()
   },
 
   onShow(options) {
@@ -40,24 +33,5 @@ App({
 
     this.globalData.referrerUid = referrerUid
     wx.setStorageSync(REFERRER_KEY, referrerUid)
-  },
-
-  silentLogin() {
-    if (isMiniappFrontendMockEnabled()) {
-      this.globalData.authReady = ensureMockLogin()
-      return this.globalData.authReady
-    }
-
-    this.globalData.authReady = login({
-      force: true
-    }).catch((error) => {
-      console.warn('miniapp silent login failed', error)
-      if (shouldUseMockFallback(error)) {
-        return ensureMockLogin()
-      }
-      return null
-    })
-
-    return this.globalData.authReady
   }
 })

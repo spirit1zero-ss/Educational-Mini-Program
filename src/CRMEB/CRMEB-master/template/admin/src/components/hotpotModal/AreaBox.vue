@@ -136,7 +136,6 @@ export default {
       //获取子元素的宽高
       let childrenWidth = childrenDiv.getBoundingClientRect().width;
       let childrenHight = childrenDiv.getBoundingClientRect().height;
-      // console.log(childrenWidth, childrenHight)
       if (!document.onmousemove) {
         const initX = this.areaInit.starX;
         const initY = this.areaInit.starY;

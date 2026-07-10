@@ -8,12 +8,10 @@ Page({
 
   onSelect(event) {
     const type = event.currentTarget.dataset.type;
-    const option = this.data.options.find((item) => item.type === type);
-    const label = option ? option.title : `${type} 类型`;
 
     wx.showModal({
-      title: "确认选择",
-      content: `确定选择 ${type}：${label} 吗？确认后会显示对应解读。`,
+      title: `确认选择 ${type}`,
+      content: "确认后会显示对应解读。",
       confirmText: "确认",
       cancelText: "再看看",
       confirmColor: "#1f6b57",

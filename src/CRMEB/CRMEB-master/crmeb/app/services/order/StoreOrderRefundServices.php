@@ -1065,9 +1065,6 @@ class StoreOrderRefundServices extends BaseServices
         event('OrderRefundCreateAfterListener', [$order]);
         //提醒推送
         event('NoticeListener', [['order' => $order], 'send_order_apply_refund']);
-        //推送订单
-        event('OutPushListener', ['refund_create_push', ['order_id' => (int)$order['id']]]);
-
         //自定义事件-订单申请退款
         event('CustomEventListener', ['order_initiated_refund', [
             'uid' => $uid,
@@ -1375,8 +1372,6 @@ class StoreOrderRefundServices extends BaseServices
 
         //售后订单取消后置事件
         event('OrderRefundCancelAfterListener', [$orderRefundInfo]);
-        // 推送订单
-        event('OutPushListener', ['refund_cancel_push', ['order_id' => (int)$orderRefundInfo['id']]]);
         return true;
     }
 

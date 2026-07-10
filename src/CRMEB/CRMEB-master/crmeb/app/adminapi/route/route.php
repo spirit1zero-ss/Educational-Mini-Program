@@ -17,9 +17,6 @@ use app\http\middleware\AllowOriginMiddleware;
  * 无需授权的接口
  */
 Route::group(function () {
-    //升级程序
-    Route::get('upgrade', 'UpgradeController/index');
-    Route::get('upgrade/run', 'UpgradeController/upgrade');
     //用户名密码登录
     Route::post('login', 'Login/login')->name('AdminLogin')->option(['real_name' => '下载表备份记录']);
     //后台登录页面数据
@@ -31,11 +28,10 @@ Route::group(function () {
     //一次验证
     Route::post('ajcheck', 'Login/ajcheck')->name('ajcheck')->option(['real_name' => '一次验证']);
     //测试
-    Route::get('index', 'Test/index')->option(['real_name' => '测试地址']);
     //扫码上传图片
     Route::post('image/scan_upload', 'PublicController/scanUpload')->option(['real_name' => '扫码上传图片']);
     Route::get('get_workerman_url', 'PublicController/getWorkerManUrl')->option(['real_name' => '获取长连接地址']);
-    Route::get('custom_admin_js', 'PublicController/customAdminJs')->option(['real_name' => '测试地址']);
+    Route::get('custom_admin_js', 'PublicController/customAdminJs')->option(['real_name' => '自定义后台JS']);
 
 })->middleware(AllowOriginMiddleware::class)->option(['mark' => 'login', 'mark_name' => '登录相关']);
 

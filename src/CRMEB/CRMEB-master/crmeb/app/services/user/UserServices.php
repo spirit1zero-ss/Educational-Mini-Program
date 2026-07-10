@@ -859,7 +859,6 @@ class UserServices extends BaseServices
                 }
                 $res1 = $userMoneyServices->income('system_sub', $user['uid'], $data['money'], $edit['now_money'], $data['adminId'] ?? 0, $data['mark']);
             }
-            event('OutPushListener', ['user_update_push', ['uid' => $id, 'type' => 'money', 'value' => $data['money_status'] == 2 ? -floatval($data['money']) : $data['money']]]);
         } else {
             $res1 = true;
         }
@@ -880,7 +879,6 @@ class UserServices extends BaseServices
                 $integral_data['mark'] = $data['mark'] == '' ? '系统扣除了' . floatval($data['integration']) . '积分' : $data['mark'];
                 $res2 = $userBill->expendIntegral($user['uid'], 'system_sub', $integral_data);
             }
-            event('OutPushListener', ['user_update_push', ['uid' => $id, 'type' => 'point', 'value' => $data['integration_status'] == 2 ? -intval($data['integration']) : $data['integration']]]);
         } else {
             $res2 = true;
         }

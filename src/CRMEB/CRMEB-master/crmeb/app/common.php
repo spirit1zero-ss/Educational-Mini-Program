@@ -726,7 +726,8 @@ if (!function_exists('filter_str')) {
     {
         $param_filter_type = sys_config('param_filter_type');
         if ($param_filter_type != 0) {
-            $rules = preg_split('/\r\n|\r|\n/', base64_decode(sys_config('param_filter_data')));
+            $rules = array_values(array_filter(preg_split('/\r\n|\r|\n/', base64_decode(sys_config('param_filter_data'))), 'strlen'));
+            if (!$rules) return $str;
             if ($param_filter_type == 1) {
                 foreach ($rules as $item) {
                     if (preg_match($item, $str)) {
@@ -1313,7 +1314,7 @@ if (!function_exists('dump_sql')) {
     function dump_sql()
     {
         Db::listen(function ($sql) {
-            var_dump($sql);
+            \think\facade\Log::debug($sql);
         });
     }
 }

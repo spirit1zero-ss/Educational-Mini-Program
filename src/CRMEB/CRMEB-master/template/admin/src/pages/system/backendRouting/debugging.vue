@@ -365,7 +365,7 @@ export default {
         });
         return x;
       } catch (error) {
-        console.log(error);
+        return x;
       }
     },
     // type 1 为obj属性

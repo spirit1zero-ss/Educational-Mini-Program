@@ -1,15 +1,11 @@
 <view class="custom-nav" style="{{navStyle}}">
-  <van-nav-bar
-    title="{{title}}"
-    border="{{false}}"
-    safe-area-inset-top="{{false}}"
-    custom-style="{{navBarStyle}}"
-    bind:click-left="onBack"
-    bind:click-right="onHome"
-  >
-    <view wx:if="{{showBack}}" slot="left" class="nav-back-icon">
-      <view class="nav-back-stroke"></view>
+  <view class="native-nav-bar" style="{{navBarStyle}}">
+    <view class="native-nav-row" style="{{navRowStyle}}">
+      <view wx:if="{{showBack}}" class="nav-back-icon nav-action--back" bindtap="onBack">
+        <view class="nav-back-stroke"></view>
+      </view>
+      <view class="nav-title">{{title}}</view>
+      <view wx:if="{{showHome}}" class="nav-home-text nav-action--home" bindtap="onHome">首页</view>
     </view>
-    <view wx:if="{{showHome}}" slot="right" class="nav-home-text" style="{{homeStyle}}">首页</view>
-  </van-nav-bar>
+  </view>
 </view>

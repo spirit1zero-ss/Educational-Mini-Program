@@ -99,7 +99,6 @@ class ChatService
 
     public function onConnect(TcpConnection $connection)
     {
-        var_dump('chatConnect');
         $this->connections[$connection->id] = $connection;
         $connection->lastMessageTime = time();
     }
@@ -111,7 +110,6 @@ class ChatService
         if (!$res || !isset($res['type']) || !$res['type'] || $res['type'] == 'ping') {
             return $this->response->connection($connection)->success('ping', ['now' => time(), 'datetime' => date('Y-m-d H:i:s')]);
         }
-        var_dump('chatMessage', $res);
         if (!method_exists($this->handle, $res['type'])) return;
         try {
             $this->handle->{$res['type']}($connection, $res + ['data' => []], $this->response->connection($connection));
@@ -122,8 +120,6 @@ class ChatService
 
     public function onWorkerStart(Worker $worker)
     {
-        var_dump('chatWorkerStart');
-
         ChannelService::connet();
 
         Client::on('crmeb_chat', function ($eventData) use ($worker) {
@@ -190,7 +186,6 @@ class ChatService
 
     public function onClose(TcpConnection $connection)
     {
-        var_dump('chatClose');
         unset($this->connections[$connection->id]);
         if (isset($connection->user->uid)) {
             unset($this->user[$connection->user->uid]);

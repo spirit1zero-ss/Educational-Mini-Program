@@ -37,7 +37,6 @@ return [
         'OrderTakeListener' => [\app\listener\order\OrderTakeListener::class], //订单收货后置事件
         'OrderRefundCreateAfterListener' => [\app\listener\order\OrderRefundCreateAfterListener::class], //售后单生成后置事件
         'OrderRefundCancelAfterListener' => [\app\listener\order\OrderRefundCancelAfterListener::class], //售后单取消后置事件
-        'OutPushListener' => [\app\listener\out\OutPushListener::class], //对外推送事件
         'UserLevelListener' => [\app\listener\user\UserLevelListener::class], //用户升级事件
         'UserVisitListener' => [\app\listener\user\UserVisitListener::class], //用户访问事件
         'NoticeListener' => [\app\listener\notice\NoticeListener::class], //通知->消息事件

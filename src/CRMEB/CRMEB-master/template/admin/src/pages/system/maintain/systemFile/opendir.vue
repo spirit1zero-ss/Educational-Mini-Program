@@ -822,7 +822,7 @@ export default {
           this.$refs.mark.focus();
         });
       } catch (error) {
-        console.log(error);
+        return false;
       }
     },
     isEditBlur(row) {

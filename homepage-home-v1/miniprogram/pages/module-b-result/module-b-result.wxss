@@ -187,7 +187,7 @@
 }
 
 .bottom-spacer {
-  height: 174rpx;
+  height: 252rpx;
 }
 
 @media screen and (max-width: 340px) {

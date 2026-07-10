@@ -252,7 +252,6 @@ class Client extends BaseClient
 
         $canonicalRequest = $httpMethod . "\n" . $canonicalUri . "\n" . $canonicalQueryString . "\n" . $canonicalHeaders . "\n" . $signedHeaders . "\n" . hash('sha256', $payload);
         $credentialScope = $dateStamp . '/' . $region . '/' . $service . '/aws4_request';
-        dump(compact('region', 'httpMethod', 'canonicalUri', 'canonicalQueryString', 'canonicalHeaders', 'signedHeaders', 'payload', 'service'));
         $stringToSign = $algorithm . "\n" . $amzDate . "\n" . $credentialScope . "\n" . hash('sha256', $canonicalRequest);
         $signingKey = hash_hmac('sha256', 'aws4_request',
             hash_hmac('sha256', $service,

@@ -3,15 +3,24 @@ const CANVAS_WIDTH = 670
 const CANVAS_HEIGHT = 1110
 const CANVAS_PIXEL_RATIO = 2
 const POSTER_BG = '/assets/promo-poster/promo-poster-bg.png'
-const CODE_IMAGE = '/assets/promo-poster/miniapp-code-placeholder.png'
 const POSTER_BG_CANVAS_SOURCES = [
   '../../assets/promo-poster/promo-poster-bg.png',
   '/assets/promo-poster/promo-poster-bg.png'
 ]
-const CODE_IMAGE_CANVAS_SOURCES = [
-  '../../assets/promo-poster/miniapp-code-placeholder.png',
-  '/assets/promo-poster/miniapp-code-placeholder.png'
-]
+
+function resolveImageSource(src) {
+  if (!/^https?:\/\//i.test(src)) {
+    return Promise.resolve(src)
+  }
+
+  return new Promise((resolve, reject) => {
+    wx.getImageInfo({
+      src,
+      success: (result) => resolve(result.path || src),
+      fail: reject
+    })
+  })
+}
 
 function getCanvasNode(page) {
   return new Promise((resolve, reject) => {
@@ -35,11 +44,35 @@ function getCanvasNode(page) {
 }
 
 function loadCanvasImage(canvas, sources, fallbackWidth, fallbackHeight) {
-  const candidates = Array.isArray(sources) ? sources : [sources]
+  const candidates = (Array.isArray(sources) ? sources : [sources]).filter(Boolean)
 
   return new Promise((resolve, reject) => {
+    if (!candidates.length) {
+      reject(new Error('canvas image source is empty'))
+      return
+    }
+
     const image = canvas.createImage()
     let index = 0
+    const loadNext = (error) => {
+      if (error) {
+        console.warn('[promo-poster] canvas image retry:', candidates[index - 1], error)
+      }
+
+      if (index >= candidates.length) {
+        console.error('[promo-poster] canvas image load failed:', candidates[candidates.length - 1], error)
+        reject(error)
+        return
+      }
+
+      const source = candidates[index]
+      index += 1
+      resolveImageSource(source)
+        .then((resolvedSource) => {
+          image.src = resolvedSource
+        })
+        .catch(loadNext)
+    }
 
     image.onload = () => {
       resolve({
@@ -48,20 +81,8 @@ function loadCanvasImage(canvas, sources, fallbackWidth, fallbackHeight) {
         height: image.height || fallbackHeight
       })
     }
-    image.onerror = (error) => {
-      const failedSrc = candidates[index]
-      index += 1
-
-      if (index < candidates.length) {
-        console.warn('[promo-poster] canvas image retry:', failedSrc, error)
-        image.src = candidates[index]
-        return
-      }
-
-      console.error('[promo-poster] canvas image load failed:', failedSrc, error)
-      reject(error)
-    }
-    image.src = candidates[index]
+    image.onerror = loadNext
+    loadNext()
   })
 }
 
@@ -138,8 +159,8 @@ Page({
     navStyle: '',
     scrollStyle: '',
     posterBg: POSTER_BG,
-    // TODO: Replace with a backend-generated mini program code for the inviter UID.
-    codeImage: CODE_IMAGE,
+    codeImage: '',
+    sharePath: '',
     shareImagePath: '',
     posterSaving: false,
     memberUid: 'A10293',
@@ -171,7 +192,12 @@ Page({
     }
 
     if (options && options.codeUrl) {
-      this.setData({ codeImage: decodeURIComponent(options.codeUrl) })
+      const codeImage = decodeURIComponent(options.codeUrl)
+      this.setData({ codeImage })
+    }
+
+    if (options && options.sharePath) {
+      this.setData({ sharePath: decodeURIComponent(options.sharePath) })
     }
   },
 
@@ -254,9 +280,13 @@ Page({
       return Promise.resolve(this.data.shareImagePath)
     }
 
+    if (!this.data.codeImage) {
+      return Promise.reject(new Error('missing mini program code image'))
+    }
+
     return getCanvasNode(this).then((canvas) => Promise.all([
       loadCanvasImage(canvas, POSTER_BG_CANVAS_SOURCES, 1024, 1792),
-      loadCanvasImage(canvas, [this.data.codeImage].concat(CODE_IMAGE_CANVAS_SOURCES), 220, 220)
+      loadCanvasImage(canvas, this.data.codeImage, 220, 220)
     ]).then(([posterBg, codeImage]) => new Promise((resolve, reject) => {
       canvas.width = CANVAS_WIDTH * CANVAS_PIXEL_RATIO
       canvas.height = CANVAS_HEIGHT * CANVAS_PIXEL_RATIO
@@ -431,7 +461,7 @@ Page({
   onShareAppMessage() {
     return {
       title: '21天自主学习训练营',
-      path: `/pages/home/home?ref=${encodeURIComponent(this.data.memberUid)}`,
+      path: this.data.sharePath || `/pages/home/home?ref=${encodeURIComponent(this.data.memberUid)}`,
       imageUrl: this.data.shareImagePath || this.data.posterBg
     }
   },
