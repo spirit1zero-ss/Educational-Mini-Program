@@ -1,0 +1,398 @@
+.page {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, #f8faf4 0%, #eff5eb 100%);
+  overflow: hidden;
+}
+
+.custom-nav {
+  position: relative;
+  min-height: 88px;
+  padding: 44px 110px 18rpx 32rpx;
+  background: rgba(248, 250, 244, 0.94);
+}
+
+.back-button {
+  position: absolute;
+  left: 24rpx;
+  bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54rpx;
+  height: 54rpx;
+  border-radius: 50%;
+  color: #245c4a;
+  font-size: 54rpx;
+  line-height: 54rpx;
+}
+
+.nav-title {
+  color: #1f2a24;
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 44rpx;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.poster-scroll {
+  height: calc(100vh - 88px);
+}
+
+.content {
+  padding: 8rpx 28rpx 42rpx;
+}
+
+.poster-shell {
+  padding: 16rpx;
+  border-radius: 34rpx;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18rpx 42rpx rgba(47, 107, 67, 0.1);
+}
+
+.poster-card {
+  position: relative;
+  min-height: 1110rpx;
+  overflow: hidden;
+  border: 1rpx solid rgba(47, 107, 67, 0.12);
+  border-radius: 28rpx;
+  background: #fbfdf8;
+}
+
+.poster-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.poster-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 1110rpx;
+  flex-direction: column;
+  padding: 42rpx 34rpx 34rpx;
+}
+
+.invite-badge {
+  align-self: flex-start;
+  height: 44rpx;
+  padding: 0 18rpx;
+  border: 1rpx solid rgba(201, 154, 67, 0.26);
+  border-radius: 999rpx;
+  background: rgba(255, 250, 240, 0.9);
+  color: #9a6f22;
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 44rpx;
+}
+
+.poster-title {
+  margin-top: 28rpx;
+  color: #183327;
+  font-size: 54rpx;
+  font-weight: 900;
+  line-height: 66rpx;
+  letter-spacing: 0;
+}
+
+.poster-value {
+  margin-top: 18rpx;
+  color: #245c4a;
+  font-size: 34rpx;
+  font-weight: 800;
+  line-height: 44rpx;
+}
+
+.poster-subtitle {
+  margin-top: 12rpx;
+  color: #647168;
+  font-size: 25rpx;
+  line-height: 36rpx;
+}
+
+.benefit-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 284rpx;
+  padding: 22rpx 14rpx;
+  border: 1rpx solid rgba(47, 107, 67, 0.1);
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12rpx 28rpx rgba(47, 107, 67, 0.08);
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 33.33%;
+  min-width: 0;
+  padding: 0 10rpx;
+  border-right: 1rpx solid rgba(47, 107, 67, 0.12);
+}
+
+.benefit-item:last-child {
+  border-right: 0;
+}
+
+.benefit-icon {
+  width: 58rpx;
+  height: 58rpx;
+  margin-right: 10rpx;
+  border-radius: 50%;
+  background: #eef5e8;
+}
+
+.benefit-copy {
+  min-width: 0;
+}
+
+.benefit-title {
+  color: #245c4a;
+  font-size: 27rpx;
+  font-weight: 900;
+  line-height: 34rpx;
+}
+
+.benefit-desc {
+  margin-top: 2rpx;
+  color: #245c4a;
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 30rpx;
+}
+
+.price-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24rpx;
+  padding: 24rpx 26rpx;
+  border: 2rpx solid rgba(221, 184, 99, 0.72);
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, #2f7047 0%, #195438 100%);
+  box-shadow: 0 14rpx 30rpx rgba(25, 84, 56, 0.16);
+}
+
+.price-main {
+  flex: 0 0 190rpx;
+}
+
+.price-label {
+  color: rgba(255, 239, 189, 0.92);
+  font-size: 24rpx;
+  font-weight: 800;
+  line-height: 32rpx;
+}
+
+.price-value {
+  margin-top: 2rpx;
+  color: #ffd682;
+  font-size: 62rpx;
+  font-weight: 900;
+  line-height: 66rpx;
+  text-shadow: 0 4rpx 10rpx rgba(61, 35, 0, 0.18);
+}
+
+.price-value text {
+  margin-left: 4rpx;
+  color: #fff6d4;
+  font-size: 26rpx;
+  line-height: 32rpx;
+}
+
+.price-divider {
+  width: 1rpx;
+  height: 96rpx;
+  margin: 0 22rpx;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.price-points {
+  min-width: 0;
+  flex: 1;
+  color: #fff8dc;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 36rpx;
+}
+
+.referral-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24rpx;
+  padding: 22rpx 22rpx 20rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12rpx 28rpx rgba(47, 107, 67, 0.08);
+}
+
+.referral-copy {
+  min-width: 0;
+  flex: 1;
+  padding-right: 22rpx;
+}
+
+.referral-title {
+  color: #1f2a24;
+  font-size: 30rpx;
+  font-weight: 900;
+  line-height: 38rpx;
+}
+
+.referral-desc {
+  margin-top: 8rpx;
+  color: #6e7a72;
+  font-size: 22rpx;
+  line-height: 32rpx;
+}
+
+.code-card {
+  width: 156rpx;
+  min-height: 176rpx;
+  padding: 14rpx 10rpx 12rpx;
+  border-radius: 22rpx;
+  background: #ffffff;
+  box-shadow: 0 10rpx 24rpx rgba(47, 107, 67, 0.1);
+}
+
+.code-card--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f6f8f4;
+  color: #6e7a72;
+  text-align: center;
+}
+
+.code-empty-text {
+  padding: 0 12rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 32rpx;
+}
+
+.code-title {
+  margin-top: 6rpx;
+  color: #1f2a24;
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 28rpx;
+  text-align: center;
+}
+
+.code-image {
+  display: block;
+  width: 132rpx;
+  height: 132rpx;
+  margin: 0 auto;
+}
+
+.action-bar {
+  display: flex;
+  gap: 18rpx;
+  margin-top: 24rpx;
+}
+
+.save-button,
+.share-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 76rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  font-weight: 800;
+  line-height: 76rpx;
+}
+
+.save-button {
+  flex: 1;
+  border: 1rpx solid rgba(47, 107, 67, 0.18);
+  background: #f2f7ef;
+  color: #245c4a;
+}
+
+.save-button.is-loading {
+  opacity: 0.7;
+}
+
+.share-button {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: linear-gradient(135deg, #2f6b43 0%, #245c4a 100%);
+  color: #ffffff;
+  box-shadow: 0 12rpx 24rpx rgba(36, 92, 74, 0.16);
+}
+
+.share-button::after {
+  border: 0;
+}
+
+.poster-canvas-host {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.poster-canvas {
+  width: 1px;
+  height: 1px;
+}
+
+@media screen and (max-width: 340px) {
+  .poster-card,
+  .poster-content {
+    min-height: 1060rpx;
+  }
+
+  .poster-title {
+    font-size: 48rpx;
+    line-height: 60rpx;
+  }
+
+  .benefit-panel {
+    margin-top: 250rpx;
+  }
+
+  .benefit-icon {
+    width: 48rpx;
+    height: 48rpx;
+  }
+
+  .benefit-title {
+    font-size: 24rpx;
+    line-height: 30rpx;
+  }
+
+  .benefit-desc,
+  .price-points,
+  .referral-desc {
+    font-size: 20rpx;
+    line-height: 28rpx;
+  }
+
+  .price-card {
+    padding: 20rpx;
+  }
+
+  .price-main {
+    flex-basis: 160rpx;
+  }
+
+  .price-divider {
+    margin: 0 16rpx;
+  }
+}

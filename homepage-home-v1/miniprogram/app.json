@@ -1,0 +1,32 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/mine/mine",
+    "pages/promo-poster/promo-poster",
+    "pages/invite-records/invite-records",
+    "pages/my-income/my-income",
+    "pages/camp-orders/camp-orders",
+    "pages/camp-checkout/camp-checkout",
+    "pages/member-registration/member-registration",
+    "pages/member-benefits/member-benefits",
+    "pages/referral-rules/referral-rules",
+    "pages/offline/offline",
+    "pages/module-2-logic/module-2-logic",
+    "pages/module-3-habit/module-3-habit",
+    "pages/module-4-drive/module-4-drive",
+    "pages/module-5-camp/module-5-camp",
+    "pages/module-b-table/module-b-table",
+    "pages/module-a-assessment/module-a-assessment",
+    "pages/module-a-result/module-a-result",
+    "pages/module-b-inline/module-b-inline",
+    "pages/module-b-assessment/module-b-assessment",
+    "pages/module-b-result/module-b-result"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#F8FAF4",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

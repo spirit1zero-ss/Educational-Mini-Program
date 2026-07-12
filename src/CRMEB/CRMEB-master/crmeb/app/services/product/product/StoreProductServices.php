@@ -1,0 +1,2482 @@
+<?php
+// +----------------------------------------------------------------------
+// | CRMEB [ CRMEB赋能开发者，助力企业发展 ]
+// +----------------------------------------------------------------------
+// | Copyright (c) 2016~2026 https://www.crmeb.com All rights reserved.
+// +----------------------------------------------------------------------
+// | Licensed CRMEB并不是自由软件，未经许可不能去掉CRMEB相关版权
+// +----------------------------------------------------------------------
+// | Author: CRMEB Team <admin@crmeb.com>
+// +----------------------------------------------------------------------
+
+namespace app\services\product\product;
+
+
+use app\dao\product\product\StoreProductDao;
+use app\Request;
+use app\services\BaseServices;
+use app\services\activity\coupon\StoreCouponIssueServices;
+use app\services\order\StoreCartServices;
+use app\services\order\StoreOrderServices;
+use app\services\other\QrcodeServices;
+use app\services\product\sku\StoreProductAttrResultServices;
+use app\services\product\sku\StoreProductAttrServices;
+use app\services\product\sku\StoreProductAttrValueServices;
+use app\services\product\sku\StoreProductRuleServices;
+use app\services\product\sku\StoreProductVirtualServices;
+use app\services\shipping\ShippingTemplatesServices;
+use app\services\system\SystemUserLevelServices;
+use app\services\user\UserLabelServices;
+use app\services\user\member\MemberCardServices;
+use app\services\user\UserLevelServices;
+use app\services\user\UserSearchServices;
+use app\services\user\UserServices;
+use crmeb\exceptions\AdminException;
+use app\jobs\ProductLogJob;
+use crmeb\exceptions\ApiException;
+use crmeb\services\GroupDataService;
+use think\facade\Config;
+
+/**
+ * Class StoreProductService
+ * @package app\services\product\product
+ * @method getOne(array $where) 获取一条数据
+ * @method update(int $id, array $data) 获取一条数据
+ * @method delete($id, ?string $key = null) 删除数据
+ * @method value($where, ?string $field = null) 获取字段
+ * @method incStockDecSales(array $where, int $num, string $stock = 'stock', string $sales = 'sales') 加库存减销量
+ * @method count(array $where) 获取指定条件下的数量
+ * @method getColumn(array $where, string $field, string $key = '') 获取某个字段数组
+ * @method getSearchList(array $where, int $page = 0, int $limit = 0, ?array $field = ['*']) 获取列表
+ * @method get(int $id, array $field) 获取一条数据
+ * @method getCid(int $page, int $limit) 获取一级分类ID
+ * @method downAdvance() 预售商品自动到期下架
+ */
+class StoreProductServices extends BaseServices
+{
+    /**
+     * @var StoreProductDao
+     */
+    protected $dao;
+
+    protected $productType = ['普通商品', '卡密商品', '优惠券商品', '虚拟商品'];
+
+    /**
+     * 商品有效期类型默认名称
+     * 0 = 长期有效商品；1 = 有限期商品
+     * @var array
+     */
+    protected $validityTypeNames = ['长期有效商品', '有限期商品'];
+
+
+    public function __construct(StoreProductDao $dao)
+    {
+        $this->dao = $dao;
+    }
+
+    /**
+     * 获取顶部标签
+     * @param array $where
+     * @return array[]
+     * @author: 吴汐
+     * @email: 442384644@qq.com
+     * @date: 2023/8/31
+     */
+    public function getHeader($where = [])
+    {
+        $where['cate_id'] = $where['cate_id'] != '' ? app()->make(StoreCategoryServices::class)->getColumn(['pid' => $where['cate_id']], 'id') : [];
+        //出售中的商品
+        $onsale = $this->dao->getCount($where + ['type' => 1]);
+        //仓库中的商品
+        $forsale = $this->dao->getCount($where + ['type' => 2]);
+        //已经售罄商品
+        $outofstock = $this->dao->getCount($where + ['type' => 4]);
+        //警戒库存商品
+        $policeforce = $this->dao->getCount($where + ['type' => 5, 'store_stock' => sys_config('store_stock') > 0 ? sys_config('store_stock') : 2]);
+        //回收站的商品
+        $recycle = $this->dao->getCount($where + ['type' => 6]);
+        return [
+            ['type' => 1, 'name' => '出售中的商品', 'count' => $onsale],
+            ['type' => 2, 'name' => '仓库中的商品', 'count' => $forsale],
+            ['type' => 4, 'name' => '已经售罄商品', 'count' => $outofstock],
+            ['type' => 5, 'name' => '警戒库存商品', 'count' => $policeforce],
+            ['type' => 6, 'name' => '回收站的商品', 'count' => $recycle]
+        ];
+    }
+
+    /**
+     * 获取列表
+     * @param array $where
+     * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @author 吴汐
+     * @email 442384644@qq.com
+     * @date 2023/02/17
+     */
+    public function getList(array $where)
+    {
+        $where['store_stock'] = sys_config('store_stock') > 0 ? sys_config('store_stock') : 2;
+        [$page, $limit] = $this->getPageValue();
+        $cateIds = [];
+        if (isset($where['cate_id']) && $where['cate_id']) {
+            /** @var StoreCategoryServices $storeCategory */
+            $storeCategory = app()->make(StoreCategoryServices::class);
+            $cateIds = $storeCategory->getColumn(['pid' => $where['cate_id']], 'id');
+        }
+        if ($cateIds) {
+            $cateIds[] = $where['cate_id'];
+            $where['cate_id'] = $cateIds;
+        }
+        $order_string = '';
+        $order_arr = ['asc', 'desc'];
+        if (isset($where['sales']) && in_array($where['sales'], $order_arr)) {
+            $order_string = 'sales ' . $where['sales'];
+        }
+        unset($where['sales']);
+        $list = $this->dao->getList($where, $page, $limit, $order_string);
+        $cateIds = implode(',', array_column($list, 'cate_id'));
+        /** @var StoreCategoryServices $categoryService */
+        $categoryService = app()->make(StoreCategoryServices::class);
+        $cateList = $categoryService->getCateParentAndChildName($cateIds);
+        $oneCateList = $categoryService->getColumn(['pid' => 0], 'id');
+        $parentCateList = $categoryService->getColumn([
+            ['id', 'in', $cateIds]
+        ], 'cate_name', 'id');
+        $activityExist = $this->getActivityExist(array_column($list, 'id'));
+        $proIds = array_column(array_filter($list, function ($item) {
+            return $item['spec_type'] == 0;
+        }), 'id', 'id');
+        /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
+        $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
+        $attrValueList = $storeProductAttrValueServices->getSkuArray(['product_id' => $proIds, 'type' => 0], 'unique,cost,price,ot_price,stock,product_id', 'product_id');
+        foreach ($list as &$item) {
+            if ($item['spec_type'] == 0) {
+                $item['attr_value'] = $attrValueList[$item['id']] ?? [];
+            }
+            $cateName = array_filter($cateList, function ($val) use ($item) {
+                if (in_array($val['id'], explode(',', $item['cate_id']))) {
+                    return $val;
+                }
+            });
+            $item['cate_name'] = [];
+            foreach ($cateName as $k => $v) {
+                $item['cate_name'][] = $v['one'] . '/' . $v['two'];
+            }
+            foreach (explode(',', $item['cate_id']) as $cate_value) {
+                if (in_array($cate_value, $oneCateList)) $item['cate_name'][] = $parentCateList[$cate_value];
+            }
+            $item['cate_name'] = is_array($item['cate_name']) ? implode(',', $item['cate_name']) : '';
+            $item['stock_attr'] = $item['stock'] > 0; //库存
+            $item['product_type'] = $this->productType[$item['virtual_type']];
+            $item['image'] = set_file_url($item['image']);
+            $item['slider_image'] = set_file_url($item['slider_image']);
+            $item['activityExist'] = $activityExist[$item['id']];
+        }
+        $count = $this->dao->count($where);
+        return compact('list', 'count');
+    }
+
+    public function getActivityExist($productIds)
+    {
+        $activityExist = [];
+        foreach ($productIds as $productId) {
+            $activityExist[$productId] = [
+                'seckill' => false,
+                'bargain' => false,
+                'combination' => false,
+            ];
+        }
+        return $activityExist;
+    }
+
+    /**
+     * 设置商品上下架
+     * @param $ids
+     * @param $is_show
+     */
+    public function setShow(array $ids, int $is_show)
+    {
+        if (empty($ids)) throw new AdminException('参数错误');
+//        if ($is_show == 0) {
+//            //下架检测是否有参与活动商品
+//            $this->checkActivity($ids);
+//        }
+        /** @var StoreCartServices $cartService */
+        $cartService = app()->make(StoreCartServices::class);
+        foreach ($ids as $id) {
+            $cartService->changeStatus($id, $is_show);
+        }
+        $res = $this->dao->batchUpdate($ids, ['is_show' => $is_show]);
+        /** @var StoreProductCateServices $storeProductCateServices */
+        $storeProductCateServices = app()->make(StoreProductCateServices::class);
+        $storeProductCateServices->batchUpdate($ids, ['status' => $is_show], 'product_id');
+        return true;
+    }
+
+    /**
+     * 获取规格模板
+     * @return array
+     */
+    public function getRule()
+    {
+        /** @var StoreProductRuleServices $storeProductRuleServices */
+        $storeProductRuleServices = app()->make(StoreProductRuleServices::class);
+        $list = $storeProductRuleServices->getList()['list'];
+        foreach ($list as &$item) {
+            $item['rule_value'] = json_decode($item['rule_value'], true);
+            foreach ($item['rule_value'] as $ruleKey => $ruleItem) {
+                foreach ($ruleItem['detail'] as $valueKey => $valueItem) {
+                    if (is_string($valueItem)) {
+                        $item['rule_value'][$ruleKey]['detail'][$valueKey] = ['value' => $valueItem, 'pic' => ''];
+                        $item['rule_value'][$ruleKey]['add_pic'] = 0;
+                    }
+                }
+            }
+        }
+        return $list;
+    }
+
+    /**
+     * 获取商品详情
+     * @param int $id
+     * @return array|\think\Model|null
+     */
+    public function getInfo(int $id)
+    {
+        /** @var StoreCategoryServices $storeCatecoryService */
+        $storeCatecoryService = app()->make(StoreCategoryServices::class);
+        /** @var StoreDescriptionServices $storeDescriptionServices */
+        $storeDescriptionServices = app()->make(StoreDescriptionServices::class);
+        /** @var StoreProductAttrResultServices $storeProductAttrResultServices */
+        $storeProductAttrResultServices = app()->make(StoreProductAttrResultServices::class);
+        /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
+        $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
+        /** @var StoreProductCouponServices $storeProductCouponServices */
+        $storeProductCouponServices = app()->make(StoreProductCouponServices::class);
+        /** @var StoreCouponIssueServices $storeCouponIssueServices */
+        $storeCouponIssueServices = app()->make(StoreCouponIssueServices::class);
+        /** @var UserLabelServices $userLabelServices */
+        $userLabelServices = app()->make(UserLabelServices::class);
+        $data['tempList'] = $this->getTemp();
+        $menus = [];
+        foreach ($storeCatecoryService->getTierList(1) as $menu) {
+            $menus[] = ['value' => $menu['id'], 'label' => $menu['html'] . $menu['cate_name'], 'disabled' => $menu['pid'] == 0 ? 0 : 1]; //,'disabled'=>$menu['pid']== 0];
+        }
+        $data['cateList'] = $menus;
+        $productInfo = $this->dao->getInfo($id);
+        if ($productInfo) $productInfo = $productInfo->toArray();
+        else throw new AdminException('商品不存在');
+        $couponIds = array_column($productInfo['coupons'], 'issue_coupon_id');
+        $is_sub = $recommend = [];
+        if ($productInfo['is_sub'] == 1) array_push($is_sub, 1);
+        if ($productInfo['is_vip'] == 1) array_push($is_sub, 0);
+        if ($productInfo['is_hot'] == 1) array_push($recommend, 'is_hot');
+        if ($productInfo['is_benefit'] == 1) array_push($recommend, 'is_benefit');
+        if ($productInfo['is_new'] == 1) array_push($recommend, 'is_new');
+        if ($productInfo['is_good'] == 1) array_push($recommend, 'is_good');
+        if ($productInfo['is_best'] == 1) array_push($recommend, 'is_best');
+        if (isset($productInfo['logistics']) && $productInfo['logistics'] != '') $productInfo['logistics'] = explode(',', $productInfo['logistics']);
+        $productInfo['is_sub'] = $is_sub;
+        $productInfo['recommend'] = $recommend;
+        $recommend_list = [];
+        if ($productInfo['recommend_list'] != '') {
+            $productInfo['recommend_list'] = explode(',', $productInfo['recommend_list']);
+            if (count($productInfo['recommend_list'])) {
+                $images = $this->getColumn([['id', 'in', $productInfo['recommend_list']]], 'image', 'id');
+                foreach ($productInfo['recommend_list'] as $item) {
+                    $recommend_list[] = [
+                        'product_id' => $item,
+                        'image' => $images[$item]
+                    ];
+                }
+            }
+        }
+        $productInfo['video_open'] = $productInfo['video_link'] != '' ? 1 : 0;
+        if (!empty($productInfo['video_link']) && (strpos($productInfo['video_link'], 'http') !== false)) {
+            $productInfo['seletVideo'] = 1;
+        } else {
+            $productInfo['seletVideo'] = 0;
+        }
+        $productInfo['video_link'] = empty($productInfo['video_link']) ? '' : (strpos($productInfo['video_link'], 'http') === false ? sys_config('site_url') . $productInfo['video_link'] : $productInfo['video_link']);
+        $productInfo['recommend_list'] = $recommend_list;
+        $productInfo['coupons'] = $storeCouponIssueServices->productCouponList([['id', 'in', $couponIds]], 'title,id');
+        $productInfo['cate_id'] = explode(',', $productInfo['cate_id']);
+        $label_id = explode(',', $productInfo['label_id']);
+        $productInfo['label_id'] = $userLabelServices->getLabelList(['ids' => $label_id], ['id', 'label_name']);
+        $productInfo['give_integral'] = floatval($productInfo['give_integral']);
+        $productInfo['presale_time'] = $productInfo['presale_start_time'] == 0 ? [] : [date('Y-m-d H:i:s', $productInfo['presale_start_time']), date('Y-m-d H:i:s', $productInfo['presale_end_time'])];
+        //有效期：保留原始可编辑字段，并补充日期选择器所需的格式化到期日
+        $productInfo['validity_type'] = (int)($productInfo['validity_type'] ?? 0);
+        $productInfo['expire_mode'] = (int)($productInfo['expire_mode'] ?? 0);
+        $productInfo['valid_days'] = (int)($productInfo['valid_days'] ?? 0);
+        $productInfo['valid_end_date'] = !empty($productInfo['valid_end_time']) ? date('Y-m-d H:i:s', (int)$productInfo['valid_end_time']) : '';
+        $productInfo['description'] = $storeDescriptionServices->getDescription(['product_id' => $id, 'type' => 0]);
+        $productInfo['custom_form'] = json_decode($productInfo['custom_form'], true);
+        $productInfo['params_list'] = json_decode($productInfo['params_list'], true) ?? [];
+        $productInfo['label_list'] = $productInfo['label_list'] != '' ? array_map('intval', explode(',', $productInfo['label_list'])) : [];
+        $productInfo['protection_list'] = $productInfo['protection_list'] != '' ? array_map('intval', explode(',', $productInfo['protection_list'])) : [];
+        /** @var StoreProductAttrServices $storeProductAttrServices */
+        $storeProductAttrServices = app()->make(StoreProductAttrServices::class);
+        //无属性添加默认属性
+        if (!$storeProductAttrResultServices->getResult(['product_id' => $id, 'type' => 0])) {
+            $attr = [
+                [
+                    'value' => '规格',
+                    'detailValue' => '',
+                    'attrHidden' => '',
+                    'detail' => ['默认']
+                ]
+            ];
+            $detail[0] = [
+                'attr_arr' => ['默认'],
+                'value1' => '默认',
+                'detail' => ['规格' => '默认'],
+                'pic' => $productInfo['image'],
+                'price' => $productInfo['price'],
+                'cost' => $productInfo['cost'],
+                'ot_price' => $productInfo['ot_price'],
+                'stock' => $productInfo['stock'],
+                'bar_code' => '',
+                'bar_code_number' => '',
+                'weight' => 0,
+                'volume' => 0,
+                'brokerage' => 0,
+                'brokerage_two' => 0,
+            ];
+            $skuList = $this->validateProductAttr($attr, $detail, $id, 0, 1, true);
+            $storeProductAttrServices->saveProductAttr($skuList, $id, 0);
+            $this->dao->update($id, ['spec_type' => 0]);
+        }
+        if ($productInfo['spec_type'] == 1) {
+            $result = $storeProductAttrResultServices->getResult(['product_id' => $id, 'type' => 0]);
+            $attrInfo = $storeProductAttrValueServices->getColumn(['product_id' => $id, 'type' => 0]);
+            foreach ($result['value'] as $k => $v) {
+                if (!isset($v['is_show'])) {
+                    $result['value'][$k]['is_show'] = 1;
+                }
+                $num = 1;
+                foreach ($v['detail'] as $dv) {
+                    $result['value'][$k]['value' . $num] = $dv;
+                    $num++;
+                }
+                if (!isset($v['attr_arr'])) {
+                    $result['value'][$k]['attr_arr'] = array_values($v['detail']);
+                    foreach ($v['detail'] as $detailKey => $detailValue) {
+                        $result['value'][$k][$detailKey] = $detailValue;
+                    }
+                }
+                foreach ($attrInfo as $attrKey => $attrItem) {
+                    if (implode(',', $result['value'][$k]['attr_arr']) == $attrKey) {
+                        $result['value'][$k]['unique'] = $attrItem['unique'];
+                        $result['value'][$k]['stock'] = $attrItem['stock'];
+                        $result['value'][$k]['price'] = $attrItem['price'];
+                        $result['value'][$k]['cost'] = $attrItem['cost'];
+                        $result['value'][$k]['ot_price'] = $attrItem['ot_price'];
+                    }
+                }
+            }
+            foreach ($result['attr'] as $attrKey => $attrItem) {
+                foreach ($attrItem['detail'] as $valueKey => $valueItem) {
+                    if (is_string($valueItem)) {
+                        $result['attr'][$attrKey]['detail'][$valueKey] = ['value' => $valueItem, 'pic' => ''];
+                        $result['attr'][$attrKey]['add_pic'] = 0;
+                    }
+                }
+            }
+            $productInfo['items'] = $result['attr'];
+            $productInfo['attrs'] = $result['value'];
+            $productInfo['attr'] = ['pic' => '', 'vip_price' => 0, 'price' => 0, 'cost' => 0, 'ot_price' => 0, 'stock' => 0, 'bar_code' => '', 'bar_code_number' => '', 'weight' => 0, 'volume' => 0, 'brokerage' => 0, 'brokerage_two' => 0];
+        } else {
+            /** @var StoreProductVirtualServices $virtualService */
+            $virtualService = app()->make(StoreProductVirtualServices::class);
+            $result = $storeProductAttrValueServices->getOne(['product_id' => $id, 'type' => 0]);
+            $productInfo['items'] = [];
+            $productInfo['attrs'] = [];
+            $productInfo['attr'] = [
+                'pic' => $result['image'] ?? '',
+                'vip_price' => $result['vip_price'] ? floatval($result['vip_price']) : 0,
+                'price' => $result['price'] ? floatval($result['price']) : 0,
+                'cost' => $result['cost'] ? floatval($result['cost']) : 0,
+                'ot_price' => $result['ot_price'] ? floatval($result['ot_price']) : 0,
+                'stock' => $result['stock'] ? floatval($result['stock']) : 0,
+                'bar_code' => $result['bar_code'] ?? '',
+                'bar_code_number' => $result['bar_code_number'] ?? '',
+                'virtual_list' => $virtualService->getArr($result['unique'], $id),
+                'weight' => $result['weight'] ? floatval($result['weight']) : 0,
+                'volume' => $result['volume'] ? floatval($result['volume']) : 0,
+                'brokerage' => $result['brokerage'] ? floatval($result['brokerage']) : 0,
+                'brokerage_two' => $result['brokerage_two'] ? floatval($result['brokerage_two']) : 0,
+                'coupon_id' => $result['coupon_id'],
+                'coupon_name' => $storeCouponIssueServices->value(['id' => $result['coupon_id']], 'title'),
+                'disk_info' => $result['disk_info'],
+                'unique' => $result['unique'],
+            ];
+        }
+        if ($productInfo['activity']) {
+            $activity = explode(',', $productInfo['activity']);
+            foreach ($activity as $k => $v) {
+                if ($v == 1) {
+                    $activity[$k] = '秒杀';
+                } elseif ($v == 2) {
+                    $activity[$k] = '砍价';
+                } elseif ($v == 3) {
+                    $activity[$k] = '拼团';
+                } elseif ($v == 0) {
+                    $activity[$k] = '默认';
+                }
+            }
+            $productInfo['activity'] = $activity;
+        } else {
+            $productInfo['activity'] = ['默认', '秒杀', '砍价', '拼团'];
+        }
+        $data['productInfo'] = $productInfo;
+        return $data;
+    }
+
+    /**
+     * 获取运费模板列表
+     * @return array
+     */
+    public function getTemp()
+    {
+        /** @var ShippingTemplatesServices $shippingTemplatesServices */
+        $shippingTemplatesServices = app()->make(ShippingTemplatesServices::class);
+        return $shippingTemplatesServices->getSelectList();
+    }
+
+    /**
+     * 获取商品规格
+     * @param array $data
+     * @param int $id
+     * @param int $type
+     * @return array
+     */
+    public function getAttr(array $data, int $id, int $type)
+    {
+        $this->applyCoreProductDefaults($data);
+        /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
+        $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
+        /** @var StoreProductVirtualServices $virtualService */
+        $virtualService = app()->make(StoreProductVirtualServices::class);
+        /** @var StoreCouponIssueServices $storeCouponIssueServices */
+        $storeCouponIssueServices = app()->make(StoreCouponIssueServices::class);
+        $attr = $data['attrs'];
+        $is_virtual = $data['is_virtual']; //是否虚拟商品
+        $virtual_type = $data['virtual_type']; //虚拟商品类型
+        $attr = array_merge($attr);
+        list($value, $head) = attr_format($attr);
+        $valueNew = [];
+        $count = 0;
+
+        foreach ($value as $suk) {
+            $detail = explode(',', $suk);
+
+            $types = 1;
+            if ($id) {
+                $sukValue = $storeProductAttrValueServices->getColumn(['product_id' => $id, 'type' => 0, 'suk' => $suk], 'bar_code,bar_code_number,cost,price,ot_price,stock,image as pic,weight,volume,brokerage,brokerage_two,vip_price,is_virtual,coupon_id,unique,disk_info', 'suk');
+                if (!$sukValue) {
+                    if ($type == 0) $types = 0; //编辑商品时，将没有规格的数据不生成默认值
+                    $sukValue[$suk]['pic'] = '';
+                    $sukValue[$suk]['price'] = 0;
+                    $sukValue[$suk]['cost'] = 0;
+                    $sukValue[$suk]['ot_price'] = 0;
+                    $sukValue[$suk]['stock'] = 0;
+                    $sukValue[$suk]['bar_code'] = '';
+                    $sukValue[$suk]['bar_code_number'] = '';
+                    if ($is_virtual) {
+                        if ($virtual_type == 1) {
+                            $sukValue[$suk]['virtual_list'] = [];
+                        } elseif ($virtual_type == 2) {
+                            $sukValue[$suk]['coupon_id'] = 0;
+                        }
+                    }
+                    $sukValue[$suk]['weight'] = 0;
+                    $sukValue[$suk]['volume'] = 0;
+                    $sukValue[$suk]['brokerage'] = 0;
+                    $sukValue[$suk]['brokerage_two'] = 0;
+                }
+            } else {
+                $sukValue[$suk]['pic'] = '';
+                $sukValue[$suk]['price'] = 0;
+                $sukValue[$suk]['cost'] = 0;
+                $sukValue[$suk]['ot_price'] = 0;
+                $sukValue[$suk]['stock'] = 0;
+                $sukValue[$suk]['bar_code'] = '';
+                $sukValue[$suk]['bar_code_number'] = '';
+                if ($is_virtual) {
+                    if ($virtual_type == 1) {
+                        $sukValue[$suk]['virtual_list'] = [];
+                    } elseif ($virtual_type == 2) {
+                        $sukValue[$suk]['coupon_id'] = 0;
+                    }
+                }
+                $sukValue[$suk]['weight'] = 0;
+                $sukValue[$suk]['volume'] = 0;
+                $sukValue[$suk]['brokerage'] = 0;
+                $sukValue[$suk]['brokerage_two'] = 0;
+            }
+            if ($types) { //编辑商品时，将没有规格的数据不生成默认值
+                foreach ($head as $k => $title) {
+                    $header[$k]['title'] = $title;
+                    $header[$k]['align'] = 'center';
+                    $header[$k]['minWidth'] = 130;
+                }
+                foreach ($detail as $k => $v) {
+                    $valueNew[$count]['value' . ($k + 1)] = $v;
+                    $header[$k]['key'] = 'value' . ($k + 1);
+                }
+                $valueNew[$count]['detail'] = array_combine($head, $detail);
+                $valueNew[$count]['pic'] = $sukValue[$suk]['pic'] ?? '';
+                $valueNew[$count]['price'] = $sukValue[$suk]['price'] ? floatval($sukValue[$suk]['price']) : 0;
+                $valueNew[$count]['cost'] = $sukValue[$suk]['cost'] ? floatval($sukValue[$suk]['cost']) : 0;
+                $valueNew[$count]['ot_price'] = isset($sukValue[$suk]['ot_price']) ? floatval($sukValue[$suk]['ot_price']) : 0;
+                $valueNew[$count]['vip_price'] = isset($sukValue[$suk]['vip_price']) ? floatval($sukValue[$suk]['vip_price']) : 0;
+                $valueNew[$count]['stock'] = $sukValue[$suk]['stock'] ? intval($sukValue[$suk]['stock']) : 0;
+                $valueNew[$count]['bar_code'] = $sukValue[$suk]['bar_code'] ?? '';
+                $valueNew[$count]['bar_code_number'] = $sukValue[$suk]['bar_code_number'] ?? '';
+                if ($is_virtual) {
+                    if ($virtual_type == 1) {
+                        if (!$type) {
+                            $valueNew[$count]['virtual_list'] = $virtualService->getArr($sukValue[$suk]['unique'], $id);
+                            $valueNew[$count]['disk_info'] = $sukValue[$suk]['disk_info'] ?? '';
+                        }
+                    } elseif ($virtual_type == 2) {
+                        $valueNew[$count]['coupon_id'] = $sukValue[$suk]['coupon_id'] ?? '';
+                        $valueNew[$count]['coupon_name'] = $storeCouponIssueServices->value(['id' => $sukValue[$suk]['coupon_id']], 'title');
+                    }
+                }
+                $valueNew[$count]['weight'] = floatval($sukValue[$suk]['weight']) ?? 0;
+                $valueNew[$count]['volume'] = floatval($sukValue[$suk]['volume']) ?? 0;
+                $valueNew[$count]['brokerage'] = floatval($sukValue[$suk]['brokerage']) ?? 0;
+                $valueNew[$count]['brokerage_two'] = floatval($sukValue[$suk]['brokerage_two']) ?? 0;
+                $count++;
+            }
+        }
+        $header[] = ['title' => '图片', 'slot' => 'pic', 'align' => 'center', 'minWidth' => 80];
+        $header[] = ['title' => '售价', 'slot' => 'price', 'align' => 'center', 'minWidth' => 120];
+        $header[] = ['title' => '成本价', 'slot' => 'cost', 'align' => 'center', 'minWidth' => 140];
+        $header[] = ['title' => '划线价', 'slot' => 'ot_price', 'align' => 'center', 'minWidth' => 140];
+        $header[] = ['title' => '库存', 'slot' => 'stock', 'align' => 'center', 'minWidth' => 140];
+        $header[] = ['title' => '商品编码', 'slot' => 'bar_code', 'align' => 'center', 'minWidth' => 140];
+        $header[] = ['title' => '条形码', 'slot' => 'bar_code_number', 'align' => 'center', 'minWidth' => 140];
+        if ($is_virtual) {
+            if ($virtual_type == 1) {
+                $header[] = ['title' => '虚拟商品', 'slot' => 'fictitious', 'align' => 'center', 'minWidth' => 140];
+            } elseif ($virtual_type == 2) {
+                $header[] = ['title' => '虚拟商品', 'slot' => 'fictitious', 'align' => 'center', 'minWidth' => 140];
+            }
+        } else {
+            $header[] = ['title' => '重量(KG)', 'slot' => 'weight', 'align' => 'center', 'minWidth' => 140];
+            $header[] = ['title' => '体积(m³)', 'slot' => 'volume', 'align' => 'center', 'minWidth' => 140];
+        }
+        $header[] = ['title' => '操作', 'slot' => 'action', 'align' => 'center', 'minWidth' => 70];
+        return ['attr' => $attr, 'value' => $valueNew, 'header' => $header];
+    }
+
+    /**
+     * SPU
+     * @return string
+     */
+    public function createSpu()
+    {
+        return substr(implode(NULL, array_map('ord', str_split(substr(uniqid(), 7, 13), 1))), 0, 8) . str_pad((string)mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * 新增编辑商品
+     * @param int $id
+     * @param array $data
+     */
+    public function save(int $id, array $data)
+    {
+        if (count($data['cate_id']) < 1) throw new AdminException('请选择商品分类');
+        if (!$data['store_name']) throw new AdminException('请输入商品名称');
+        if (count($data['slider_image']) < 1) throw new AdminException('请选择商品轮播图');
+        if ($data['is_limit'] == 1 && $data['min_qty'] > $data['limit_num']) throw new AdminException('起购数量不能大于限购数量');
+
+        $this->applyCoreProductDefaults($data);
+        $this->normalizeValidity($data);
+        $detail = $data['attrs'];
+        $attr = $data['items'];
+        $cate_id = $data['cate_id'];
+        $coupon_ids = $data['coupon_ids'];
+        $description = $data['description'];
+        $type = $data['type'];
+        if ((int)$type === -1) {
+            $type = 0;
+            $data['is_copy'] = 0;
+        }
+        $data['recommend_list'] = count($data['recommend_list']) ? implode(',', array_column($data['recommend_list'], 'product_id')) : '';
+        $data['is_vip'] = in_array(0, $data['is_sub']) ? 1 : 0;
+        $data['is_sub'] = in_array(1, $data['is_sub']) ? 1 : 0;
+        $data['vip_product'] = intval($data['vip_product']);
+        $data['vip_product_type'] = intval($data['vip_product_type'] ?? 0);
+        $data['presale'] = intval($data['presale']);
+        $data['presale_start_time'] = $data['presale'] ? strtotime($data['presale_time'][0]) : 0;
+        $data['presale_end_time'] = $data['presale'] ? strtotime($data['presale_time'][1]) : 0;
+        $data['is_limit'] = intval($data['is_limit']);
+        if (!$data['is_limit']) {
+            $data['limit_type'] = 0;
+            $data['limit_num'] = 0;
+        } else {
+            if (!in_array($data['limit_type'], [1, 2])) throw new AdminException('请选择限购类型');
+            if ($data['limit_num'] <= 0) throw new AdminException('限购数量不能小于1');
+        }
+        $data['is_virtual'] = in_array($data['virtual_type'], [1, 2]) > 0 ? 1 : 0;
+        $data['logistics'] = implode(',', $data['logistics']);
+        $data['custom_form'] = json_encode($data['custom_form']);
+        $data['params_list'] = json_encode($data['params_list']);
+        $data['label_list'] = implode(',', $data['label_list']);
+        $data['protection_list'] = implode(',', $data['protection_list']);
+        if ($data['freight'] == 2) {
+            $data['temp_id'] = 0;
+        } elseif ($data['freight'] == 3) {
+            $data['postage'] = 0;
+        }
+        $data['is_hot'] = $data['is_benefit'] = $data['is_new'] = $data['is_good'] = $data['is_best'] = 0;
+        foreach ($data['recommend'] as $item) {
+            $data[$item] = 1;
+        }
+        foreach ($detail as &$item) {
+            if ($data['is_sub'] == 0) {
+                $item['brokerage'] = 0;
+                $item['brokerage_two'] = 0;
+            }
+            if (($item['brokerage'] + $item['brokerage_two']) > $item['price']) {
+                throw new AdminException('一二级返佣相加不能大于商品售价');
+            }
+            if (isset($item['detail'])) {
+                foreach ($item['detail'] as $detail_k => $detail_v) {
+                    if (preg_match('/[=;]/', $detail_k) === 1 || preg_match('/[=;]/', $detail_v) === 1) {
+                        throw new AdminException('规格以及规格值中不能包含=或;符号');
+                    }
+                }
+            }
+        }
+        foreach ($data['activity'] as $k => $v) {
+            if ($v == '秒杀') {
+                $data['activity'][$k] = 1;
+            } elseif ($v == '砍价') {
+                $data['activity'][$k] = 2;
+            } elseif ($v == '拼团') {
+                $data['activity'][$k] = 3;
+            } else {
+                $data['activity'][$k] = 0;
+            }
+        }
+
+        if ($data['spec_type'] == 1) {
+            $defaultItems = array_filter($detail, function ($item) {
+                return $item['is_default_select'] === 1;
+            });
+            if (!empty($defaultItems)) {
+                $defaultItem = reset($defaultItems);
+                $data['price'] = $defaultItem['price'];
+                $data['ot_price'] = $defaultItem['ot_price'];
+                $data['cost'] = $defaultItem['cost'] ?? 0;
+            } else {
+                $filtered = array_filter($detail, function ($item) {
+                    return $item['is_show'] == 1;
+                });
+                $data['price'] = min(array_column($filtered, 'price'));
+                $data['ot_price'] = min(array_column($filtered, 'ot_price'));
+                $data['cost'] = isset($data['cost']) ? min(array_column($filtered, 'cost')) : 0;
+                if (!$data['cost']) {
+                    $data['cost'] = 0;
+                }
+            }
+        } else {
+            $data['price'] = min(array_column($detail, 'price'));
+            $data['ot_price'] = min(array_column($detail, 'ot_price'));
+            $data['cost'] = isset($data['cost']) ? min(array_column($detail, 'cost')) : 0;
+            if (!$data['cost']) {
+                $data['cost'] = 0;
+            }
+        }
+
+        $data['activity'] = implode(',', $data['activity']);
+        $data['cate_id'] = implode(',', $data['cate_id']);
+        $data['label_id'] = implode(',', $data['label_id']);
+        $data['image'] = $data['slider_image'][0];
+        $data['slider_image'] = json_encode($data['slider_image']);
+        $data['stock'] = array_sum(array_column($detail, 'stock'));
+        unset($data['description'], $data['coupon_ids'], $data['items'], $data['attrs'], $data['type']);
+        /** @var StoreDescriptionServices $storeDescriptionServices */
+        $storeDescriptionServices = app()->make(StoreDescriptionServices::class);
+        /** @var StoreProductCateServices $storeProductCateServices */
+        $storeProductCateServices = app()->make(StoreProductCateServices::class);
+        /** @var StoreProductAttrServices $storeProductAttrServices */
+        $storeProductAttrServices = app()->make(StoreProductAttrServices::class);
+        /** @var StoreProductCouponServices $storeProductCouponServices */
+        $storeProductCouponServices = app()->make(StoreProductCouponServices::class);
+        /** @var StoreCategoryServices $storeCategoryServices */
+        $storeCategoryServices = app()->make(StoreCategoryServices::class);
+        unset($data['is_copy']);
+        $this->transaction(function () use ($id, $data, $description, $cate_id, $storeDescriptionServices, $storeProductCateServices, $storeProductAttrServices, $storeProductCouponServices, $storeCategoryServices, $detail, $attr, $coupon_ids) {
+            if ($data['spec_type'] == 0) {
+                $attr = [
+                    [
+                        'value' => '规格',
+                        'detailValue' => '',
+                        'attrHidden' => '',
+                        'detail' => ['默认']
+                    ]
+                ];
+                $detail[0]['value1'] = '规格';
+                $detail[0]['detail'] = ['规格' => '默认'];
+                $data['default_sku'] = '';
+            }
+            foreach ($detail as &$item) {
+                $item['is_virtual'] = $data['is_virtual'];
+                if ($data['spec_type'] == 1) {
+                    if ($item['is_default_select'] == 1) {
+                        $data['default_sku'] = implode(",", $item['attr_arr']);
+                    }
+                }
+            }
+            if ($id) {
+                $oldInfo = $this->get($id)->toArray();
+                if ($oldInfo['virtual_type'] != $data['virtual_type']) {
+                    throw new AdminException('商品类型不能切换');
+                }
+                unset($data['sales']);
+                $this->dao->update($id, $data);
+                $storeDescriptionServices->saveDescription($id, $description);
+                $cateData = [];
+                $time = time();
+                $cateGory = $storeCategoryServices->getColumn([['id', 'IN', $cate_id]], 'id,pid', 'id');
+                foreach ($cate_id as $cid) {
+                    if ($cid && isset($cateGory[$cid]['pid'])) {
+                        $cateData[] = ['product_id' => $id, 'cate_id' => $cid, 'cate_pid' => $cateGory[$cid]['pid'] ?: $cid, 'status' => $data['is_show'], 'add_time' => $time];
+                    }
+                }
+                $storeProductCateServices->change($id, $cateData);
+                $skuList = $this->validateProductAttr($attr, $detail, $id);
+                $attrRes = $storeProductAttrServices->saveProductAttr($skuList, $id, 0, $data['is_vip'], $data['virtual_type']);
+                if (!empty($coupon_ids)) {
+                    $storeProductCouponServices->setCoupon($id, $coupon_ids);
+                } else {
+                    $storeProductCouponServices->delete(['product_id' => $id]);
+                }
+                if (!$attrRes) throw new AdminException('添加失败');
+            } else {
+                $data['add_time'] = time();
+                $data['code_path'] = '';
+                $data['spu'] = $this->createSpu();
+                $res = $this->dao->save($data);
+                $storeDescriptionServices->saveDescription($res->id, $description);
+                $cateData = [];
+                $time = time();
+                $cateGory = $storeCategoryServices->getColumn([['id', 'IN', $cate_id]], 'id,pid', 'id');
+                foreach ($cate_id as $cid) {
+                    if ($cid && isset($cateGory[$cid]['pid'])) {
+                        $cateData[] = ['product_id' => $res->id, 'cate_id' => $cid, 'cate_pid' => $cateGory[$cid]['pid'], 'status' => $data['is_show'], 'add_time' => $time];
+                    }
+                }
+                $storeProductCateServices->change($res->id, $cateData);
+                $skuList = $this->validateProductAttr($attr, $detail, $res->id, 0, 1, true);
+                $attrRes = $storeProductAttrServices->saveProductAttr($skuList, $res->id, 0, $data['is_vip'], $data['virtual_type']);
+                if (!empty($coupon_ids)) $storeProductCouponServices->setCoupon($res->id, $coupon_ids);
+                if (!$attrRes) throw new AdminException('添加失败');
+
+            }
+        });
+    }
+
+    /**
+     * 添加商品属性数据判断
+     * @param array $attrList
+     * @param array $valueList
+     * @param int $productId
+     * @param int $type
+     * @param int $validate
+     * @param bool $isNew
+     * @return array
+     */
+    public function validateProductAttr(array $attrList, array $valueList, int $productId, $type = 0, int $validate = 1, bool $isNew = false)
+    {
+        $result = ['attr' => $attrList, 'value' => $valueList];
+        $attrValueList = [];
+        $attrNameList = [];
+        foreach ($attrList as $index => $attr) {
+            if (!isset($attr['value'])) {
+                throw new AdminException('请输入规则名称');
+            }
+            $attr['value'] = trim($attr['value']);
+            if (!isset($attr['value'])) {
+                throw new AdminException('请输入规则名称');
+            }
+            if (!isset($attr['detail']) || !count($attr['detail'])) {
+                throw new AdminException('请输入属性名称');
+            }
+            foreach ($attr['detail'] as $k => $attrValue) {
+                if (is_string($attrValue)) {
+                    $attrValueTemp = $attrValue;
+                    $attrValue = [];
+                    $attrValue['value'] = $attrValueTemp;
+                    $attrValue['pic'] = '';
+                } else {
+                    $attrValue['value'] = trim($attrValue['value']);
+                    $attrValue['pic'] = isset($attr['add_pic']) ? $attr['add_pic'] == 1 ? trim($attrValue['pic']) : '' : '';
+                }
+                if (empty($attrValue['value'])) {
+                    throw new AdminException('请输入正确的属性');
+                }
+                $attr['detail'][$k] = $attrValue;
+                $attrValueList[] = $attrValue;
+            }
+            $attrNameList[] = $attr['value'];
+            $attrList[$index] = $attr;
+        }
+        $attrCount = count($attrList);
+        foreach ($valueList as $index => $value) {
+            if (!isset($value['detail']) || count($value['detail']) != $attrCount) {
+                throw new AdminException('请填写正确的商品信息');
+            }
+            if (!isset($value['price']) || !is_numeric($value['price']) || floatval($value['price']) != $value['price']) {
+                throw new AdminException('请填写正确的商品价格');
+            }
+            if ($validate && (!isset($value['stock']) || !is_numeric($value['stock']) || intval($value['stock']) != $value['stock'])) {
+                throw new AdminException('请填写正确的商品库存');
+            }
+            if (!isset($value['cost']) || !is_numeric($value['cost']) || floatval($value['cost']) != $value['cost']) {
+                throw new AdminException('请填写正确的商品成本价格');
+            }
+            if ($validate && (!isset($value['pic']) || empty($value['pic']))) {
+                throw new AdminException('请设置规格图片');
+            }
+            foreach ($value['detail'] as $attrName => $attrValue) {
+                //如果attrName 存在空格 则这个规格key 会出现两次
+                unset($valueList[$index]['detail'][$attrName]);
+                $attrName = trim($attrName);
+                $attrValue = trim($attrValue);
+                if (!in_array($attrName, $attrNameList, true)) {
+                    throw new AdminException('{:name}规格不存在', ['name' => $attrName]);
+                }
+                if (!in_array($attrValue, array_column($attrValueList, 'value'), true)) {
+                    throw new AdminException('{:name}属性不存在', ['name' => $attrValue]);
+                }
+                if (empty($attrName)) {
+                    throw new AdminException('请输入正确的属性');
+                }
+                $valueList[$index]['detail'][$attrName] = $attrValue;
+            }
+        }
+        $attrGroup = [];
+        $valueGroup = [];
+        foreach ($attrList as $k => $value) {
+            $attrGroup[] = [
+                'product_id' => $productId,
+                'attr_name' => $value['value'],
+                'attr_values' => $value['detail'],
+                'type' => $type
+            ];
+        }
+        /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
+        $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
+        $skuArray = $storeProductAttrValueServices->getColumn(['product_id' => $productId, 'type' => $type], 'unique', 'suk');
+        foreach ($valueList as $k => $value) {
+            $sku = implode(',', array_map(function ($key) use ($value) {
+                return $value['detail'][$key];
+            }, array_column($attrList, 'value')));
+            $skuValue = [
+                'product_id' => $productId,
+                'suk' => $sku,
+                'price' => $value['price'],
+                'cost' => $value['cost'],
+                'ot_price' => $value['ot_price'],
+                'unique' => $isNew ? '' : $value['unique'] ?? '',
+                'image' => $value['pic'],
+                'bar_code' => $value['bar_code'] ?? '',
+                'bar_code_number' => $value['bar_code_number'] ?? '',
+                'weight' => $value['weight'] ?? 0,
+                'volume' => $value['volume'] ?? 0,
+                'brokerage' => $value['brokerage'] ?? 0,
+                'brokerage_two' => $value['brokerage_two'] ?? 0,
+                'type' => $type,
+                'quota' => $value['quota'] ?? 0,
+                'quota_show' => $value['quota'] ?? 0,
+                'vip_price' => $value['vip_price'] ?? 0,
+                'is_virtual' => $value['is_virtual'] ?? 0,
+                'coupon_id' => $value['coupon_id'] ?? 0,
+                'virtual_list' => $value['virtual_list'] ?? [],
+                'disk_info' => $value['disk_info'] ?? '',
+                'is_show' => $value['is_show'] ?? 1,
+                'is_default_select' => $value['is_default_select'] ?? 0,
+            ];
+
+            if ($validate) {
+                $skuValue['stock'] = $value['stock'];
+            }
+            $valueGroup[$sku] = $skuValue;
+        }
+
+        if (!count($attrGroup) || !count($valueGroup)) {
+            throw new AdminException('请设置至少一个属性');
+        }
+        $result = ['attr' => $attrList, 'value' => $valueList];
+        return compact('result', 'attrGroup', 'valueGroup');
+    }
+
+    /**
+     * 归一化并校验商品有效期相关字段（新增/编辑保存时调用）
+     *
+     * 商品仅保留两种类型：
+     *   validity_type = 0 长期有效商品
+     *   validity_type = 1 有限期商品（需配置失效方式）
+     *     expire_mode = 1 固定到期日（valid_end_time 时间戳，过期后全场不可购买）
+     *     expire_mode = 2 购买后 N 天（valid_days，按用户购买时间起算）
+     * validity_name 为可选的自定义类型名称，支持前端传入覆盖默认名称。
+     *
+     * @param array $data
+     * @return void
+     */
+    public function normalizeValidity(array &$data): void
+    {
+        $validityType = (int)($data['validity_type'] ?? 0);
+        if (!in_array($validityType, [0, 1], true)) {
+            throw new AdminException('商品有效期类型有误');
+        }
+
+        $validityName = trim((string)($data['validity_name'] ?? ''));
+        // 防止存储型XSS：去除标签与尖括号
+        $validityName = str_replace(['<', '>'], '', strip_tags($validityName));
+        if (mb_strlen($validityName) > 64) {
+            throw new AdminException('商品类型名称不能超过64个字符');
+        }
+
+        if ($validityType === 0) {
+            $data['validity_type'] = 0;
+            $data['validity_name'] = $validityName;
+            $data['expire_mode'] = 0;
+            $data['valid_end_time'] = 0;
+            $data['valid_days'] = 0;
+            unset($data['valid_end_date']);
+            return;
+        }
+
+        $expireMode = (int)($data['expire_mode'] ?? 0);
+        if (!in_array($expireMode, [1, 2], true)) {
+            throw new AdminException('请选择有限期商品的失效方式');
+        }
+
+        $validEndTime = 0;
+        $validDays = 0;
+        if ($expireMode === 1) {
+            // 固定到期日：兼容前端传入日期字符串或时间戳
+            if (isset($data['valid_end_date']) && $data['valid_end_date'] !== '') {
+                $validEndTime = is_numeric($data['valid_end_date'])
+                    ? (int)$data['valid_end_date']
+                    : (int)strtotime((string)$data['valid_end_date']);
+            } elseif (!empty($data['valid_end_time'])) {
+                $validEndTime = is_numeric($data['valid_end_time'])
+                    ? (int)$data['valid_end_time']
+                    : (int)strtotime((string)$data['valid_end_time']);
+            }
+            if ($validEndTime <= 0) {
+                throw new AdminException('请配置有效期截止日期');
+            }
+        } else {
+            $validDays = (int)($data['valid_days'] ?? 0);
+            if ($validDays <= 0) {
+                throw new AdminException('请配置购买后有效天数');
+            }
+        }
+
+        $data['validity_type'] = 1;
+        $data['validity_name'] = $validityName;
+        $data['expire_mode'] = $expireMode;
+        $data['valid_end_time'] = $validEndTime;
+        $data['valid_days'] = $validDays;
+        unset($data['valid_end_date']);
+    }
+
+    /**
+     * 获取商品有效期类型显示名称（优先自定义名称）
+     * @param array $info
+     * @return string
+     */
+    public function getValidityName($info): string
+    {
+        $name = trim((string)($info['validity_name'] ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+        $type = (int)($info['validity_type'] ?? 0);
+        return $this->validityTypeNames[$type] ?? $this->validityTypeNames[0];
+    }
+
+    /**
+     * 判断有限期商品是否已过期
+     * 仅“固定到期日”方式可在下单前判定为不可购买；
+     * “购买后N天”按用户维度计算，不影响商品本身的可售状态。
+     * @param array $info
+     * @return bool
+     */
+    public function isProductExpired($info): bool
+    {
+        if ((int)($info['validity_type'] ?? 0) !== 1) {
+            return false;
+        }
+        if ((int)($info['expire_mode'] ?? 0) === 1) {
+            $end = (int)($info['valid_end_time'] ?? 0);
+            return $end > 0 && time() > $end;
+        }
+        return false;
+    }
+
+    /**
+     * 为商品数据注入有效期展示信息（前端可见但过期不可选）
+     * @param array $info
+     * @return array
+     */
+    public function attachValidityInfo($info): array
+    {
+        $validityType = (int)($info['validity_type'] ?? 0);
+        $expireMode = (int)($info['expire_mode'] ?? 0);
+        $validEndTime = (int)($info['valid_end_time'] ?? 0);
+        $validDays = (int)($info['valid_days'] ?? 0);
+        $isExpired = $this->isProductExpired($info);
+
+        $info['validity_type'] = $validityType;
+        $info['validity_name'] = $this->getValidityName($info);
+        $info['expire_mode'] = $expireMode;
+        $info['valid_end_time'] = $validEndTime;
+        $info['valid_end_date'] = $validEndTime > 0 ? date('Y-m-d H:i:s', $validEndTime) : '';
+        $info['valid_days'] = $validDays;
+        $info['is_expired'] = $isExpired ? 1 : 0;
+
+        if ($validityType === 0) {
+            $info['validity_desc'] = '长期有效';
+        } elseif ($expireMode === 1) {
+            $info['validity_desc'] = $isExpired
+                ? ('已过期（' . $info['valid_end_date'] . '）')
+                : ('有效期至 ' . $info['valid_end_date']);
+        } elseif ($expireMode === 2) {
+            $info['validity_desc'] = '购买后 ' . $validDays . ' 天内有效';
+        } else {
+            $info['validity_desc'] = '';
+        }
+        return $info;
+    }
+
+    /**
+     * 下单前断言商品可购买，过期的固定有效期商品不可下单
+     * @param array $info
+     * @return void
+     */
+    public function assertProductPurchasable($info): void
+    {
+        if ($this->isProductExpired($info)) {
+            throw new ApiException('该商品已过期，无法购买');
+        }
+    }
+
+    /**
+     * Normalize retired product-extra fields to the supported product shape.
+     * This protects the save endpoint from crafted requests that bypass frontend guards.
+     *
+     * @param array $data
+     * @return void
+     */
+    private function applyCoreProductDefaults(array &$data): void
+    {
+        $data['is_virtual'] = 0;
+        $data['virtual_type'] = 0;
+        $data['video_link'] = '';
+        $data['temp_id'] = 0;
+        if (($data['freight'] ?? 0) == 3) {
+            $data['freight'] = 2;
+        }
+
+        $resetSku = function (&$item) {
+            if (!is_array($item)) {
+                return;
+            }
+            $item['is_virtual'] = 0;
+            $item['virtual_list'] = [];
+            $item['disk_info'] = '';
+            $item['coupon_id'] = 0;
+            $item['coupon_name'] = '';
+        };
+
+        if (isset($data['attrs']) && is_array($data['attrs'])) {
+            foreach ($data['attrs'] as &$item) {
+                $resetSku($item);
+            }
+            unset($item);
+        }
+
+        if (isset($data['items']) && is_array($data['items'])) {
+            foreach ($data['items'] as &$item) {
+                $resetSku($item);
+            }
+            unset($item);
+        }
+    }
+
+    /**
+     * 放入回收站
+     * @param int $id
+     * @return string
+     */
+    public function del(int $id)
+    {
+        if (!$id) throw new AdminException('参数错误');
+        $productInfo = $this->dao->get($id);
+        if (!$productInfo) throw new AdminException('商品不存在');
+        /** @var StoreProductCateServices $storeProductCateServices */
+        $storeProductCateServices = app()->make(StoreProductCateServices::class);
+        if ($productInfo['is_del'] == 1) {
+            $data['is_del'] = 0;
+            $res = $this->dao->update($id, $data);
+            $storeProductCateServices->update(['product_id' => $id], ['status' => 1]);
+            if (!$res) throw new AdminException('恢复失败');
+            return '恢复成功';
+        } else {
+            $data['is_del'] = 1;
+            $data['is_show'] = 0;
+            $res = $this->dao->update($id, $data);
+            $storeProductCateServices->update(['product_id' => $id], ['status' => 0]);
+            if (!$res) throw new AdminException('删除失败');
+            return '移动回收站成功';
+        }
+    }
+
+    /**
+     * 获取选择的商品列表
+     * @param array $where
+     * @return array
+     */
+    public function searchList(array $where, bool $isStock = false, $is_page = true)
+    {
+        $store_stock = sys_config('store_stock');
+        $where['store_stock'] = $store_stock > 0 ? $store_stock : 2;
+        $data = $this->getProductList($where, $isStock, $is_page);
+        $cateIds = implode(',', array_column($data['list'], 'cate_id'));
+
+        /** @var StoreCategoryServices $storeCategoryServices */
+        $storeCategoryServices = app()->make(StoreCategoryServices::class);
+        $cateList = $storeCategoryServices->getCateArray($cateIds);
+
+        foreach ($data['list'] as &$item) {
+            $cateName = array_filter($cateList, function ($val) use ($item) {
+                if (in_array($val['id'], explode(',', $item['cate_id']))) {
+                    return $val;
+                }
+            });
+            $item['cate_name'] = implode(',', array_column($cateName, 'cate_name'));
+            $item['give_integral'] = floatval($item['give_integral']);
+            $item['price'] = floatval($item['price']);
+            $item['vip_price'] = floatval($item['vip_price']);
+            $item['ot_price'] = floatval($item['ot_price']);
+            $item['postage'] = floatval($item['postage']);
+            $item['cost'] = floatval($item['cost']);
+            $item['is_product_type'] = 1;
+            $item['logistics'] = explode(',', $item['logistics']);
+            $attrs = $this->getProductRules($item['id'], 0)['attrs'];
+            $key = 0;
+            foreach ($attrs as $items) {
+                $item['attrs'][$key] = $items;
+                $item['attrs'][$key]['suk'] = implode(',', $items['detail']);
+                $item['attrs'][$key]['product_price'] = $items['price'];
+                $key += 1;
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * 后台获取商品列表展示
+     * @param array $where
+     * @return array
+     */
+    public function getProductList(array $where, bool $isStock = true, $is_page = true)
+    {
+        $prefix = Config::get('database.connections.' . Config::get('database.default') . '.prefix');
+        if ($isStock) {
+            $field = [
+                '*',
+                '(SELECT count(*) FROM `' . $prefix . 'store_product_relation` WHERE `product_id` = `' . $prefix . 'store_product`.`id` AND `type` = \'collect\') as collect',
+                '(SELECT count(*) FROM `' . $prefix . 'store_product_relation` WHERE `product_id` = `' . $prefix . 'store_product`.`id` AND `type` = \'like\') as likes',
+                '(SELECT SUM(stock) FROM `' . $prefix . 'store_product_attr_value` WHERE `product_id` = `' . $prefix . 'store_product`.`id` AND `type` = 0) as stock',
+                //                '(SELECT SUM(sales) FROM `' . $prefix . 'store_product_attr_value` WHERE `product_id` = `' . $prefix . 'store_product`.`id` AND `type` = 0) as sales',
+                '(SELECT count(*) FROM `' . $prefix . 'store_visit` WHERE `product_id` = `' . $prefix . 'store_product`.`id` AND `product_type` = \'product\') as visitor',
+            ];
+        } else {
+            $field = ['*'];
+        }
+        [$page, $limit] = $this->getPageValue($is_page);
+        $list = $this->dao->getSearchList($where, $page, $limit, $field, ['description']);
+        foreach ($list as &$product) {
+            $product['product_price'] = $product['price'];
+            $attrValue = $product['attrs'] ?? [];
+            foreach ($attrValue as &$value) {
+                $value['product_price'] = $value['price'];
+            }
+            $product['attrs'] = $attrValue;
+        }
+        $count = $this->dao->getCount($where);
+        return compact('count', 'list');
+    }
+
+    /**
+     * 获取商品规格
+     * @param int $id
+     * @param int $type
+     * @return array
+     */
+    public function getProductRules(int $id, int $type = 0)
+    {
+        /** @var StoreProductAttrServices $storeProductAttrService */
+        $storeProductAttrService = app()->make(StoreProductAttrServices::class);
+        /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
+        $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
+        $productAttr = $storeProductAttrService->getProductAttr(['product_id' => $id, 'type' => 0]);
+        if (!$productAttr) return [];
+        $attr = [];
+        foreach ($productAttr as $key => $value) {
+            $attr[$key]['value'] = $value['attr_name'];
+            $attr[$key]['detailValue'] = '';
+            $attr[$key]['attrHidden'] = true;
+            $attr[$key]['detail'] = $value['attr_values'];
+        }
+        list($value, $head) = attr_format($attr);
+        $valueNew = [];
+        $count = 0;
+        $sukValue = $sukDefaultValue = $storeProductAttrValueServices->getSkuArray(['product_id' => $id, 'type' => 0]);
+        foreach ($value as $suk) {
+            $detail = explode(',', $suk);
+            if (!isset($sukDefaultValue[$suk])) continue;
+            foreach ($head as $k => $title) {
+                $header[$k]['title'] = $title;
+                $header[$k]['align'] = 'center';
+                $header[$k]['minWidth'] = 80;
+            }
+            foreach ($detail as $k => $v) {
+                $valueNew[$count]['value' . ($k + 1)] = $v;
+                $header[$k]['key'] = 'value' . ($k + 1);
+            }
+            $valueNew[$count]['detail'] = array_combine($head, $detail);
+            $valueNew[$count]['pic'] = $sukValue[$suk]['pic'];
+            $valueNew[$count]['price'] = floatval($sukValue[$suk]['price']);
+            if ($type == 2) $valueNew[$count]['min_price'] = 0;
+            if (in_array($type, [1, 2, 3])) $valueNew[$count]['r_price'] = floatval($sukValue[$suk]['price']);
+            $valueNew[$count]['cost'] = floatval($sukValue[$suk]['cost']);
+            $valueNew[$count]['ot_price'] = floatval($sukValue[$suk]['ot_price']);
+            $valueNew[$count]['stock'] = intval($sukValue[$suk]['stock']);
+            $valueNew[$count]['quota'] = intval($sukValue[$suk]['quota']);
+            $valueNew[$count]['bar_code'] = $sukValue[$suk]['bar_code'];
+            $valueNew[$count]['bar_code_number'] = $sukValue[$suk]['bar_code_number'];
+            $valueNew[$count]['unique'] = $sukValue[$suk]['unique'];
+            $valueNew[$count]['weight'] = $sukValue[$suk]['weight'] ? floatval($sukValue[$suk]['weight']) : 0;
+            $valueNew[$count]['volume'] = $sukValue[$suk]['volume'] ? floatval($sukValue[$suk]['volume']) : 0;
+            $valueNew[$count]['brokerage'] = $sukValue[$suk]['brokerage'] ? floatval($sukValue[$suk]['brokerage']) : 0;
+            $valueNew[$count]['brokerage_two'] = $sukValue[$suk]['brokerage_two'] ? floatval($sukValue[$suk]['brokerage_two']) : 0;
+            $valueNew[$count]['vip_price'] = $sukValue[$suk]['vip_price'] ? floatval($sukValue[$suk]['vip_price']) : 0;
+            $count++;
+        }
+        $header[] = ['title' => '图片', 'slot' => 'pic', 'align' => 'center', 'minWidth' => 120];
+        if ($type == 1) {
+            $header[] = ['title' => '秒杀价', 'slot' => 'price', 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '成本价', 'key' => 'cost', 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '日常售价', 'key' => 'r_price', 'align' => 'center', 'minWidth' => 80];
+        } elseif ($type == 2) {
+            $header[] = ['title' => '砍价起始金额', 'slot' => 'price', 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '砍价最低价', 'slot' => 'min_price', 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '成本价', 'key' => 'cost', 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '日常售价', 'key' => 'r_price', 'align' => 'center', 'minWidth' => 80];
+        } elseif ($type == 3) {
+            $header[] = ['title' => '拼团价', 'slot' => 'price', 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '成本价', 'key' => 'cost', 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '日常售价', 'key' => 'r_price', 'align' => 'center', 'minWidth' => 80];
+        } elseif ($type == 4) {
+            $header[] = ['title' => '兑换积分', 'slot' => 'price', 'type' => 1, 'align' => 'center', 'minWidth' => 80];
+        } elseif ($type == 6) {
+            $header[] = ['title' => '预售价', 'key' => 'price', 'type' => 1, 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '成本价', 'key' => 'cost', 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '划线价', 'key' => 'ot_price', 'align' => 'center', 'minWidth' => 80];
+        } else {
+            $header[] = ['title' => '成本价', 'key' => 'cost', 'align' => 'center', 'minWidth' => 80];
+            $header[] = ['title' => '划线价', 'key' => 'ot_price', 'align' => 'center', 'minWidth' => 80];
+        }
+        $header[] = ['title' => '库存', 'key' => 'stock', 'align' => 'center', 'minWidth' => 80];
+        $header[] = ['title' => '限量', 'slot' => 'quota', 'type' => 1, 'align' => 'center', 'minWidth' => 80];
+        $header[] = ['title' => '重量(KG)', 'key' => 'weight', 'align' => 'center', 'minWidth' => 80];
+        $header[] = ['title' => '体积(m³)', 'key' => 'volume', 'align' => 'center', 'minWidth' => 80];
+        $header[] = ['title' => '商品编码', 'key' => 'bar_code', 'align' => 'center', 'minWidth' => 80];
+        $header[] = ['title' => '条形码', 'key' => 'bar_code_number', 'align' => 'center', 'minWidth' => 80];
+        return ['items' => $attr, 'attrs' => $valueNew, 'header' => $header];
+    }
+
+    /**
+     * 检查商品是否有活动
+     * @param  $id
+     * @return bool
+     */
+    public function checkActivity($id = 0, $return = false)
+    {
+        return true;
+    }
+
+    /**
+     * 保存
+     * @param array $data
+     * @return mixed
+     */
+    public function create(array $data)
+    {
+        return $this->dao->save($data);
+    }
+
+    /**
+     * 前台获取商品列表
+     * @param array $where
+     * @param int $uid
+     * @return array|array[]
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getGoodsList(array $where, int $uid)
+    {
+        $where['is_show'] = 1;
+        $where['is_del'] = 0;
+        $where['star'] = 1;
+        $ifKeyword = isset($where['store_name']) && $where['store_name'];
+        if ($ifKeyword) {
+            app()->make(UserSearchServices::class)->saveUserSearch($uid, $where['store_name'], [$where['store_name']], []);
+        }
+        [$page, $limit] = $this->getPageValue();
+        $where['vip_user'] = $uid ? app()->make(UserServices::class)->value(['uid' => $uid], 'is_money_level') : 0;
+        $list = $this->dao->getSearchList($where, $page, $limit, ['id,store_name,cate_id,image,IFNULL(sales, 0) + IFNULL(ficti, 0) as sales,price,stock,activity,ot_price,spec_type,recommend_image,unit_name,is_vip,vip_price,is_virtual,presale,custom_form,virtual_type,min_qty,label_list,validity_type,validity_name,expire_mode,valid_end_time,valid_days']);
+        /** @var MemberCardServices $memberCardService */
+        $memberCardService = app()->make(MemberCardServices::class);
+        $vipStatus = $memberCardService->isOpenMemberCard('vip_price');
+
+        // 提取所有 label_list 并过滤空值
+        $labelLists = array_map(function ($item) {
+            return $item['label_list'];
+        }, $list);
+
+        // 将 label_list 转换为数组，过滤空值，并去重
+        $uniqueLabels = array_unique(array_reduce($labelLists, function ($carry, $labels) {
+            // 将 label_list 按逗号分割成数组
+            $labelsArray = explode(',', $labels);
+            // 过滤掉空值
+            $labelsArray = array_filter($labelsArray, function ($label) {
+                return !empty(trim($label));
+            });
+            return array_merge($carry, $labelsArray);
+        }, []));
+
+        $labelList = app()->make(StoreProductLabelServices::class)->labelListByIds($uniqueLabels);
+        // 使用 id 作为键
+        $labelList = array_column($labelList, null, 'id');
+
+        foreach ($list as &$item) {
+            if (!$this->vipIsOpen(!!$item['is_vip'], $vipStatus)) {
+                $item['vip_price'] = 0;
+            }
+            $item['cart_button'] = $item['is_virtual'] || $item['virtual_type'] == 3 || $item['presale'] || json_decode($item['custom_form'], true) ? 0 : 1;
+            $item = $this->attachValidityInfo($item);
+            if ($item['is_expired']) {
+                $item['cart_button'] = 0;
+            }
+            if (count($item['star'])) {
+                $item['star'] = bcdiv((string)array_sum(array_column($item['star'], 'product_score')), (string)count($item['star']), 1);
+            } else {
+                $item['star'] = '5.0';
+            }
+            $item['label_list'] = $item['label_list'] != '' ? array_map(function ($labelId) use ($labelList) {
+                return $labelList[$labelId] ?? [];
+            }, explode(',', $item['label_list'])) : [];
+        }
+        $list = $this->getActivityList($list);
+        $list = $this->getProduceOtherList($list, $uid, !!$where['type']);
+        return $list;
+    }
+
+    /**
+     * 获取某些模板所需得购物车数量
+     * @param array $list
+     * @param int $uid
+     * @return array
+     */
+    public function getProduceOtherList(array $list, int $uid, bool $type = true)
+    {
+        if (!$type || !$list) {
+            return $list;
+        }
+        $productIds = array_column($list, 'id');
+        if ($productIds) {
+            /** @var StoreProductAttrValueServices $services */
+            $services = app()->make(StoreProductAttrValueServices::class);
+            $attList = $services->getColumn([
+                'product_id' => $productIds,
+                'type' => 0
+            ], 'count(*)', 'product_id');
+            if ($uid) {
+                /** @var StoreCartServices $cartServices */
+                $cartServices = app()->make(StoreCartServices::class);
+                $cartNumList = $cartServices->productIdByCartNum($productIds, $uid);
+                $data = [];
+                foreach ($cartNumList as $item) {
+                    $data[$item['product_id']][] = $item['cart_num'];
+                }
+                $newNumList = [];
+                foreach ($data as $key => $item) {
+                    $newNumList[$key] = array_sum($item);
+                }
+                $cartNumList = $newNumList;
+            } else {
+                $cartNumList = [];
+            }
+            foreach ($list as &$item) {
+                if ($item['spec_type']) {
+                    $item['is_att'] = isset($attList[$item['id']]) && $attList[$item['id']];
+                } else {
+                    $item['is_att'] = false;
+                }
+                $item['cart_num'] = $cartNumList[$item['id']] ?? 0;
+            }
+        }
+        return $list;
+    }
+
+    /**
+     * 获取商品活动标签
+     * @param array $list
+     * @param array $productIds
+     * @return array
+     */
+    public function getActivityList(array $list, bool $status = true, $seckillIdsList = false, $pinkIdsList = false, $bargrainIdsList = false)
+    {
+        if (!$list) return [];
+        if (!$status) return [];
+        foreach ($list as &$item) {
+            $item['activity'] = [];
+            $item['checkCoupon'] = false;
+        }
+        return $list;
+    }
+
+    /**
+     * 获取商品在此时段活动优先类型
+     * @param string $activity
+     * @param int $id
+     * @param int $combinationId
+     * @param array $seckillId
+     * @param int $bargainId
+     * @param bool $status
+     * @return array
+     */
+    public function activity(string $activity, int $id, int $combinationId, array $seckillId, int $bargainId, bool $status = true)
+    {
+        if (!$activity) {
+            $activity = '0,1,2,3'; //如果老商品没有活动顺序，默认活动顺序，秒杀-砍价-拼团
+        }
+        $activity = explode(',', $activity);
+        if ($activity[0] == 0 && $status) return [];
+        $activityId = [];
+        $time_id = 0;
+        if ($seckillId) {
+            foreach ($seckillId as $v) {
+                $timeInfo = GroupDataService::getDataNumbers($v['time_id']);
+                foreach ($timeInfo as $time) {
+                    $value = json_decode($time['value'], true);
+                    if (date('H') >= $value['time']['value'] && date('H') < ($value['time']['value'] + $value['continued']['value'])) {
+                        $activityId[1] = $v['id'];
+                        $time_id = $time['id'];
+                        break;
+                    }
+                }
+            }
+        }
+        if ($bargainId) $activityId[2] = $bargainId;
+        if ($combinationId) $activityId[3] = $combinationId;
+        $data = [];
+        foreach ($activity as $k => $v) {
+            if (array_key_exists($v, $activityId)) {
+                if ($status) {
+                    $data['type'] = $v;
+                    $data['id'] = $activityId[$v];
+                    if ($v == 1) $data['time_id'] = $time_id;
+                    break;
+                } else {
+                    if ($v != 0) {
+                        $arr['type'] = $v;
+                        $arr['id'] = $activityId[$v];
+                        if ($v == 1) $arr['time_id'] = $time_id;
+                        $data[] = $arr;
+                    }
+                }
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * 获取热门商品
+     * @param array $where
+     * @param int $num
+     * @return array|array[]
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getProducts(array $where, int $num = 0)
+    {
+        [$page, $limit] = $this->getPageValue();
+        if ($num) {
+            $page = 1;
+            $limit = $num;
+        }
+        $list = $this->dao->getSearchList($where, $page, $limit, ['id,store_name,cate_id,image,IFNULL(sales, 0) + IFNULL(ficti, 0) as sales,price,stock,activity,unit_name,presale,is_vip,vip_price']);
+        $list = $this->getActivityList($list);
+        return $list;
+    }
+
+    /**
+     * 获取商品详情
+     * @param Request $request
+     * @param int $id
+     * @param int $type
+     * @return mixed
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function productDetail(Request $request, int $id, int $type)
+    {
+        $uid = (int)$request->uid();
+        $data['uid'] = $uid;
+
+        $storeInfo = $this->dao->getOne(['id' => $id, 'is_show' => 1, 'is_del' => 0], '*', ['description']);
+        if (!$storeInfo) {
+            throw new AdminException('商品不存在');
+        } else {
+            $storeInfo = $storeInfo->toArray();
+        }
+        $siteUrl = sys_config('site_url');
+        $storeInfo['image'] = set_file_url($storeInfo['image'], $siteUrl);
+        $storeInfo['image_base'] = set_file_url($storeInfo['image'], $siteUrl);
+        $storeInfo['video_link'] = empty($storeInfo['video_link']) ? '' : (strpos($storeInfo['video_link'], 'http') === false ? (sys_config('site_url') . $storeInfo['video_link']) : $storeInfo['video_link']);
+        $storeInfo['fsales'] = $storeInfo['ficti'] + $storeInfo['sales'];
+        $storeInfo['custom_form'] = json_decode($storeInfo['custom_form'], true);
+        $storeInfo['params_list'] = json_decode($storeInfo['params_list'], true) ?? [];
+        if ($storeInfo['label_list'] != '') {
+            $labelIds = explode(',', $storeInfo['label_list']);
+            $storeInfo['label_list'] = [];
+            $labelList = app()->make(StoreProductLabelServices::class)->labelListByIds($labelIds);
+            foreach ($labelIds as $labelId) {
+                foreach ($labelList as $label) {
+                    if ($labelId == $label['id']) {
+                        $storeInfo['label_list'][] = $label;
+                    }
+                }
+            }
+        } else {
+            $storeInfo['label_list'] = [];
+        }
+        if ($storeInfo['protection_list'] != '') {
+            $storeInfo['protection_list'] = app()->make(StoreProductProtectionServices::class)->protectionListByIds(explode(',', $storeInfo['protection_list']));
+        } else {
+            $storeInfo['protection_list'] = [];
+        }
+        $storeInfo['slider_image'] = set_file_url($storeInfo['slider_image'], $siteUrl);
+
+        if (sys_config('share_qrcode', 0) && request()->isWechat()) {
+            /** @var QrcodeServices $qrcodeService */
+            $qrcodeService = app()->make(QrcodeServices::class);
+            $storeInfo['wechat_code'] = $qrcodeService->getTemporaryQrcode('product-' . $id, $uid)->url;
+        } else {
+            $storeInfo['wechat_code'] = '';
+        }
+
+        /** @var StoreProductRelationServices $storeProductRelationServices */
+        $storeProductRelationServices = app()->make(StoreProductRelationServices::class);
+        $storeInfo['userCollect'] = $storeProductRelationServices->isProductRelation(['uid' => $uid, 'product_id' => $id, 'type' => 'collect', 'category' => 'product']);
+        $storeInfo['userLike'] = false;
+        $storeInfo['small_image'] = $storeInfo['image'];
+        $storeInfo = get_thumb_water($storeInfo, 'small', ['small_image']);
+
+        //预售相关
+        if ($storeInfo['presale']) {
+            if ($storeInfo['presale_start_time'] > time()) {
+                $storeInfo['presale_pay_status'] = 1;
+            } elseif ($storeInfo['presale_start_time'] <= time() && $storeInfo['presale_end_time'] > time()) {
+                $storeInfo['presale_pay_status'] = 2;
+            } elseif ($storeInfo['presale_end_time'] < time()) {
+                $storeInfo['presale_pay_status'] = 3;
+            } else {
+                $storeInfo['presale_pay_status'] = 0;
+            }
+        } else {
+            $storeInfo['presale_pay_status'] = 0;
+        }
+        $storeInfo['presale_start_time'] = date('Y-m-d H:i', $storeInfo['presale_start_time']);
+        $storeInfo['presale_end_time'] = date('Y-m-d H:i', $storeInfo['presale_end_time']);
+
+        //有自定义表单或预售或虚拟不展示加入购物车按钮
+        $storeInfo['cart_button'] = $storeInfo['custom_form'] || $storeInfo['presale'] || $storeInfo['is_virtual'] || $storeInfo['virtual_type'] == 3 ? 0 : 1;
+
+        //有效期信息：商品过期后仍可见但不可购买
+        $storeInfo = $this->attachValidityInfo($storeInfo);
+        if ($storeInfo['is_expired']) {
+            $storeInfo['cart_button'] = 0;
+        }
+
+        /** @var StoreProductAttrServices $storeProductAttrServices */
+        $storeProductAttrServices = app()->make(StoreProductAttrServices::class);
+        list($productAttr, $productValue) = $storeProductAttrServices->getProductAttrDetail($id, $uid, $type, 0);
+        $attrPics = [];
+        foreach ($productAttr as $attrValues) {
+            foreach ($attrValues['attr_value'] as $picArr) {
+                if (isset($picArr['pic']) && $picArr['pic'] != '') {
+                    $attrPics[] = $picArr['pic'];
+                }
+            }
+        }
+        $storeInfo['attrPics'] = $attrPics;
+        //无属性添加默认属性
+        if (empty($productValue)) {
+            $attr = [
+                [
+                    'value' => '规格',
+                    'detailValue' => '',
+                    'attrHidden' => '',
+                    'detail' => ['默认']
+                ]
+            ];
+            $detail[0] = [
+                'value1' => '默认',
+                'detail' => ['规格' => '默认'],
+                'pic' => $storeInfo['image'],
+                'price' => $storeInfo['price'],
+                'cost' => $storeInfo['cost'],
+                'ot_price' => $storeInfo['ot_price'],
+                'stock' => $storeInfo['stock'],
+                'bar_code' => '',
+                'bar_code_number' => '',
+                'weight' => 0,
+                'volume' => 0,
+                'brokerage' => 0,
+                'brokerage_two' => 0,
+            ];
+            $skuList = $this->validateProductAttr($attr, $detail, $id, 0, 1, true);
+            $storeProductAttrServices->saveProductAttr($skuList, $id, 0);
+        }
+        $attrValue = $productValue;
+        if (!$storeInfo['spec_type']) {
+            $productAttr = [];
+            $productValue = [];
+            $data['spec_unique'] = $attrValue['默认']['unique'];
+        } else {
+            foreach ($productValue as &$sku) {
+                if ($sku['is_show'] == 0) {
+                    $storeInfo['stock'] = $storeInfo['stock'] - $sku['stock'];
+                    $sku['stock'] = 0;
+                }
+            }
+            $data['spec_unique'] = '';
+        }
+        $data['productAttr'] = $productAttr;
+        $data['productValue'] = $productValue;
+        $data['storeInfo'] = $storeInfo;
+
+        /** @var MemberCardServices $memberCardService */
+        $memberCardService = app()->make(MemberCardServices::class);
+        $data['svip_open'] = $vipStatus = $memberCardService->isOpenMemberCard('vip_price');
+        $data['svip_price_open'] = (int)sys_config('member_price_status');
+        $data['storeInfo']['svip_economize_price'] = bcsub((string)$data['storeInfo']['price'], (string)$data['storeInfo']['vip_price'], 2);
+        if (!$this->vipIsOpen(!!$storeInfo['is_vip'], $vipStatus)) {
+            $data['storeInfo']['vip_price'] = 0;
+        }
+        $data['priceName'] = 0;
+        if ($uid && (int)sys_config('brokerage_window_switch', 1)) {
+            $user = $request->user();
+            if (!$user->is_promoter) {
+                /** @var StoreOrderServices $storeOrderService */
+                $storeOrderService = app()->make(StoreOrderServices::class);
+                $price = $storeOrderService->sum(['paid' => 1, 'refund_status' => 0, 'uid' => $uid], 'pay_price');
+                $status = is_brokerage_statu($price);
+                if ($status) {
+                    /** @var UserServices $userServices */
+                    $userServices = app()->make(UserServices::class);
+                    $userServices->update($uid, ['is_promoter' => 1]);
+                    $user->is_promoter = 1;
+                }
+            }
+            $data['priceName'] = $this->getPacketPrice($storeInfo, $attrValue, $uid);
+            //用户访问事件
+            event('UserVisitListener', [$uid, $id, 'product', $storeInfo['cate_id'], 'view']);
+        }
+
+        /** @var StoreProductReplyServices $storeProductReplyService */
+        $storeProductReplyService = app()->make(StoreProductReplyServices::class);
+        $data['reply'] = get_thumb_water($storeProductReplyService->getRecProductReply($id), 'big', ['pics']);
+        [$replyCount, $goodReply, $replyChance] = $storeProductReplyService->getProductReplyData($id);
+        $data['replyChance'] = $replyChance;
+        $data['replyCount'] = $replyCount;
+        $data['mer_id'] = 0;
+        $vip_user = $uid ? app()->make(UserServices::class)->value(['uid' => $uid], 'is_money_level') : 0;
+        if ($storeInfo['recommend_list'] != '') {
+            $recommend_list = explode(',', $storeInfo['recommend_list']);
+            $data['good_list'] = $this->getProducts(['ids' => $recommend_list, 'is_del' => 0, 'is_show' => 1], 12);
+            $recommend_count = 12 - count($data['good_list']);
+            if ($recommend_count) $data['good_list'] = array_merge($data['good_list'], $this->getProducts(['is_good' => 1, 'is_del' => 0, 'is_show' => 1, 'vip_user' => $vip_user, 'not_ids' => $recommend_list], $recommend_count));
+        } else {
+            $data['good_list'] = $this->getProducts(['is_good' => 1, 'is_del' => 0, 'is_show' => 1, 'vip_user' => $vip_user], 12);
+        }
+        $data['mapKey'] = sys_config('tengxun_map_key');
+        $data['store_self_mention'] = (int)sys_config('store_self_mention') ?? 0; //门店自提是否开启
+        $data['activity'] = $this->getActivityList($data['storeInfo'], false);
+        $data['coupons'] = [];
+        $data['routine_contact_type'] = sys_config('routine_contact_type', 0);
+        //浏览记录
+        ProductLogJob::dispatch(['visit', ['uid' => $uid, 'product_id' => $id]]);
+
+        //自定义事件-用户商品访问
+        event('CustomEventListener', ['user_product_visit', [
+            'product_id' => $id,
+            'uid' => $uid,
+            'visit_time' => date('Y-m-d H:i:s'),
+        ]]);
+
+        return $data;
+    }
+
+    /**
+     * 是否开启vip
+     * @param bool $vip
+     * @return bool
+     */
+    public function vipIsOpen(bool $vip = false, $vipStatus = -1)
+    {
+        if ($vipStatus == -1) {
+            /** @var MemberCardServices $memberCardService */
+            $memberCardService = app()->make(MemberCardServices::class);
+            $vipStatus = $memberCardService->isOpenMemberCard('vip_price');
+        }
+        return $vipStatus && sys_config('member_card_status') && $vip && sys_config('member_price_status', 1);
+    }
+
+    /**
+     * 获取商品分销佣金最低和最高
+     * @param $storeInfo
+     * @param $productValue
+     * @param int $uid
+     * @return int|string
+     */
+    public function getPacketPrice($storeInfo, $productValue, int $uid)
+    {
+        /** @var UserServices $userServices */
+        $userServices = app()->make(UserServices::class);
+        if (!$userServices->checkUserPromoter($uid)) {
+            return 0;
+        }
+        if (!count($productValue)) {
+            return 0;
+        }
+        if (!sys_config('brokerage_func_status')) {
+            return 0;
+        }
+        $store_brokerage_ratio = sys_config('store_brokerage_ratio');
+        $store_brokerage_ratio = bcdiv((string)$store_brokerage_ratio, '100', 2);
+        if (isset($storeInfo['is_sub']) && $storeInfo['is_sub'] == 1) {
+            $maxPrice = (int)max(array_column($productValue, 'brokerage'));
+            $minPrice = (int)min(array_column($productValue, 'brokerage'));
+        } else {
+            $maxPrice = max(array_column($productValue, 'price'));
+            $minPrice = min(array_column($productValue, 'price'));
+            $maxPrice = bcmul((string)$store_brokerage_ratio, (string)$maxPrice, 0);
+            $minPrice = bcmul((string)$store_brokerage_ratio, (string)$minPrice, 0);
+        }
+        if ($minPrice == 0 && $maxPrice == 0) {
+            $priceName = 0;
+        } else if ($minPrice == 0 && $maxPrice)
+            $priceName = $maxPrice;
+        else if ($maxPrice == 0 && $minPrice)
+            $priceName = $minPrice;
+        else if ($maxPrice == $minPrice && $minPrice)
+            $priceName = $maxPrice;
+        else
+            $priceName = $minPrice . '~' . $maxPrice;
+        return strlen(trim($priceName)) ? $priceName : 0;
+    }
+
+    /**
+     * 设置会员价格
+     * @param $list
+     * @param int $uid
+     * @param $userInfo
+     * @param $vipStatus
+     * @param int $discount
+     * @param float $vipPrice
+     * @param int $is_vip
+     * @param bool $is_show
+     * @return array|float|int|mixed|string
+     */
+    public function setLevelPriceV2($price, int $uid, $userInfo, $vipStatus, $discount = 0, $vipPrice = 0.00, $is_vip = 0, $is_show = false)
+    {
+        if ($uid) {
+            if (!$userInfo) {
+                /** @var UserServices $user */
+                $user = app()->make(UserServices::class);
+                $userInfo = $user->getUserInfo($uid);
+            }
+            if ($discount === 0) {
+                /** @var SystemUserLevelServices $systemLevel */
+                $systemLevel = app()->make(SystemUserLevelServices::class);
+                $discount = $systemLevel->value(['id' => $userInfo['level'], 'is_del' => 0, 'is_show' => 1], 'discount');
+            }
+        } else {
+            //没登录
+            $discount = 100;
+            $userInfo = [];
+        }
+        $discount = bcdiv((string)$discount, '100', 2);
+        if (!$vipStatus) $is_vip = 0;
+        //is_vip == 0表示会员价格不启用，展示为零
+        if ($is_vip == 0) $vipPrice = 0;
+
+        $noPayVipPrice = ($discount && sys_config('member_func_status')) ? bcmul((string)$discount, (string)$price, 2) : $price;
+        $vipPrice = ($vipPrice < $noPayVipPrice && $vipPrice > 0) ? $vipPrice : $noPayVipPrice;
+        //如果$isSingle==true 返回优惠后的总金额，否则返回优惠的金额
+        if ($vipStatus && $is_vip == 1 && (!$is_show || ($is_show && $userInfo && isset($userInfo['is_money_level']) && $userInfo['is_money_level'] > 0))) {
+            return [(float)$vipPrice, (float)bcsub((string)$price, (string)$vipPrice, 2)];
+        } else {
+            return [(float)$noPayVipPrice, (float)bcsub((string)$price, (string)$noPayVipPrice, 2)];
+        }
+    }
+
+    /**
+     * 设置会员价格
+     * @param $list
+     * @param int $uid
+     * @param $userInfo
+     * @param $vipStatus
+     * @param bool $isSingle
+     * @param int $discount
+     * @param float $vipPrice
+     * @param int $is_vip
+     * @param bool $is_show
+     * @return array|float|int|mixed|string
+     */
+    public function setLevelPrice($price, int $uid, $userInfo, $vipStatus, $discount = 0, $vipPrice = 0.00, $is_vip = 0, $is_show = false)
+    {
+        if (!(float)$price) return [0, 0, 'level'];
+        if (!$vipStatus) $is_vip = 0;
+        //已登录
+        if ($uid) {
+            if (!$userInfo) {
+                /** @var UserServices $user */
+                $user = app()->make(UserServices::class);
+                $userInfo = $user->getUserInfo($uid);
+            }
+            if ($discount === 0) {
+                $discount = 100;
+                if (sys_config('member_func_status', 1)) {
+                    /** @var SystemUserLevelServices $systemLevel */
+                    $systemLevel = app()->make(SystemUserLevelServices::class);
+                    $discount = $systemLevel->value(['id' => $userInfo['level'], 'is_del' => 0, 'is_show' => 1], 'discount') ?: 100;
+                }
+            }
+        } else {
+            //没登录
+            $discount = 100;
+        }
+        $discount = bcdiv((string)$discount, '100', 2);
+        //执行减去会员优惠金额
+        [$truePrice, $vip_truePrice, $type] = $this->isPayLevelPrice($uid, $userInfo, $vipStatus, $price, $discount, $vipPrice, $is_vip, $is_show);
+        //返回优惠后的总金额
+        $truePrice = $truePrice < 0.01 ? 0.01 : $truePrice;
+        //优惠的金额
+        $vip_truePrice = $vip_truePrice == $price ? bcsub((string)$vip_truePrice, '0.01', 2) : $vip_truePrice;
+        return [(float)$truePrice, (float)$vip_truePrice, $type];
+    }
+
+
+    /**商品列表
+     * @param array $where
+     * @param $limit
+     * @param $field
+     * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getProductLimit(array $where, $limit, $field)
+    {
+        return $this->dao->getProductLimit($where, $limit, $field);
+    }
+
+    /**通过条件获取商品列表
+     * @param $where
+     * @param $field
+     * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getProductListByWhere($where, $field)
+    {
+        return $this->dao->getProductListByWhere($where, $field);
+    }
+
+    /**
+     * 根据指定id获取商品列表
+     * @param array $ids
+     * @param string $field
+     * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getProductColumn(array $ids, string $field = '')
+    {
+        $productData = [];
+        $productInfoField = 'id,image,price,ot_price,vip_price,postage,give_integral,sales,stock,store_name,unit_name,is_show,is_del,is_postage,cost,is_sub,temp_id';
+        if (!empty($ids)) {
+            $productAll = $this->dao->idByProductList($ids, $field ?: $productInfoField);
+            if (!empty($productAll))
+                $productData = array_combine(array_column($productAll, 'id'), $productAll);
+        }
+        return $productData;
+    }
+
+    /**
+     * 商品是否存在
+     * @param int $productId
+     * @param string $field
+     * @return array|\think\Model|null
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @author 吴汐
+     * @email 442384644@qq.com
+     * @date 2023/02/15
+     */
+    public function isValidProduct(int $productId, string $field = '*')
+    {
+        return $this->dao->getOne(['id' => $productId, 'is_del' => 0, 'is_show' => 1], $field);
+    }
+
+    /**
+     * 获取商品库存
+     * @param int $productId
+     * @param string $uniqueId
+     * @return int|mixed
+     */
+    public function getProductStock(int $productId, string $uniqueId = '')
+    {
+        /** @var  StoreProductAttrValueServices $StoreProductAttrValue */
+        $StoreProductAttrValue = app()->make(StoreProductAttrValueServices::class);
+        return $uniqueId == '' ?
+            ($this->dao->value(['id' => $productId], 'stock') ?: 0)
+            : $StoreProductAttrValue->uniqueByStock($uniqueId);
+    }
+
+    /**
+     * 减库存,加销量
+     * @param $num
+     * @param $productId
+     * @param string $unique
+     * @return bool
+     */
+    public function decProductStock(int $num, int $productId, string $unique = '')
+    {
+        $res = true;
+        if ($unique) {
+            /** @var StoreProductAttrValueServices $skuValueServices */
+            $skuValueServices = app()->make(StoreProductAttrValueServices::class);
+            $res = $res && $skuValueServices->decProductAttrStock($productId, $unique, $num, 0);
+        }
+        return $res && $this->dao->decStockIncSales(['id' => $productId], $num);
+    }
+
+    /**
+     * 加销量减库存
+     * @param int $num
+     * @param int $productId
+     * @param string $unique
+     * @return bool
+     */
+    public function incProductStock(int $num, int $productId, string $unique = '')
+    {
+        $res = true;
+        if ($unique) {
+            /** @var StoreProductAttrValueServices $skuValueServices */
+            $skuValueServices = app()->make(StoreProductAttrValueServices::class);
+            $res = $res && $skuValueServices->incProductAttrStock($productId, $unique, $num);
+        }
+        $res = $res && $this->dao->incStockDecSales(['id' => $productId], $num);
+        return $res;
+    }
+
+    /**
+     * 库存预警发送消息
+     * @param int $productId
+     */
+    public function workSendStock(int $productId)
+    {
+        $stock = $this->dao->value(['id' => $productId], 'stock');
+        $replenishment_num = sys_config('store_stock') ?? 0; //库存预警界限
+        if ($replenishment_num >= $stock) {
+            try {
+                \crmeb\services\workerman\ChannelService::instance()->send('STORE_STOCK', ['id' => $productId]);
+            } catch (\Exception $e) {
+            }
+        }
+    }
+
+    /**
+     * 获取首页推荐商品（多个）
+     * @param int $uid
+     * @param array $fields
+     * @param bool $is_num
+     * @param string $type
+     * @return array[]
+     */
+    public function getRecommendProductArr(int $uid, array $fields, bool $is_num = true, string $type = 'mid')
+    {
+        $baseList = $firstList = $benefitList = $hotList = $vipList = [];
+        $data = [$baseList, $firstList, $benefitList, $hotList, $vipList];
+        if ($fields) {
+            /** @var MemberCardServices $memberCardService */
+            $memberCardService = app()->make(MemberCardServices::class);
+            $vipStatus = $memberCardService->isOpenMemberCard('vip_price');
+            $seckillIdsList = $pinkIdsList = $bargrainIdsList = false;
+            [$page, $limit] = $this->getPageValue();
+            $where['vip_user'] = $uid ? app()->make(UserServices::class)->value(['uid' => $uid], 'is_money_level') : 0;
+            foreach ($fields as $field) {
+                $list = [];
+                switch ($field) {
+                    case 'is_best': //精品推荐
+                        $k = 0;
+                        if ($is_num) {
+                            $bastNumber = (int)sys_config('bast_number', 0); //TODO 精品推荐个数
+                            $list = $bastNumber ? $list = $this->dao->getRecommendProduct($where, $field, $bastNumber, $page, $limit) : [];
+                        } else {
+                            $list = $this->dao->getRecommendProduct($where, $field, 0, $page, $limit);
+                        }
+                        break;
+                    case 'is_new': //首发新品
+                        $k = 1;
+                        if ($is_num) {
+                            $firstNumber = (int)sys_config('first_number', 0); //TODO 首发新品个数
+                            $list = $firstNumber ? $list = $this->dao->getRecommendProduct($where, $field, $firstNumber, $page, $limit) : [];
+                        } else {
+                            $list = $this->dao->getRecommendProduct($where, $field, 0, $page, $limit);
+                        }
+                        break;
+                    case 'is_benefit': //首页促销单品
+                        $k = 2;
+                        if ($is_num) {
+                            $promotionNumber = (int)sys_config('promotion_number', 0); //TODO 首发新品个数
+                            $list = $promotionNumber ? $list = $this->dao->getRecommendProduct($where, $field, $promotionNumber, $page, $limit) : [];
+                        } else {
+                            $list = $this->dao->getRecommendProduct($where, $field, 0, $page, $limit);
+                        }
+                        break;
+                    case 'is_hot': //热门榜单
+                        $k = 3;
+                        $hotNumber = $is_num ? 3 : 0;
+                        $list = $this->dao->getRecommendProduct($where, $field, $hotNumber, $page, $limit);
+                        break;
+                    case 'is_vip': //会员
+                        $k = 4;
+                        $list = $this->dao->getRecommendProduct($where, $field, 0, $page, $limit);
+                        break;
+                }
+                if ($list) {
+                    $list = get_thumb_water($list, $type);
+                    $list = $this->getActivityList($list, true, $seckillIdsList, $pinkIdsList, $bargrainIdsList);
+                    foreach ($list as &$item) {
+                        if (!($vipStatus && $item['is_vip'])) {
+                            $item['vip_price'] = 0;
+                        }
+                    }
+                }
+                if (isset($k)) $data[$k] = $list;
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * 单个获取首页推荐商品
+     * @param int $uid
+     * @param $field
+     * @param int $num
+     * @param string $type
+     * @return array|array[]
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getRecommendProduct(int $uid, $field, int $num = 0, string $type = 'mid')
+    {
+        [$page, $limit] = $this->getPageValue();
+        $where['vip_user'] = $uid ? app()->make(UserServices::class)->value(['uid' => $uid], 'is_money_level') : 0;
+        $list = $this->dao->getRecommendProduct($where, $field, $num, $page, $limit);
+        if ($list) {
+            $list = get_thumb_water($list, $type);
+            $list = $this->getActivityList($list);
+            /** @var MemberCardServices $memberCardService */
+            $memberCardService = app()->make(MemberCardServices::class);
+            $vipStatus = $memberCardService->isOpenMemberCard('vip_price');
+            foreach ($list as &$item) {
+                if (!$this->vipIsOpen(!!$item['is_vip'], $vipStatus)) {
+                    $item['vip_price'] = 0;
+                }
+            }
+        }
+        return $list;
+    }
+
+    /**
+     * 商品名称 图片
+     * @param array $productIds
+     * @return array
+     */
+    public function getProductArray(array $where, string $field, string $key)
+    {
+        return $this->dao->getColumn($where, $field, $key);
+    }
+
+    /**
+     * 获取商品详情
+     * @param int $productId
+     * @param string $field
+     * @param array $with
+     * @return array|\think\Model|null
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getProductInfo(int $productId, string $field = '*', array $with = [])
+    {
+        return $this->dao->getOne(['is_del' => 0, 'is_show' => 1, 'id' => $productId], $field, $with);
+    }
+
+    /** 生成商品复制口令关键字
+     * @param int $productId
+     * @return string
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function getProductWords(int $productId)
+    {
+        $productInfo = $this->dao->getOne(['is_del' => 0, 'is_show' => 1, 'id' => $productId]);
+        $keyWords = "";
+        if ($productInfo) {
+            $oneKey = "crmeb-fu致文本 Http:/ZБ";
+            $twoKey = "Б轉移至☞" . sys_config('site_name') . "☜";
+            $threeKey = "【" . $productInfo['store_name'] . "】";
+            $mainKey = base64_encode($productId);
+            $keyWords = $oneKey . $mainKey . $twoKey . $threeKey;
+        }
+        return $keyWords;
+    }
+
+    /**
+     * 获取会员价格（付费会员价格和购买商品会员价格）
+     * @param int $uid
+     * @param $userInfo
+     * @param $vipStatus
+     * @param $goodsList
+     * @param string $discount
+     * @param bool $isSingle
+     * @param float $payVipPrice
+     * @param int $is_vip
+     * @param bool $is_show
+     * @return float|int|mixed|string
+     */
+    public function isPayLevelPrice(int $uid, $userInfo, $vipStatus, $price, string $discount, $payVipPrice = 0.00, $is_vip = 0, $is_show = false)
+    {
+        //is_vip == 0表示会员价格不启用，展示为零
+        if ($is_vip == 0) $payVipPrice = 0;
+        if (!$userInfo && $uid) {
+            //检测用户是否是付费会员
+            /** @var  UserServices $userService */
+            $userService = app()->make(UserServices::class);
+            $userInfo = $userService->getUserInfo($uid);
+        }
+        $noPayVipPrice = ($discount && $discount != 0.00) ? bcmul((string)$discount, (string)$price, 2) : $price;
+        if ($payVipPrice < $noPayVipPrice && $payVipPrice > 0) {
+            $vipPrice = $payVipPrice;
+            $type = 'member';
+        } else {
+            $vipPrice = $noPayVipPrice;
+            $type = 'level';
+        }
+
+        //如果$isSingle==true 返回优惠后的总金额，否则返回优惠的金额
+        if ($vipStatus && $is_vip == 1) {
+            //$is_show == false 是计算支付价格，true是展示
+            if (!$is_show) {
+                return [$vipPrice, bcsub((string)$price, (string)$vipPrice, 2), $type];
+            } else {
+                if ($userInfo && isset($userInfo['is_money_level']) && $userInfo['is_money_level'] > 0) {
+                    return [$vipPrice, bcsub((string)$price, (string)$vipPrice, 2), $type];
+                } else {
+                    return [$noPayVipPrice, bcsub((string)$price, (string)$noPayVipPrice, 2), $type];
+                }
+            }
+        } else {
+            return [$noPayVipPrice, bcsub((string)$price, (string)$noPayVipPrice, 2), $type];
+        }
+    }
+
+    /**
+     * 通过商品id获取商品分类
+     * @param array $productId
+     * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     */
+    public function productIdByProductCateName(array $productId)
+    {
+        $data = $this->dao->productIdByCateId($productId);
+        $cateData = [];
+        foreach ($data as $item) {
+            $cateData[$item['id']] = implode(',', array_map(function ($i) {
+                return $i['cate_name'];
+            }, $item['cateName']));
+        }
+        return $cateData;
+    }
+
+    /**
+     * 获取预售列表
+     * @param $where
+     * @return mixed
+     */
+    public function getAdvanceList($where)
+    {
+        [$page, $limit] = $this->getPageValue();
+        $data = $this->dao->getAdvanceList($where, $page, $limit);
+        foreach ($data['list'] as &$item) {
+        }
+        return $data;
+    }
+
+    /**
+     * 商品分享二维码 推广员
+     * @param int $id
+     * @param string $userType
+     * @param $user
+     * @return mixed|string
+     */
+    public function getCode(int $id, string $userType, $user)
+    {
+        if (!$id || !$this->isValidProduct($id, 'id')) {
+            throw new ApiException('商品不存在');
+        }
+        if ($userType == 'routine') {
+            /** @var QrcodeServices $qrcodeService */
+            $qrcodeService = app()->make(QrcodeServices::class);
+            $url = $qrcodeService->getRoutineQrcodePath($id, $user['uid'], 0, ['is_promoter' => $user['is_promoter']]);
+            if (!$url) {
+                throw new ApiException('二维码生成失败');
+            } else {
+                if ($url == 'unpublished') throw new ApiException('小程序尚未发布,无法生成商品海报');
+                return $url;
+            }
+        }
+        return '';
+    }
+
+    public function otherInfo($id, $type)
+    {
+        $storeInfo = $this->dao->get($id, ['id', 'is_sub', 'is_vip', 'vip_product', 'vip_product_type']);
+        if (!$storeInfo) throw new AdminException('商品不存在');
+        $storeInfo = $storeInfo->toArray();
+        $storeInfo['store_brokerage_ratio'] = sys_config('store_brokerage_ratio');
+        $storeInfo['store_brokerage_two'] = sys_config('store_brokerage_two');
+        /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
+        $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
+        $attrValue = $storeProductAttrValueServices->getSkuArray(['product_id' => $id, 'type' => 0]);
+        return compact('storeInfo', 'attrValue');
+    }
+
+    public function otherSave($id, $type, $data)
+    {
+        $upProductData = [];
+        if ($type == 1) {
+            $upProductData = [
+                'is_sub' => $data['is_sub'],
+            ];
+        } elseif ($type == 2) {
+            $upProductData = [
+                'is_vip' => $data['is_vip'],
+                'vip_product' => $data['vip_product'],
+                'vip_product_type' => $data['vip_product_type'],
+            ];
+        }
+        if ($upProductData) $this->dao->update($id, $upProductData);
+        /** @var StoreProductAttrValueServices $storeProductAttrValueServices */
+        $storeProductAttrValueServices = app()->make(StoreProductAttrValueServices::class);
+        /** @var StoreProductAttrResultServices $storeProductAttrValueServices */
+        $storeProductAttrResultServices = app()->make(StoreProductAttrResultServices::class);
+        $attrResult = json_decode($storeProductAttrResultServices->get(['product_id' => $id, 'type' => 0])->toArray()['result'], true);
+        foreach ($data['attr_value'] as $item) {
+            $upAttrData = [];
+            if ($type == 1) {
+                $upAttrData = [
+                    'brokerage' => $data['is_sub'] ? $item['brokerage'] : 0,
+                    'brokerage_two' => $data['is_sub'] ? $item['brokerage_two'] : 0
+                ];
+            } elseif ($type == 2) {
+                $upAttrData = [
+                    'vip_price' => $data['is_vip'] ? $item['vip_price'] : 0
+                ];
+            }
+            if ($upAttrData) $storeProductAttrValueServices->update($item['id'], $upAttrData);
+            foreach ($attrResult['value'] as $key => $result) {
+                if (isset($result['unique'])) {
+                    if ($result['unique'] == $item['unique']) {
+                        if ($type == 1) {
+                            $attrResult['value'][$key]['brokerage'] = $data['is_sub'] ? $item['brokerage'] : 0;
+                            $attrResult['value'][$key]['brokerage_two'] = $data['is_sub'] ? $item['brokerage_two'] : 0;
+                        } elseif ($type == 2) {
+                            $attrResult['value'][$key]['vip_price'] = $data['is_vip'] ? $item['vip_price'] : 0;
+                            $attrResult['value'][$key]['vip_proportion'] = $data['is_vip'] ? bcmul(bcdiv($item['vip_price'], $item['price'], 4), 100, 2) : 0;
+                        }
+                    }
+                }
+            }
+            $storeProductAttrResultServices->update(['product_id' => $id, 'type' => 0], ['result' => json_encode($attrResult)]);
+        }
+        return true;
+    }
+
+    /**
+     * 真实价格
+     * @param $uid
+     * @param $id
+     * @param $unique
+     * @return array
+     * @author wuhaotian
+     * @email 442384644@qq.com
+     * @date 2025/2/5
+     */
+    public function realPrice($uid, $id, $unique)
+    {
+        $isMember = $isVip = $levelPrice = $memberPrice = $realPrice = $price = 0;
+        $levelDiscount = 100;
+        if ($uid) {
+            $isMember = app()->make(UserServices::class)->value(['uid' => $uid], 'is_money_level');
+            if (sys_config('member_func_status', 0)) {
+                $levelDiscount = app()->make(UserLevelServices::class)->getUerLevelInfoByUid($uid, 'discount');
+            }
+        }
+        $productIsVip = $this->dao->value(['id' => $id], 'is_vip');
+        $attrInfo = app()->make(StoreProductAttrValueServices::class)->get(['unique' => $unique, 'product_id' => $id, 'type' => 0], ['price', 'vip_price', 'ot_price']);
+        $attrInfo = $attrInfo->toArray();
+        $realPrice = $price = $attrInfo['price'];
+        $levelPrice = bcmul($attrInfo['price'], bcdiv($levelDiscount, 100, 2), 2);
+        $memberPrice = $attrInfo['vip_price'];
+        $otPrice = $attrInfo['ot_price'];
+        if ($levelDiscount && $isMember && $productIsVip) {
+            $realPrice = min($levelPrice, $memberPrice);
+            $isVip = $memberPrice < $levelPrice ? 1 : 0;
+        }
+        if ($levelDiscount && (!$isMember || !$productIsVip)) {
+            $realPrice = $levelPrice;
+            $isVip = 0;
+        }
+        if (!$levelDiscount && $isMember && $productIsVip) {
+            $realPrice = $memberPrice;
+            $isVip = 1;
+        }
+        return ['real_price' => $realPrice, 'price' => $price, 'is_vip' => $isVip, 'product_is_vip' => $productIsVip, 'member_price' => $memberPrice, 'level_price' => $levelPrice, 'user_is_member' => $isMember, 'ot_price' => $otPrice];
+    }
+
+    /**
+     * 批量移动回收站
+     * @param $ids
+     * @return bool
+     * @author wuhaotian
+     * @email 442384644@qq.com
+     * @date 2025/6/18
+     */
+    public function batchDelete($ids)
+    {
+        $passNum = 0;
+        foreach ($ids as $id) {
+            //删除商品检测是否有参与活动
+            $res = $this->checkActivity($id, true);
+            if ($res) {
+                $data['is_del'] = 1;
+                $data['is_show'] = 0;
+                $this->dao->update($id, $data);
+                app()->make(StoreProductCateServices::class)->update(['product_id' => $id], ['status' => 0]);
+                app()->make(StoreCartServices::class)->changeStatus($id, 0);
+            } else {
+                $passNum++;
+            }
+        }
+        return $passNum ? $passNum . '件商品参与活动无法移到回收站，其他商品移动回收站成功' : '移动回收站成功';
+    }
+
+    public function batchRecover($ids)
+    {
+        foreach ($ids as $id) {
+            $data['is_del'] = 0;
+            $this->dao->update($id, $data);
+            app()->make(StoreProductCateServices::class)->update(['product_id' => $id], ['status' => 1]);
+        }
+        return true;
+    }
+
+    /**
+     * 自定义组件-商品
+     * @param $where
+     * @return array
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\DbException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @author wuhaotian
+     * @email 442384644@qq.com
+     * @date 2026/1/13
+     */
+    public function getThemeProduct($where)
+    {
+        $sort = $where['sort'] ? 'asc' : 'desc';
+        switch ($where['order']) {
+            case 0:
+                $order = 'sales ' . $sort;
+                break;
+            case 1:
+                $order = 'price ' . $sort;
+                break;
+            default:
+                $order = 'sort desc';
+                break;
+        }
+        $limit = $where['ids'] == '' ? (int)$where['limit'] : 1000;
+        $list = $this->dao->getThemeProduct($where, $order, $limit);
+        foreach ($list as &$item) {
+            $item['cate_name'] = $item['cateName'][0]['cate_name'];
+            unset($item['cateName']);
+        }
+        if ($where['ids'] == '') return $list;
+        // 将$list转换为以id为键的数组
+        $list = array_column($list, null, 'id');
+        $data = [];
+        // 遍历where中的ids，按顺序取出对应商品
+        foreach (explode(',', $where['ids']) as $id) {
+            if (isset($list[$id])) {
+                $data[] = $list[$id];
+            }
+        }
+        return $data;
+    }
+}

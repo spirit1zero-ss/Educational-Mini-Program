@@ -1,0 +1,53 @@
+@import "../invite-records/invite-records.wxss";
+
+.action-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 18rpx;
+  margin-top: 22rpx;
+}
+
+.primary-entry,
+.secondary-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 72rpx;
+  border-radius: 999rpx;
+  font-size: 25rpx;
+  font-weight: 800;
+  line-height: 72rpx;
+}
+
+.primary-entry {
+  background: linear-gradient(135deg, #245c4a 0%, #2f6b43 100%);
+  color: #ffffff;
+  box-shadow: 0 12rpx 24rpx rgba(36, 92, 74, 0.16);
+}
+
+.secondary-entry {
+  border: 1rpx solid rgba(47, 107, 67, 0.16);
+  background: #f2f7ef;
+  color: #245c4a;
+}
+
+.record-icon {
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.record-name {
+  max-width: 300rpx;
+}
+
+.status-badge--withdraw {
+  background: rgba(88, 125, 103, 0.12);
+  color: #496b59;
+}
+
+.primary-entry:active,
+.secondary-entry:active {
+  transform: scale(0.99);
+}

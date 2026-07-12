@@ -1,0 +1,25 @@
+node_modules/
+dist/
+src/CRMEB/CRMEB-master/crmeb/vendor/
+.wechat-local-data/
+src/CRMEB/CRMEB-master/template/uni-app/.npm-cache/
+src/CRMEB/CRMEB-master/template/admin/.npm-cache/
+src/CRMEB/CRMEB-master/crmeb/public/statics/mp_view/.vscode/
+.env
+.env.*
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.DS_Store
+Thumbs.db
+agent-orchestrator.yaml
+
+# CRMEB local/runtime artifacts
+src/CRMEB/CRMEB-master/crmeb/.constant
+src/CRMEB/CRMEB-master/crmeb/public/install.lock
+src/CRMEB/CRMEB-master/crmeb/runtime/
+src/CRMEB/CRMEB-master/crmeb/supervisord.log
+src/CRMEB/CRMEB-master/crmeb/vendor/workerman/workerman.log
+src/CRMEB/CRMEB-master/help/docker/mysql/

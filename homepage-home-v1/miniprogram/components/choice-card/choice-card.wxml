@@ -1,0 +1,6 @@
+<view class="choice-card {{selected ? 'choice-card--selected' : ''}}" bindtap="onTap">
+  <view class="choice-letter">{{option.label}}</view>
+  <view class="choice-content">
+    <view class="choice-row" wx:for="{{option.subjects}}" wx:key="*this">{{item}}</view>
+  </view>
+</view>

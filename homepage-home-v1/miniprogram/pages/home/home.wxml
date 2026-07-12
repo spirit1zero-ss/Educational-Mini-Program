@@ -1,0 +1,94 @@
+<view class="page">
+  <view class="custom-nav" style="{{navStyle}}">
+    <view class="nav-title">自主学习训练营</view>
+  </view>
+
+  <scroll-view class="home-scroll" style="{{scrollStyle}}" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="hero-card">
+        <view class="intro">
+          <view class="intro-title">自主学习是 AI 时代的根本能力</view>
+          <view class="intro-subtitle">内驱力、学习习惯、学科开窍，三大能力一起生长</view>
+        </view>
+
+        <view class="model-panel">
+          <image class="tree-image" src="../../assets/home-tree-rounded-v2.jpg" mode="aspectFill"></image>
+
+          <view class="module-stack">
+            <view
+              class="module-card {{item.className}}"
+              wx:for="{{modules}}"
+              wx:key="key"
+              bindtap="onModuleTap"
+              data-item="{{item}}"
+            >
+              <view class="module-icon-wrap">
+                <image class="module-icon" src="{{item.icon}}" mode="aspectFit"></image>
+              </view>
+              <view class="module-copy">
+                <view class="module-title">{{item.title}}</view>
+                <view class="module-subtitle">{{item.subtitle}}</view>
+              </view>
+              <view class="module-arrow">›</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="entry-panel">
+        <view class="section-heading">
+          <view class="section-mark"></view>
+          <view class="section-title">先从一个入口开始</view>
+        </view>
+
+        <view class="action-list">
+          <view
+            class="action-card action-card--{{item.type}}"
+            wx:for="{{actions}}"
+            wx:key="key"
+            bindtap="onActionTap"
+            data-item="{{item}}"
+          >
+            <view class="action-icon-wrap">
+              <image class="action-icon" src="{{item.icon}}" mode="aspectFit"></image>
+            </view>
+            <view class="action-copy">
+              <view class="action-title">{{item.title}}</view>
+              <view class="action-desc">{{item.desc}}</view>
+            </view>
+            <view class="action-button">{{item.actionText}} <text class="button-arrow">›</text></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="camp-strip" bindtap="onCampTap">
+        <view class="camp-icon-wrap">
+          <image class="camp-icon" src="../../assets/home/home-icon-camp.png" mode="aspectFit"></image>
+        </view>
+        <view class="camp-copy">
+          <view class="camp-title">21天线上特训营</view>
+          <view class="camp-desc">直播课 + 打卡陪跑 + 答疑</view>
+        </view>
+        <view class="camp-price">399元</view>
+        <view class="camp-arrow">›</view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="bottom-tab">
+    <view
+      class="tab-item {{item.key === 'home' ? 'tab-item--active' : ''}}"
+      wx:for="{{tabs}}"
+      wx:key="key"
+      bindtap="onTabTap"
+      data-key="{{item.key}}"
+    >
+      <image
+        class="tab-icon"
+        src="{{item.key === 'home' ? item.activeIcon : item.icon}}"
+        mode="aspectFit"
+      ></image>
+      <view class="tab-text">{{item.text}}</view>
+    </view>
+  </view>
+</view>

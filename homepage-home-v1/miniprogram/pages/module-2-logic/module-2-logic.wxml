@@ -1,0 +1,109 @@
+<view class="page">
+  <custom-nav title="学科开窍" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="hero">
+        <view class="hero-title">学科知识的基础逻辑</view>
+      </view>
+
+      <block wx:for="{{articleBlocks}}" wx:key="id">
+        <view wx:if="{{item.type === 'quote'}}" class="quote-card">
+          <view class="quote-mark quote-mark--left">“</view>
+          <view class="quote-text">{{item.text}}</view>
+          <view class="quote-mark quote-mark--right">”</view>
+        </view>
+
+        <view wx:elif="{{item.type === 'definition'}}" class="definition-card">
+          <view class="definition-icon-wrap">
+            <image class="definition-icon" src="{{iconBase}}{{item.icon}}" mode="aspectFit"></image>
+          </view>
+          <view class="definition-copy">
+            <text>{{item.prefix}}</text><text class="highlight">{{item.highlight}}</text>
+          </view>
+        </view>
+
+        <view wx:elif="{{item.type === 'section'}}" class="article-card">
+          <view class="section-head">
+            <view class="section-index">{{item.index}}</view>
+            <view class="section-title">{{item.title}}</view>
+          </view>
+
+          <view wx:if="{{item.lines && item.index !== '04'}}">
+            <view class="paragraph" wx:for="{{item.lines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
+          </view>
+
+          <view wx:if="{{item.list}}" class="logic-list">
+            <view class="logic-row" wx:for="{{item.list}}" wx:for-item="entry" wx:key="marker">
+              <view class="logic-marker">{{entry.marker}}</view>
+              <view class="logic-copy">{{entry.text}}</view>
+            </view>
+          </view>
+
+          <view wx:if="{{item.note}}" class="note-box">
+            <image class="note-icon" src="{{iconBase}}callout-star.png" mode="aspectFit"></image>
+            <view class="note-text">{{item.note}}</view>
+          </view>
+
+          <view wx:if="{{item.noteLines}}" class="note-box">
+            <image class="note-icon" src="{{iconBase}}callout-star.png" mode="aspectFit"></image>
+            <view class="note-text">
+              <view wx:for="{{item.noteLines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
+            </view>
+          </view>
+
+          <view wx:if="{{item.stages}}" class="stage-list">
+            <view class="stage-row" wx:for="{{item.stages}}" wx:for-item="stage" wx:key="key">
+              <view class="stage-icon-wrap">
+                <image class="stage-icon" src="{{iconBase}}{{stage.icon}}" mode="aspectFit"></image>
+              </view>
+              <view class="stage-copy">
+                <view
+                  class="{{lineIndex === 0 ? 'stage-title' : 'stage-line'}}"
+                  wx:for="{{stage.lines}}"
+                  wx:for-item="line"
+                  wx:for-index="lineIndex"
+                  wx:key="*this"
+                >{{line}}</view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:if="{{item.lines && item.index === '04'}}" class="closing-block">
+            <view class="closing-quote">{{item.lines[1]}}</view>
+            <view class="closing-copy">
+              <text>{{item.educationParts.prefix}}</text><text class="gold-chip">{{item.educationParts.first}}</text><text>{{item.educationParts.middle}}</text><text class="gold-chip">{{item.educationParts.second}}</text><text>{{item.educationParts.suffix}}</text>
+            </view>
+          </view>
+
+          <view wx:if="{{item.subjectLines}}" class="subject-list">
+            <view class="subject-pill {{subject.className}}" wx:for="{{item.subjectLines}}" wx:for-item="subject" wx:key="key">
+              <view class="subject-key">{{subject.key}}</view>
+              <view class="subject-text">{{subject.text}}</view>
+            </view>
+          </view>
+
+          <view wx:if="{{item.finalLines}}" class="final-block">
+            <view
+              class="final-line"
+              wx:for="{{item.finalLines}}"
+              wx:for-item="line"
+              wx:key="*this"
+            >{{line}}</view>
+          </view>
+        </view>
+      </block>
+
+      <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+
+  <view class="assessment-bar" bindtap="onStartAssessment">
+    <image class="assessment-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
+    <view class="assessment-copy">
+      <view class="assessment-title">点击：测评</view>
+      <view class="assessment-subtitle">一张图让孩子的学科开窍</view>
+    </view>
+    <view class="assessment-arrow">›</view>
+  </view>
+</view>

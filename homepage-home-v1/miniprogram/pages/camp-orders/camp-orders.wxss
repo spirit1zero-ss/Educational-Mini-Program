@@ -1,0 +1,97 @@
+@import "../invite-records/invite-records.wxss";
+
+.order-card {
+  padding: 24rpx;
+  border-bottom: 1rpx solid rgba(47, 107, 67, 0.08);
+}
+
+.order-card:last-child {
+  border-bottom: 0;
+}
+
+.order-head,
+.order-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: #1f2a24;
+  font-size: 29rpx;
+  font-weight: 900;
+  line-height: 38rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-info {
+  margin-top: 16rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 18rpx;
+  background: #f7faf4;
+}
+
+.order-line {
+  color: #647168;
+  font-size: 22rpx;
+  line-height: 34rpx;
+}
+
+.order-foot {
+  margin-top: 18rpx;
+}
+
+.order-amount {
+  color: #9a6f22;
+  font-size: 28rpx;
+  font-weight: 900;
+  line-height: 36rpx;
+}
+
+.order-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.order-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 54rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  background: #edf5ea;
+  color: #245c4a;
+  font-size: 22rpx;
+  font-weight: 800;
+  line-height: 54rpx;
+}
+
+.order-action--ghost {
+  background: #fff8ea;
+  color: #9a6f22;
+}
+
+.order-action--disabled {
+  background: #eef1ee;
+  color: #8f9a92;
+}
+
+.status-badge--paid {
+  background: rgba(47, 107, 67, 0.1);
+  color: #245c4a;
+}
+
+.status-badge--closed {
+  background: rgba(88, 125, 103, 0.12);
+  color: #496b59;
+}
+
+.order-action:active {
+  transform: scale(0.99);
+}

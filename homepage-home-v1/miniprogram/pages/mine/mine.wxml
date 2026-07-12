@@ -1,0 +1,130 @@
+<view class="page">
+  <view class="custom-nav" style="{{navStyle}}">
+    <view class="nav-title">我的</view>
+  </view>
+
+  <scroll-view class="mine-scroll" style="{{scrollStyle}}" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="camp-card {{isMember ? 'camp-card--member' : ''}}">
+        <image class="camp-bg" src="{{isMember ? memberHeroImage : heroImage}}" mode="aspectFill"></image>
+        <view class="camp-overlay"></view>
+        <view class="camp-body">
+          <view class="member-row">
+            <view class="member-badge {{isMember ? 'member-badge--active' : ''}}">
+              <image class="member-icon" src="../../assets/mine/icon-member-status.svg" mode="aspectFit"></image>
+              <text>{{isMember ? '训练营会员' : memberStatusText}}</text>
+            </view>
+          </view>
+          <view class="camp-title">{{trainingCamp.title}}</view>
+          <view class="camp-desc">{{trainingCamp.subtitle}}</view>
+          <view class="uid-line" wx:if="{{isMember}}">会员编号 UID：{{memberUid}}</view>
+          <view class="camp-meta {{isMember ? 'camp-meta--member' : ''}}">
+            <view class="price-chip">{{trainingCamp.priceText}}</view>
+            <view class="benefit-text">{{benefitText}}</view>
+          </view>
+          <view class="signup-button" wx:if="{{!isMember}}" bindtap="onHeroActionTap">{{trainingCamp.ctaText}}</view>
+        </view>
+      </view>
+
+      <view class="referral-card">
+        <view class="section-head">
+          <view>
+            <view class="section-title">分销中心</view>
+            <view class="section-desc">邀请好友报名，获得推广奖励</view>
+          </view>
+          <image class="section-icon" src="../../assets/mine/icon-referral.svg" mode="aspectFit"></image>
+        </view>
+        <view class="stats-row">
+          <view class="stat-item" wx:for="{{stats}}" wx:key="key">
+            <view class="stat-value">{{item.value}}</view>
+            <view class="stat-label">{{item.label}}</view>
+          </view>
+        </view>
+        <view class="poster-button {{isMember ? 'poster-button--primary' : 'poster-button--secondary'}}" bindtap="onPosterTap">{{posterCtaText}}</view>
+      </view>
+
+      <view class="quick-grid" wx:if="{{isMember}}">
+        <view
+          class="quick-item"
+          wx:for="{{quickActions}}"
+          wx:key="key"
+          bindtap="onActionTap"
+          data-key="{{item.key}}"
+        >
+          <image class="quick-icon" src="{{item.icon}}" mode="aspectFit"></image>
+          <view class="quick-title">{{item.title}}</view>
+        </view>
+      </view>
+
+      <view class="list-panel">
+        <view
+          class="list-row"
+          wx:for="{{listItems}}"
+          wx:key="key"
+          bindtap="onListTap"
+          data-key="{{item.key}}"
+        >
+          <image class="list-icon" src="{{item.icon}}" mode="aspectFit"></image>
+          <view class="list-copy">
+            <view class="list-title">{{item.title}}</view>
+            <view class="list-desc">
+              {{item.key === 'registration' ? (registrationCompleted ? '已填写，可随时修改' : '待填写孩子信息') : item.desc}}
+            </view>
+          </view>
+          <view class="chevron">›</view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="bottom-tab">
+    <view
+      class="tab-item {{item.key === 'mine' ? 'tab-item--active' : ''}}"
+      wx:for="{{tabs}}"
+      wx:key="key"
+      bindtap="onTabTap"
+      data-item="{{item}}"
+    >
+      <image class="tab-icon" src="{{item.key === 'mine' ? item.activeIcon : item.icon}}" mode="aspectFit"></image>
+      <view class="tab-text">{{item.text}}</view>
+    </view>
+  </view>
+
+  <view class="redeem-mask" wx:if="{{showRedeemModal}}" bindtap="closeRedeemModal">
+    <view class="redeem-modal" catchtap="stopModalClose">
+      <view class="redeem-head">
+        <view>
+          <view class="redeem-title">兑换码</view>
+          <view class="redeem-subtitle">输入兑换码，开通训练营会员权益</view>
+        </view>
+        <view class="redeem-close" bindtap="closeRedeemModal">×</view>
+      </view>
+
+      <view class="redeem-card">
+        <image class="redeem-icon" src="../../assets/mine/icon-redeem-code.svg" mode="aspectFit"></image>
+        <input
+          class="redeem-input"
+          value="{{redeemCode}}"
+          maxlength="24"
+          placeholder="请输入兑换码"
+          placeholder-class="redeem-placeholder"
+          confirm-type="done"
+          bindinput="onRedeemInput"
+          bindconfirm="onRedeemSubmit"
+        />
+      </view>
+
+      <view class="redeem-tips">
+        <view class="redeem-tip">兑换成功后将自动开通会员权益</view>
+        <view class="redeem-tip">兑换码仅可按后台规则使用</view>
+      </view>
+
+      <view
+        class="redeem-submit {{redeemCode ? 'redeem-submit--ready' : ''}} {{redeemSubmitting ? 'redeem-submit--loading' : ''}}"
+        bindtap="onRedeemSubmit"
+      >
+        {{redeemSubmitting ? '兑换中...' : '确认兑换'}}
+      </view>
+    </view>
+  </view>
+</view>

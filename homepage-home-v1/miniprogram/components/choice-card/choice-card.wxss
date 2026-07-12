@@ -1,0 +1,55 @@
+.choice-card {
+  display: flex;
+  align-items: center;
+  min-height: 126rpx;
+  padding: 18rpx;
+  border: 1rpx solid rgba(31, 107, 87, 0.09);
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10rpx 28rpx rgba(31, 42, 36, 0.04);
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.choice-card:active {
+  transform: scale(0.99);
+}
+
+.choice-card--selected {
+  border-color: rgba(31, 107, 87, 0.42);
+  background: #eef7ec;
+  box-shadow: 0 12rpx 30rpx rgba(31, 107, 87, 0.08);
+}
+
+.choice-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  margin-right: 16rpx;
+  border-radius: 50%;
+  background: rgba(216, 166, 64, 0.14);
+  color: #a97822;
+  font-size: 28rpx;
+  line-height: 56rpx;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.choice-card--selected .choice-letter {
+  background: #1f6b57;
+  color: #ffffff;
+}
+
+.choice-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.choice-row {
+  color: #24332d;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  font-weight: 600;
+  white-space: nowrap;
+}

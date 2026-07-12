@@ -1,0 +1,111 @@
+<view class="page">
+  <custom-nav title="21天线上特训营" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="camp-hero">
+        <view class="camp-hero-copy">
+          <view class="camp-title">21天线上特训营</view>
+        </view>
+        <image class="camp-hero-image" src="{{heroImage}}" mode="aspectFit"></image>
+      </view>
+
+      <view class="quote-card camp-quote">
+        <view class="quote-mark quote-mark--left">“</view>
+        <view class="quote-text">{{intro.quote}}</view>
+        <view class="quote-mark quote-mark--right">”</view>
+      </view>
+
+      <view class="article-card intro-card">
+        <view class="paragraph" wx:for="{{intro.lines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
+      </view>
+
+      <block wx:for="{{sections}}" wx:key="id">
+        <view class="article-card camp-section camp-section--{{item.id}}">
+          <view class="section-head camp-section-head">
+            <view class="section-index">{{item.index}}</view>
+            <view class="section-title">
+              <text>{{item.title}}</text>
+              <text wx:if="{{item.subtitle}}" class="section-subtitle"> {{item.subtitle}}</text>
+            </view>
+            <image
+              wx:if="{{item.icon}}"
+              class="section-side-icon"
+              src="{{iconBase}}{{item.icon}}"
+              mode="aspectFit"
+            ></image>
+          </view>
+
+          <view wx:if="{{item.kind === 'numbered'}}" class="goal-list">
+            <view class="goal-row" wx:for="{{item.items}}" wx:for-item="goal" wx:for-index="goalIndex" wx:key="*this">
+              <view class="goal-dot">{{goalIndex + 1}}</view>
+              <view class="goal-text">{{goal}}</view>
+            </view>
+          </view>
+
+          <view wx:elif="{{item.kind === 'models'}}" class="model-list">
+            <view class="model-row" wx:for="{{item.models}}" wx:for-item="model" wx:key="text">
+              <view class="model-icon-wrap">
+                <image
+                  class="model-icon"
+                  src="{{model.iconSrc}}"
+                  mode="aspectFit"
+                ></image>
+              </view>
+              <view class="model-text">{{model.text}}</view>
+            </view>
+          </view>
+
+          <view wx:elif="{{item.kind === 'system'}}">
+            <view class="system-line">{{item.text}}</view>
+            <view class="system-steps">
+              <view class="system-step" wx:for="{{item.items}}" wx:for-item="step" wx:key="text">
+                <view class="system-icon-wrap">
+                  <image
+                    class="system-icon"
+                    src="{{step.iconSrc}}"
+                    mode="aspectFit"
+                  ></image>
+                </view>
+                <view class="system-text">{{step.text}}</view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:elif="{{item.kind === 'lessons'}}" class="lesson-list">
+            <view class="lesson-row" wx:for="{{item.items}}" wx:for-item="lesson" wx:key="*this">
+              <view class="play-mark"></view>
+              <view class="lesson-text">{{lesson}}</view>
+            </view>
+          </view>
+
+          <view wx:elif="{{item.kind === 'details'}}" class="detail-grid">
+            <view
+              class="detail-group detail-group--{{groupIndex}} {{group.price ? 'detail-group--price' : ''}}"
+              wx:for="{{item.groups}}"
+              wx:for-item="group"
+              wx:for-index="groupIndex"
+              wx:key="title"
+            >
+              <view class="detail-title">{{group.title}}</view>
+              <view class="detail-line" wx:for="{{group.lines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <view class="final-line camp-closing">{{closing}}</view>
+
+      <view class="bottom-spacer"></view>
+    </view>
+  </scroll-view>
+
+  <view class="assessment-bar" bindtap="onJoinTap">
+    <image class="assessment-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
+    <view class="assessment-copy">
+      <view class="assessment-title">立即报名 399元</view>
+      <view class="assessment-subtitle">确认订单后使用微信支付</view>
+    </view>
+    <view class="assessment-arrow">›</view>
+  </view>
+</view>

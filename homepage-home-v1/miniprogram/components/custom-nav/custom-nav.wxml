@@ -1,0 +1,11 @@
+<view class="custom-nav" style="{{navStyle}}">
+  <view class="native-nav-bar" style="{{navBarStyle}}">
+    <view class="native-nav-row" style="{{navRowStyle}}">
+      <view wx:if="{{showBack}}" class="nav-back-icon nav-action--back" bindtap="onBack">
+        <view class="nav-back-stroke"></view>
+      </view>
+      <view class="nav-title">{{title}}</view>
+      <view wx:if="{{showHome}}" class="nav-home-text nav-action--home" bindtap="onHome">首页</view>
+    </view>
+  </view>
+</view>

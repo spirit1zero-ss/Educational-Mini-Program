@@ -1,0 +1,16 @@
+{
+  "name": "miniprogram",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "node ../../tests/miniprogram-smoke.mjs && node ../../tests/admin-retired-surface.contract.mjs && node ../../tests/backend-retired-surface.contract.mjs",
+    "test:miniprogram": "node ../../tests/miniprogram-smoke.mjs",
+    "test:admin-contract": "node ../../tests/admin-retired-surface.contract.mjs",
+    "test:backend-contract": "node ../../tests/backend-retired-surface.contract.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
