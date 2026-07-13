@@ -15,7 +15,7 @@ RUN apt-get update \
         libzip-dev \
         unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" \
+    && docker-php-ext-install -j1 \
         bcmath \
         curl \
         dom \
@@ -28,8 +28,9 @@ RUN apt-get update \
         xml \
         xmlreader \
         xmlwriter \
-        zip \
-    && pecl install redis-6.0.2 \
+        zip
+
+RUN pecl install redis-6.0.2 \
     && docker-php-ext-enable redis \
     && a2enmod rewrite headers expires \
     && rm -rf /var/lib/apt/lists/* /tmp/pear
