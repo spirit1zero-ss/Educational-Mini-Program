@@ -6,28 +6,18 @@ ENV TZ=Asia/Shanghai \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl \
-        libcurl4-openssl-dev \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
-        libonig-dev \
         libpng-dev \
-        libxml2-dev \
         libzip-dev \
         unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j1 \
         bcmath \
-        curl \
-        dom \
         gd \
-        mbstring \
         mysqli \
         opcache \
         pdo_mysql \
-        simplexml \
-        xml \
-        xmlreader \
-        xmlwriter \
         zip
 
 RUN pecl install redis-6.0.2 \
