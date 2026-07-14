@@ -36,7 +36,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 86rpx;
+  gap: 8rpx;
+  min-width: 112rpx;
   height: 52rpx;
   padding: 0 18rpx;
   border-radius: 999rpx;
@@ -45,4 +46,36 @@
   font-size: 24rpx;
   font-weight: 800;
   flex: 0 0 auto;
+}
+
+.doc-card--busy,
+.assessment-bar--busy {
+  opacity: 0.78;
+}
+
+.doc-action--error {
+  background: #8b3c32;
+}
+
+.download-spinner {
+  width: 20rpx;
+  height: 20rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: download-spin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+
+.download-spinner--bar {
+  width: 28rpx;
+  height: 28rpx;
+  border-color: rgba(15, 90, 61, 0.22);
+  border-top-color: #0f5a3d;
+}
+
+@keyframes download-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -7,25 +7,29 @@
         <view class="hero-title">点击下载表格</view>
       </view>
 
-      <view class="article-card doc-card" bindtap="onDownloadTable">
+      <view class="article-card doc-card {{isBusy ? 'doc-card--busy' : ''}}" bindtap="onDownloadTable">
         <image class="doc-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
         <view class="doc-copy">
           <view class="doc-title">SOP高效作业流程规范表格.docx</view>
-          <view class="doc-desc">作业即考试 训练</view>
+          <view class="doc-desc">{{statusText}}</view>
         </view>
-        <view class="doc-action">打开</view>
+        <view class="doc-action {{downloadState === 'error' ? 'doc-action--error' : ''}}">
+          <view class="download-spinner" wx:if="{{isBusy}}"></view>
+          <text>{{actionText}}</text>
+        </view>
       </view>
 
       <view class="bottom-spacer"></view>
     </view>
   </scroll-view>
 
-  <view class="assessment-bar" bindtap="onDownloadTable">
+  <view class="assessment-bar {{isBusy ? 'assessment-bar--busy' : ''}}" bindtap="onDownloadTable">
     <image class="assessment-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
     <view class="assessment-copy">
-      <view class="assessment-title">点击下载表格</view>
-      <view class="assessment-subtitle">作业即考试 训练</view>
+      <view class="assessment-title">{{barTitle}}</view>
+      <view class="assessment-subtitle">{{barSubtitle}}</view>
     </view>
-    <view class="assessment-arrow">›</view>
+    <view class="download-spinner download-spinner--bar" wx:if="{{isBusy}}"></view>
+    <view class="assessment-arrow" wx:else>›</view>
   </view>
 </view>
