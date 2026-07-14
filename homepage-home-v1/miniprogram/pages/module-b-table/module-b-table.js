@@ -1,6 +1,6 @@
 Page({
   data: {
-    tableDocPath: "../../assets/module-b-table/sop-homework-table.docx",
+    tableDocPath: "assets/module-b-table/sop-homework-table.docx",
     tableFileUrl: "",
     iconBase: "../../assets/module-2-logic/icons/"
   },
@@ -11,7 +11,35 @@ Page({
       return;
     }
 
-    this.openDocument(this.data.tableDocPath);
+    this.openBundledTable();
+  },
+
+  openBundledTable() {
+    const fileSystem = wx.getFileSystemManager();
+    const targetPath = `${wx.env.USER_DATA_PATH}/sop-homework-table.docx`;
+
+    wx.showLoading({
+      title: "准备文件"
+    });
+
+    fileSystem.readFile({
+      filePath: this.data.tableDocPath,
+      success: (readResult) => {
+        fileSystem.writeFile({
+          filePath: targetPath,
+          data: readResult.data,
+          success: () => {
+            this.openDocument(targetPath);
+          },
+          fail: () => {
+            this.showOpenError();
+          }
+        });
+      },
+      fail: () => {
+        this.showOpenError();
+      }
+    });
   },
 
   downloadRemoteTable() {
@@ -56,14 +84,18 @@ Page({
         wx.hideLoading();
       },
       fail: () => {
-        wx.hideLoading();
-        wx.showModal({
-          title: "无法打开文件",
-          content: "当前环境无法直接打开表格，请上传到服务器后配置下载地址再测试真机下载。",
-          showCancel: false,
-          confirmText: "知道了"
-        });
+        this.showOpenError();
       }
+    });
+  },
+
+  showOpenError() {
+    wx.hideLoading();
+    wx.showModal({
+      title: "无法打开文件",
+      content: "表格文件打开失败，请稍后重试或更换设备。",
+      showCancel: false,
+      confirmText: "知道了"
     });
   }
 });
