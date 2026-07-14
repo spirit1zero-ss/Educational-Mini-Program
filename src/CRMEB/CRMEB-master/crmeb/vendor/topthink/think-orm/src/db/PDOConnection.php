@@ -1237,6 +1237,9 @@ abstract class PDOConnection extends Connection
                 $value = 0;
             }
 
+            // PHP 8 requires substr_replace() replacement values to be strings.
+            $value = (string) $value;
+
             // 判断占位符
             $sql = is_numeric($key) ?
             substr_replace($sql, $value, strpos($sql, '?'), 1) :
