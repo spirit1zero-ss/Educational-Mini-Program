@@ -1,72 +1,31 @@
 Page({
   data: {
-    tableDocPath: "assets/module-b-table/sop-homework-table.docx",
-    tableFileUrl: "",
+    tableFileId: "cloud://prod-d0ge2jwpgc0db67eb.7072-prod-d0ge2jwpgc0db67eb-1453312076/sop-homework-table.docx",
     iconBase: "../../assets/module-2-logic/icons/"
   },
 
   onDownloadTable() {
-    if (this.data.tableFileUrl) {
-      this.downloadRemoteTable();
-      return;
-    }
-
-    this.openBundledTable();
+    this.downloadCloudTable();
   },
 
-  openBundledTable() {
-    const fileSystem = wx.getFileSystemManager();
-    const targetPath = `${wx.env.USER_DATA_PATH}/sop-homework-table.docx`;
-
-    wx.showLoading({
-      title: "准备文件"
-    });
-
-    fileSystem.readFile({
-      filePath: this.data.tableDocPath,
-      success: (readResult) => {
-        fileSystem.writeFile({
-          filePath: targetPath,
-          data: readResult.data,
-          success: () => {
-            this.openDocument(targetPath);
-          },
-          fail: () => {
-            this.showOpenError();
-          }
-        });
-      },
-      fail: () => {
-        this.showOpenError();
-      }
-    });
-  },
-
-  downloadRemoteTable() {
+  downloadCloudTable() {
     wx.showLoading({
       title: "下载中"
     });
 
-    wx.downloadFile({
-      url: this.data.tableFileUrl,
+    wx.cloud.downloadFile({
+      fileID: this.data.tableFileId,
       success: (res) => {
-        if (res.statusCode === 200 && res.tempFilePath) {
+        if (res.tempFilePath) {
           this.openDocument(res.tempFilePath);
           return;
         }
 
-        wx.hideLoading();
-        wx.showToast({
-          title: "下载失败",
-          icon: "none"
-        });
+        this.showDownloadError();
       },
-      fail: () => {
-        wx.hideLoading();
-        wx.showToast({
-          title: "下载失败",
-          icon: "none"
-        });
+      fail: (error) => {
+        console.error("Download table failed", error);
+        this.showDownloadError();
       }
     });
   },
@@ -83,9 +42,20 @@ Page({
       success: () => {
         wx.hideLoading();
       },
-      fail: () => {
+      fail: (error) => {
+        console.error("Open table failed", error);
         this.showOpenError();
       }
+    });
+  },
+
+  showDownloadError() {
+    wx.hideLoading();
+    wx.showModal({
+      title: "下载失败",
+      content: "表格下载失败，请检查网络后重试。",
+      showCancel: false,
+      confirmText: "知道了"
     });
   },
 
