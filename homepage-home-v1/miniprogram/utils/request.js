@@ -1,4 +1,6 @@
 const {
+  CLOUD_ENV_ID,
+  CLOUD_SERVICE_NAME,
   getApiBaseUrl,
   TOKEN_KEY,
   USER_KEY,
@@ -23,8 +25,8 @@ function buildUrl(url) {
 
 function rawRequest(options) {
   return new Promise((resolve, reject) => {
-    wx.request({
-      url: buildUrl(options.url),
+    const baseUrl = getApiBaseUrl()
+    const requestOptions = {
       method: options.method || 'GET',
       data: options.data || {},
       header: options.header || {},
@@ -45,7 +47,24 @@ function rawRequest(options) {
         })
       },
       fail: reject
-    })
+    }
+
+    if (baseUrl) {
+      wx.request(Object.assign(requestOptions, {
+        url: buildUrl(options.url)
+      }))
+      return
+    }
+
+    wx.cloud.callContainer(Object.assign(requestOptions, {
+      config: {
+        env: CLOUD_ENV_ID
+      },
+      path: options.url.charAt(0) === '/' ? options.url : `/${options.url}`,
+      header: Object.assign({}, requestOptions.header, {
+        'X-WX-SERVICE': CLOUD_SERVICE_NAME
+      })
+    }))
   })
 }
 

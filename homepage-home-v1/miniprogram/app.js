@@ -1,4 +1,5 @@
 const { REFERRER_KEY } = require('./utils/request')
+const { CLOUD_ENV_ID } = require('./config/api')
 
 App({
   globalData: {
@@ -7,6 +8,11 @@ App({
   },
 
   onLaunch(options) {
+    wx.cloud.init({
+      env: CLOUD_ENV_ID,
+      traceUser: true
+    })
+
     if (wx.getMenuButtonBoundingClientRect) {
       this.globalData.menuButton = wx.getMenuButtonBoundingClientRect()
     }
