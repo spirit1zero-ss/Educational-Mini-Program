@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS `eb_miniapp_training_camp_order` (
   `product_id` varchar(64) NOT NULL DEFAULT '' COMMENT 'xpay product snapshot',
   `price_fen` int unsigned NOT NULL DEFAULT '0' COMMENT 'price snapshot in fen',
   `order_state` varchar(16) NOT NULL DEFAULT 'pending' COMMENT 'pending/paying/paid/closed/refunded/exception',
-  `entitlement_state` varchar(16) NOT NULL DEFAULT 'not_granted' COMMENT 'not_granted/granted/review',
+  `entitlement_state` varchar(16) NOT NULL DEFAULT 'not_granted' COMMENT 'not_granted/granted/review/revoked/retained',
   `delivery_state` varchar(16) NOT NULL DEFAULT 'not_delivered' COMMENT 'not_delivered/delivered/failed',
   `refund_state` varchar(16) NOT NULL DEFAULT 'none' COMMENT 'none/refunding/refunded/failed',
   `active_attempt_id` bigint unsigned DEFAULT NULL COMMENT 'current payment attempt',
@@ -106,3 +106,60 @@ SELECT 'Training camp virtual payment reconciliation', 'virtualPaymentReconcile'
 WHERE NOT EXISTS (
   SELECT 1 FROM `eb_system_timer` WHERE `mark` = 'virtualPaymentReconcile' AND `is_del` = 0
 );
+
+-- Visible administration pages under User > Paid Membership.
+INSERT INTO `eb_system_menus`
+(`pid`,`icon`,`menu_name`,`module`,`sort`,`is_show`,`is_show_path`,`access`,`menu_path`,`path`,`auth_type`,`unique_auth`,`is_del`,`mark`)
+SELECT `id`,'','训练营订单','admin',3,1,1,1,'/user/grade/trainingCampOrders','',1,'admin-user-grade-training-camp-orders',0,'训练营订单与虚拟支付监控'
+FROM `eb_system_menus`
+WHERE `unique_auth` = 'user-user-grade'
+  AND NOT EXISTS (SELECT 1 FROM `eb_system_menus` WHERE `unique_auth` = 'admin-user-grade-training-camp-orders');
+
+INSERT INTO `eb_system_menus`
+(`pid`,`icon`,`menu_name`,`module`,`sort`,`is_show`,`is_show_path`,`access`,`menu_path`,`path`,`auth_type`,`unique_auth`,`is_del`,`mark`)
+SELECT `id`,'','报名登记表','admin',2,1,1,1,'/user/grade/registration','',1,'admin-user-grade-registration',0,'训练营报名登记表'
+FROM `eb_system_menus`
+WHERE `unique_auth` = 'user-user-grade'
+  AND NOT EXISTS (SELECT 1 FROM `eb_system_menus` WHERE `unique_auth` = 'admin-user-grade-registration');
+
+INSERT INTO `eb_system_menus`
+(`pid`,`menu_name`,`api_url`,`methods`,`params`,`sort`,`is_show`,`is_show_path`,`access`,`auth_type`,`unique_auth`,`is_del`,`mark`)
+SELECT `id`,'训练营订单列表','user/member/training_camp/orders','GET','[]',1,1,1,1,2,'admin-user-training-camp-order-list',0,'训练营订单列表'
+FROM `eb_system_menus`
+WHERE `unique_auth` = 'admin-user-grade-training-camp-orders'
+  AND NOT EXISTS (SELECT 1 FROM `eb_system_menus` WHERE `unique_auth` = 'admin-user-training-camp-order-list');
+
+INSERT INTO `eb_system_menus`
+(`pid`,`menu_name`,`api_url`,`methods`,`params`,`sort`,`is_show`,`is_show_path`,`access`,`auth_type`,`unique_auth`,`is_del`,`mark`)
+SELECT `id`,'训练营订单详情','user/member/training_camp/order/<id>','GET','[]',1,1,1,1,2,'admin-user-training-camp-order-detail',0,'训练营订单详情'
+FROM `eb_system_menus`
+WHERE `unique_auth` = 'admin-user-grade-training-camp-orders'
+  AND NOT EXISTS (SELECT 1 FROM `eb_system_menus` WHERE `unique_auth` = 'admin-user-training-camp-order-detail');
+
+INSERT INTO `eb_system_menus`
+(`pid`,`menu_name`,`api_url`,`methods`,`params`,`sort`,`is_show`,`is_show_path`,`access`,`auth_type`,`unique_auth`,`is_del`,`mark`)
+SELECT `id`,'核对微信支付状态','user/member/training_camp/order/<id>/sync','POST','[]',1,1,1,1,2,'admin-user-training-camp-order-sync',0,'核对微信支付状态'
+FROM `eb_system_menus`
+WHERE `unique_auth` = 'admin-user-grade-training-camp-orders'
+  AND NOT EXISTS (SELECT 1 FROM `eb_system_menus` WHERE `unique_auth` = 'admin-user-training-camp-order-sync');
+
+INSERT INTO `eb_system_menus`
+(`pid`,`menu_name`,`api_url`,`methods`,`params`,`sort`,`is_show`,`is_show_path`,`access`,`auth_type`,`unique_auth`,`is_del`,`mark`)
+SELECT `id`,'重试会员权益确认','user/member/training_camp/order/<id>/retry_delivery','POST','[]',1,1,1,1,2,'admin-user-training-camp-order-retry-delivery',0,'重试会员权益确认'
+FROM `eb_system_menus`
+WHERE `unique_auth` = 'admin-user-grade-training-camp-orders'
+  AND NOT EXISTS (SELECT 1 FROM `eb_system_menus` WHERE `unique_auth` = 'admin-user-training-camp-order-retry-delivery');
+
+INSERT INTO `eb_system_menus`
+(`pid`,`menu_name`,`api_url`,`methods`,`params`,`sort`,`is_show`,`is_show_path`,`access`,`auth_type`,`unique_auth`,`is_del`,`mark`)
+SELECT `id`,'处理退款会员权益','user/member/training_camp/order/<id>/refund_review','POST','[]',1,1,1,1,2,'admin-user-training-camp-order-refund-review',0,'人工退款完成后撤销或保留会员权益'
+FROM `eb_system_menus`
+WHERE `unique_auth` = 'admin-user-grade-training-camp-orders'
+  AND NOT EXISTS (SELECT 1 FROM `eb_system_menus` WHERE `unique_auth` = 'admin-user-training-camp-order-refund-review');
+
+INSERT INTO `eb_system_menus`
+(`pid`,`menu_name`,`api_url`,`methods`,`params`,`sort`,`is_show`,`is_show_path`,`access`,`auth_type`,`unique_auth`,`is_del`,`mark`)
+SELECT `id`,'训练营报名登记列表','user/member/registration','GET','[]',1,1,1,1,2,'admin-user-training-camp-registration-list',0,'训练营报名登记列表'
+FROM `eb_system_menus`
+WHERE `unique_auth` = 'admin-user-grade-registration'
+  AND NOT EXISTS (SELECT 1 FROM `eb_system_menus` WHERE `unique_auth` = 'admin-user-training-camp-registration-list');

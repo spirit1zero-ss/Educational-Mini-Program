@@ -494,12 +494,20 @@ class VirtualPaymentServices
 
         if (in_array($status, [5, 8], true)) {
             $camp = Db::name(self::CAMP_ORDER_TABLE)->where('order_id', (string)$attempt['order_id'])->find();
+            $currentEntitlement = (string)($camp['entitlement_state'] ?? 'not_granted');
+            if ($currentEntitlement === 'granted') {
+                $nextEntitlement = 'review';
+            } elseif (in_array($currentEntitlement, ['review', 'revoked', 'retained'], true)) {
+                $nextEntitlement = $currentEntitlement;
+            } else {
+                $nextEntitlement = 'not_granted';
+            }
             Db::name(self::CAMP_ORDER_TABLE)->where('order_id', (string)$attempt['order_id'])->update([
                 'order_state' => 'refunded',
                 'active_uid_key' => null,
                 'refund_state' => 'refunded',
-                'entitlement_state' => ($camp && $camp['entitlement_state'] === 'granted') ? 'review' : 'not_granted',
-                'last_error' => 'Refund detected; entitlement revocation requires business review.',
+                'entitlement_state' => $nextEntitlement,
+                'last_error' => $nextEntitlement === 'review' ? '检测到微信退款，请人工复核会员权益。' : (string)($camp['last_error'] ?? ''),
                 'update_time' => time(),
             ]);
         }
@@ -630,6 +638,11 @@ class VirtualPaymentServices
         $appKey = $this->appKeyForEnvironment($environment);
         if ($offerId === '' || $productId === '' || $appKey === '') {
             throw new ApiException('虚拟支付 OfferId、AppKey 或训练营会员权益商品 ID 未配置');
+        }
+        foreach ([$offerId, $productId, $appKey] as $value) {
+            if (stripos($value, 'replace-with-') !== false) {
+                throw new ApiException('虚拟支付仍在使用示例配置，禁止发起真实支付');
+            }
         }
         return ['env' => $environment, 'offer_id' => $offerId, 'product_id' => $productId, 'app_key' => $appKey];
     }

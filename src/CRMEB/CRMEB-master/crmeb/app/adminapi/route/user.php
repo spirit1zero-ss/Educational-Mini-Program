@@ -171,6 +171,12 @@ Route::group('user', function () {
         Route::get('member/agreement', 'v1.user.member.MemberCardBatch/getAgreement')->option(['real_name' => '获取会员协议']);
         //训练营报名登记表
         Route::get('member/registration', 'v1.user.member.TrainingCampRegistration/index')->option(['real_name' => '训练营报名登记表']);
+        //训练营订单与虚拟支付监控
+        Route::get('member/training_camp/orders', 'v1.user.member.TrainingCampOrder/index')->option(['real_name' => '训练营订单列表']);
+        Route::get('member/training_camp/order/:id', 'v1.user.member.TrainingCampOrder/detail')->option(['real_name' => '训练营订单详情']);
+        Route::post('member/training_camp/order/:id/sync', 'v1.user.member.TrainingCampOrder/sync')->option(['real_name' => '同步训练营微信支付状态']);
+        Route::post('member/training_camp/order/:id/retry_delivery', 'v1.user.member.TrainingCampOrder/retryDelivery')->option(['real_name' => '重试训练营权益发货确认']);
+        Route::post('member/training_camp/order/:id/refund_review', 'v1.user.member.TrainingCampOrder/reviewRefund')->option(['real_name' => '处理训练营退款会员权益']);
     })->option(['parent' => 'user', 'cate_name' => '付费会员']);
 
 

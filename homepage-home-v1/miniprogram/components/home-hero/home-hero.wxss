@@ -182,7 +182,25 @@
 
 .module-card__click-mark {
   display: block;
-  width: 36rpx;
-  height: 36rpx;
+  box-sizing: border-box;
+  width: 38rpx;
+  height: 38rpx;
   margin-top: 8rpx;
+  padding: 10rpx;
+  border: 1rpx solid rgba(31, 172, 91, 0.2);
+  border-radius: 12rpx;
+  background: rgba(31, 172, 91, 0.08);
+  box-shadow: 0 4rpx 10rpx rgba(24, 120, 70, 0.08);
+}
+
+.module-card--blue .module-card__click-mark {
+  border-color: rgba(43, 121, 231, 0.18);
+  background: rgba(43, 121, 231, 0.07);
+  box-shadow: 0 4rpx 10rpx rgba(43, 121, 231, 0.07);
+}
+
+.module-card--orange .module-card__click-mark {
+  border-color: rgba(255, 138, 16, 0.2);
+  background: rgba(255, 138, 16, 0.08);
+  box-shadow: 0 4rpx 10rpx rgba(205, 102, 8, 0.07);
 }

@@ -229,6 +229,27 @@
   content: "";
 }
 
+.contact-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 184rpx;
+  height: 62rpx;
+  margin: 20rpx 0 0;
+  padding: 0;
+  border: 1rpx solid rgba(15, 159, 90, 0.42);
+  border-radius: 31rpx;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f9f5a;
+  font-size: 24rpx;
+  line-height: 62rpx;
+  font-weight: 700;
+}
+
+.contact-button::after {
+  border: 0;
+}
+
 .agreement-row {
   display: flex;
   align-items: flex-start;

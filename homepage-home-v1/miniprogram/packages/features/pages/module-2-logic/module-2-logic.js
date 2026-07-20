@@ -4,6 +4,14 @@ Page({
   data: {
     assessmentPath: MODULE_A_PATH,
     iconBase: "../../assets/module-2-logic/icons/",
+    dividerImage: "../../assets/module-5-camp/camp-landscape-divider-v2.webp",
+    heroTreeImage: "../../assets/module-5-camp/camp-closing-illustration-v2.png",
+    stageOverviewImage: "../../assets/module-5-camp/camp-closing-illustration-v2.png",
+    illustrationBase: "../../assets/module-2-logic/illustrations/",
+    englishIllustration: "../../assets/module-2-logic/illustrations/english-abc-v2.webp",
+    mathIllustration: "../../assets/module-2-logic/illustrations/math-abacus-v2.webp",
+    closingIllustration: "../../assets/module-2-logic/illustrations/closing-window-tree-v2.webp",
+    subjectIllustrations: "../../assets/module-2-logic/illustrations/subject-icons-v2.webp",
     articleBlocks: [
       {
         id: "pain",

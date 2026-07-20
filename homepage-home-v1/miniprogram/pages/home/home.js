@@ -11,7 +11,7 @@ Page({
         subtitle: '学科性格开窍法',
         tone: 'green',
         icon: '/assets/home/reference-module-leaf.png',
-        indicatorIcon: '/assets/home/home-tap-spark-green.png',
+        indicatorIcon: '/assets/home/home-tap-arrow-green.png',
         path: '/packages/features/pages/module-2-logic/module-2-logic'
       },
       {
@@ -21,7 +21,7 @@ Page({
         subtitle: 'SOP高效作业法',
         tone: 'blue',
         icon: '/assets/home/reference-module-clipboard.png',
-        indicatorIcon: '/assets/home/home-tap-spark-blue.png',
+        indicatorIcon: '/assets/home/home-tap-arrow-blue.png',
         path: '/packages/features/pages/module-3-habit/module-3-habit'
       },
       {
@@ -31,7 +31,7 @@ Page({
         subtitle: '慧眼读心赋能法',
         tone: 'orange',
         icon: '/assets/home/reference-module-heart.png',
-        indicatorIcon: '/assets/home/home-tap-spark-orange.png',
+        indicatorIcon: '/assets/home/home-tap-arrow-orange.png',
         path: '/packages/features/pages/module-4-drive/module-4-drive'
       }
     ],
@@ -43,7 +43,7 @@ Page({
         action: '测评',
         tone: 'green',
         icon: '/assets/home/reference-icon-subject.png',
-        indicatorIcon: '/assets/home/home-tap-spark-green.png',
+        indicatorIcon: '/assets/home/home-tap-arrow-green.png',
         path: '/packages/features/pages/module-a-assessment/module-a-assessment'
       },
       {
@@ -53,17 +53,17 @@ Page({
         action: '下载',
         tone: 'blue',
         icon: '/assets/home/reference-icon-habit.png',
-        indicatorIcon: '/assets/home/home-tap-spark-blue.png',
+        indicatorIcon: '/assets/home/home-tap-arrow-blue.png',
         path: '/packages/features/pages/module-b-table/module-b-table'
       },
       {
         key: 'heart-test',
-        title: '一张图让家长读懂孩子心',
-        description: '读懂孩子，让内心更有自信力量！',
+        title: '一张图让家长懂孩子心',
+        description: '读懂孩子，让内心更有自信力量',
         action: '测评',
         tone: 'orange',
         icon: '/assets/home/reference-icon-heart.png',
-        indicatorIcon: '/assets/home/home-tap-spark-orange.png',
+        indicatorIcon: '/assets/home/home-tap-arrow-orange.png',
         path: '/packages/features/pages/module-b-inline/module-b-inline'
       },
       {
@@ -74,7 +74,7 @@ Page({
         tone: 'green',
         solid: true,
         icon: '/assets/home/reference-icon-camp.png',
-        indicatorIcon: '/assets/home/home-tap-spark-white.png',
+        indicatorIcon: '/assets/home/home-tap-arrow-white.png',
         path: '/packages/features/pages/module-5-camp/module-5-camp'
       }
     ],

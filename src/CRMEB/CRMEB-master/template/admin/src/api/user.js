@@ -533,6 +533,43 @@ export function trainingCampRegistrationList(data) {
   });
 }
 
+export function trainingCampOrderList(data) {
+  return request({
+    url: '/user/member/training_camp/orders',
+    method: 'get',
+    params: data,
+  });
+}
+
+export function trainingCampOrderDetail(id) {
+  return request({
+    url: `/user/member/training_camp/order/${id}`,
+    method: 'get',
+  });
+}
+
+export function trainingCampOrderSync(id) {
+  return request({
+    url: `/user/member/training_camp/order/${id}/sync`,
+    method: 'post',
+  });
+}
+
+export function trainingCampOrderRetryDelivery(id) {
+  return request({
+    url: `/user/member/training_camp/order/${id}/retry_delivery`,
+    method: 'post',
+  });
+}
+
+export function trainingCampOrderReviewRefund(id, data) {
+  return request({
+    url: `/user/member/training_camp/order/${id}/refund_review`,
+    method: 'post',
+    data,
+  });
+}
+
 /**
  * 会员权益
  */
