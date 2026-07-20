@@ -521,7 +521,13 @@ class VirtualPaymentServices
         } else {
             $payload['order_id'] = (string)$attempt['out_trade_no'];
         }
-        $this->callXPay(self::NOTIFY_ENTITLEMENT_URI, $this->encodeJson($payload));
+        $body = $this->encodeJson($payload);
+        $appKey = $this->appKeyForEnvironment((int)$attempt['environment']);
+        if ($appKey === '') {
+            throw new ApiException('微信虚拟支付发货确认缺少对应环境的 AppKey');
+        }
+        $paySig = $this->paySignature(self::NOTIFY_ENTITLEMENT_URI, $body, $appKey);
+        $this->callXPay(self::NOTIFY_ENTITLEMENT_URI, $body, ['pay_sig' => $paySig]);
     }
 
     private function markDelivered(array $attempt): void
