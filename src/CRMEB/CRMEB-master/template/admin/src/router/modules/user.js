@@ -43,6 +43,18 @@ export default {
       component: () => import('@/pages/user/grade/type/index'),
     },
     {
+      path: 'grade/trainingCampOrders',
+      name: `${pre}trainingCampOrders`,
+      meta: { auth: ['admin-user-grade-training-camp-orders'], footer: true, title: '训练营订单' },
+      component: () => import('@/pages/user/grade/trainingCampOrders/index'),
+    },
+    {
+      path: 'grade/registration',
+      name: `${pre}trainingCampRegistration`,
+      meta: { auth: ['admin-user-grade-registration'], footer: true, title: '报名登记表' },
+      component: () => import('@/pages/user/grade/registration/index'),
+    },
+    {
       path: 'grade/card',
       name: `${pre}card`,
       meta: { auth: ['admin-user-grade-card'], footer: true, title: '卡密会员' },
