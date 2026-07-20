@@ -250,7 +250,7 @@ class UserDao extends BaseDao
             ->whereBetweenTime('add_time', $starday, $yesterday)
             ->field("FROM_UNIXTIME(add_time,'%m-%e') as day,count(*) as count")
             ->group("FROM_UNIXTIME(add_time,'%m-%e')")
-            ->order('MIN(add_time) asc')->select()->toArray();
+            ->orderRaw('MIN(add_time) asc')->select()->toArray();
     }
 
     /**
