@@ -53,3 +53,22 @@
   font-weight: 600;
   white-space: nowrap;
 }
+
+.choice-card--large {
+  min-height: 148rpx;
+  padding: 20rpx 22rpx;
+}
+
+.choice-card--large .choice-letter {
+  width: 66rpx;
+  height: 66rpx;
+  margin-right: 18rpx;
+  font-size: 34rpx;
+  line-height: 66rpx;
+}
+
+.choice-card--large .choice-row {
+  font-size: 28rpx;
+  line-height: 39rpx;
+  font-weight: 700;
+}

@@ -27523,6 +27523,75 @@ CREATE TABLE IF NOT EXISTS `eb_other_order` (
 -- --------------------------------------------------------
 
 --
+-- 表的结构 `eb_miniapp_training_camp_order`
+--
+
+CREATE TABLE IF NOT EXISTS `eb_miniapp_training_camp_order` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'training camp order id',
+  `uid` int unsigned NOT NULL DEFAULT '0' COMMENT 'local user id',
+  `other_order_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'eb_other_order primary key',
+  `order_id` varchar(32) NOT NULL DEFAULT '' COMMENT 'local business order id',
+  `active_uid_key` varchar(16) DEFAULT NULL COMMENT 'one active training camp order per user',
+  `plan_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'membership plan snapshot id',
+  `member_type` varchar(32) NOT NULL DEFAULT '' COMMENT 'membership type snapshot',
+  `product_id` varchar(64) NOT NULL DEFAULT '' COMMENT 'xpay product snapshot',
+  `price_fen` int unsigned NOT NULL DEFAULT '0' COMMENT 'price snapshot in fen',
+  `order_state` varchar(16) NOT NULL DEFAULT 'pending',
+  `entitlement_state` varchar(16) NOT NULL DEFAULT 'not_granted',
+  `delivery_state` varchar(16) NOT NULL DEFAULT 'not_delivered',
+  `refund_state` varchar(16) NOT NULL DEFAULT 'none',
+  `active_attempt_id` bigint unsigned DEFAULT NULL,
+  `last_error` varchar(500) NOT NULL DEFAULT '',
+  `add_time` int unsigned NOT NULL DEFAULT '0',
+  `update_time` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_training_other_order` (`other_order_id`),
+  UNIQUE KEY `uniq_training_order_id` (`order_id`),
+  UNIQUE KEY `uniq_training_active_uid` (`active_uid_key`),
+  KEY `idx_training_uid_state` (`uid`, `order_state`),
+  KEY `idx_training_delivery` (`delivery_state`, `update_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='miniapp training camp orders';
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `eb_miniapp_virtual_payment_attempt`
+--
+
+CREATE TABLE IF NOT EXISTS `eb_miniapp_virtual_payment_attempt` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'attempt id',
+  `uid` int unsigned NOT NULL DEFAULT '0' COMMENT 'local user id',
+  `order_id` varchar(32) NOT NULL DEFAULT '' COMMENT 'local other_order order id',
+  `out_trade_no` varchar(32) NOT NULL DEFAULT '' COMMENT 'xpay business order id',
+  `active_order_key` varchar(32) DEFAULT NULL COMMENT 'one active payment attempt per local order',
+  `openid` varchar(255) NOT NULL DEFAULT '' COMMENT 'mini program openid',
+  `environment` tinyint unsigned NOT NULL DEFAULT '1' COMMENT '0 production 1 sandbox',
+  `product_id` varchar(64) NOT NULL DEFAULT '' COMMENT 'published xpay goods id',
+  `amount` int unsigned NOT NULL DEFAULT '0' COMMENT 'amount in fen',
+  `wx_status` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'xpay order status',
+  `local_state` varchar(16) NOT NULL DEFAULT 'prepared',
+  `wx_order_id` varchar(64) NOT NULL DEFAULT '' COMMENT 'xpay internal order id',
+  `transaction_id` varchar(64) NOT NULL DEFAULT '' COMMENT 'wechat pay transaction id',
+  `retry_count` int unsigned NOT NULL DEFAULT '0',
+  `delivery_retry_count` int unsigned NOT NULL DEFAULT '0',
+  `next_retry_at` int unsigned NOT NULL DEFAULT '0',
+  `last_error` varchar(500) NOT NULL DEFAULT '',
+  `confirmed_at` int unsigned NOT NULL DEFAULT '0',
+  `delivered_at` int unsigned NOT NULL DEFAULT '0',
+  `refunded_at` int unsigned NOT NULL DEFAULT '0',
+  `add_time` int unsigned NOT NULL DEFAULT '0',
+  `update_time` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_out_trade_no` (`out_trade_no`),
+  UNIQUE KEY `uniq_active_order_key` (`active_order_key`),
+  KEY `idx_uid_order` (`uid`, `order_id`),
+  KEY `idx_order_status` (`order_id`, `wx_status`),
+  KEY `idx_retry_due` (`next_retry_at`, `local_state`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='miniapp virtual payment attempts';
+
+-- --------------------------------------------------------
+
+--
 -- 表的结构 `eb_other_order_status`
 --
 
@@ -51490,7 +51559,8 @@ INSERT INTO `eb_system_timer` (`id`, `name`, `mark`, `content`, `type`, `week`, 
 (8, '订单商品自动好评', 'productReplay', '每隔5分钟执行订单到期商品好评', 2, 1, 1, 1, 5, 0, 0, 1670642933, 1670642633, 0, 1),
 (9, '清除昨日海报', 'clearPoster', '每天0时30分0秒执行一次清除昨日海报', 5, 1, 1, 0, 30, 0, 0, 1670862600, 1670815378, 0, 1),
 (10, '自动开具/冲红电子发票', 'autoInvoice', '每隔10分钟执行自动开具/冲红电子发票', 2, 1, 1, 1, 10, 0, 0, 0, 1715760152, 0, 1),
-(11, '未签到提醒', 'signRemind', '每隔10分钟执行未签到提醒', 2, 1, 1, 1, 10, 0, 0, 0, 1715760152, 0, 1);
+(11, '未签到提醒', 'signRemind', '每隔10分钟执行未签到提醒', 2, 1, 1, 1, 10, 0, 0, 0, 1715760152, 0, 1),
+(12, '训练营虚拟支付补偿', 'virtualPaymentReconcile', '每隔1分钟查询支付状态并补发权益确认', 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1);
 
 -- --------------------------------------------------------
 

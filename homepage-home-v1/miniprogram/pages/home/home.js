@@ -1,129 +1,148 @@
-const MODULE_A_PATH = '/pages/module-a-assessment/module-a-assessment'
-const MODULE_2_LOGIC_PATH = '/pages/module-2-logic/module-2-logic'
-const MODULE_3_HABIT_PATH = '/pages/module-3-habit/module-3-habit'
-const MODULE_4_DRIVE_PATH = '/pages/module-4-drive/module-4-drive'
-const MODULE_5_CAMP_PATH = '/pages/module-5-camp/module-5-camp'
-const MODULE_B_TABLE_PATH = '/pages/module-b-table/module-b-table'
-const MODULE_B_PATH = '/pages/module-b-inline/module-b-inline'
-const MINE_PATH = '/pages/mine/mine'
-const OFFLINE_PATH = '/pages/offline/offline'
-
 Page({
   data: {
-    navStyle: '',
-    scrollStyle: '',
+    safeTopStyle: 'height: 88px;',
+    safeBottom: 0,
+    bottomPlaceholderStyle: 'height: 118rpx;',
     modules: [
       {
-        key: 'subject',
-        title: '学科开窍',
+        key: 'knowledge',
+        badge: '叶',
+        title: '知识',
         subtitle: '学科性格开窍法',
-        className: 'module-card--top',
-        icon: '../../assets/home/home-icon-subject.png',
-        path: MODULE_2_LOGIC_PATH
+        tone: 'green',
+        icon: '/assets/home/reference-module-leaf.png',
+        indicatorIcon: '/assets/home/home-tap-spark-green.png',
+        path: '/packages/features/pages/module-2-logic/module-2-logic'
       },
       {
         key: 'habit',
-        title: '学习习惯',
+        badge: '茎',
+        title: '习惯',
         subtitle: 'SOP高效作业法',
-        className: 'module-card--middle',
-        icon: '../../assets/home/home-icon-habit.png',
-        path: MODULE_3_HABIT_PATH
+        tone: 'blue',
+        icon: '/assets/home/reference-module-clipboard.png',
+        indicatorIcon: '/assets/home/home-tap-spark-blue.png',
+        path: '/packages/features/pages/module-3-habit/module-3-habit'
       },
       {
         key: 'drive',
-        title: '内驱力',
+        badge: '根',
+        title: '内驱',
         subtitle: '慧眼读心赋能法',
-        className: 'module-card--bottom',
-        icon: '../../assets/home/home-icon-drive.png',
-        path: MODULE_4_DRIVE_PATH
+        tone: 'orange',
+        icon: '/assets/home/reference-module-heart.png',
+        indicatorIcon: '/assets/home/home-tap-spark-orange.png',
+        path: '/packages/features/pages/module-4-drive/module-4-drive'
       }
     ],
     actions: [
       {
         key: 'subject-test',
         title: '一张图让孩子学科开窍',
-        desc: '启发灵感，让学习更加生动有趣',
-        actionText: '去测评',
-        type: 'subject',
-        icon: '../../assets/home/home-icon-subject-test.png',
-        path: MODULE_A_PATH
+        description: '帮孩子找到学习开窍的关键点',
+        action: '测评',
+        tone: 'green',
+        icon: '/assets/home/reference-icon-subject.png',
+        indicatorIcon: '/assets/home/home-tap-spark-green.png',
+        path: '/packages/features/pages/module-a-assessment/module-a-assessment'
+      },
+      {
+        key: 'habit-tool',
+        title: '一张图养成作业好习惯',
+        description: '运用工具，让流程更加科学',
+        action: '下载',
+        tone: 'blue',
+        icon: '/assets/home/reference-icon-habit.png',
+        indicatorIcon: '/assets/home/home-tap-spark-blue.png',
+        path: '/packages/features/pages/module-b-table/module-b-table'
       },
       {
         key: 'heart-test',
         title: '一张图让家长读懂孩子心',
-        desc: '读懂孩子，让内心更有自信力量',
-        actionText: '去测评',
-        type: 'heart',
-        icon: '../../assets/home/home-icon-heart-test.png',
-        path: MODULE_B_PATH
+        description: '读懂孩子，让内心更有自信力量！',
+        action: '测评',
+        tone: 'orange',
+        icon: '/assets/home/reference-icon-heart.png',
+        indicatorIcon: '/assets/home/home-tap-spark-orange.png',
+        path: '/packages/features/pages/module-b-inline/module-b-inline'
       },
       {
-        key: 'sop-download',
-        title: '一张图养成作业好习惯',
-        desc: '运用工具，让流程更加科学高效',
-        actionText: '下载',
-        type: 'download',
-        icon: '../../assets/home/home-icon-sop.png',
-        path: MODULE_B_TABLE_PATH
+        key: 'camp',
+        title: '21天训练营计划',
+        description: '21天陪伴式训练，见证孩子的成长蜕变',
+        action: '去查看',
+        tone: 'green',
+        solid: true,
+        icon: '/assets/home/reference-icon-camp.png',
+        indicatorIcon: '/assets/home/home-tap-spark-white.png',
+        path: '/packages/features/pages/module-5-camp/module-5-camp'
       }
     ],
     tabs: [
       {
         key: 'home',
-        text: '首页',
-        icon: '../../assets/mine/tab-home.svg',
-        activeIcon: '../../assets/mine/tab-home-active.svg'
+        label: '首页',
+        icon: '/assets/mine/tab-home.svg',
+        activeIcon: '/assets/mine/tab-home-active.svg',
+        path: '/pages/home/home'
       },
       {
         key: 'mine',
-        text: '我的',
-        icon: '../../assets/mine/tab-mine.svg',
-        activeIcon: '../../assets/mine/tab-mine-active.svg'
+        label: '我的',
+        icon: '/assets/mine/tab-mine.svg',
+        activeIcon: '/assets/mine/tab-mine-active.svg',
+        path: '/pages/mine/mine'
       },
       {
         key: 'offline',
-        text: '线下',
-        icon: '../../assets/mine/tab-offline.svg',
-        activeIcon: '../../assets/mine/tab-offline-active.svg',
-        path: OFFLINE_PATH
+        label: '线下',
+        icon: '/assets/mine/tab-offline.svg',
+        activeIcon: '/assets/mine/tab-offline-active.svg',
+        path: '/pages/offline/offline'
       }
     ]
   },
 
   onLoad() {
-    this.setNavigationMetrics()
+    this.setSafeAreaMetrics()
   },
 
-  setNavigationMetrics() {
-    const fallbackNavHeight = 88
+  setSafeAreaMetrics() {
     try {
-      const system = wx.getSystemInfoSync()
-      const menu = wx.getMenuButtonBoundingClientRect()
-      const navHeight = menu.bottom + 12
-      const rightPadding = Math.max(system.windowWidth - menu.left + 12, 96)
+      const info = typeof wx.getWindowInfo === 'function'
+        ? wx.getWindowInfo()
+        : wx.getSystemInfoSync()
+      const menuButton = typeof wx.getMenuButtonBoundingClientRect === 'function'
+        ? wx.getMenuButtonBoundingClientRect()
+        : null
+      const safeArea = info.safeArea || {}
+      const screenHeight = Number(info.screenHeight) || Number(info.windowHeight) || 0
+      const statusBarHeight = Number(info.statusBarHeight) || Number(safeArea.top) || 0
+      const menuBottom = menuButton && Number(menuButton.bottom)
+        ? Number(menuButton.bottom)
+        : statusBarHeight + 40
+      const safeBottom = Math.max(screenHeight - (Number(safeArea.bottom) || screenHeight), 0)
+      const safeTop = Math.max(menuBottom + 8, statusBarHeight + 48)
 
       this.setData({
-        navStyle: `height:${navHeight}px;padding-top:${menu.top}px;padding-right:${rightPadding}px;`,
-        scrollStyle: `height:calc(100vh - ${navHeight}px - 112rpx - env(safe-area-inset-bottom));`
+        safeTopStyle: `height: ${safeTop}px;`,
+        safeBottom,
+        bottomPlaceholderStyle: `height: calc(118rpx + ${safeBottom}px);`
       })
     } catch (error) {
       this.setData({
-        navStyle: `height:${fallbackNavHeight}px;padding-top:44px;padding-right:110px;`,
-        scrollStyle: `height:calc(100vh - ${fallbackNavHeight}px - 112rpx - env(safe-area-inset-bottom));`
+        safeTopStyle: 'height: 88px;',
+        safeBottom: 0,
+        bottomPlaceholderStyle: 'height: 118rpx;'
       })
     }
   },
 
-  openPath(path) {
-    if (!path) {
-      wx.showToast({
-        title: '页面建设中',
-        icon: 'none'
-      })
-      return
-    }
+  openPath(path, redirect = false) {
+    if (!path) return
 
-    wx.navigateTo({
+    const navigate = redirect ? wx.redirectTo : wx.navigateTo
+    navigate({
       url: path,
       fail: () => {
         wx.showToast({
@@ -134,56 +153,15 @@ Page({
     })
   },
 
-  onModuleTap(e) {
-    const item = e.currentTarget.dataset.item
-    if (!item) return
-    this.openPath(item.path)
+  onEntrySelect(event) {
+    const item = event.detail && event.detail.item
+    this.openPath(item && item.path)
   },
 
-  onActionTap(e) {
-    const item = e.currentTarget.dataset.item
-    if (!item) return
+  onTabChange(event) {
+    const item = event.detail && event.detail.item
 
-    this.openPath(item.path)
-  },
-
-  onCampTap() {
-    wx.navigateTo({
-      url: MODULE_5_CAMP_PATH,
-      fail: () => {
-        wx.showToast({
-          title: '页面建设中',
-          icon: 'none'
-        })
-      }
-    })
-  },
-
-  onTabTap(e) {
-    const key = e.currentTarget.dataset.key
-    if (key === 'mine') {
-      wx.redirectTo({
-        url: MINE_PATH,
-        fail: () => {
-          wx.showToast({
-            title: '页面建设中',
-            icon: 'none'
-          })
-        }
-      })
-      return
-    }
-
-    if (key === 'offline') {
-      wx.redirectTo({
-        url: OFFLINE_PATH,
-        fail: () => {
-          wx.showToast({
-            title: '页面建设中',
-            icon: 'none'
-          })
-        }
-      })
-    }
+    if (!item || item.key === 'home') return
+    this.openPath(item.path, true)
   }
 })

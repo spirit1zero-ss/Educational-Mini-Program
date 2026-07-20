@@ -6,8 +6,9 @@ use app\services\BaseServices;
 use app\services\order\OtherOrderServices;
 use app\services\order\OtherOrderStatusServices;
 use app\services\other\QrcodeServices;
-use app\services\pay\OrderPayServices;
 use app\services\pay\PayServices;
+use app\services\pay\PaymentLockService;
+use app\services\pay\VirtualPaymentServices;
 use app\services\user\member\MemberCardServices;
 use app\services\user\UserServices;
 use app\services\wechat\RoutineServices;
@@ -15,10 +16,12 @@ use app\services\wechat\WechatUserServices;
 use crmeb\exceptions\ApiException;
 use crmeb\services\CacheService;
 use think\facade\Db;
+use think\facade\Log;
 
 class MiniappServices extends BaseServices
 {
     private const PENDING_MEMBER_ORDER_TTL = 1800;
+    private const CAMP_ORDER_TABLE = 'miniapp_training_camp_order';
 
     private const REFERRAL_POSTER_PAGES = [
         'pages/home/home',
@@ -113,7 +116,7 @@ class MiniappServices extends BaseServices
         }, $plans));
     }
 
-    public function createTrainingCampMemberOrder(int $uid, int $mcId = 0, string $payType = PayServices::WEIXIN_PAY): array
+    public function createTrainingCampMemberOrder(int $uid, int $mcId = 0, string $payType = PayServices::VIRTUAL_PAY): array
     {
         $user = $this->requireUser($uid);
         $plans = $this->getMemberPlans();
@@ -125,37 +128,95 @@ class MiniappServices extends BaseServices
             throw new ApiException('Please choose a paid membership plan');
         }
 
-        /** @var OtherOrderServices $otherOrderServices */
-        $otherOrderServices = app()->make(OtherOrderServices::class);
-        $payType = $payType ?: PayServices::WEIXIN_PAY;
-        $this->expirePendingTrainingCampOrders($uid);
+        // This product delivers digital membership/content and must not fall back to ordinary WeChat Pay.
+        $payType = PayServices::VIRTUAL_PAY;
 
-        $pendingOrder = $this->getPendingTrainingCampOrder($uid);
-        if ($pendingOrder) {
-            return $this->formatTrainingCampOrderAction($pendingOrder, 'pending_reused');
-        }
+        /** @var PaymentLockService $lock */
+        $lock = app()->make(PaymentLockService::class);
+        return $lock->run('camp:create:' . $uid, function () use ($uid, $user, $plan, $payType) {
+            /** @var VirtualPaymentServices $virtualPaymentServices */
+            $virtualPaymentServices = app()->make(VirtualPaymentServices::class);
+            $virtualPaymentServices->reconcileUserPendingOrders($uid);
+            $this->expirePendingTrainingCampOrders($uid);
 
-        $order = $otherOrderServices->createOrder(
-            $uid,
-            $user['user_type'] ?? 'routine',
-            $plan['type'],
-            $plan['price'],
-            $payType,
-            1,
-            $plan['price'],
-            (int)$plan['mcId']
-        );
-        $order = $this->modelToArray($order);
-        if (!$order) {
-            throw new ApiException('Membership order creation failed');
-        }
+            $pendingOrder = $this->getPendingTrainingCampOrder($uid);
+            if ($pendingOrder) {
+                $sameMemberType = (string)($pendingOrder['member_type'] ?? '') === (string)$plan['type'];
+                $samePrice = $this->formatAmount($pendingOrder['pay_price'] ?? 0) === $this->formatAmount($plan['price']);
+                if ($sameMemberType && $samePrice) {
+                    return $this->formatTrainingCampOrderAction($pendingOrder, 'pending_reused');
+                }
 
-        return $this->formatTrainingCampOrderAction($order, 'created');
+                $virtualPaymentServices->assertTrainingCampOrderClosable($uid, $pendingOrder);
+                $this->closeTrainingCampOrderRecord(
+                    $pendingOrder,
+                    'replace_member_order',
+                    $this->zh('\u4f1a\u5458\u65b9\u6848\u6216\u4ef7\u683c\u5df2\u66f4\u65b0\uff0c\u65e7\u8ba2\u5355\u5df2\u5173\u95ed')
+                );
+            }
+
+            return Db::transaction(function () use ($uid, $user, $plan, $payType) {
+                // The user row is the database fallback when Redis is unavailable.
+                Db::name('user')->where('uid', $uid)->lock(true)->find();
+                $existing = $this->getPendingTrainingCampOrder($uid);
+                if ($existing) {
+                    $sameType = (string)$existing['member_type'] === (string)$plan['type'];
+                    $samePrice = $this->formatAmount($existing['pay_price']) === $this->formatAmount($plan['price']);
+                    if ($sameType && $samePrice) {
+                        return $this->formatTrainingCampOrderAction($existing, 'pending_reused');
+                    }
+                    throw new ApiException('已有其他报名订单正在处理，请稍后重试');
+                }
+
+                /** @var OtherOrderServices $otherOrderServices */
+                $otherOrderServices = app()->make(OtherOrderServices::class);
+                $order = $this->modelToArray($otherOrderServices->createOrder(
+                    $uid,
+                    $user['user_type'] ?? 'routine',
+                    $plan['type'],
+                    $plan['price'],
+                    $payType,
+                    1,
+                    $plan['price'],
+                    (int)$plan['mcId']
+                ));
+                if (!$order) {
+                    throw new ApiException('Membership order creation failed');
+                }
+
+                Db::name(self::CAMP_ORDER_TABLE)->insert([
+                    'uid' => $uid,
+                    'other_order_id' => (int)$order['id'],
+                    'order_id' => (string)$order['order_id'],
+                    'active_uid_key' => (string)$uid,
+                    'plan_id' => (int)$plan['mcId'],
+                    'member_type' => (string)$plan['type'],
+                    'product_id' => trim((string)config('xpay.training_camp_product_id', '')),
+                    'price_fen' => (int)round((float)$plan['price'] * 100),
+                    'order_state' => 'pending',
+                    'entitlement_state' => 'not_granted',
+                    'delivery_state' => 'not_delivered',
+                    'refund_state' => 'none',
+                    'add_time' => time(),
+                    'update_time' => time(),
+                ]);
+
+                return $this->formatTrainingCampOrderAction($order, 'created');
+            });
+        }, 30, 2000);
     }
 
-    public function payTrainingCampMemberOrder(int $uid, string $orderId, string $payType = PayServices::WEIXIN_PAY): array
+    public function payTrainingCampMemberOrder(
+        int $uid,
+        string $orderId,
+        string $payType = PayServices::VIRTUAL_PAY,
+        string $loginCode = ''
+    ): array
     {
         $this->requireUser($uid);
+        /** @var VirtualPaymentServices $virtualPaymentServices */
+        $virtualPaymentServices = app()->make(VirtualPaymentServices::class);
+        $virtualPaymentServices->reconcileUserPendingOrders($uid);
         $this->expirePendingTrainingCampOrders($uid);
         $order = $this->getTrainingCampOrderByOrderId($uid, $orderId);
         if (!$order) {
@@ -165,17 +226,37 @@ class MiniappServices extends BaseServices
             throw new ApiException('Order has been closed');
         }
         if ((int)($order['paid'] ?? 0) === 1) {
-            throw new ApiException('Order has been paid');
+            return [
+                'order' => $this->formatTrainingCampOrderAction($order, 'paid'),
+                'payment' => [
+                    'provider' => 'wechat_xpay',
+                    'alreadyConfirmed' => true,
+                    'orderId' => (string)$order['order_id'],
+                ],
+            ];
         }
 
-        /** @var OrderPayServices $orderPayServices */
-        $orderPayServices = app()->make(OrderPayServices::class);
-        $payment = $orderPayServices->beforePay($order, $payType ?: PayServices::WEIXIN_PAY);
+        if (($payType ?: PayServices::VIRTUAL_PAY) !== PayServices::VIRTUAL_PAY) {
+            throw new ApiException('训练营仅支持小程序虚拟支付');
+        }
 
         return [
             'order' => $this->formatTrainingCampOrderAction($order, 'paying'),
-            'payment' => $payment,
+            'payment' => $virtualPaymentServices->prepareTrainingCampPayment($uid, $order, $loginCode),
         ];
+    }
+
+    public function confirmTrainingCampMemberOrder(int $uid, string $orderId, string $outTradeNo): array
+    {
+        $this->requireUser($uid);
+        $order = $this->getTrainingCampOrderByOrderId($uid, $orderId);
+        if (!$order) {
+            throw new ApiException('Order does not exist');
+        }
+
+        /** @var VirtualPaymentServices $virtualPaymentServices */
+        $virtualPaymentServices = app()->make(VirtualPaymentServices::class);
+        return $virtualPaymentServices->confirmTrainingCampPayment($uid, $order, $outTradeNo);
     }
 
     public function cancelTrainingCampMemberOrder(int $uid, string $orderId): array
@@ -192,8 +273,14 @@ class MiniappServices extends BaseServices
             return $this->formatTrainingCampOrderAction($order, 'closed');
         }
 
-        Db::name('other_order')->where('id', (int)$order['id'])->update(['is_del' => 1]);
-        $this->saveTrainingCampOrderStatus($order, 'cancel_member_order', $this->zh('\u7528\u6237\u53d6\u6d88\u8ba2\u5355'));
+        /** @var VirtualPaymentServices $virtualPaymentServices */
+        $virtualPaymentServices = app()->make(VirtualPaymentServices::class);
+        $virtualPaymentServices->assertTrainingCampOrderClosable($uid, $order);
+        $this->closeTrainingCampOrderRecord(
+            $order,
+            'cancel_member_order',
+            $this->zh('\u7528\u6237\u53d6\u6d88\u8ba2\u5355')
+        );
         $order['is_del'] = 1;
 
         return $this->formatTrainingCampOrderAction($order, 'closed');
@@ -329,15 +416,18 @@ class MiniappServices extends BaseServices
     public function getTrainingCampOrders(int $uid): array
     {
         $this->requireUser($uid);
+        /** @var VirtualPaymentServices $virtualPaymentServices */
+        $virtualPaymentServices = app()->make(VirtualPaymentServices::class);
+        $virtualPaymentServices->reconcileUserPendingOrders($uid);
         $this->expirePendingTrainingCampOrders($uid);
 
         [$page, $limit, $defaultLimit] = $this->getPageValue();
         $limit = $limit ?: $defaultLimit;
         $baseQuery = Db::name('other_order')
             ->alias('o')
+            ->join(self::CAMP_ORDER_TABLE . ' c', 'c.other_order_id = o.id AND c.order_id = o.order_id')
             ->leftJoin('user u', 'u.uid = o.uid')
-            ->where('o.uid', $uid)
-            ->where('o.member_type', '<>', '')
+            ->where('c.uid', $uid)
             ->where(function ($query) {
                 $query->where('o.is_del', 0)
                     ->whereOr(function ($query) {
@@ -372,14 +462,57 @@ class MiniappServices extends BaseServices
         ];
     }
 
+    /** Safely close stale unpaid training-camp orders from the cron worker. */
+    public function expireStaleTrainingCampOrders(int $limit = 100): array
+    {
+        $orders = Db::name('other_order')
+            ->alias('o')
+            ->join(self::CAMP_ORDER_TABLE . ' c', 'c.other_order_id = o.id AND c.order_id = o.order_id')
+            ->whereIn('c.order_state', ['pending', 'paying'])
+            ->where('o.paid', 0)
+            ->where('o.is_del', 0)
+            ->where('o.add_time', '<', time() - self::PENDING_MEMBER_ORDER_TTL)
+            ->field('o.*')
+            ->order('o.id', 'asc')
+            ->limit(max(1, min(200, $limit)))
+            ->select()
+            ->toArray();
+
+        $result = ['checked' => 0, 'closed' => 0, 'deferred' => 0];
+        foreach ($orders as $order) {
+            $result['checked']++;
+            try {
+                /** @var VirtualPaymentServices $virtualPaymentServices */
+                $virtualPaymentServices = app()->make(VirtualPaymentServices::class);
+                $virtualPaymentServices->assertTrainingCampOrderClosable((int)$order['uid'], $order);
+                $this->closeTrainingCampOrderRecord(
+                    $order,
+                    'timeout_member_order',
+                    $this->zh('\u8ba2\u5355\u8d85\u65f6\u81ea\u52a8\u5173\u95ed')
+                );
+                $result['closed']++;
+            } catch (\Throwable $exception) {
+                $result['deferred']++;
+                Log::warning('training_camp_order_timeout_deferred', [
+                    'order_id' => $order['order_id'] ?? '',
+                    'message' => $exception->getMessage(),
+                ]);
+            }
+        }
+        return $result;
+    }
+
     private function getPendingTrainingCampOrder(int $uid): ?array
     {
         $row = Db::name('other_order')
-            ->where('uid', $uid)
-            ->where('paid', 0)
-            ->where('is_del', 0)
-            ->where('member_type', '<>', '')
-            ->order('id', 'desc')
+            ->alias('o')
+            ->join(self::CAMP_ORDER_TABLE . ' c', 'c.other_order_id = o.id AND c.order_id = o.order_id')
+            ->where('c.uid', $uid)
+            ->whereIn('c.order_state', ['pending', 'paying'])
+            ->where('o.paid', 0)
+            ->where('o.is_del', 0)
+            ->field('o.*')
+            ->order('o.id', 'desc')
             ->find();
 
         return $row ?: null;
@@ -392,9 +525,11 @@ class MiniappServices extends BaseServices
             throw new ApiException('Missing order id');
         }
         $row = Db::name('other_order')
-            ->where('uid', $uid)
-            ->where('order_id', $orderId)
-            ->where('member_type', '<>', '')
+            ->alias('o')
+            ->join(self::CAMP_ORDER_TABLE . ' c', 'c.other_order_id = o.id AND c.order_id = o.order_id')
+            ->where('c.uid', $uid)
+            ->where('c.order_id', $orderId)
+            ->field('o.*')
             ->find();
 
         return $row ?: null;
@@ -404,18 +539,62 @@ class MiniappServices extends BaseServices
     {
         $deadline = time() - self::PENDING_MEMBER_ORDER_TTL;
         $orders = Db::name('other_order')
-            ->where('uid', $uid)
-            ->where('paid', 0)
-            ->where('is_del', 0)
-            ->where('member_type', '<>', '')
-            ->where('add_time', '<', $deadline)
+            ->alias('o')
+            ->join(self::CAMP_ORDER_TABLE . ' c', 'c.other_order_id = o.id AND c.order_id = o.order_id')
+            ->where('c.uid', $uid)
+            ->whereIn('c.order_state', ['pending', 'paying'])
+            ->where('o.paid', 0)
+            ->where('o.is_del', 0)
+            ->where('o.add_time', '<', $deadline)
+            ->field('o.*')
             ->select()
             ->toArray();
 
         foreach ($orders as $order) {
-            Db::name('other_order')->where('id', (int)$order['id'])->update(['is_del' => 1]);
-            $this->saveTrainingCampOrderStatus($order, 'timeout_member_order', $this->zh('\u8ba2\u5355\u8d85\u65f6\u81ea\u52a8\u5173\u95ed'));
+            try {
+                /** @var VirtualPaymentServices $virtualPaymentServices */
+                $virtualPaymentServices = app()->make(VirtualPaymentServices::class);
+                $virtualPaymentServices->assertTrainingCampOrderClosable($uid, $order);
+                $this->closeTrainingCampOrderRecord(
+                    $order,
+                    'timeout_member_order',
+                    $this->zh('\u8ba2\u5355\u8d85\u65f6\u81ea\u52a8\u5173\u95ed')
+                );
+            } catch (\Throwable $exception) {
+                // A query failure or in-flight payment must never be converted to a local close.
+                Log::warning('training_camp_order_timeout_deferred', [
+                    'order_id' => $order['order_id'] ?? '',
+                    'message' => $exception->getMessage(),
+                ]);
+            }
         }
+    }
+
+    private function closeTrainingCampOrderRecord(array $order, string $changeType, string $message): void
+    {
+        Db::transaction(function () use ($order, $changeType, $message) {
+            $locked = Db::name('other_order')->where('id', (int)$order['id'])->lock(true)->find();
+            $camp = Db::name(self::CAMP_ORDER_TABLE)
+                ->where('order_id', (string)$order['order_id'])
+                ->lock(true)
+                ->find();
+            if (!$locked || !$camp) {
+                throw new ApiException('训练营订单不存在');
+            }
+            if ((int)$locked['paid'] === 1) {
+                throw new ApiException('订单已支付，不能关闭');
+            }
+            if ((int)$locked['is_del'] === 0) {
+                Db::name('other_order')->where('id', (int)$locked['id'])->update(['is_del' => 1]);
+                Db::name(self::CAMP_ORDER_TABLE)->where('id', (int)$camp['id'])->update([
+                    'order_state' => 'closed',
+                    'active_uid_key' => null,
+                    'active_attempt_id' => null,
+                    'update_time' => time(),
+                ]);
+                $this->saveTrainingCampOrderStatus($locked, $changeType, $message);
+            }
+        });
     }
 
     private function saveTrainingCampOrderStatus(array $order, string $changeType, string $message): void
@@ -438,14 +617,14 @@ class MiniappServices extends BaseServices
             'id' => (int)($order['id'] ?? 0),
             'memberType' => $order['member_type'] ?? '',
             'payPrice' => $this->formatAmount($order['pay_price'] ?? 0),
-            'payType' => $order['pay_type'] ?? PayServices::WEIXIN_PAY,
+            'payType' => $order['pay_type'] ?? PayServices::VIRTUAL_PAY,
             'status' => $status,
             'needPay' => (int)($order['paid'] ?? 0) === 0 && (int)($order['is_del'] ?? 0) === 0,
             'message' => $status === 'closed'
                 ? $this->zh('\u8ba2\u5355\u5df2\u5173\u95ed')
                 : ($status === 'pending_reused'
                     ? $this->zh('\u5df2\u6709\u5f85\u652f\u4ed8\u8ba2\u5355\uff0c\u8bf7\u7ee7\u7eed\u652f\u4ed8')
-                    : $this->zh('\u4f1a\u5458\u8ba2\u5355\u5df2\u521b\u5efa\uff0c\u652f\u4ed8\u5c06\u5728\u4e0b\u4e00\u6b65\u63a5\u5165')),
+                    : $this->zh('\u4f1a\u5458\u8ba2\u5355\u5df2\u521b\u5efa\uff0c\u8bf7\u7ee7\u7eed\u5b8c\u6210\u652f\u4ed8')),
         ];
     }
 

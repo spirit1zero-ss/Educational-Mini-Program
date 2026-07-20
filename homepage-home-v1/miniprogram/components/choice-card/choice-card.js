@@ -7,6 +7,10 @@ Component({
     selected: {
       type: Boolean,
       value: false
+    },
+    large: {
+      type: Boolean,
+      value: false
     }
   },
 

@@ -511,6 +511,9 @@ class OtherOrderServices extends BaseServices
                     case "weixin":
                         $v['pay_type'] = "微信";
                         break;
+                    case "virtual":
+                        $v['pay_type'] = "小程序虚拟支付";
+                        break;
                     case "alipay":
                         $v['pay_type'] = "支付宝";
                         break;
@@ -568,6 +571,9 @@ class OtherOrderServices extends BaseServices
                         break;
                     case 'allinpay':
                         $v['pay_type'] = "通联支付";
+                        break;
+                    case "virtual":
+                        $v['pay_type'] = "小程序虚拟支付";
                         break;
                     case "admin":
                         $v['pay_type'] = "后台赠送";

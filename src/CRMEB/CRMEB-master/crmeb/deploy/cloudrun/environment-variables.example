@@ -21,3 +21,11 @@ PHP_REDIS_SELECT=0
 PHP_SESSION_TYPE=cache
 PHP_SESSION_STORE=redis
 PHP_QUEUE_QUEUE_NAME=replace-with-random-queue-name
+
+# WeChat Mini Program virtual payment (XPay). Store AppKeys as secret values.
+PHP_XPAY_ENABLED=false
+PHP_XPAY_ENV=1
+PHP_XPAY_OFFER_ID=replace-with-offer-id
+PHP_XPAY_SANDBOX_APP_KEY=replace-with-secret
+PHP_XPAY_PRODUCTION_APP_KEY=replace-with-secret
+PHP_XPAY_TRAINING_CAMP_PRODUCT_ID=replace-with-membership-entitlement-product-id

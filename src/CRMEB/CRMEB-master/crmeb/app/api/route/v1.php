@@ -13,6 +13,7 @@ Route::group(function () {
 Route::group(function () {
     Route::get('index', 'v1.PublicController/index')->name('index')->option(['real_name' => 'health index']);
     Route::get('site_config', 'v1.PublicController/getSiteConfig')->name('getSiteConfig')->option(['real_name' => 'site config']);
+    Route::get('miniapp/training-camp/member-plans', 'v1.miniapp.MineController/memberPlans')->name('miniappTrainingCampMemberPlans')->option(['real_name' => 'Miniapp training camp member plans']);
 })->middleware(\app\http\middleware\AllowOriginMiddleware::class)
     ->middleware(\app\api\middleware\StationOpenMiddleware::class, false)
     ->option(['mark' => 'public', 'mark_name' => 'Public miniapp support']);
@@ -27,9 +28,9 @@ Route::group(function () {
     Route::get('miniapp/mine/overview', 'v1.miniapp.MineController/overview')->name('miniappMineOverview')->option(['real_name' => 'Miniapp mine overview']);
     Route::post('miniapp/referral/poster', 'v1.miniapp.MineController/poster')->name('miniappReferralPoster')->option(['real_name' => 'Miniapp referral poster']);
     Route::post('miniapp/redeem-code/use', 'v1.miniapp.MineController/redeemCode')->name('miniappRedeemCodeUse')->option(['real_name' => 'Miniapp redeem code']);
-    Route::get('miniapp/training-camp/member-plans', 'v1.miniapp.MineController/memberPlans')->name('miniappTrainingCampMemberPlans')->option(['real_name' => 'Miniapp training camp member plans']);
     Route::post('miniapp/training-camp/member-order', 'v1.miniapp.MineController/createMemberOrder')->name('miniappTrainingCampMemberOrder')->option(['real_name' => 'Miniapp training camp member order']);
     Route::post('miniapp/training-camp/member-order/pay', 'v1.miniapp.MineController/payMemberOrder')->name('miniappTrainingCampMemberOrderPay')->option(['real_name' => 'Miniapp training camp member order pay']);
+    Route::post('miniapp/training-camp/member-order/confirm', 'v1.miniapp.MineController/confirmMemberOrder')->name('miniappTrainingCampMemberOrderConfirm')->option(['real_name' => 'Miniapp training camp virtual payment confirmation']);
     Route::post('miniapp/training-camp/member-order/cancel', 'v1.miniapp.MineController/cancelMemberOrder')->name('miniappTrainingCampMemberOrderCancel')->option(['real_name' => 'Miniapp training camp member order cancel']);
     Route::get('miniapp/training-camp/registration', 'v1.miniapp.MineController/registration')->name('miniappTrainingCampRegistration')->option(['real_name' => 'Miniapp training camp registration']);
     Route::post('miniapp/training-camp/registration', 'v1.miniapp.MineController/saveRegistration')->name('miniappTrainingCampRegistrationSave')->option(['real_name' => 'Miniapp training camp registration save']);

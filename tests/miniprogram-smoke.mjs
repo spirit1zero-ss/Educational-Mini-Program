@@ -30,7 +30,12 @@ for (const file of jsonFiles) {
 }
 
 const appConfig = JSON.parse(readFileSync(join(miniRoot, 'app.json'), 'utf8'));
-const pages = new Set(appConfig.pages || []);
+const pages = new Set([
+  ...(appConfig.pages || []),
+  ...((appConfig.subPackages || appConfig.subpackages || []).flatMap((subpackage) =>
+    (subpackage.pages || []).map((page) => `${subpackage.root}/${page}`),
+  )),
+]);
 
 for (const page of pages) {
   for (const ext of ['js', 'wxml', 'json', 'wxss']) {
@@ -39,7 +44,7 @@ for (const page of pages) {
   }
 }
 
-const routePattern = /['"`](\/?pages\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+)(?:\?[^'"`]*)?['"`]/g;
+const routePattern = /['"`](\/?(?:packages\/[A-Za-z0-9_-]+\/)?pages\/[A-Za-z0-9_-]+\/[A-Za-z0-9_-]+)(?:\?[^'"`]*)?['"`]/g;
 const routeFiles = walk(miniRoot, (path) => path.endsWith('.js') || path.endsWith('.wxml'));
 for (const file of routeFiles) {
   const source = readFileSync(file, 'utf8');

@@ -1,0 +1,148 @@
+<view class="page">
+  <custom-nav title="21天线上特训营" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+
+  <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="camp-long">
+      <view class="camp-screen camp-screen--intro">
+        <view class="hero-copy">
+          <view class="hero-title">21天线上特训营</view>
+          <view class="hero-subtitle">提高孩子自主学习能力的创新型训练系统</view>
+        </view>
+
+        <image class="hero-scene" src="{{heroScene}}" mode="aspectFill"></image>
+
+        <view class="intro-card">
+          <view class="intro-line" wx:for="{{introLines}}" wx:key="*this">
+            <image class="intro-icon" src="{{campAssetBase}}camp-icon-drive-v2.png" mode="aspectFit"></image>
+            <view class="intro-text">{{item}}</view>
+          </view>
+        </view>
+
+        <view class="section-card goal-card">
+          <view class="section-heading">
+            <view class="section-index">01</view>
+            <view class="section-title">【目标】</view>
+          </view>
+          <view class="goal-layout">
+            <image class="goal-illustration" src="{{iconBase}}exam-target.png" mode="aspectFit"></image>
+            <view class="goal-list">
+              <view class="number-row" wx:for="{{goals}}" wx:key="*this">
+                <view class="number-badge">{{index + 1}}</view>
+                <view class="number-copy">{{item}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <image class="landscape-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+      </view>
+
+      <view class="camp-screen camp-screen--content">
+        <view class="section-heading section-heading--standalone">
+          <view class="section-index">02</view>
+          <view>
+            <view class="section-title section-title--navy">【内容】</view>
+            <view class="section-caption">从内驱到习惯，再到学科开窍</view>
+          </view>
+        </view>
+
+        <view class="model-list">
+          <view class="model-card model-card--{{item.theme}}" wx:for="{{models}}" wx:key="title">
+            <image class="model-icon" src="{{item.iconSrc}}" mode="aspectFit"></image>
+            <view class="model-copy">
+              <view class="model-title">{{item.title}}</view>
+              <view class="model-description">{{item.description}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="section-heading section-heading--compact">
+          <view class="section-index">03</view>
+          <view class="section-title section-title--navy">【学制】</view>
+        </view>
+        <view class="system-grid">
+          <view class="system-card system-card--{{item.theme}}" wx:for="{{systemItems}}" wx:key="label">
+            <view class="system-value">{{item.value}}</view>
+            <view class="system-label">{{item.label}}</view>
+          </view>
+        </view>
+        <view class="system-summary">三次直播（每周一次）+ 21天打卡督导陪跑 + 3个月答疑解惑，让孩子真正走向自主学习。</view>
+
+        <view class="section-heading section-heading--compact lessons-heading">
+          <view class="section-index">04</view>
+          <view class="section-title section-title--navy">三次直播</view>
+        </view>
+        <view class="lesson-list">
+          <view class="lesson-card" wx:for="{{lessons}}" wx:key="title">
+            <image class="lesson-icon" src="{{item.iconSrc}}" mode="aspectFit"></image>
+            <view class="lesson-copy">
+              <view class="lesson-title lesson-title--{{item.theme}}">{{item.title}}</view>
+              <view class="lesson-description">{{item.description}}</view>
+            </view>
+          </view>
+        </view>
+
+        <image class="landscape-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+      </view>
+
+      <view class="camp-screen camp-screen--details">
+        <view class="section-heading section-heading--standalone">
+          <view class="section-index">05</view>
+          <view class="section-title section-title--navy">【适合】</view>
+        </view>
+
+        <view class="suitable-card">
+          <view class="suitable-row" wx:for="{{suitableItems}}" wx:key="text">
+            <image class="suitable-icon" src="{{item.iconSrc}}" mode="aspectFit"></image>
+            <view class="number-badge number-badge--{{index + 1}}">{{index + 1}}</view>
+            <view class="suitable-text">{{item.text}}</view>
+          </view>
+        </view>
+
+        <view class="price-card">
+          <view class="price-kicker">21天线上特训营</view>
+          <view class="price-main">
+            <view class="price-copy">
+              <view class="price-heading">【收费】</view>
+              <view class="price-tag">限时福利价</view>
+              <view class="price-original" wx:if="{{showOriginalPrice}}">原价 {{memberOriginalPrice}}元</view>
+            </view>
+            <view class="price-now"><text class="price-number">{{memberPrice}}</text><text class="price-unit" wx:if="{{memberPrice !== '--'}}">元</text></view>
+          </view>
+          <view class="price-note">一次付费 · 21天训练 · 3个月答疑</view>
+          <image class="price-icon" src="{{campAssetBase}}camp-process-house-v2.png" mode="aspectFit"></image>
+        </view>
+
+        <view class="process-card">
+          <view class="process-heading">【入班流程】</view>
+          <view class="process-grid">
+            <view class="process-rail"></view>
+            <view class="process-step" wx:for="{{processSteps}}" wx:key="title">
+              <view class="process-number process-number--{{item.theme}}">0{{index + 1}}</view>
+              <image class="process-icon" src="{{item.iconSrc}}" mode="aspectFit"></image>
+              <view class="process-title">{{item.title}}</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="closing-card">
+          <image class="closing-illustration" src="{{closingImage}}" mode="aspectFit"></image>
+          <view class="closing-copy">
+            <view class="closing-title">21天，建立受益长久的自主学习系统</view>
+            <view class="closing-text">{{closing}}</view>
+          </view>
+        </view>
+
+        <view class="bottom-spacer"></view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="signup-bar">
+    <view class="signup-note">
+      <image class="signup-note-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
+      <view>确认订单后使用微信支付</view>
+    </view>
+    <button class="signup-button" bindtap="onJoinTap">{{memberPrice === '--' ? '立即报名' : '立即报名 ' + memberPrice + '元'}}</button>
+  </view>
+</view>

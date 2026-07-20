@@ -1,4 +1,9 @@
 {
   "navigationStyle": "custom",
-  "disableScroll": false
+  "disableScroll": false,
+  "usingComponents": {
+    "home-hero": "/components/home-hero/home-hero",
+    "home-action-row": "/components/home-action-row/home-action-row",
+    "home-tabbar": "/components/home-tabbar/home-tabbar"
+  }
 }

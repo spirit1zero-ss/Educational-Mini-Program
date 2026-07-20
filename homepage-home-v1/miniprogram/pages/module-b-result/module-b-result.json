@@ -1,6 +1,0 @@
-{
-  "usingComponents": {
-    "custom-nav": "../../components/custom-nav/custom-nav",
-    "sticky-action": "../../components/sticky-action/sticky-action"
-  }
-}

@@ -15,7 +15,7 @@ function useRedeemCode(code) {
 }
 
 function getMemberPlans() {
-  return get('/api/miniapp/training-camp/member-plans')
+  return get('/api/miniapp/training-camp/member-plans', {}, { noAuth: true })
 }
 
 function createTrainingCampMemberOrder(data) {
@@ -24,6 +24,10 @@ function createTrainingCampMemberOrder(data) {
 
 function payTrainingCampMemberOrder(data) {
   return post('/api/miniapp/training-camp/member-order/pay', data || {})
+}
+
+function confirmTrainingCampMemberOrder(data) {
+  return post('/api/miniapp/training-camp/member-order/confirm', data || {})
 }
 
 function cancelTrainingCampMemberOrder(data) {
@@ -57,6 +61,7 @@ module.exports = {
   getMemberPlans,
   createTrainingCampMemberOrder,
   payTrainingCampMemberOrder,
+  confirmTrainingCampMemberOrder,
   cancelTrainingCampMemberOrder,
   getInviteRecords,
   getIncomeRecords,

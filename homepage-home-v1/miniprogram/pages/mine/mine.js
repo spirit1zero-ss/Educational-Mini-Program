@@ -1,18 +1,18 @@
-const CAMP_PATH = '/pages/module-5-camp/module-5-camp'
-const PROMO_POSTER_PATH = '/pages/promo-poster/promo-poster'
-const INVITE_RECORDS_PATH = '/pages/invite-records/invite-records'
-const MY_INCOME_PATH = '/pages/my-income/my-income'
-const CAMP_ORDERS_PATH = '/pages/camp-orders/camp-orders'
-const CAMP_CHECKOUT_PATH = '/pages/camp-checkout/camp-checkout'
-const MEMBER_BENEFITS_PATH = '/pages/member-benefits/member-benefits'
-const MEMBER_REGISTRATION_PATH = '/pages/member-registration/member-registration'
-const REFERRAL_RULES_PATH = '/pages/referral-rules/referral-rules'
+const CAMP_PATH = '/packages/features/pages/module-5-camp/module-5-camp'
+const PROMO_POSTER_PATH = '/packages/features/pages/promo-poster/promo-poster'
+const INVITE_RECORDS_PATH = '/packages/features/pages/invite-records/invite-records'
+const MY_INCOME_PATH = '/packages/features/pages/my-income/my-income'
+const CAMP_ORDERS_PATH = '/packages/features/pages/camp-orders/camp-orders'
+const CAMP_CHECKOUT_PATH = '/packages/features/pages/camp-checkout/camp-checkout'
+const MEMBER_BENEFITS_PATH = '/packages/features/pages/member-benefits/member-benefits'
+const MEMBER_REGISTRATION_PATH = '/packages/features/pages/member-registration/member-registration'
+const REFERRAL_RULES_PATH = '/packages/features/pages/referral-rules/referral-rules'
 const OFFLINE_PATH = '/pages/offline/offline'
 const {
   getMineOverview,
+  getMemberPlans,
   createReferralPoster,
-  useRedeemCode,
-  createTrainingCampMemberOrder
+  useRedeemCode
 } = require('../../api/mine')
 const { hasAuthToken, clearAuth } = require('../../utils/request')
 
@@ -21,7 +21,6 @@ Page({
     navStyle: '',
     scrollStyle: '',
     overviewLoading: false,
-    orderSubmitting: false,
     isMember: false,
     registrationCompleted: false,
     registrationCanOpen: false,
@@ -33,7 +32,7 @@ Page({
       productId: '',
       title: '21天自主学习训练营',
       subtitle: '直播课 + 打卡陪跑 + 答疑服务',
-      priceText: '399元',
+      priceText: '价格加载中',
       ctaText: '立即报名'
     },
     benefitText: '报名后开通会员权益',
@@ -130,6 +129,7 @@ Page({
 
   onLoad() {
     this.setNavigationMetrics()
+    this.loadPublicMemberPlan()
     this.loadMineOverviewIfAuthed()
   },
 
@@ -159,6 +159,46 @@ Page({
     }
   },
 
+  loadPublicMemberPlan() {
+    return getMemberPlans()
+      .then((response) => {
+        const plans = Array.isArray(response.data) ? response.data : []
+        const plan = plans.find((item) => item && !item.isFree && item.mcId)
+
+        if (!plan) {
+          this.setData({
+            trainingCamp: Object.assign({}, this.data.trainingCamp, {
+              priceText: '暂未开放'
+            }),
+            memberPlans: [],
+            selectedMemberPlan: null
+          })
+          return
+        }
+
+        this.setData({
+          trainingCamp: Object.assign({}, this.data.trainingCamp, {
+            productId: `member-card-${plan.mcId}`,
+            memberPlan: plan,
+            memberPlans: plans,
+            priceText: plan.priceText || `${plan.price}元`
+          }),
+          memberPlans: plans,
+          selectedMemberPlan: plan
+        })
+      })
+      .catch((error) => {
+        console.warn('[mine] load member price failed:', error)
+        if (!hasAuthToken()) {
+          this.setData({
+            trainingCamp: Object.assign({}, this.data.trainingCamp, {
+              priceText: '价格暂不可用'
+            })
+          })
+        }
+      })
+  },
+
   onHeroActionTap() {
     if (this.data.isMember) {
       this.onPosterTap()
@@ -174,38 +214,6 @@ Page({
         })
       }
     })
-  },
-
-  createMemberOrder(plan) {
-    this.setData({ orderSubmitting: true })
-    wx.showLoading({ title: '\u521b\u5efa\u4e2d' })
-
-    createTrainingCampMemberOrder({
-      mcId: plan.mcId,
-      payType: 'weixin'
-    })
-      .then((response) => {
-        wx.hideLoading()
-        const order = response.data || {}
-        wx.showModal({
-          title: '\u8ba2\u5355\u5df2\u521b\u5efa',
-          content: order.orderId
-            ? `\u8ba2\u5355\u53f7\uff1a${order.orderId}\n\u652f\u4ed8\u4e0b\u4e00\u6b65\u63a5\u5165`
-            : (order.message || '\u652f\u4ed8\u4e0b\u4e00\u6b65\u63a5\u5165'),
-          showCancel: false,
-          confirmText: '\u77e5\u9053\u4e86'
-        })
-      })
-      .catch((error) => {
-        wx.hideLoading()
-        wx.showToast({
-          title: (error && error.message) || '\u8ba2\u5355\u521b\u5efa\u5931\u8d25',
-          icon: 'none'
-        })
-      })
-      .then(() => {
-        this.setData({ orderSubmitting: false })
-      })
   },
 
   onPosterTap() {

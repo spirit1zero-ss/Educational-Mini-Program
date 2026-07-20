@@ -47,7 +47,7 @@ class MineController
     {
         [$mcId, $payType] = $request->postMore([
             ['mcId', 0],
-            ['payType', 'weixin'],
+            ['payType', 'virtual'],
         ], true);
 
         return app('json')->success($this->services->createTrainingCampMemberOrder((int)$request->uid(), (int)$mcId, $payType));
@@ -55,12 +55,27 @@ class MineController
 
     public function payMemberOrder(Request $request)
     {
-        [$orderId, $payType] = $request->postMore([
+        [$orderId, $payType, $code] = $request->postMore([
             ['orderId', ''],
-            ['payType', 'weixin'],
+            ['payType', 'virtual'],
+            ['code', ''],
         ], true);
 
-        return app('json')->success($this->services->payTrainingCampMemberOrder((int)$request->uid(), $orderId, $payType));
+        return app('json')->success($this->services->payTrainingCampMemberOrder((int)$request->uid(), $orderId, $payType, $code));
+    }
+
+    public function confirmMemberOrder(Request $request)
+    {
+        [$orderId, $outTradeNo] = $request->postMore([
+            ['orderId', ''],
+            ['outTradeNo', ''],
+        ], true);
+
+        return app('json')->success($this->services->confirmTrainingCampMemberOrder(
+            (int)$request->uid(),
+            $orderId,
+            $outTradeNo
+        ));
     }
 
     public function cancelMemberOrder(Request $request)

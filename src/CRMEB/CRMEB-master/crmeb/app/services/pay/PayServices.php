@@ -37,6 +37,9 @@ class PayServices
     //通联支付
     const ALLIN_PAY = 'allinpay';
 
+    //小程序虚拟支付（XPay）
+    const VIRTUAL_PAY = 'virtual';
+
     //好友代付
     const FRIEND = 'friend';
 
@@ -51,6 +54,7 @@ class PayServices
         PayServices::ALIAPY_PAY => '支付宝',
         PayServices::FRIEND => '好友代付',
         PayServices::ALLIN_PAY => '通联支付',
+        PayServices::VIRTUAL_PAY => '小程序虚拟支付',
         PayServices::BANK => '银行转账',
     ];
 

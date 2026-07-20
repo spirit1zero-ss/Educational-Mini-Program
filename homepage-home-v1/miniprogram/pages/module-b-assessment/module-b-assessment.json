@@ -1,7 +1,0 @@
-{
-  "usingComponents": {
-    "custom-nav": "../../components/custom-nav/custom-nav",
-    "choice-card": "../../components/choice-card/choice-card",
-    "sticky-action": "../../components/sticky-action/sticky-action"
-  }
-}

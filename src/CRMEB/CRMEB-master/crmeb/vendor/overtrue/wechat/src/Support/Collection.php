@@ -347,13 +347,18 @@ class Collection implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     }
 
     /**
-     * var_export.
+     * Restore a collection exported by var_export.
      *
-     * @return array
+     * PHP 8 requires __set_state to be static and to accept exactly one
+     * argument. EasyWeChat 3.3.33 predates that enforced signature.
+     *
+     * @param array $state
+     *
+     * @return static
      */
-    public function __set_state()
+    public static function __set_state(array $state)
     {
-        return $this->all();
+        return new static(isset($state['items']) && is_array($state['items']) ? $state['items'] : []);
     }
 
     /**

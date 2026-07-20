@@ -17,6 +17,8 @@ use app\services\agent\AgentManageServices;
 use app\services\order\StoreOrderInvoiceServices;
 use app\services\order\StoreOrderServices;
 use app\services\order\StoreOrderTakeServices;
+use app\services\miniapp\MiniappServices;
+use app\services\pay\VirtualPaymentServices;
 use app\services\product\product\StoreProductServices;
 use app\services\system\attachment\SystemAttachmentServices;
 use app\services\user\UserSignServices;
@@ -46,6 +48,7 @@ class CrontabRunServices
         'clearPoster' => '清除昨日海报',
         'autoInvoice' => '自动开具发票以及退款自动冲红',
         'signRemind' => '未签到提醒',
+        'virtualPaymentReconcile' => '训练营虚拟支付补偿',
         'customTimer' => '自定义定时任务',
     ];
 
@@ -251,6 +254,21 @@ class CrontabRunServices
             $this->crontabLog(' 执行未签到提醒');
         } catch (\Throwable $e) {
             $this->crontabLog('未签到提醒失败,失败原因:' . $e->getMessage());
+        }
+    }
+
+    /** Reconcile XPay orders and retry paid entitlement delivery. */
+    public function virtualPaymentReconcile()
+    {
+        try {
+            $result = app()->make(VirtualPaymentServices::class)->reconcilePendingPayments(100);
+            $expired = app()->make(MiniappServices::class)->expireStaleTrainingCampOrders(100);
+            $this->crontabLog(' 训练营虚拟支付补偿完成:' . json_encode([
+                'payment' => $result,
+                'expiry' => $expired,
+            ], JSON_UNESCAPED_UNICODE));
+        } catch (\Throwable $e) {
+            $this->crontabLog('训练营虚拟支付补偿失败:' . $e->getMessage());
         }
     }
 
