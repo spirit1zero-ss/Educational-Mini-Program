@@ -70,6 +70,8 @@ assert.match(wechatMiniProgramService, /Env::get\('miniapp\.app_secret'/, 'mini-
 assert.match(qrcodeService, /Env::get\('miniapp\.code_env_version',\s*'release'\)/, 'mini-program codes must default to the release version')
 assert.match(qrcodeService, /Env::get\('miniapp\.code_check_path',\s*'true'\)/, 'mini-program code path validation must default to enabled')
 assert.match(qrcodeService, /\$cacheVariant\s*=\s*\$page\s*\.\s*'\|'\s*\.\s*\$envVersion/, 'development and release QR-code caches must be isolated')
+assert.match(qrcodeService, /\$wechatPage\s*=\s*\$page\s*===\s*'pages\/home\/home'\s*\?\s*null\s*:\s*\$page/, 'home referral codes must use the version default page to avoid WeChat 41030')
+assert.match(easyWechatQrCode, /if\s*\(\$page\s*!==\s*null\s*&&\s*\$page\s*!==\s*''\)[\s\S]*\$params\['page'\]\s*=\s*\$page/, 'empty QR-code pages must be omitted from the WeChat payload')
 assert.match(easyWechatQrCode, /'check_path'\]\s*=\s*\(bool\)\$checkPath/)
 assert.match(easyWechatQrCode, /'env_version'\]\s*=\s*\$envVersion/)
 assert.match(checkout, /item\.type\s*===\s*'ever'/)

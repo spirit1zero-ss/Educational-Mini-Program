@@ -93,12 +93,14 @@ class QRCode extends AbstractMiniProgram
     {
         $params = [
             'scene' => $scene,
-            'page' => $page,
             'width' => $width,
             'auto_color' => $autoColor,
             'line_color' => $lineColor,
         ];
 
+        if ($page !== null && $page !== '') {
+            $params['page'] = $page;
+        }
         if ($checkPath !== null) {
             $params['check_path'] = (bool)$checkPath;
         }

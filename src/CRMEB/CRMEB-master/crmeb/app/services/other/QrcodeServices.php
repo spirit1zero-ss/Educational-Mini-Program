@@ -352,6 +352,10 @@ class QrcodeServices extends BaseServices
         $checkPathValue = strtolower(trim((string)Env::get('miniapp.code_check_path', 'true')));
         $checkPath = !in_array($checkPathValue, ['0', 'false', 'off', 'no'], true);
         $scene = 'ref=' . $memberUid;
+        // The referral code opens the app's default home page. Omitting the
+        // explicit page avoids WeChat 41030 when a newly uploaded environment
+        // has not indexed the same route yet; the scene still carries the ref.
+        $wechatPage = $page === 'pages/home/home' ? null : $page;
         $cacheVariant = $page . '|' . $envVersion . '|' . ($checkPath ? '1' : '0');
         $namePath = 'member_invite_' . $memberUid . '_' . md5($cacheVariant) . '.jpg';
         try {
@@ -364,7 +368,7 @@ class QrcodeServices extends BaseServices
             if (!$imageInfo) {
                 $res = MiniProgramService::appCodeUnlimitService(
                     $scene,
-                    $page,
+                    $wechatPage,
                     280,
                     false,
                     ['r' => 0, 'g' => 0, 'b' => 0],
@@ -387,7 +391,13 @@ class QrcodeServices extends BaseServices
                     ];
                     Log::warning('miniapp_member_invite_code_wechat_failed', $context);
                     error_log('[miniapp_member_invite_code_wechat_failed] ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-                    throw new ApiException(sprintf('微信小程序码接口失败（%d）：%s', $context['errcode'], $context['errmsg'] ?: '未知错误'));
+                    throw new ApiException(sprintf(
+                        '微信小程序码接口失败（%d，%s，check_path=%s）：%s',
+                        $context['errcode'],
+                        $envVersion,
+                        $checkPath ? 'true' : 'false',
+                        $context['errmsg'] ?: '未知错误'
+                    ));
                 }
                 if (strlen($body) < 100) {
                     $context = [
