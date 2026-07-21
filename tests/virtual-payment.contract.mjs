@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises'
 const root = new URL('../', import.meta.url)
 const read = (path) => readFile(new URL(path, root), 'utf8')
 
-const [client, page, checkout, api, service, lockService, miniappService, crontabService, routes, config, schema, easyWechatCollection] = await Promise.all([
+const [client, page, checkout, api, service, lockService, miniappService, wechatMiniProgramService, crontabService, routes, config, schema, easyWechatCollection] = await Promise.all([
   read('homepage-home-v1/miniprogram/utils/virtual-payment.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/camp-orders/camp-orders.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/camp-checkout/camp-checkout.js'),
@@ -13,6 +13,7 @@ const [client, page, checkout, api, service, lockService, miniappService, cronta
   read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/VirtualPaymentServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/PaymentLockService.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/miniapp/MiniappServices.php'),
+  read('src/CRMEB/CRMEB-master/crmeb/crmeb/services/app/MiniProgramService.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/system/crontab/CrontabRunServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php'),
   read('src/CRMEB/CRMEB-master/crmeb/config/xpay.php'),
@@ -60,6 +61,9 @@ assert.match(miniappService, /miniapp_training_camp_order/)
 assert.match(miniappService, /TRAINING_CAMP_MEMBER_TYPE\s*=\s*'ever'/)
 assert.match(miniappService, /\(string\)\(\$item\['type'\]\s*\?\?\s*''\)\s*===\s*self::TRAINING_CAMP_MEMBER_TYPE/)
 assert.match(miniappService, /Training camp only supports permanent membership/)
+assert.match(miniappService, /\$status\s*=\s*\$isMember\s*\?\s*'registered'\s*:\s*'pending'/, 'invite registration status must require training-camp membership')
+assert.match(wechatMiniProgramService, /Env::get\('miniapp\.app_id'/, 'mini-program AppID must support cloud environment configuration')
+assert.match(wechatMiniProgramService, /Env::get\('miniapp\.app_secret'/, 'mini-program AppSecret must support cloud environment configuration')
 assert.match(checkout, /item\.type\s*===\s*'ever'/)
 for (const permanentPlanClient of permanentPlanClients) {
   assert.match(permanentPlanClient, /item\.type\s*===\s*'ever'/)

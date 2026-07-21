@@ -7,7 +7,7 @@ const POSTER_BG_CANVAS_SOURCES = [
   '../../assets/promo-poster/promo-poster-bg.jpg',
   '/packages/features/assets/promo-poster/promo-poster-bg.jpg'
 ]
-const { getMemberPlans } = require('../../../../api/mine')
+const { createReferralPoster, getMemberPlans } = require('../../../../api/mine')
 
 function resolveImageSource(src) {
   if (!/^https?:\/\//i.test(src)) {
@@ -165,7 +165,7 @@ Page({
     shareImagePath: '',
     posterSaving: false,
     memberPrice: '--',
-    memberUid: 'A10293',
+    memberUid: '',
     benefits: [
       {
         icon: '/assets/mine/icon-promo-poster.svg',
@@ -189,19 +189,56 @@ Page({
     this.setNavigationMetrics()
     this.showShareMenu()
     this.memberPlanTask = this.loadMemberPlan()
+    this.posterDataTask = this.loadPosterData(options || {})
+  },
 
-    if (options && options.uid) {
-      this.setData({ memberUid: options.uid })
+  loadPosterData(options) {
+    const nextData = {}
+
+    if (options.uid) {
+      nextData.memberUid = options.uid
     }
 
-    if (options && options.codeUrl) {
-      const codeImage = decodeURIComponent(options.codeUrl)
-      this.setData({ codeImage })
+    if (options.codeUrl) {
+      nextData.codeImage = decodeURIComponent(options.codeUrl)
     }
 
-    if (options && options.sharePath) {
-      this.setData({ sharePath: decodeURIComponent(options.sharePath) })
+    if (options.sharePath) {
+      nextData.sharePath = decodeURIComponent(options.sharePath)
     }
+
+    if (Object.keys(nextData).length) {
+      this.setData(nextData)
+    }
+
+    if (nextData.codeImage && nextData.codeImage !== 'unpublished') {
+      return Promise.resolve(nextData)
+    }
+
+    return createReferralPoster({ page: 'pages/home/home' })
+      .then((response) => {
+        const poster = response && response.data ? response.data : {}
+        if (!poster.codeUrl || poster.codeUrl === 'unpublished') {
+          throw new Error('邀请二维码生成失败')
+        }
+
+        const data = {
+          codeImage: poster.codeUrl,
+          memberUid: poster.memberUid || this.data.memberUid,
+          sharePath: poster.sharePath || this.data.sharePath
+        }
+        this.setData(data)
+        return data
+      })
+      .catch((error) => {
+        console.warn('[promo-poster] load referral code failed:', error)
+        this.setData({ codeImage: '' })
+        wx.showToast({
+          title: (error && error.message) || '邀请二维码生成失败',
+          icon: 'none'
+        })
+        return null
+      })
   },
 
   loadMemberPlan() {
@@ -233,8 +270,11 @@ Page({
   },
 
   onReady() {
-    Promise.resolve(this.memberPlanTask).then(() => {
-      if (this.data.memberPrice === '--') return
+    Promise.all([
+      Promise.resolve(this.memberPlanTask),
+      Promise.resolve(this.posterDataTask)
+    ]).then(() => {
+      if (this.data.memberPrice === '--' || !this.data.codeImage) return
       setTimeout(() => {
         this.preparePosterImage()
       }, 300)

@@ -304,6 +304,9 @@ class MiniappServices extends BaseServices
         /** @var QrcodeServices $qrcodeServices */
         $qrcodeServices = app()->make(QrcodeServices::class);
         $codeUrl = $qrcodeServices->getMiniappMemberInviteCode($memberUid, $page);
+        if (!$codeUrl || $codeUrl === 'unpublished') {
+            throw new ApiException($this->zh('\u5c0f\u7a0b\u5e8f\u4e8c\u7ef4\u7801\u751f\u6210\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5 AppID\u3001AppSecret \u548c\u56fe\u7247\u5b58\u50a8\u914d\u7f6e'));
+        }
 
         return [
             'memberUid' => $memberUid,
@@ -785,9 +788,11 @@ class MiniappServices extends BaseServices
     {
         $uid = (int)($item['uid'] ?? 0);
         $isMember = $this->isTrainingCampMember($item);
-        $status = $fallbackStatus === 'pending' && !$isMember ? 'pending' : 'registered';
+        // A referral binding is only an invitation. It becomes "registered" after
+        // the invited user has actually obtained the training-camp membership.
+        $status = $isMember ? 'registered' : 'pending';
         $time = $status === 'pending'
-            ? (int)($item['locked_at'] ?? $item['add_time'] ?? 0)
+            ? (int)($item['locked_at'] ?? $item['spread_time'] ?? $item['add_time'] ?? 0)
             : (int)($item['spread_time'] ?? $item['add_time'] ?? 0);
         $orderCount = $status === 'registered' ? max(1, (int)($item['pay_count'] ?? 0)) : 0;
 

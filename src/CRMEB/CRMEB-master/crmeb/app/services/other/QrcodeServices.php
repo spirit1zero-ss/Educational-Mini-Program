@@ -19,6 +19,7 @@ use crmeb\exceptions\AdminException;
 use crmeb\services\app\MiniProgramService;
 use crmeb\services\app\WechatService;
 use Guzzle\Http\EntityBody;
+use think\facade\Log;
 
 /**
  *
@@ -354,11 +355,28 @@ class QrcodeServices extends BaseServices
             if (!$imageInfo) {
                 $res = MiniProgramService::appCodeUnlimitService($scene, $page, 280);
                 if (!$res) return false;
-                if ($res->getSize() < 100) return 'unpublished';
+                $body = (string)EntityBody::factory($res);
+                $wechatError = json_decode($body, true);
+                if (is_array($wechatError) && isset($wechatError['errcode'])) {
+                    Log::warning('miniapp_member_invite_code_wechat_failed', [
+                        'member_uid' => $memberUid,
+                        'page' => $page,
+                        'errcode' => (int)$wechatError['errcode'],
+                        'errmsg' => (string)($wechatError['errmsg'] ?? ''),
+                    ]);
+                    return false;
+                }
+                if (strlen($body) < 100) {
+                    Log::warning('miniapp_member_invite_code_empty_image', [
+                        'member_uid' => $memberUid,
+                        'page' => $page,
+                        'size' => strlen($body),
+                    ]);
+                    return false;
+                }
                 $uploadType = (int)sys_config('upload_type', 1);
                 $upload = UploadService::init();
-                $res = (string)EntityBody::factory($res);
-                $res = $upload->to('routine/member/invite-code')->validate()->setAuthThumb(false)->stream($res, $namePath);
+                $res = $upload->to('routine/member/invite-code')->validate()->setAuthThumb(false)->stream($body, $namePath);
                 if ($res === false) {
                     return false;
                 }
@@ -386,6 +404,11 @@ class QrcodeServices extends BaseServices
             if ($imageInfo['image_type'] == 1) $url = $siteUrl . $url;
             return $url;
         } catch (\Throwable $e) {
+            Log::error('miniapp_member_invite_code_failed', [
+                'member_uid' => $memberUid,
+                'page' => $page,
+                'message' => $e->getMessage(),
+            ]);
             return false;
         }
     }

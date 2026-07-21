@@ -5,66 +5,20 @@ Page({
   data: {
     navStyle: '',
     scrollStyle: '',
-    memberUid: 'A10293',
+    memberUid: '',
     activeStatus: 'all',
     summary: [
       { key: 'available', value: '0元', label: '可提现' },
-      { key: 'pending', value: '120元', label: '待结算' },
-      { key: 'settled', value: '60元', label: '已到账' }
+      { key: 'pending', value: '0元', label: '待结算' },
+      { key: 'settled', value: '0元', label: '已到账' }
     ],
     statusTabs: [
-      { key: 'all', text: '全部', count: 5 },
-      { key: 'pending', text: '待结算', count: 2 },
-      { key: 'settled', text: '已到账', count: 1 },
-      { key: 'withdraw', text: '提现', count: 2 }
+      { key: 'all', text: '全部', count: 0 },
+      { key: 'pending', text: '待结算', count: 0 },
+      { key: 'settled', text: '已到账', count: 0 },
+      { key: 'withdraw', text: '提现', count: 0 }
     ],
-    records: [
-      {
-        id: 'I2026063001',
-        title: '陈同学家长报名奖励',
-        desc: '训练营订单完成后结算',
-        time: '2026-06-30 10:18',
-        amount: '+60元',
-        status: 'pending',
-        statusText: '待结算'
-      },
-      {
-        id: 'I2026062902',
-        title: '周同学家长报名奖励',
-        desc: '训练营订单完成后结算',
-        time: '2026-06-29 21:04',
-        amount: '+60元',
-        status: 'pending',
-        statusText: '待结算'
-      },
-      {
-        id: 'I2026062103',
-        title: '赵同学家长报名奖励',
-        desc: '推广奖励已到账',
-        time: '2026-06-21 19:30',
-        amount: '+60元',
-        status: 'settled',
-        statusText: '已到账'
-      },
-      {
-        id: 'W2026062001',
-        title: '提现申请',
-        desc: '后台审核中',
-        time: '2026-06-20 11:12',
-        amount: '-60元',
-        status: 'withdraw',
-        statusText: '审核中'
-      },
-      {
-        id: 'W2026061801',
-        title: '提现到账',
-        desc: '已打款至绑定账户',
-        time: '2026-06-18 15:40',
-        amount: '-80元',
-        status: 'withdraw',
-        statusText: '已完成'
-      }
-    ],
+    records: [],
     filteredRecords: []
   },
 
@@ -105,13 +59,8 @@ Page({
       .then((response) => {
         const data = response && response.data ? response.data : {}
         const source = Array.isArray(data.list) ? data.list : []
-        if (!source.length) {
-          this.updateFilteredRecords()
-          return
-        }
-
         const records = source.map((item, index) => {
-          const pm = Number(item.pm || 1)
+          const pm = Number(item.pm === undefined ? 1 : item.pm)
           const amount = Number(item.number || item.amount || 0)
           const status = item.statusKey || (item.type === 'extract' ? 'withdraw' : 'settled')
 
@@ -126,10 +75,6 @@ Page({
           }
         })
 
-        const available = records
-          .filter((item) => item.status !== 'withdraw')
-          .reduce((sum, item) => sum + Number(String(item.amount).replace('+', '')), 0)
-
         const statusTabs = this.data.statusTabs.map((item) => {
           const count = item.key === 'all'
             ? records.length
@@ -142,9 +87,9 @@ Page({
           statusTabs,
           summary: this.data.summary.map((item) => {
             const backendSummary = data.summary || {}
-            if (item.key === 'available') return Object.assign({}, item, { value: `${backendSummary.availableAmount || available.toFixed(2)}元` })
+            if (item.key === 'available') return Object.assign({}, item, { value: `${backendSummary.availableAmount || '0.00'}元` })
             if (item.key === 'pending') return Object.assign({}, item, { value: `${backendSummary.pendingAmount || '0.00'}元` })
-            if (item.key === 'settled') return Object.assign({}, item, { value: `${backendSummary.settledAmount || backendSummary.totalAmount || '0.00'}元` })
+            if (item.key === 'settled') return Object.assign({}, item, { value: `${backendSummary.settledAmount || '0.00'}元` })
             return item
           })
         }, () => {
@@ -153,7 +98,12 @@ Page({
       })
       .catch((error) => {
         console.warn('[my-income] load backend records failed:', error)
-        this.updateFilteredRecords()
+        this.setData({
+          records: [],
+          filteredRecords: [],
+          summary: this.data.summary.map((item) => Object.assign({}, item, { value: '0\u5143' })),
+          statusTabs: this.data.statusTabs.map((item) => Object.assign({}, item, { count: 0 }))
+        })
       })
       .finally(() => {
         wx.hideNavigationBarLoading()

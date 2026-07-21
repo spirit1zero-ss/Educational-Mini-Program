@@ -14,6 +14,3 @@ CREATE TABLE IF NOT EXISTS `eb_miniapp_member_referrer_locks` (
   KEY `idx_spread_uid_status` (`spread_uid`, `status`),
   KEY `idx_expires_at` (`expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='miniapp member first referrer locks';
-
--- down
-DROP TABLE IF EXISTS `eb_miniapp_member_referrer_locks`;

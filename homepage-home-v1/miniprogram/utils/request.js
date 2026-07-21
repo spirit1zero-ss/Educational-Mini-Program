@@ -33,7 +33,7 @@ function rawRequest(options) {
       success: (response) => {
         const body = response.data || {}
         const statusCode = response.statusCode
-        const businessStatus = body.status || body.code
+        const businessStatus = body.status !== undefined ? body.status : body.code
 
         if (statusCode >= 200 && statusCode < 300 && (businessStatus === undefined || Number(businessStatus) === 200)) {
           resolve(body)
@@ -42,6 +42,7 @@ function rawRequest(options) {
 
         reject({
           statusCode,
+          businessStatus,
           data: body,
           message: body.msg || body.message || '请求失败'
         })
@@ -168,10 +169,12 @@ function request(options) {
   }
 
   return doRequest().catch((error) => {
-    const unauthorized = error && (error.statusCode === 401 || error.statusCode === 403)
+    const httpStatus = Number(error && error.statusCode)
+    const businessStatus = Number(error && error.businessStatus)
+    const unauthorized = httpStatus === 401 || httpStatus === 403 || businessStatus === 401 || businessStatus === 403
 
     if (!noAuth && unauthorized && options.retryAuth !== false) {
-      wx.removeStorageSync(TOKEN_KEY)
+      clearAuth()
       return login().then(() => request(Object.assign({}, options, { retryAuth: false })))
     }
 

@@ -104,8 +104,16 @@ class MiniProgramService
             $appId = isset($wechat['wechat_app_appid']) ? trim($wechat['wechat_app_appid']) : '';
             $appsecret = isset($wechat['wechat_app_appsecret']) ? trim($wechat['wechat_app_appsecret']) : '';
         } else {
-            $appId = isset($wechat['routine_appId']) ? trim($wechat['routine_appId']) : '';
-            $appsecret = isset($wechat['routine_appsecret']) ? trim($wechat['routine_appsecret']) : '';
+            // Cloud deployments may not expose CRMEB's original routine settings UI.
+            // Environment secrets take precedence while database settings remain compatible.
+            $appId = trim((string)Env::get('miniapp.app_id', ''));
+            $appsecret = trim((string)Env::get('miniapp.app_secret', ''));
+            if ($appId === '') {
+                $appId = isset($wechat['routine_appId']) ? trim($wechat['routine_appId']) : '';
+            }
+            if ($appsecret === '') {
+                $appsecret = isset($wechat['routine_appsecret']) ? trim($wechat['routine_appsecret']) : '';
+            }
         }
         $config = [
             'token' => isset($wechat['routine_token']) ? trim($wechat['routine_token']) : '',

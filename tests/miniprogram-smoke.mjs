@@ -30,6 +30,16 @@ for (const file of jsonFiles) {
 }
 
 const appConfig = JSON.parse(readFileSync(join(miniRoot, 'app.json'), 'utf8'));
+const requestSource = readFileSync(join(miniRoot, 'utils', 'request.js'), 'utf8');
+const promoPosterSource = readFileSync(join(miniRoot, 'packages', 'features', 'pages', 'promo-poster', 'promo-poster.js'), 'utf8');
+const inviteRecordsSource = readFileSync(join(miniRoot, 'packages', 'features', 'pages', 'invite-records', 'invite-records.js'), 'utf8');
+const incomeRecordsSource = readFileSync(join(miniRoot, 'packages', 'features', 'pages', 'my-income', 'my-income.js'), 'utf8');
+assert.match(requestSource, /businessStatus,\s*\n\s*data:/, 'request errors must preserve CRMEB business status');
+assert.match(requestSource, /businessStatus === 401 \|\| businessStatus === 403/, 'CRMEB business auth errors must trigger automatic login recovery');
+assert.match(requestSource, /if \(!noAuth && unauthorized[\s\S]*clearAuth\(\)[\s\S]*return login\(\)/, 'stale auth must be cleared before automatic login retry');
+assert.match(promoPosterSource, /createReferralPoster\(\{ page: 'pages\/home\/home' \}\)/, 'poster page must load its own referral code when route parameters are incomplete');
+assert.doesNotMatch(inviteRecordsSource, /R202606|陈同学家长|120元/, 'invite records must not ship demo users or rewards');
+assert.doesNotMatch(incomeRecordsSource, /I202606|W202606|陈同学家长|120元/, 'income records must not ship demo transactions');
 const pages = new Set([
   ...(appConfig.pages || []),
   ...((appConfig.subPackages || appConfig.subpackages || []).flatMap((subpackage) =>

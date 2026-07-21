@@ -482,12 +482,14 @@ Page({
       wx.showNavigationBarLoading && wx.showNavigationBarLoading()
     }
 
-    return getMineOverview({ retryAuth: false })
+    return getMineOverview()
       .then((response) => {
         this.applyOverviewData(response.data || {})
       })
       .catch((error) => {
-        if (error && (error.statusCode === 401 || error.statusCode === 403)) {
+        const httpStatus = Number(error && error.statusCode)
+        const businessStatus = Number(error && error.businessStatus)
+        if (httpStatus === 401 || httpStatus === 403 || businessStatus === 401 || businessStatus === 403) {
           clearAuth()
           return
         }
