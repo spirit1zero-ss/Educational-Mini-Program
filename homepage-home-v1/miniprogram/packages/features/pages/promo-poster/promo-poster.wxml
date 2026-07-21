@@ -47,7 +47,7 @@
                 <view class="code-title">扫码报名</view>
               </view>
               <view class="code-card code-card--empty" wx:else>
-                <view class="code-empty-text">邀请二维码生成失败</view>
+                <view class="code-empty-text">{{codeError || '邀请二维码生成失败'}}</view>
               </view>
             </view>
           </view>

@@ -16,6 +16,7 @@ use app\services\BaseServices;
 use app\dao\other\QrcodeDao;
 use app\services\system\attachment\SystemAttachmentServices;
 use crmeb\exceptions\AdminException;
+use crmeb\exceptions\ApiException;
 use crmeb\services\app\MiniProgramService;
 use crmeb\services\app\WechatService;
 use Guzzle\Http\EntityBody;
@@ -354,37 +355,45 @@ class QrcodeServices extends BaseServices
             $siteUrl = sys_config('site_url');
             if (!$imageInfo) {
                 $res = MiniProgramService::appCodeUnlimitService($scene, $page, 280);
-                if (!$res) return false;
+                if (!$res) {
+                    throw new ApiException('微信小程序码接口未返回内容');
+                }
                 $body = (string)EntityBody::factory($res);
                 $wechatError = json_decode($body, true);
                 if (is_array($wechatError) && isset($wechatError['errcode'])) {
-                    Log::warning('miniapp_member_invite_code_wechat_failed', [
+                    $context = [
                         'member_uid' => $memberUid,
                         'page' => $page,
                         'errcode' => (int)$wechatError['errcode'],
                         'errmsg' => (string)($wechatError['errmsg'] ?? ''),
-                    ]);
-                    return false;
+                    ];
+                    Log::warning('miniapp_member_invite_code_wechat_failed', $context);
+                    error_log('[miniapp_member_invite_code_wechat_failed] ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                    throw new ApiException(sprintf('微信小程序码接口失败（%d）：%s', $context['errcode'], $context['errmsg'] ?: '未知错误'));
                 }
                 if (strlen($body) < 100) {
-                    Log::warning('miniapp_member_invite_code_empty_image', [
+                    $context = [
                         'member_uid' => $memberUid,
                         'page' => $page,
                         'size' => strlen($body),
-                    ]);
-                    return false;
+                    ];
+                    Log::warning('miniapp_member_invite_code_empty_image', $context);
+                    error_log('[miniapp_member_invite_code_empty_image] ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                    throw new ApiException('微信小程序码接口返回了空图片');
                 }
                 $uploadType = (int)sys_config('upload_type', 1);
                 $upload = UploadService::init();
                 $res = $upload->to('routine/member/invite-code')->validate()->setAuthThumb(false)->stream($body, $namePath);
                 if ($res === false) {
-                    return false;
+                    throw new ApiException('邀请二维码图片保存失败');
                 }
                 $imageInfo = $upload->getUploadInfo();
                 $imageInfo['image_type'] = $uploadType;
                 if ($imageInfo['image_type'] == 1) $remoteImage = PosterServices::remoteImage($siteUrl . $imageInfo['dir']);
                 else $remoteImage = PosterServices::remoteImage($imageInfo['dir']);
-                if (!$remoteImage['status']) return false;
+                if (!$remoteImage['status']) {
+                    throw new ApiException('邀请二维码图片地址无法访问');
+                }
                 if ($isSaveAttach) {
                     $systemAttachmentService->save([
                         'name' => $imageInfo['name'],
@@ -403,13 +412,17 @@ class QrcodeServices extends BaseServices
             } else $url = $imageInfo['att_dir'];
             if ($imageInfo['image_type'] == 1) $url = $siteUrl . $url;
             return $url;
+        } catch (ApiException $e) {
+            throw $e;
         } catch (\Throwable $e) {
-            Log::error('miniapp_member_invite_code_failed', [
+            $context = [
                 'member_uid' => $memberUid,
                 'page' => $page,
                 'message' => $e->getMessage(),
-            ]);
-            return false;
+            ];
+            Log::error('miniapp_member_invite_code_failed', $context);
+            error_log('[miniapp_member_invite_code_failed] ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+            throw new ApiException('邀请二维码生成异常，请查看服务日志');
         }
     }
 

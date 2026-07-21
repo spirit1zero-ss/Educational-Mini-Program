@@ -19,6 +19,13 @@ class PaymentLockService
 
     public function run(string $key, callable $callback, int $ttlSeconds = 20, int $waitMilliseconds = 1500)
     {
+        // Redis is an optional fast barrier. When the application is configured
+        // to use file cache, skip the Redis store entirely and rely on the
+        // database row locks and unique keys enforced inside the callback.
+        if (strtolower((string)config('cache.default', 'file')) !== 'redis') {
+            return $callback();
+        }
+
         $token = bin2hex(random_bytes(16));
         $redis = null;
 

@@ -161,6 +161,7 @@ Page({
     scrollStyle: '',
     posterBg: POSTER_BG,
     codeImage: '',
+    codeError: '',
     sharePath: '',
     shareImagePath: '',
     posterSaving: false,
@@ -224,6 +225,7 @@ Page({
 
         const data = {
           codeImage: poster.codeUrl,
+          codeError: '',
           memberUid: poster.memberUid || this.data.memberUid,
           sharePath: poster.sharePath || this.data.sharePath
         }
@@ -232,9 +234,10 @@ Page({
       })
       .catch((error) => {
         console.warn('[promo-poster] load referral code failed:', error)
-        this.setData({ codeImage: '' })
+        const codeError = (error && error.message) || '邀请二维码生成失败'
+        this.setData({ codeImage: '', codeError })
         wx.showToast({
-          title: (error && error.message) || '邀请二维码生成失败',
+          title: codeError,
           icon: 'none'
         })
         return null
