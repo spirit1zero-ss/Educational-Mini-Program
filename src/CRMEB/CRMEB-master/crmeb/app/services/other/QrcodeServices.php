@@ -20,6 +20,7 @@ use crmeb\exceptions\ApiException;
 use crmeb\services\app\MiniProgramService;
 use crmeb\services\app\WechatService;
 use Guzzle\Http\EntityBody;
+use think\facade\Env;
 use think\facade\Log;
 
 /**
@@ -344,8 +345,15 @@ class QrcodeServices extends BaseServices
             return false;
         }
 
+        $envVersion = strtolower(trim((string)Env::get('miniapp.code_env_version', 'release')));
+        if (!in_array($envVersion, ['release', 'trial', 'develop'], true)) {
+            $envVersion = 'release';
+        }
+        $checkPathValue = strtolower(trim((string)Env::get('miniapp.code_check_path', 'true')));
+        $checkPath = !in_array($checkPathValue, ['0', 'false', 'off', 'no'], true);
         $scene = 'ref=' . $memberUid;
-        $namePath = 'member_invite_' . $memberUid . '_' . md5($page) . '.jpg';
+        $cacheVariant = $page . '|' . $envVersion . '|' . ($checkPath ? '1' : '0');
+        $namePath = 'member_invite_' . $memberUid . '_' . md5($cacheVariant) . '.jpg';
         try {
             if (!$isSaveAttach) {
                 $imageInfo = '';
@@ -354,7 +362,15 @@ class QrcodeServices extends BaseServices
             }
             $siteUrl = sys_config('site_url');
             if (!$imageInfo) {
-                $res = MiniProgramService::appCodeUnlimitService($scene, $page, 280);
+                $res = MiniProgramService::appCodeUnlimitService(
+                    $scene,
+                    $page,
+                    280,
+                    false,
+                    ['r' => 0, 'g' => 0, 'b' => 0],
+                    $checkPath,
+                    $envVersion
+                );
                 if (!$res) {
                     throw new ApiException('微信小程序码接口未返回内容');
                 }
@@ -364,6 +380,8 @@ class QrcodeServices extends BaseServices
                     $context = [
                         'member_uid' => $memberUid,
                         'page' => $page,
+                        'env_version' => $envVersion,
+                        'check_path' => $checkPath,
                         'errcode' => (int)$wechatError['errcode'],
                         'errmsg' => (string)($wechatError['errmsg'] ?? ''),
                     ];
@@ -375,6 +393,8 @@ class QrcodeServices extends BaseServices
                     $context = [
                         'member_uid' => $memberUid,
                         'page' => $page,
+                        'env_version' => $envVersion,
+                        'check_path' => $checkPath,
                         'size' => strlen($body),
                     ];
                     Log::warning('miniapp_member_invite_code_empty_image', $context);
@@ -418,6 +438,8 @@ class QrcodeServices extends BaseServices
             $context = [
                 'member_uid' => $memberUid,
                 'page' => $page,
+                'env_version' => $envVersion,
+                'check_path' => $checkPath,
                 'message' => $e->getMessage(),
             ];
             Log::error('miniapp_member_invite_code_failed', $context);

@@ -25,6 +25,8 @@ PHP_QUEUE_QUEUE_NAME=replace-with-random-queue-name
 # WeChat Mini Program credentials. Store APP_SECRET as a secret value.
 PHP_MINIAPP_APP_ID=replace-with-mini-program-app-id
 PHP_MINIAPP_APP_SECRET=replace-with-mini-program-app-secret
+PHP_MINIAPP_CODE_ENV_VERSION=release
+PHP_MINIAPP_CODE_CHECK_PATH=true
 
 # WeChat Mini Program virtual payment (XPay). Production deployment example.
 # Store AppKeys as secret values. Use XPAY_ENV=1 only in an isolated sandbox service.

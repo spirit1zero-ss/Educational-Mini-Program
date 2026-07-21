@@ -239,9 +239,9 @@ class MiniProgramService
      * @param array $lineColor
      * @return \Psr\Http\Message\StreamInterface
      */
-    public static function appCodeUnlimitService($scene, $page = null, $width = 430, $autoColor = false, $lineColor = ['r' => 0, 'g' => 0, 'b' => 0])
+    public static function appCodeUnlimitService($scene, $page = null, $width = 430, $autoColor = false, $lineColor = ['r' => 0, 'g' => 0, 'b' => 0], $checkPath = null, $envVersion = null)
     {
-        return self::qrcodeService()->appCodeUnlimit($scene, $page, $width, $autoColor, $lineColor);
+        return self::qrcodeService()->appCodeUnlimit($scene, $page, $width, $autoColor, $lineColor, $checkPath, $envVersion);
     }
 
 

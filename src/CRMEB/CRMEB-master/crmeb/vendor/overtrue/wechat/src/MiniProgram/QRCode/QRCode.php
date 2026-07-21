@@ -89,7 +89,7 @@ class QRCode extends AbstractMiniProgram
      *
      * @return \Psr\Http\Message\StreamInterface
      */
-    public function appCodeUnlimit($scene, $page = null, $width = null, $autoColor = null, $lineColor = null)
+    public function appCodeUnlimit($scene, $page = null, $width = null, $autoColor = null, $lineColor = null, $checkPath = null, $envVersion = null)
     {
         $params = [
             'scene' => $scene,
@@ -98,6 +98,13 @@ class QRCode extends AbstractMiniProgram
             'auto_color' => $autoColor,
             'line_color' => $lineColor,
         ];
+
+        if ($checkPath !== null) {
+            $params['check_path'] = (bool)$checkPath;
+        }
+        if ($envVersion !== null && $envVersion !== '') {
+            $params['env_version'] = $envVersion;
+        }
 
         return $this->getStream(self::API_GET_WXACODE_UNLIMIT, $params);
     }
