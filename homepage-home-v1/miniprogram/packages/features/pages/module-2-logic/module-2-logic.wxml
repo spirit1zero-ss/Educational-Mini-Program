@@ -2,146 +2,165 @@
   <custom-nav title="学科开窍" showBack="{{true}}" showHome="{{true}}"></custom-nav>
 
   <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
-    <view class="content">
-      <view class="hero-scene">
-        <image class="hero-landscape" src="{{dividerImage}}" mode="aspectFill"></image>
-        <view class="hero-copy">
-          <view class="hero-title">学科知识的基础逻辑</view>
-          <view class="hero-quote">
-            <view class="hero-quote-mark">“</view>
-            <view class="hero-quote-text">{{articleBlocks[0].text}}</view>
-            <view class="hero-quote-mark hero-quote-mark--end">”</view>
-          </view>
-          <view class="hero-definition">
-            <image class="hero-definition-icon" src="{{iconBase}}{{articleBlocks[1].icon}}" mode="aspectFit"></image>
-            <view class="hero-definition-copy">
-              <text>{{articleBlocks[1].prefix}}</text>
-              <text class="hero-highlight">{{articleBlocks[1].highlight}}</text>
+    <view class="logic-long">
+      <view class="poster poster--one">
+        <view class="hero-poster">
+          <image class="hero-landscape" src="{{dividerImage}}" mode="aspectFill"></image>
+          <view class="hero-copy">
+            <view class="hero-title">学科知识的基础逻辑</view>
+            <view class="hero-quote">
+              <view class="quote-mark">“</view>
+              <view class="hero-quote-text">{{articleBlocks[0].text}}</view>
+              <view class="quote-mark quote-mark--end">”</view>
+            </view>
+            <view class="hero-definition">
+              <image class="hero-definition-icon" src="{{iconBase}}{{articleBlocks[1].icon}}" mode="aspectFit"></image>
+              <view class="hero-definition-copy">
+                <text>{{articleBlocks[1].prefix}}</text>
+                <text class="hero-highlight">{{articleBlocks[1].highlight}}</text>
+              </view>
             </view>
           </view>
+          <image class="hero-tree" src="{{heroTreeImage}}" mode="aspectFit"></image>
         </view>
-        <image class="hero-tree" src="{{heroTreeImage}}" mode="aspectFit"></image>
+
+        <view class="poster-card english-card">
+          <image class="english-art" src="{{englishIllustration}}" mode="aspectFit"></image>
+          <view class="section-heading section-heading--english">
+            <view class="section-index">{{articleBlocks[2].index}}</view>
+            <view class="section-title">{{articleBlocks[2].title}}</view>
+          </view>
+
+          <view class="reading-block">
+            <view class="reading-row" wx:for="{{articleBlocks[2].lines}}" wx:key="*this">
+              <view class="reading-dot"></view>
+              <view class="paragraph">{{item}}</view>
+            </view>
+          </view>
+
+          <view class="logic-list">
+            <view class="logic-row logic-row--english-{{ruleIndex}}" wx:for="{{articleBlocks[2].list}}" wx:for-index="ruleIndex" wx:key="marker">
+              <view class="number-badge">{{item.marker}}</view>
+              <view class="logic-text">{{item.text}}</view>
+              <image class="logic-art" src="{{ruleIndex === 0 ? englishBricksImage : englishFrameImage}}" mode="aspectFit"></image>
+            </view>
+          </view>
+
+          <view class="takeaway">
+            <image class="takeaway-icon" src="{{iconBase}}callout-star.png" mode="aspectFit"></image>
+            <view class="takeaway-text">{{articleBlocks[2].note}}</view>
+          </view>
+        </view>
+
+        <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill"></image>
       </view>
 
-      <block wx:for="{{articleBlocks}}" wx:key="id">
-        <view
-          wx:if="{{item.type === 'section'}}"
-          class="chapter chapter--{{item.index}}"
-        >
-          <view class="chapter-head {{item.index === '01' ? 'chapter-head--illustrated' : ''}}">
-            <image wx:if="{{item.index === '01'}}" class="chapter-head-image chapter-head-image--english" src="{{englishIllustration}}" mode="aspectFit"></image>
-            <view class="chapter-heading">
-              <view class="chapter-index">{{item.index}}</view>
-              <view class="chapter-title">{{item.title}}</view>
+      <view class="poster poster--two">
+        <view class="poster-card math-card">
+          <view class="section-heading">
+            <view class="section-index">{{articleBlocks[3].index}}</view>
+            <view class="section-title">{{articleBlocks[3].title}}</view>
+          </view>
+
+          <view class="paragraph paragraph--lead">{{articleBlocks[3].lines[0]}}</view>
+          <image class="math-art" src="{{mathIllustration}}" mode="aspectFit"></image>
+          <view class="paragraph paragraph--lead">{{articleBlocks[3].lines[1]}}</view>
+
+          <view class="logic-list">
+            <view class="logic-row" wx:for="{{articleBlocks[3].list}}" wx:key="marker">
+              <view class="number-badge">{{item.marker}}</view>
+              <view class="logic-text">{{item.text}}</view>
             </view>
           </view>
 
-          <view wx:if="{{item.index === '02'}}" class="chapter-lead">
-            <view class="chapter-lead-copy">
-              <view class="paragraph" wx:for="{{item.lines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
+          <view class="takeaway takeaway--stacked">
+            <image class="takeaway-icon" src="{{iconBase}}callout-star.png" mode="aspectFit"></image>
+            <view class="takeaway-text">
+              <view wx:for="{{articleBlocks[3].noteLines}}" wx:key="*this">{{item}}</view>
             </view>
-            <image class="chapter-lead-image" src="{{mathIllustration}}" mode="aspectFit"></image>
-          </view>
-
-          <view wx:elif="{{item.lines && item.index !== '04'}}" class="chapter-body">
-            <view class="paragraph" wx:for="{{item.lines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
-          </view>
-
-          <view wx:if="{{item.list}}" class="logic-rows">
-            <view class="logic-row" wx:for="{{item.list}}" wx:for-item="entry" wx:key="marker">
-              <view class="logic-marker">{{entry.marker}}</view>
-              <view class="logic-copy">{{entry.text}}</view>
-            </view>
-          </view>
-
-          <view wx:if="{{item.note}}" class="takeaway">
-            <image class="note-icon" src="{{iconBase}}callout-star.png" mode="aspectFit"></image>
-            <view class="note-text">{{item.note}}</view>
-          </view>
-
-          <view wx:if="{{item.noteLines}}" class="takeaway">
-            <image class="note-icon" src="{{iconBase}}callout-star.png" mode="aspectFit"></image>
-            <view class="note-text">
-              <view wx:for="{{item.noteLines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
-            </view>
-          </view>
-
-          <view wx:if="{{item.stages}}" class="stage-layout">
-            <image class="stage-overview-image" src="{{stageOverviewImage}}" mode="aspectFit"></image>
-            <view class="stage-list">
-              <view class="stage-row" wx:for="{{item.stages}}" wx:for-item="stage" wx:for-index="stageIndex" wx:key="key">
-                <view class="stage-rail">
-                  <view class="stage-icon-wrap">
-                    <image class="stage-icon" src="{{iconBase}}{{stage.icon}}" mode="aspectFit"></image>
-                  </view>
-                  <view wx:if="{{stageIndex !== item.stages.length - 1}}" class="stage-line-rail"></view>
-                </view>
-                <view class="stage-copy">
-                  <view
-                    class="{{lineIndex === 0 ? 'stage-title' : 'stage-line'}}"
-                    wx:for="{{stage.lines}}"
-                    wx:for-item="line"
-                    wx:for-index="lineIndex"
-                    wx:key="*this"
-                  >{{line}}</view>
-                </view>
-              </view>
-            </view>
-          </view>
-
-          <view wx:if="{{item.lines && item.index === '04'}}" class="closing-layout">
-            <view class="closing-copy-wrap">
-              <view class="closing-quote">{{item.lines[1]}}</view>
-              <view class="closing-copy">
-                <text>{{item.educationParts.prefix}}</text>
-                <text class="gold-chip">{{item.educationParts.first}}</text>
-                <text>{{item.educationParts.middle}}</text>
-                <text class="gold-chip">{{item.educationParts.second}}</text>
-                <text>{{item.educationParts.suffix}}</text>
-              </view>
-            </view>
-            <image class="closing-image" src="{{closingIllustration}}" mode="aspectFit"></image>
-          </view>
-
-          <view wx:if="{{item.subjectLines}}" class="subject-area">
-            <view class="subject-list">
-              <view class="subject-row {{subject.className}}" wx:for="{{item.subjectLines}}" wx:for-item="subject" wx:key="key">
-                <view class="subject-key">{{subject.key}}</view>
-                <view class="subject-text">{{subject.text}}</view>
-              </view>
-            </view>
-            <image class="subject-illustrations" src="{{subjectIllustrations}}" mode="aspectFit"></image>
-          </view>
-
-          <view wx:if="{{item.finalLines}}" class="final-block">
-            <view class="final-line" wx:for="{{item.finalLines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
           </view>
         </view>
 
-        <image
-          wx:if="{{item.type === 'section' && (item.index === '01' || item.index === '03')}}"
-          class="landscape-divider landscape-divider--{{item.index}}"
-          src="{{dividerImage}}"
-          mode="aspectFill"
-          aria-hidden="true"
-        ></image>
-      </block>
+        <view class="poster-card stage-card">
+          <view class="section-heading">
+            <view class="section-index">{{articleBlocks[4].index}}</view>
+            <view class="section-title">{{articleBlocks[4].title}}</view>
+          </view>
 
-      <view class="bottom-spacer"></view>
+          <image class="stage-poster-art" src="{{stagePosterImage}}" mode="aspectFit"></image>
+
+          <view class="stage-list">
+            <view class="stage-row" wx:for="{{articleBlocks[4].stages}}" wx:for-item="stage" wx:for-index="stageIndex" wx:key="key">
+              <view class="stage-rail">
+                <view class="stage-icon-wrap">
+                  <image class="stage-icon" src="{{iconBase}}{{stage.icon}}" mode="aspectFit"></image>
+                </view>
+                <view wx:if="{{stageIndex !== articleBlocks[4].stages.length - 1}}" class="stage-line-rail"></view>
+              </view>
+              <view class="stage-copy">
+                <view
+                  class="{{lineIndex === 0 ? 'stage-title' : 'stage-line'}}"
+                  wx:for="{{stage.lines}}"
+                  wx:for-item="line"
+                  wx:for-index="lineIndex"
+                  wx:key="*this"
+                >{{line}}</view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+      </view>
+
+      <view class="poster poster--three">
+        <view class="poster-card closing-card">
+          <view class="section-heading">
+            <view class="section-index">{{articleBlocks[5].index}}</view>
+            <view class="section-title">{{articleBlocks[5].title}}</view>
+          </view>
+
+          <view class="closing-quote">{{articleBlocks[5].lines[1]}}</view>
+          <image class="closing-art" src="{{closingIllustration}}" mode="aspectFit"></image>
+          <view class="closing-education">
+            <text>{{articleBlocks[5].educationParts.prefix}}</text>
+            <text class="gold-emphasis">{{articleBlocks[5].educationParts.first}}</text>
+            <text>{{articleBlocks[5].educationParts.middle}}</text>
+            <text class="gold-emphasis">{{articleBlocks[5].educationParts.second}}</text>
+            <text>{{articleBlocks[5].educationParts.suffix}}</text>
+          </view>
+        </view>
+
+        <view class="poster-card subject-card">
+          <view class="section-heading">
+            <view class="section-index">{{articleBlocks[6].index}}</view>
+            <view class="section-title">{{articleBlocks[6].title}}</view>
+          </view>
+
+          <view class="subject-area">
+            <view class="subject-list">
+              <view class="subject-row {{item.className}}" wx:for="{{articleBlocks[6].subjectLines}}" wx:key="key">
+                <view class="subject-key">{{item.key}}</view>
+                <view class="subject-text">{{item.text}}</view>
+              </view>
+            </view>
+            <image class="subject-art" src="{{subjectIllustrations}}" mode="aspectFit"></image>
+          </view>
+
+          <view class="final-copy" wx:for="{{articleBlocks[6].finalLines}}" wx:key="*this">{{item}}</view>
+
+          <view class="assessment-bar" bindtap="onStartAssessment" role="button" aria-label="开始学科开窍测评">
+            <image class="assessment-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
+            <view class="assessment-copy">
+              <view class="assessment-title">点击：测评</view>
+              <view class="assessment-subtitle">一张图让孩子的学科开窍</view>
+            </view>
+            <image class="assessment-arrow" src="/assets/home/home-tap-arrow-white.png" mode="aspectFit"></image>
+          </view>
+        </view>
+
+        <view class="safe-bottom"></view>
+      </view>
     </view>
   </scroll-view>
-
-  <view class="assessment-bar" bindtap="onStartAssessment">
-    <image class="assessment-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
-    <view class="assessment-copy">
-      <view class="assessment-title">点击：测评</view>
-      <view class="assessment-subtitle">一张图让孩子的学科开窍</view>
-    </view>
-    <image
-      class="assessment-arrow"
-      src="/assets/home/home-tap-arrow-white.png"
-      mode="aspectFit"
-      aria-hidden="true"
-    ></image>
-  </view>
 </view>
