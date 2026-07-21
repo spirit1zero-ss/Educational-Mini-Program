@@ -108,7 +108,7 @@ Page({
     getMemberPlans()
       .then((response) => {
         const plans = Array.isArray(response.data) ? response.data : []
-        const plan = plans.find((item) => item && !item.isFree && item.mcId)
+        const plan = plans.find((item) => item && item.type === 'ever' && !item.isFree && item.mcId)
         if (!plan) return
 
         const memberPrice = String(plan.price || '')

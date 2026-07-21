@@ -163,7 +163,7 @@ Page({
     return getMemberPlans()
       .then((response) => {
         const plans = Array.isArray(response.data) ? response.data : []
-        const plan = plans.find((item) => item && !item.isFree && item.mcId)
+        const plan = plans.find((item) => item && item.type === 'ever' && !item.isFree && item.mcId)
 
         if (!plan) {
           this.setData({
@@ -524,9 +524,9 @@ Page({
     const benefitText = (extra && extra.benefitText) || ''
     const registration = (extra && extra.registration) || {}
     const memberPlans = Array.isArray(trainingCamp.memberPlans) ? trainingCamp.memberPlans : this.data.memberPlans
-    const selectedMemberPlan = trainingCamp.memberPlan && trainingCamp.memberPlan.mcId
+    const selectedMemberPlan = trainingCamp.memberPlan && trainingCamp.memberPlan.mcId && trainingCamp.memberPlan.type === 'ever'
       ? trainingCamp.memberPlan
-      : (memberPlans.filter((item) => !item.isFree)[0] || memberPlans[0] || null)
+      : (memberPlans.find((item) => item && item.type === 'ever' && !item.isFree) || null)
     const invitedCount = referral.invitedCount !== undefined ? referral.invitedCount : (referral.inviteCount || 0)
     const incomeAmount = referral.estimatedRewardText || (referral.incomeAmount ? `${referral.incomeAmount}元` : '0元')
     const withdrawableAmount = referral.withdrawableAmountText || (referral.availableAmount ? `${referral.availableAmount}元` : '0元')

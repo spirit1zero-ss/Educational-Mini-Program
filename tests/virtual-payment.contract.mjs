@@ -20,6 +20,14 @@ const [client, page, checkout, api, service, lockService, miniappService, cronta
   read('src/CRMEB/CRMEB-master/crmeb/vendor/overtrue/wechat/src/Support/Collection.php')
 ])
 
+const permanentPlanClients = await Promise.all([
+  read('homepage-home-v1/miniprogram/pages/mine/mine.js'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/camp-checkout/camp-checkout.js'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/member-benefits/member-benefits.js'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/module-5-camp/module-5-camp.js'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/promo-poster/promo-poster.js'),
+])
+
 assert.match(client, /wx\.requestVirtualPayment\s*\(/)
 assert.doesNotMatch(page, /wx\.requestPayment\s*\(/)
 assert.doesNotMatch(checkout, /wx\.requestPayment\s*\(/)
@@ -49,6 +57,13 @@ assert.match(lockService, /bin2hex\(random_bytes\(16\)\)/)
 assert.match(lockService, /redis\.call\('get', KEYS\[1\]\) == ARGV\[1\]/)
 assert.match(lockService, /microtime\(true\) < \$deadline/)
 assert.match(miniappService, /miniapp_training_camp_order/)
+assert.match(miniappService, /TRAINING_CAMP_MEMBER_TYPE\s*=\s*'ever'/)
+assert.match(miniappService, /\(string\)\(\$item\['type'\]\s*\?\?\s*''\)\s*===\s*self::TRAINING_CAMP_MEMBER_TYPE/)
+assert.match(miniappService, /Training camp only supports permanent membership/)
+assert.match(checkout, /item\.type\s*===\s*'ever'/)
+for (const permanentPlanClient of permanentPlanClients) {
+  assert.match(permanentPlanClient, /item\.type\s*===\s*'ever'/)
+}
 assert.match(miniappService, /whereIn\('c\.order_state', \['pending', 'paying'\]\)/)
 assert.match(miniappService, /expireStaleTrainingCampOrders/)
 assert.match(crontabService, /virtualPaymentReconcile/)

@@ -22,6 +22,7 @@ class MiniappServices extends BaseServices
 {
     private const PENDING_MEMBER_ORDER_TTL = 1800;
     private const CAMP_ORDER_TABLE = 'miniapp_training_camp_order';
+    private const TRAINING_CAMP_MEMBER_TYPE = 'ever';
 
     private const REFERRAL_POSTER_PAGES = [
         'pages/home/home',
@@ -100,6 +101,10 @@ class MiniappServices extends BaseServices
             return [];
         }
 
+        $plans = array_filter($plans, function ($item) {
+            return (string)($item['type'] ?? '') === self::TRAINING_CAMP_MEMBER_TYPE;
+        });
+
         return array_values(array_map(function ($item) {
             $price = $this->formatAmount($item['pre_price'] ?? 0);
             $originalPrice = $this->formatAmount($item['price'] ?? 0);
@@ -126,6 +131,9 @@ class MiniappServices extends BaseServices
         }
         if (!empty($plan['isFree'])) {
             throw new ApiException('Please choose a paid membership plan');
+        }
+        if ((string)($plan['type'] ?? '') !== self::TRAINING_CAMP_MEMBER_TYPE) {
+            throw new ApiException('Training camp only supports permanent membership');
         }
 
         // This product delivers digital membership/content and must not fall back to ordinary WeChat Pay.
@@ -631,7 +639,7 @@ class MiniappServices extends BaseServices
     private function getDefaultMemberPlan(array $plans): array
     {
         foreach ($plans as $plan) {
-            if (empty($plan['isFree'])) {
+            if ((string)($plan['type'] ?? '') === self::TRAINING_CAMP_MEMBER_TYPE && empty($plan['isFree'])) {
                 return $plan;
             }
         }
@@ -650,7 +658,8 @@ class MiniappServices extends BaseServices
     private function findMemberPlan(array $plans, int $mcId): array
     {
         foreach ($plans as $plan) {
-            if ((int)($plan['mcId'] ?? 0) === $mcId) {
+            if ((int)($plan['mcId'] ?? 0) === $mcId &&
+                (string)($plan['type'] ?? '') === self::TRAINING_CAMP_MEMBER_TYPE) {
                 return $plan;
             }
         }

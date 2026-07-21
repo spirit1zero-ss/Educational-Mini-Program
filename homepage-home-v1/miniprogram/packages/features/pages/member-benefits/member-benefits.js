@@ -37,7 +37,7 @@ Page({
     getMemberPlans()
       .then((response) => {
         const plans = Array.isArray(response.data) ? response.data : []
-        const plan = plans.find((item) => item && !item.isFree && item.mcId)
+        const plan = plans.find((item) => item && item.type === 'ever' && !item.isFree && item.mcId)
         this.setData({
           memberPriceText: plan ? (plan.priceText || `${plan.price}元`) : '暂未开放'
         })
