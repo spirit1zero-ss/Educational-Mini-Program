@@ -38,6 +38,7 @@ assert.match(requestSource, /businessStatus,\s*\n\s*data:/, 'request errors must
 assert.match(requestSource, /businessStatus === 401 \|\| businessStatus === 403/, 'CRMEB business auth errors must trigger automatic login recovery');
 assert.match(requestSource, /if \(!noAuth && unauthorized[\s\S]*clearAuth\(\)[\s\S]*return login\(\)/, 'stale auth must be cleared before automatic login retry');
 assert.match(promoPosterSource, /createReferralPoster\(\{ page: 'pages\/home\/home' \}\)/, 'poster page must load its own referral code when route parameters are incomplete');
+assert.match(promoPosterSource, /writeFile\(\{[\s\S]*encoding:\s*'base64'/, 'inline referral codes must be materialized as local mini-program image files');
 assert.doesNotMatch(inviteRecordsSource, /R202606|陈同学家长|120元/, 'invite records must not ship demo users or rewards');
 assert.doesNotMatch(incomeRecordsSource, /I202606|W202606|陈同学家长|120元/, 'income records must not ship demo transactions');
 const pages = new Set([

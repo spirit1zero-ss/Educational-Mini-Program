@@ -303,7 +303,10 @@ class MiniappServices extends BaseServices
         $memberUid = $member['uid'];
         /** @var QrcodeServices $qrcodeServices */
         $qrcodeServices = app()->make(QrcodeServices::class);
-        $codeUrl = $qrcodeServices->getMiniappMemberInviteCode($memberUid, $page);
+        // Return the generated code inline. The mini program reaches this API
+        // through CloudBase callContainer, so a container-local /uploads URL is
+        // not a reliable image source for the device.
+        $codeUrl = $qrcodeServices->getMiniappMemberInviteCode($memberUid, $page, false);
         if (!$codeUrl || $codeUrl === 'unpublished') {
             throw new ApiException($this->zh('\u5c0f\u7a0b\u5e8f\u4e8c\u7ef4\u7801\u751f\u6210\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5 AppID\u3001AppSecret \u548c\u56fe\u7247\u5b58\u50a8\u914d\u7f6e'));
         }

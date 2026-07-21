@@ -9,6 +9,25 @@ const POSTER_BG_CANVAS_SOURCES = [
 ]
 const { createReferralPoster, getMemberPlans } = require('../../../../api/mine')
 
+function materializeCodeImage(src) {
+  const match = /^data:image\/(png|jpe?g);base64,(.+)$/i.exec(src || '')
+  if (!match) {
+    return Promise.resolve(src)
+  }
+
+  const extension = match[1].toLowerCase() === 'png' ? 'png' : 'jpg'
+  const filePath = `${wx.env.USER_DATA_PATH}/member-invite-code.${extension}`
+  return new Promise((resolve, reject) => {
+    wx.getFileSystemManager().writeFile({
+      filePath,
+      data: match[2],
+      encoding: 'base64',
+      success: () => resolve(filePath),
+      fail: reject
+    })
+  })
+}
+
 function resolveImageSource(src) {
   if (!/^https?:\/\//i.test(src)) {
     return Promise.resolve(src)
@@ -213,7 +232,10 @@ Page({
     }
 
     if (nextData.codeImage && nextData.codeImage !== 'unpublished') {
-      return Promise.resolve(nextData)
+      return materializeCodeImage(nextData.codeImage).then((codeImage) => {
+        this.setData({ codeImage, codeError: '' })
+        return Object.assign({}, nextData, { codeImage })
+      })
     }
 
     return createReferralPoster({ page: 'pages/home/home' })
@@ -223,14 +245,16 @@ Page({
           throw new Error('邀请二维码生成失败')
         }
 
-        const data = {
-          codeImage: poster.codeUrl,
-          codeError: '',
-          memberUid: poster.memberUid || this.data.memberUid,
-          sharePath: poster.sharePath || this.data.sharePath
-        }
-        this.setData(data)
-        return data
+        return materializeCodeImage(poster.codeUrl).then((codeImage) => {
+          const data = {
+            codeImage,
+            codeError: '',
+            memberUid: poster.memberUid || this.data.memberUid,
+            sharePath: poster.sharePath || this.data.sharePath
+          }
+          this.setData(data)
+          return data
+        })
       })
       .catch((error) => {
         console.warn('[promo-poster] load referral code failed:', error)
@@ -242,6 +266,19 @@ Page({
         })
         return null
       })
+  },
+
+  onCodeImageError(event) {
+    console.warn('[promo-poster] referral code image failed to load:', {
+      url: this.data.codeImage,
+      detail: event && event.detail
+    })
+    const codeError = '二维码已生成，但图片加载失败，请检查 HTTPS 图片域名和存储地址'
+    this.setData({ codeImage: '', codeError })
+    wx.showToast({
+      title: '二维码图片加载失败',
+      icon: 'none'
+    })
   },
 
   loadMemberPlan() {

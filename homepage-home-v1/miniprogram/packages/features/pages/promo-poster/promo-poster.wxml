@@ -43,7 +43,7 @@
                 <view class="referral-desc">好友报名后，您可获得推广奖励</view>
               </view>
               <view class="code-card" wx:if="{{codeImage}}">
-                <image class="code-image" src="{{codeImage}}" mode="aspectFit"></image>
+                <image class="code-image" src="{{codeImage}}" mode="aspectFit" binderror="onCodeImageError"></image>
                 <view class="code-title">扫码报名</view>
               </view>
               <view class="code-card code-card--empty" wx:else>

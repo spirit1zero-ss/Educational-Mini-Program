@@ -411,6 +411,9 @@ class QrcodeServices extends BaseServices
                     error_log('[miniapp_member_invite_code_empty_image] ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
                     throw new ApiException('微信小程序码接口返回了空图片');
                 }
+                if (!$isSaveAttach) {
+                    return 'data:image/jpeg;base64,' . base64_encode($body);
+                }
                 $uploadType = (int)sys_config('upload_type', 1);
                 $upload = UploadService::init();
                 $res = $upload->to('routine/member/invite-code')->validate()->setAuthThumb(false)->stream($body, $namePath);
