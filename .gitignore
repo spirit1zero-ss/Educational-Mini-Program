@@ -16,6 +16,7 @@ pnpm-debug.log*
 Thumbs.db
 agent-orchestrator.yaml
 homepage-home-v1/project.private.config.json
+homepage-home-v1/tmp/
 
 # CRMEB local/runtime artifacts
 src/CRMEB/CRMEB-master/crmeb/.constant

@@ -289,7 +289,7 @@ export default {
       const revoke = decision === 'revoke';
       const title = revoke ? '撤销退款订单会员' : '保留退款订单会员';
       const message = revoke
-        ? '仅在微信退款已经完成、且会员确由这笔订单开通时撤销。请输入处理备注：'
+        ? '仅在微信退款已经完成、且会员确由这笔订单开通时撤销。系统会同步关闭会员/分销资格，并扣回本订单尚可扣回的佣金。请输入处理备注：'
         : '该操作会保留用户的永久会员。请输入保留原因：';
       this.$prompt(message, title, {
         confirmButtonText: revoke ? '确认撤销' : '确认保留',

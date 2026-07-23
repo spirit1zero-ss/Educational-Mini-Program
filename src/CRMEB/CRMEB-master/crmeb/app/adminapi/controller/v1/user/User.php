@@ -11,6 +11,7 @@
 namespace app\adminapi\controller\v1\user;
 
 use app\services\user\UserServices;
+use app\services\user\UserCancelServices;
 use app\adminapi\controller\AuthController;
 use think\exception\ValidateException;
 use think\facade\App;
@@ -193,6 +194,19 @@ class User extends AuthController
             $id = (int)$id;
         }
         return app('json')->success($this->services->read($id));
+    }
+
+    /** Soft-delete a user and immediately revoke login, membership and distribution rights. */
+    public function delete($id)
+    {
+        $id = (int)$id;
+        if ($id <= 0) {
+            return app('json')->fail('用户参数错误');
+        }
+        /** @var UserCancelServices $services */
+        $services = app()->make(UserCancelServices::class);
+        $services->SetUserCancel($id);
+        return app('json')->success('用户已注销');
     }
 
     /**

@@ -451,8 +451,9 @@ class UserServices extends BaseServices
             return false;
         }
 
-        $spreadUser = $this->getUserInfo($spreadUid, 'uid,spread_uid,is_ever_level,is_money_level,overdue_time,level');
-        if (!$spreadUser || !$this->isTrainingCampMemberUser($spreadUser)) {
+        $spreadUser = $this->getUserInfo($spreadUid, 'uid,spread_uid,is_ever_level,is_money_level,overdue_time,is_promoter,spread_open');
+        if (!$spreadUser || !$this->isTrainingCampMemberUser($spreadUser)
+            || (int)$spreadUser['is_promoter'] !== 1 || (int)$spreadUser['spread_open'] !== 1) {
             return false;
         }
 
@@ -619,7 +620,15 @@ class UserServices extends BaseServices
     {
         /** @var UserWechatuserServices $userWechatUser */
         $userWechatUser = app()->make(UserWechatuserServices::class);
-        $fields = 'u.*,w.country,w.province,w.city,w.sex,w.unionid,w.openid,w.user_type as w_user_type,w.groupid,w.tagid_list,w.subscribe,w.subscribe_time';
+        // One user can have multiple WeChat identities. The list is grouped by uid,
+        // so every field from the joined table must be aggregated explicitly when
+        // MySQL ONLY_FULL_GROUP_BY is enabled.
+        $fields = 'u.*,'
+            . 'MAX(w.country) as country,MAX(w.province) as province,MAX(w.city) as city,'
+            . 'MAX(w.sex) as sex,MAX(w.unionid) as unionid,MAX(w.openid) as openid,'
+            . 'MAX(w.user_type) as w_user_type,MAX(w.groupid) as groupid,'
+            . 'MAX(w.tagid_list) as tagid_list,MAX(w.subscribe) as subscribe,'
+            . 'MAX(w.subscribe_time) as subscribe_time';
         [$list, $count] = $userWechatUser->getWhereUserList($where, $fields);
         if ($list) {
             $uids = array_column($list, 'uid');
@@ -2010,7 +2019,7 @@ class UserServices extends BaseServices
         }
         $overdueTime = (int)($user['overdue_time'] ?? 0);
         $isPaidLevel = (int)($user['is_money_level'] ?? 0) > 0 && ($overdueTime === 0 || $overdueTime > time());
-        return (int)($user['is_ever_level'] ?? 0) > 0 || $isPaidLevel || (int)($user['level'] ?? 0) > 0;
+        return (int)($user['is_ever_level'] ?? 0) > 0 || $isPaidLevel;
     }
 
     public function offMemberLevel($uid, $userInfo = [])

@@ -108,7 +108,7 @@ class UserUserBrokerageDao extends BaseDao
                     }
                     break;
             }
-        })->where($where)->field($field)->group('u.uid')->order($order)->order('id desc')
+        })->where($where)->field($field)->group('u.uid')->order($order)->orderRaw('MAX(b.id) DESC')
             ->when($page && $limit, function ($query) use ($page, $limit) {
                 $query->page($page, $limit);
             })->select()->toArray();

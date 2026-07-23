@@ -36,6 +36,8 @@ Route::group(function () {
     Route::post('miniapp/training-camp/registration', 'v1.miniapp.MineController/saveRegistration')->name('miniappTrainingCampRegistrationSave')->option(['real_name' => 'Miniapp training camp registration save']);
     Route::get('miniapp/referral/invites', 'v1.miniapp.MineController/invites')->name('miniappReferralInvites')->option(['real_name' => 'Miniapp referral invites']);
     Route::get('miniapp/referral/income', 'v1.miniapp.MineController/income')->name('miniappReferralIncome')->option(['real_name' => 'Miniapp referral income']);
+    Route::get('miniapp/referral/withdrawal', 'v1.miniapp.MineController/withdrawal')->name('miniappReferralWithdrawal')->option(['real_name' => 'Miniapp referral withdrawal overview']);
+    Route::post('miniapp/referral/withdrawal', 'v1.miniapp.MineController/applyWithdrawal')->name('miniappReferralWithdrawalApply')->option(['real_name' => 'Miniapp referral withdrawal apply']);
     Route::get('miniapp/training-camp/orders', 'v1.miniapp.MineController/orders')->name('miniappTrainingCampOrders')->option(['real_name' => 'Miniapp training camp orders']);
 })->middleware(\app\http\middleware\AllowOriginMiddleware::class)
     ->middleware(\app\api\middleware\StationOpenMiddleware::class)

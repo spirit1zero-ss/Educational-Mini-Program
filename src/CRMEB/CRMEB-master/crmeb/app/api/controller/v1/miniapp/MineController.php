@@ -107,6 +107,17 @@ class MineController
         return app('json')->success($this->services->getIncomeRecords((int)$request->uid(), (int)$type));
     }
 
+    public function withdrawal(Request $request)
+    {
+        return app('json')->success($this->services->getWithdrawalOverview((int)$request->uid()));
+    }
+
+    public function applyWithdrawal(Request $request)
+    {
+        [$amount] = $request->postMore([['amount', '0']], true);
+        return app('json')->success('提现申请已提交', $this->services->applyWithdrawal((int)$request->uid(), $amount));
+    }
+
     public function orders(Request $request)
     {
         return app('json')->success($this->services->getTrainingCampOrders((int)$request->uid()));

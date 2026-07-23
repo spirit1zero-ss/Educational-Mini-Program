@@ -73,6 +73,11 @@
         <el-table-column label="更新时间" min-width="150">
           <template slot-scope="scope">{{ scope.row.update_time || '--' }}</template>
         </el-table-column>
+        <el-table-column label="操作" fixed="right" width="90">
+          <template slot-scope="scope">
+            <el-button v-auth="['admin-user-training-camp-registration-delete']" type="text" class="danger-action" @click="deleteRegistration(scope.row)">删除</el-button>
+          </template>
+        </el-table-column>
       </el-table>
       <div class="acea-row row-right page">
         <pagination
@@ -88,7 +93,7 @@
 </template>
 
 <script>
-import { trainingCampRegistrationList } from '@/api/user';
+import { trainingCampRegistrationList, trainingCampRegistrationDelete } from '@/api/user';
 import { mapState } from 'vuex';
 
 export default {
@@ -123,6 +128,20 @@ export default {
     this.getList();
   },
   methods: {
+    deleteRegistration(row) {
+      this.$confirm(`确认删除 ${row.child_name || '该用户'} 的报名记录？删除后用户可重新填写。`, '删除报名记录', {
+        type: 'warning',
+      })
+        .then(() => trainingCampRegistrationDelete(row.id))
+        .then((res) => {
+          this.$message.success(res.msg || '报名记录已删除');
+          if (this.tbody.length === 1 && this.tablePage.page > 1) this.tablePage.page -= 1;
+          this.getList();
+        })
+        .catch((error) => {
+          if (error !== 'cancel' && error !== 'close') this.$message.error(error.msg || '删除失败');
+        });
+    },
     userSearchs() {
       this.tablePage.page = 1;
       this.getList();

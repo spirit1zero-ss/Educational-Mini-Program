@@ -11,6 +11,7 @@ use app\services\pay\PaymentLockService;
 use app\services\pay\VirtualPaymentServices;
 use app\services\user\member\MemberCardServices;
 use app\services\user\UserServices;
+use app\services\user\UserExtractServices;
 use app\services\wechat\RoutineServices;
 use app\services\wechat\WechatUserServices;
 use crmeb\exceptions\ApiException;
@@ -297,6 +298,9 @@ class MiniappServices extends BaseServices
     public function createReferralPoster(int $uid, string $page = ''): array
     {
         $user = $this->requireMemberUser($uid);
+        if (!$this->canPromote($user)) {
+            throw new ApiException('当前账号的推广资格已关闭');
+        }
         $member = $this->formatMember($user);
 
         $page = $this->normalizeReferralPosterPage($page);
@@ -474,6 +478,103 @@ class MiniappServices extends BaseServices
             'list' => $list,
             'count' => $count,
         ];
+    }
+
+    public function getWithdrawalOverview(int $uid): array
+    {
+        $user = $this->requireMemberUser($uid);
+        /** @var UserExtractServices $extractServices */
+        $extractServices = app()->make(UserExtractServices::class);
+        $config = $extractServices->bank($uid);
+        $records = Db::name('user_extract')
+            ->where('uid', $uid)
+            ->where('extract_type', 'weixin')
+            ->order('id', 'desc')
+            ->limit(10)
+            ->select()
+            ->toArray();
+
+        $list = array_map(function (array $row) {
+            $status = (int)($row['status'] ?? 0);
+            $state = strtoupper((string)($row['state'] ?? ''));
+            $statusKey = $status === -1 ? 'rejected' : ($status === 0 ? 'reviewing' : 'processing');
+            $statusText = $status === -1 ? '已拒绝' : ($status === 0 ? '审核中' : '处理中');
+            if ($status === 1 && $state === 'SUCCESS') {
+                $statusKey = 'paid';
+                $statusText = '已到账';
+            } elseif ($status === 1 && !empty($row['package_info']) && in_array($state, ['', 'WAIT_USER_CONFIRM'], true)) {
+                $statusKey = 'confirm';
+                $statusText = '待确认收款';
+            } elseif ($status === 1 && $state === '') {
+                $statusKey = 'paid';
+                $statusText = '已通过';
+            }
+
+            return [
+                'id' => (int)$row['id'],
+                'amount' => $this->formatAmount($row['extract_price'] ?? 0),
+                'fee' => $this->formatAmount($row['extract_fee'] ?? 0),
+                'status' => $statusKey,
+                'statusText' => $statusText,
+                'state' => $state,
+                'failReason' => (string)($row['fail_reason'] ?: ($row['fail_msg'] ?? '')),
+                'addTime' => !empty($row['add_time']) ? date('Y-m-d H:i:s', (int)$row['add_time']) : '',
+                'canConfirm' => $statusKey === 'confirm',
+                'transfer' => $statusKey === 'confirm' ? [
+                    'mchId' => (string)sys_config('pay_weixin_mchid', ''),
+                    'appId' => (string)sys_config('routine_appId', ''),
+                    'package' => (string)$row['package_info'],
+                ] : null,
+            ];
+        }, $records);
+
+        return [
+            'enabled' => (bool)sys_config('weixin_extract_type', 0),
+            'eligible' => (int)($user['is_promoter'] ?? 0) === 1 && (int)($user['spread_open'] ?? 0) === 1,
+            'availableAmount' => $this->formatAmount(max(0, (float)($config['commissionCount'] ?? 0))),
+            'minAmount' => $this->formatAmount($config['minPrice'] ?? 0.1),
+            'feeRate' => (string)($config['withdrawal_fee'] ?? 0),
+            'hasPending' => Db::name('user_extract')->where('uid', $uid)->where('status', 0)->count() > 0,
+            'list' => $list,
+        ];
+    }
+
+    public function applyWithdrawal(int $uid, $amount): array
+    {
+        $user = $this->requireMemberUser($uid);
+        if ((int)($user['is_promoter'] ?? 0) !== 1 || (int)($user['spread_open'] ?? 0) !== 1) {
+            throw new ApiException('当前账号没有有效的推广提现资格');
+        }
+        if (!sys_config('weixin_extract_type', 0)) {
+            throw new ApiException('后台尚未开启微信提现到零钱，请联系管理员');
+        }
+        if (!is_numeric($amount)) {
+            throw new ApiException('请输入正确的提现金额');
+        }
+        $amount = bcadd((string)$amount, '0', 2);
+        if (bccomp($amount, '0.10', 2) < 0) {
+            throw new ApiException('提现金额不能小于0.10元');
+        }
+
+        Db::transaction(function () use ($uid, $amount, $user) {
+            Db::name('user')->where('uid', $uid)->lock(true)->find();
+            if (Db::name('user_extract')->where('uid', $uid)->where('status', 0)->find()) {
+                throw new ApiException('已有一笔提现正在审核，请勿重复提交');
+            }
+
+            /** @var UserExtractServices $extractServices */
+            $extractServices = app()->make(UserExtractServices::class);
+            $extractServices->cash($uid, [
+                'extract_type' => 'weixin',
+                'money' => $amount,
+                'channel_type' => 'routine',
+                'weixin' => '',
+                'user_name' => (string)($user['real_name'] ?? ($user['nickname'] ?? '微信用户')),
+                'qrcode_url' => '',
+            ]);
+        });
+
+        return $this->getWithdrawalOverview($uid);
     }
 
     /** Safely close stale unpaid training-camp orders from the cron worker. */
@@ -737,14 +838,15 @@ class MiniappServices extends BaseServices
         /** @var UserServices $userServices */
         $userServices = app()->make(UserServices::class);
         $inviteCount = (int)($user['spread_count'] ?? count($userServices->getUserSpredadUids($uid, 1)));
+        $canPromote = $this->canPromote($user);
 
         return [
             'inviteCount' => $inviteCount,
             'orderCount' => (int)($user['pay_count'] ?? 0),
             'incomeAmount' => $this->formatAmount($user['brokerage_price'] ?? 0),
             'posterCount' => 0,
-            'canPromote' => $isMember,
-            'posterCtaText' => $isMember ? $this->zh('\u751f\u6210\u63a8\u5e7f\u6d77\u62a5') : $this->zh('\u5f00\u901a\u540e\u751f\u6210\u63a8\u5e7f\u6d77\u62a5'),
+            'canPromote' => $canPromote,
+            'posterCtaText' => $canPromote ? $this->zh('\u751f\u6210\u63a8\u5e7f\u6d77\u62a5') : '推广资格已关闭',
         ];
     }
 
@@ -823,7 +925,7 @@ class MiniappServices extends BaseServices
 
     private function memberIncomeTypes(): array
     {
-        return ['get_member_brokerage', 'get_self_member_brokerage', 'get_two_member_brokerage', 'one_member_brokerage', 'two_member_brokerage'];
+        return ['get_member_brokerage', 'get_self_member_brokerage', 'get_two_member_brokerage', 'self_member_brokerage', 'one_member_brokerage', 'two_member_brokerage'];
     }
 
     private function formatIncomeRecord(array $item): array
@@ -893,7 +995,14 @@ class MiniappServices extends BaseServices
     {
         $overdueTime = (int)($user['overdue_time'] ?? 0);
         $isPaidLevel = (int)($user['is_money_level'] ?? 0) > 0 && ($overdueTime === 0 || $overdueTime > time());
-        return (int)($user['is_ever_level'] ?? 0) > 0 || $isPaidLevel || (int)($user['level'] ?? 0) > 0;
+        return (int)($user['is_ever_level'] ?? 0) > 0 || $isPaidLevel;
+    }
+
+    private function canPromote(array $user): bool
+    {
+        return $this->isTrainingCampMember($user)
+            && (int)($user['is_promoter'] ?? 0) === 1
+            && (int)($user['spread_open'] ?? 0) === 1;
     }
 
     private function resolveMemberReferrerUid(string $referrerUid): int
@@ -906,7 +1015,7 @@ class MiniappServices extends BaseServices
         /** @var UserServices $userServices */
         $userServices = app()->make(UserServices::class);
         $spreadUser = $this->modelToArray($userServices->getUserInfo($spreadUid));
-        if (!$spreadUser || !$this->isTrainingCampMember($spreadUser)) {
+        if (!$spreadUser || !$this->canPromote($spreadUser)) {
             return 0;
         }
 

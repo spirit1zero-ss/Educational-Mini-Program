@@ -48903,6 +48903,8 @@ INSERT INTO `eb_system_menus` (`id`, `pid`, `icon`, `menu_name`, `module`, `cont
 (3475, 3470, '', '重试会员权益确认', '', '', '', 'user/member/training_camp/order/<id>/retry_delivery', 'POST', '[]', 1, 1, 1, 1, '', '', 2, '', 0, 'admin-user-training-camp-order-retry-delivery', 0, '重试会员权益确认'),
 (3476, 3471, '', '训练营报名登记列表', '', '', '', 'user/member/registration', 'GET', '[]', 1, 1, 1, 1, '', '', 2, '', 0, 'admin-user-training-camp-registration-list', 0, '训练营报名登记列表'),
 (3477, 3470, '', '处理退款会员权益', '', '', '', 'user/member/training_camp/order/<id>/refund_review', 'POST', '[]', 1, 1, 1, 1, '', '', 2, '', 0, 'admin-user-training-camp-order-refund-review', 0, '人工退款完成后撤销或保留会员权益'),
+(3478, 3471, '', '删除训练营报名记录', '', '', '', 'user/member/registration/<id>', 'DELETE', '[]', 1, 1, 1, 1, '', '', 2, '', 0, 'admin-user-training-camp-registration-delete', 0, '软删除报名记录，保留审计数据'),
+(3479, 10, '', '注销用户', '', '', '', 'user/user/<id>', 'DELETE', '[]', 1, 1, 1, 1, '', '', 2, '', 0, 'admin-user-delete', 0, '软删除用户并撤销登录、会员和分销资格'),
 (765, 731, '', '会员权益', 'admin', '', '', '', '', '[]', 4, 1, 1, 1, '/user/grade/right', '', 1, '', 0, 'admin-user-grade-right', 0, '会员权益'),
 (767, 36, '', '发票管理', 'admin', '', '', '', '', '[]', 0, 1, 1, 1, '/order/invoice/list', '', 1, '', 0, 'admin-order-startOrderInvoice-index', 0, '发票管理'),
 (896, 26, '', '分销等级', 'admin', '', '', '', '', '[]', 95, 1, 1, 1, '/setting/membership_level/index', '26', 1, '', 0, 'admin-setting-membership_level-index', 0, '分销等级'),

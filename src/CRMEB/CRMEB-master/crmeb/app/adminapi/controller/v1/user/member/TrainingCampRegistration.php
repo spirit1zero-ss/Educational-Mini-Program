@@ -25,4 +25,10 @@ class TrainingCampRegistration
 
         return app('json')->success($this->services->adminList($where));
     }
+
+    public function delete($id)
+    {
+        $this->services->adminDelete((int)$id);
+        return app('json')->success('报名记录已删除');
+    }
 }

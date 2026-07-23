@@ -773,7 +773,11 @@ class UserBillServices extends BaseServices
         }
         /** @var UserUserBrokerageServices $userUserBrokerage */
         $userUserBrokerage = app()->make(UserUserBrokerageServices::class);
-        [$count, $list] = $userUserBrokerage->getBrokerageList($where_data, 'b.type,b.pm,sum(IF(b.pm = 1 AND b.type <> \'extract_fail\', b.number, 0)) as income,sum(IF(b.pm = 0, b.number, 0)) as pay,u.nickname,u.phone,u.uid,u.now_money,u.brokerage_price,b.add_time as time', $order_string, $limit);
+        $fields = 'sum(IF(b.pm = 1 AND b.type <> \'extract_fail\', b.number, 0)) as income,'
+            . 'sum(IF(b.pm = 0, b.number, 0)) as pay,'
+            . 'u.nickname,u.phone,u.uid,u.now_money,u.brokerage_price,'
+            . 'MAX(b.add_time) as time';
+        [$count, $list] = $userUserBrokerage->getBrokerageList($where_data, $fields, $order_string, $limit);
         $uids = array_unique(array_column($list, 'uid'));
         /** @var UserExtractServices $userExtract */
         $userExtract = app()->make(UserExtractServices::class);

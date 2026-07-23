@@ -14,7 +14,8 @@ use app\dao\user\UserCancelDao;
 use app\services\BaseServices;
 use app\services\kefu\service\StoreServiceServices;
 use app\services\wechat\WechatUserServices;
-use crmeb\services\CacheService;
+use crmeb\exceptions\ApiException;
+use think\facade\Db;
 
 class UserCancelServices extends BaseServices
 {
@@ -42,12 +43,39 @@ class UserCancelServices extends BaseServices
         $wechatUserServices = app()->make(WechatUserServices::class);
         /** @var StoreServiceServices $ServiceServices */
         $ServiceServices = app()->make(StoreServiceServices::class);
-        $userServices->update($uid, ['is_del' => 1]);
-        $userServices->update(['spread_uid' => $uid], ['spread_uid' => 0, 'spread_time' => 0]);
-        $wechatUserServices->update(['uid' => $uid], ['is_del' => 1]);
-        $ServiceServices->delete(['uid' => $uid]);
-
         $user = $userServices->getUserInfo($uid);
+        if (!$user) {
+            throw new ApiException('用户不存在或已经注销');
+        }
+        $unsettledExtract = Db::name('user_extract')
+            ->where('uid', $uid)
+            ->where(function ($query) {
+                $query->where('status', 0)
+                    ->whereOr(function ($query) {
+                        $query->where('status', 1)
+                            ->where('package_info', '<>', '')
+                            ->where('state', '<>', 'SUCCESS');
+                    });
+            })
+            ->find();
+        if ($unsettledExtract) {
+            throw new ApiException('该用户仍有未完成的提现，请先处理提现后再注销');
+        }
+
+        $this->transaction(function () use ($uid, $userServices, $wechatUserServices, $ServiceServices) {
+            $userServices->update($uid, [
+                'is_del' => 1,
+                'status' => 0,
+                'is_promoter' => 0,
+                'spread_open' => 0,
+                'is_ever_level' => 0,
+                'is_money_level' => 0,
+                'overdue_time' => 0,
+            ]);
+            $userServices->update(['spread_uid' => $uid], ['spread_uid' => 0, 'spread_time' => 0]);
+            $wechatUserServices->update(['uid' => $uid], ['is_del' => 1]);
+            $ServiceServices->delete(['uid' => $uid]);
+        });
 
         //自定义事件-用户注销
         event('CustomEventListener', ['user_cancel', [

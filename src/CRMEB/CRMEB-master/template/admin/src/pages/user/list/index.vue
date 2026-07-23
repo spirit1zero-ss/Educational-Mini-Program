@@ -22,7 +22,7 @@
                   </el-select>
                 </el-input>
               </el-form-item>
-              <el-form-item label="用户等级：" label-for="level">
+              <el-form-item v-if="false" label="用户等级：" label-for="level">
                 <el-select v-model="level" placeholder="请选择用户等级" clearable class="form_content_width">
                   <el-option value="all" label="全部">全部</el-option>
                   <el-option
@@ -33,7 +33,7 @@
                   ></el-option>
                 </el-select>
               </el-form-item>
-              <el-form-item label="用户分组：">
+              <el-form-item v-if="false" label="用户分组：">
                 <el-select v-model="group_id" placeholder="请选择用户分组" clearable class="form_content_width">
                   <el-option value="all" label="全部"></el-option>
                   <el-option
@@ -66,7 +66,7 @@
                   </el-select>
                 </el-input>
               </el-form-item>
-              <el-form-item label="用户等级：" label-for="level">
+              <el-form-item v-if="false" label="用户等级：" label-for="level">
                 <el-select v-model="level" placeholder="请选择用户等级" clearable class="form_content_width">
                   <el-option value="all" label="全部">全部</el-option>
                   <el-option
@@ -77,7 +77,7 @@
                   ></el-option>
                 </el-select>
               </el-form-item>
-              <el-form-item label="用户分组：">
+              <el-form-item v-if="false" label="用户分组：">
                 <el-select v-model="group_id" placeholder="请选择用户分组" clearable class="form_content_width">
                   <el-option value="all" label="全部"></el-option>
                   <el-option
@@ -99,7 +99,7 @@
                   ></el-option>
                 </el-select>
               </el-form-item>
-              <el-form-item label="用户标签：" label-for="label_id">
+              <el-form-item v-if="false" label="用户标签：" label-for="label_id">
                 <div class="labelInput acea-row row-between-wrapper" v-db-click @click="openSelectLabel">
                   <div style="width: 222px">
                     <div v-if="selectDataLabel.length">
@@ -293,8 +293,6 @@
           >
             发送图文消息
           </el-button>
-          <el-button v-auth="['admin-user-group_set']" v-db-click @click="setGroup">批量设置分组</el-button>
-          <el-button v-auth="['admin-user-set_label']" v-db-click @click="setLabel">批量设置标签</el-button>
           <el-button class="mr10" v-db-click @click="exportList">导出</el-button>
 
           <!-- <el-button v-auth="['admin-user-synchro']" class="mr20" v-db-click @click="synchro">同步公众号用户</el-button> -->
@@ -352,12 +350,12 @@
             <div>{{ scope.row.isMember ? '是' : '否' }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="用户等级" min-width="90">
+        <el-table-column v-if="false" label="用户等级" min-width="90">
           <template slot-scope="scope">
             <div>{{ scope.row.level }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="分组" min-width="100">
+        <el-table-column v-if="false" label="分组" min-width="100">
           <template slot-scope="scope">
             <div>{{ scope.row.group_id }}</div>
           </template>
@@ -401,10 +399,9 @@
                   <el-dropdown-item command="8">修改积分</el-dropdown-item>
                   <el-dropdown-item command="3">赠送会员</el-dropdown-item>
                   <!--                                <el-dropdown-item command="4" v-if="row.vip_name">清除等级</el-dropdown-item>-->
-                  <el-dropdown-item command="5">设置分组</el-dropdown-item>
-                  <el-dropdown-item command="6">设置标签</el-dropdown-item>
                   <el-dropdown-item command="7">修改上级推广人</el-dropdown-item>
                   <el-dropdown-item command="99" v-if="scope.row.spread_uid">清除上级推广人</el-dropdown-item>
+                  <el-dropdown-item v-auth="['admin-user-delete']" command="10" divided>注销用户</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </template>
@@ -524,6 +521,7 @@ import {
   setUser,
   editUser,
   saveSetLabel,
+  userDelete,
 } from '@/api/user';
 import { agentSpreadApi } from '@/api/agent';
 import { exportUserList } from '@/api/export';
@@ -937,9 +935,27 @@ export default {
         case '8':
           this.getOtherFrom(row.uid, 'point');
           break;
+        case '10':
+          this.cancelUser(row);
+          break;
         default:
           this.del(row, '解除【 ' + this.tenText(row.nickname) + ' 】的上级推广人', index, 'tuiguang');
       }
+    },
+    cancelUser(row) {
+      this.$confirm(
+        `确认注销用户 ${row.nickname || row.uid}？注销后将立即失效登录、永久会员和分销资格，但保留订单与财务审计记录。`,
+        '注销用户',
+        { type: 'warning', confirmButtonText: '确认注销' }
+      )
+        .then(() => userDelete(row.uid))
+        .then((res) => {
+          this.$message.success(res.msg || '用户已注销');
+          this.getList();
+        })
+        .catch((error) => {
+          if (error !== 'cancel' && error !== 'close') this.$message.error(error.msg || '注销失败');
+        });
     },
     tenText(str) {
       if (str.length > 10) {

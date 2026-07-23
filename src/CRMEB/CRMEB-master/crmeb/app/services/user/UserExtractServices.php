@@ -29,6 +29,7 @@ use crmeb\services\workerman\ChannelService;
 use EasyWeChat\Payment\Order;
 use think\exception\ValidateException;
 use think\facade\Route as Url;
+use think\facade\Db;
 
 /**
  *
@@ -454,6 +455,17 @@ class UserExtractServices extends BaseServices
         }
         if ($extract->status == -1) {
             throw new AdminException('您的提现申请已被拒绝');
+        }
+        if ($extract['channel_type'] === 'routine') {
+            $user = Db::name('user')->where('uid', (int)$extract['uid'])->find();
+            $overdueTime = (int)($user['overdue_time'] ?? 0);
+            $isMember = $user && ((int)($user['is_ever_level'] ?? 0) === 1
+                    || ((int)($user['is_money_level'] ?? 0) > 0 && ($overdueTime === 0 || $overdueTime > time())));
+            $canWithdraw = $isMember && (int)($user['is_del'] ?? 0) === 0 && (int)($user['status'] ?? 0) === 1
+                && (int)($user['is_promoter'] ?? 0) === 1 && (int)($user['spread_open'] ?? 0) === 1;
+            if (!$canWithdraw) {
+                throw new AdminException('用户会员或推广资格已经失效，请拒绝该提现申请并退回余额');
+            }
         }
         $res = $this->changeSuccess($id, $extract);
         if ($res) {

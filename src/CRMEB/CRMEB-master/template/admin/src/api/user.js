@@ -525,11 +525,25 @@ export function memberRecord(data) {
   });
 }
 
+export function userDelete(id) {
+  return request({
+    url: `user/user/${id}`,
+    method: 'delete',
+  });
+}
+
 export function trainingCampRegistrationList(data) {
   return request({
     url: '/user/member/registration',
     method: 'get',
     params: data,
+  });
+}
+
+export function trainingCampRegistrationDelete(id) {
+  return request({
+    url: `/user/member/registration/${id}`,
+    method: 'delete',
   });
 }
 

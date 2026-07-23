@@ -147,6 +147,21 @@ class TrainingCampRegistrationServices extends BaseServices
         ];
     }
 
+    public function adminDelete(int $id): bool
+    {
+        if ($id <= 0) {
+            throw new ApiException('报名记录参数错误');
+        }
+        $row = Db::name('training_camp_registration')->where('id', $id)->where('is_del', 0)->find();
+        if (!$row) {
+            throw new ApiException('报名记录不存在或已经删除');
+        }
+        return Db::name('training_camp_registration')->where('id', $id)->update([
+            'is_del' => 1,
+            'update_time' => time(),
+        ]) > 0;
+    }
+
     private function validateInput(array $input): array
     {
         $childName = trim((string)($input['child_name'] ?? ''));

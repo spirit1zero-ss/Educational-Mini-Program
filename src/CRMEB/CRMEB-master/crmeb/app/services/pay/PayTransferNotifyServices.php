@@ -55,6 +55,7 @@ class PayTransferNotifyServices
                 event('NoticeListener', [['uid' => $userExtractInfo['uid'], 'userType' => strtolower($user['user_type']), 'extractNumber' => $extractNumber, 'nickname' => $user['nickname']], 'user_extract']);
 
                 //自定义通知-用户提现成功
+                $userExtract = is_array($userExtractInfo) ? $userExtractInfo : $userExtractInfo->toArray();
                 $userExtract['nickname'] = $user['nickname'];
                 $userExtract['phone'] = $user['phone'];
                 $userExtract['time'] = date('Y-m-d H:i:s');
