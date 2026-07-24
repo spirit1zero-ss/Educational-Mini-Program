@@ -68,6 +68,7 @@ PHP_XPAY_TRAINING_CAMP_PRODUCT_ID=正式道具ID
 
 PHP_CACHE_DRIVER=file
 PHP_SESSION_TYPE=file
+PHP_QUEUE_DRIVER=sync
 ```
 
 注意事项：
@@ -77,6 +78,7 @@ PHP_SESSION_TYPE=file
 - [ ] 修改环境变量后重新部署或重启服务，不能只保存配置。
 - [ ] 确认正式环境没有使用 `develop`、`trial`、沙箱 AppKey 或测试道具 ID。
 - [ ] 当前短期不使用 Redis；`PHP_CACHE_DRIVER=file` 时支付锁会直接依赖数据库事务和唯一索引。
+- [ ] 云托管构建日志中 `composer install` 与 `composer check-platform-reqs` 均已通过，镜像不依赖仓库中的 `vendor`。
 
 ## 四、发布后验收
 

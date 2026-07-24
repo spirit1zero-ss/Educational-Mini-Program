@@ -9,6 +9,7 @@ upgrade/
 deploy/nginx/
 public/uploads/
 public/phpExcel/
+vendor/
 *.log
 *.bak
 *.backup
