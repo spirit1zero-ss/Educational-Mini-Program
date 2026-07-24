@@ -13,6 +13,7 @@ namespace app\adminapi\controller\v1\agent;
 use app\adminapi\controller\AuthController;
 use app\services\agent\AgentLevelServices;
 use app\services\agent\AgentLevelTaskServices;
+use app\services\user\DistributionServices;
 use think\facade\App;
 
 /**
@@ -50,8 +51,23 @@ class AgentLevel extends AuthController
         // 获取请求参数，包括状态和关键词
         $where = $this->request->getMore([
             ['status', ''],
-            ['keyword', '']
+            ['keyword', ''],
+            ['mode', '']
         ]);
+        if ($where['mode'] === 'training_camp') {
+            /** @var DistributionServices $distributionServices */
+            $distributionServices = app()->make(DistributionServices::class);
+            $list = $distributionServices->policyList();
+            $keyword = trim((string)$where['keyword']);
+            if ($keyword !== '') {
+                $list = array_values(array_filter($list, static function (array $item) use ($keyword) {
+                    return stripos($item['levelKey'], $keyword) !== false
+                        || mb_stripos($item['levelName'], $keyword) !== false;
+                }));
+            }
+            return app('json')->success(['count' => count($list), 'list' => $list]);
+        }
+        unset($where['mode']);
         // 调用服务层获取等级列表
         return app('json')->success($this->services->getLevelList($where));
     }

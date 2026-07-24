@@ -1,629 +1,619 @@
 <template>
-  <div>
-    <el-card :bordered="false" shadow="never" class="ivu-mb-16" :body-style="{ padding: 0 }">
-      <div class="padding-add">
-        <el-form
-          ref="formValidate"
-          :model="formValidate"
-          :label-width="labelWidth"
-          :label-position="labelPosition"
-          @submit.native.prevent
-          inline
-        >
-          <el-form-item label="是否显示：">
-            <el-select v-model="formValidate.status" clearable @change="search" class="form_content_width">
-              <el-option value="" label="全部"></el-option>
-              <el-option :value="1" label="显示"></el-option>
-              <el-option :value="0" label="不显示"></el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="等级名称：">
-            <el-input
-              clearable
-              placeholder="请输入等级名称"
-              v-model="formValidate.keyword"
-              class="form_content_width"
-            />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" v-db-click @click="search">查询</el-button>
-          </el-form-item>
-        </el-form>
+  <div class="distribution-policy-page">
+    <el-card :bordered="false" shadow="never">
+      <div class="policy-header">
+        <div>
+          <div class="policy-title">训练营分销身份与返佣规则</div>
+          <div class="policy-subtitle">终端客户统一支付 ¥399，订单款进入公司账户，再按推广人身份产生固定返佣。</div>
+        </div>
+        <el-tag type="success" effect="plain">固定金额模式</el-tag>
+      </div>
+
+      <el-alert
+        class="policy-alert"
+        title="此页面展示的是训练营实际结算规则，不再使用原分销等级的百分比字段。固定返佣先进入待结算，审核通过后才可提现。"
+        type="success"
+        :closable="false"
+        show-icon
+      />
+
+      <div class="policy-summary">
+        <div class="summary-item">
+          <span class="summary-label">统一售价</span>
+          <strong>¥399</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">一级返佣</span>
+          <strong>¥120–¥300</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">二级返佣</span>
+          <strong>统一 ¥20</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">结算方式</span>
+          <strong>人工审核</strong>
+        </div>
       </div>
     </el-card>
-    <el-card :bordered="false" shadow="never" class="ivu-mt mt16">
-      <el-button type="primary" v-db-click @click="groupAdd">添加等级</el-button>
+
+    <el-card :bordered="false" shadow="never" class="mt16">
+      <div class="table-toolbar">
+        <div>
+          <div class="table-title">身份规则</div>
+          <div class="table-tip">金额由支付结算服务统一提供，后台展示与实际发放保持一致。</div>
+        </div>
+        <div class="table-search">
+          <el-input
+            v-model.trim="formValidate.keyword"
+            clearable
+            placeholder="搜索身份名称或代码"
+            @keyup.enter.native="search"
+            @clear="search"
+          />
+          <el-button type="primary" v-db-click @click="search">查询</el-button>
+        </div>
+      </div>
+
       <el-table
         class="mt14"
         :data="tabList"
-        ref="table"
         v-loading="loading"
         highlight-current-row
-        no-userFrom-text="暂无数据"
-        no-filtered-userFrom-text="暂无筛选结果"
+        empty-text="暂无身份规则"
       >
-        <el-table-column label="ID" width="50">
+        <el-table-column label="身份代码" min-width="100">
           <template slot-scope="scope">
-            <span>{{ scope.row.id }}</span>
+            <span class="identity-code" :class="`identity-${scope.row.levelKey.toLowerCase()}`">
+              {{ scope.row.levelKey }}
+            </span>
           </template>
         </el-table-column>
-        <el-table-column label="商品图片" min-width="90">
+        <el-table-column prop="levelName" label="合作身份" min-width="140" />
+        <el-table-column label="团队初始名额" min-width="150">
           <template slot-scope="scope">
-            <div class="tabBox_img" v-viewer>
-              <img v-lazy="scope.row.image" />
-            </div>
+            <strong class="quota-value">{{ scope.row.initialQuota }}</strong>
+            <span class="unit">人</span>
           </template>
         </el-table-column>
-        <el-table-column label="名称" min-width="130">
+        <el-table-column label="一级固定返佣" min-width="160">
           <template slot-scope="scope">
-            <span>{{ scope.row.name }}</span>
+            <strong class="commission-value">¥{{ money(scope.row.firstCommission) }}</strong>
+            <span class="unit">/ 单</span>
           </template>
         </el-table-column>
-        <el-table-column label="等级" min-width="130">
+        <el-table-column label="二级固定返佣" min-width="160">
           <template slot-scope="scope">
-            <span>{{ scope.row.grade }}</span>
+            <strong class="commission-value second">¥{{ money(scope.row.secondCommission) }}</strong>
+            <span class="unit">/ 单</span>
           </template>
         </el-table-column>
-        <el-table-column label="一级分佣比例" min-width="150">
-          <template slot-scope="scope">
-            <span
-              >{{
-                scope.row.one_brokerage_percent == '0.00'
-                  ? scope.row.one_brokerage_ratio
-                  : scope.row.one_brokerage_percent
-              }}%</span
-            >
-          </template>
-        </el-table-column>
-        <el-table-column label="二级分佣比例" min-width="150">
-          <template slot-scope="scope">
-            <span
-              >{{
-                scope.row.two_brokerage_percent == '0.00'
-                  ? scope.row.two_brokerage_ratio
-                  : scope.row.two_brokerage_percent
-              }}%</span
-            >
-          </template>
-        </el-table-column>
-        <el-table-column label="任务总数" min-width="150">
-          <template slot-scope="scope">
-            <span>{{ scope.row.task_total_num }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="需完成数量" min-width="150">
-          <template slot-scope="scope">
-            <span>{{ scope.row.task_num }}</span>
-          </template>
-        </el-table-column>
-        <!-- <el-table-column label="一级上浮比例" min-width="130">
-          <template slot-scope="scope">
-            <span>{{ scope.row.one_brokerage }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="一级分佣比例(上浮后)" min-width="150">
-          <template slot-scope="scope">
-            <span>{{ scope.row.one_brokerage_ratio }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="二级上浮比例" min-width="130">
-          <template slot-scope="scope">
-            <span>{{ scope.row.two_brokerage }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="二级分佣比例(上浮后)" min-width="150">
-          <template slot-scope="scope">
-            <span>{{ scope.row.two_brokerage_ratio }}%</span>
-          </template>
-        </el-table-column> -->
-        <el-table-column label="是否显示" min-width="130">
-          <template slot-scope="scope">
-            <el-switch
-              class="defineSwitch"
-              :active-value="1"
-              :inactive-value="0"
-              v-model="scope.row.status"
-              :value="scope.row.status"
-              @change="onchangeIsShow(scope.row)"
-              size="large"
-              active-text="显示"
-              inactive-text="隐藏"
-            >
-            </el-switch>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" fixed="right" width="170">
-          <template slot-scope="scope">
-            <a v-db-click @click="addTask(scope.row)">等级任务</a>
-            <el-divider direction="vertical"></el-divider>
-            <a v-db-click @click="edit(scope.row, '编辑')">编辑</a>
-            <el-divider direction="vertical"></el-divider>
-            <a v-db-click @click="del(scope.row, '删除这条信息', scope.$index)">删除</a>
+        <el-table-column label="规则状态" min-width="120">
+          <template>
+            <el-tag type="success" size="small">已生效</el-tag>
           </template>
         </el-table-column>
       </el-table>
-      <div class="acea-row row-right page">
-        <pagination
-          v-if="total"
-          :total="total"
-          :page.sync="formValidate.page"
-          :limit.sync="formValidate.limit"
-          @pagination="getList"
-        />
-      </div>
     </el-card>
-    <div class="task-modal">
-      <el-dialog :visible.sync="modal2" title="添加任务" width="1000px">
-        <el-form :model="taskData" :label-width="labelWidth" :label-position="labelPosition" inline>
-          <el-form-item label="是否显示：">
-            <el-select v-model="taskData.status" class="form_content_width" clearable>
-              <el-option :value="1" label="显示"></el-option>
-              <el-option :value="0" label="不显示"></el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="任务名称：">
-            <el-input v-model="taskData.keyword" placeholder="请输入任务名称" clearable class="form_content_width" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" v-db-click @click="searchTask">查询</el-button>
-          </el-form-item>
-        </el-form>
-        <div>
-          <div class="add-task">
-            <el-button type="primary" v-db-click @click="taskAdd()">添加等级任务</el-button>
-            <el-button type="primary" v-db-click @click="taskEdit()">设置完成数量</el-button>
+
+    <div class="rule-grid mt16">
+      <el-card :bordered="false" shadow="never">
+        <div class="table-title">佣金计算示例</div>
+        <div class="table-tip">盟友产生3个一级成交、2个二级成交</div>
+        <div class="formula-box">
+          <div>
+            <span>一级收入</span>
+            <strong>3 × ¥150 = ¥450</strong>
           </div>
           <div>
-            <el-table
-              :data="taskTabList"
-              ref="table"
-              class="mt14"
-              v-loading="taskLoading"
-              highlight-current-row
-              no-userFrom-text="暂无数据"
-              no-filtered-userFrom-text="暂无筛选结果"
-            >
-              <el-table-column label="ID" width="80">
-                <template slot-scope="scope">
-                  <span>{{ scope.row.id }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="名称" min-width="130">
-                <template slot-scope="scope">
-                  <span>{{ scope.row.name }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="任务类型" min-width="80">
-                <template slot-scope="scope">
-                  <span>{{ scope.row.type_name }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="限定数量" min-width="80">
-                <template slot-scope="scope">
-                  <span>{{ scope.row.number }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="是否显示" min-width="80">
-                <template slot-scope="scope">
-                  <el-switch
-                    class="defineSwitch"
-                    :active-value="1"
-                    :inactive-value="0"
-                    v-model="scope.row.status"
-                    :value="scope.row.status"
-                    @change="onchangeTaskIsShow(scope.row)"
-                    active-text="开启"
-                    inactive-text="关闭"
-                  >
-                    <span slot="open">开启</span>
-                    <span slot="close">关闭</span>
-                  </el-switch>
-                </template>
-              </el-table-column>
-              <el-table-column label="排序" min-width="50">
-                <template slot-scope="scope">
-                  <span>{{ scope.row.sort }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="操作" fixed="right" width="170">
-                <template slot-scope="scope">
-                  <a v-db-click @click="editTask(scope.row, '编辑')">编辑</a>
-                  <el-divider direction="vertical"></el-divider>
-                  <a v-db-click @click="delTask(scope.row, '删除这条信息', scope.$index)">删除</a>
-                </template>
-              </el-table-column>
-            </el-table>
+            <span>二级收入</span>
+            <strong>2 × ¥20 = ¥40</strong>
+          </div>
+          <div class="formula-total">
+            <span>总收入</span>
+            <strong>¥490</strong>
           </div>
         </div>
-      </el-dialog>
+        <div class="rule-note">
+          ¥399订单款全部进入公司账户，不进入推广人余额；推广人只获得对应的一级或二级佣金。
+        </div>
+      </el-card>
+
+      <el-card :bordered="false" shadow="never">
+        <div class="table-title">团队名额口径</div>
+        <div class="table-tip">团队人数和名额均以有效支付订单为准</div>
+        <div class="definition-list">
+          <div>
+            <span>一级团队</span>
+            <p>直接邀请且完成399元支付、未退款的成员。</p>
+          </div>
+          <div>
+            <span>二级团队</span>
+            <p>一级有效成员继续邀请并完成支付的成员。</p>
+          </div>
+          <div>
+            <span>名额占用</span>
+            <p>仅一级有效订单占用名额；二级成交不重复占用上级名额。</p>
+          </div>
+          <div>
+            <span>退款恢复</span>
+            <p>订单退款后，团队人数减少、一级名额恢复、对应佣金撤销。</p>
+          </div>
+        </div>
+      </el-card>
+    </div>
+
+    <el-card :bordered="false" shadow="never" class="mt16">
+      <div class="table-title">收入状态链路</div>
+      <div class="table-tip">人工审核控制佣金结算与提现，已提现只统计用户实际确认到账的净额。</div>
+      <div class="status-flow">
+        <template v-for="(step, index) in flowSteps">
+          <div :key="step" class="flow-step">
+            <span>{{ index + 1 }}</span>
+            <strong>{{ step }}</strong>
+          </div>
+          <i v-if="index < flowSteps.length - 1" :key="step + '-arrow'" class="el-icon-arrow-right"></i>
+        </template>
+      </div>
+      <div class="withdraw-example">
+        <span>提现示例</span>
+        <strong>申请 ¥490</strong>
+        <i>−</i>
+        <strong>手续费 ¥2.94（0.6%）</strong>
+        <i>=</i>
+        <strong class="received">实际到账 ¥487.06</strong>
+      </div>
+    </el-card>
+
+    <div class="rule-grid mt16">
+      <el-card :bordered="false" shadow="never">
+        <div class="table-title">小程序展示口径</div>
+        <div class="display-groups">
+          <div>
+            <strong>分销中心</strong>
+            <p>已邀请：一级有效成交人数</p>
+            <p>总收入：有效一级佣金＋二级佣金</p>
+            <p>已提现：扣除手续费后的实际到账金额</p>
+          </div>
+          <div>
+            <strong>我的团队</strong>
+            <p>团队初始名额、已使用名额、剩余名额</p>
+            <p>一级团队、二级团队及成员明细</p>
+          </div>
+          <div>
+            <strong>我的收益</strong>
+            <p>待结算、可提现、提现中、已到账</p>
+            <p>一级收入明细、二级收入明细</p>
+          </div>
+        </div>
+      </el-card>
+
+      <el-card :bordered="false" shadow="never">
+        <div class="table-title">身份开通方式</div>
+        <div class="table-tip">第一版不做自动升级，也不提供线上购买合作身份。</div>
+        <div class="activation-list">
+          <div>
+            <span class="identity-code identity-c">C</span>
+            <p><strong>普通会员</strong>购买399元训练营并确认支付后自动获得。</p>
+          </div>
+          <div>
+            <span class="identity-code identity-m">M</span>
+            <p><strong>盟友</strong>线下确认合作款后，由后台人工设置。</p>
+          </div>
+          <div>
+            <span class="identity-code identity-d">D</span>
+            <p><strong>代理</strong>线下确认合作款后，由后台人工设置。</p>
+          </div>
+          <div>
+            <span class="identity-code identity-h">H</span>
+            <p><strong>合伙人</strong>线下确认合作款后，由后台人工设置。</p>
+          </div>
+        </div>
+      </el-card>
     </div>
   </div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
-import {
-  membershipDataAddApi,
-  membershipDataListApi,
-  membershipDataEditApi,
-  membershipSetApi,
-  levelTaskSetApi,
-  levelTaskListDataAddApi,
-  levelTaskDataEditApi,
-  levelTaskDataAddApi,
-  getTaskNumFormApi,
-} from '@/api/membershipLevel';
+import { membershipDataListApi } from '@/api/membershipLevel';
+
 export default {
-  name: 'list',
+  name: 'trainingCampDistributionPolicy',
   data() {
     return {
-      grid: {
-        xl: 7,
-        lg: 7,
-        md: 12,
-        sm: 24,
-        xs: 24,
-      },
-      modal1: false,
-      modal2: false,
       formValidate: {
-        status: '',
-        page: 1,
-        limit: 20,
-        gid: 0,
-      },
-      taskData: {
         keyword: '',
-        page: 1,
-        limit: 20,
-        status: '',
+        mode: 'training_camp',
       },
-      total: 0,
-      taskTotal: 0,
       tabList: [],
-      taskTabList: [],
-      columns1: [
-        {
-          key: 'id',
-          minWidth: 35,
-          title: 'ID',
-        },
-        {
-          slot: 'image',
-          minWidth: 35,
-          title: '背景图',
-        },
-        {
-          key: 'name',
-          minWidth: 35,
-          title: '名称',
-        },
-        {
-          key: 'grade',
-          minWidth: 35,
-          title: '等级',
-        },
-        {
-          slot: 'one_brokerage',
-          minWidth: 35,
-          title: '一级上浮比例',
-        },
-        {
-          slot: 'one_brokerage_ratio',
-          minWidth: 35,
-          title: '一级分佣比例(上浮后)',
-        },
-        {
-          slot: 'two_brokerage',
-          minWidth: 35,
-          title: '二级上浮比例',
-        },
-        {
-          slot: 'two_brokerage_ratio',
-          minWidth: 35,
-          title: '二级分佣比例(上浮后)',
-        },
-        {
-          slot: 'status',
-          minWidth: 35,
-          title: '是否显示',
-        },
-        {
-          minWidth: 120,
-          slot: 'action',
-          title: '操作',
-        },
-      ],
-      columns2: [
-        {
-          key: 'id',
-          minWidth: 35,
-          title: 'ID',
-        },
-        {
-          key: 'name',
-          minWidth: 35,
-          title: '名称',
-        },
-        {
-          key: 'type_name',
-          minWidth: 35,
-          title: '任务类型',
-        },
-        {
-          key: 'number',
-          minWidth: 35,
-          title: '限定数量',
-        },
-        {
-          slot: 'status',
-          minWidth: 35,
-          title: '是否显示',
-        },
-        {
-          key: 'sort',
-          minWidth: 35,
-          title: '排序',
-        },
-        {
-          fixed: 'right',
-          minWidth: 120,
-          slot: 'action',
-          title: '操作',
-        },
-      ],
-      FromData: null,
       loading: false,
-      taskLoading: false,
-      titleType: 'group',
-      groupAll: [],
-      theme3: 'light',
-      labelSort: [],
-      sortName: null,
-      current: 0,
-      model1: '',
-      value1: '',
+      flowSteps: [
+        '客户支付399元',
+        '开通永久会员',
+        '生成固定佣金',
+        '进入待结算',
+        '后台审核',
+        '变为可提现',
+        '申请提现',
+        '后台转账',
+        '用户确认到账',
+      ],
     };
-  },
-  computed: {
-    ...mapState('admin/layout', ['isMobile']),
-    labelWidth() {
-      return this.isMobile ? undefined : '80px';
-    },
-    labelPosition() {
-      return this.isMobile ? 'top' : 'right';
-    },
-  },
-  watch: {
-    $route(to, from) {
-      if (this.$route.params.id) {
-      } else {
-      }
-    },
   },
   mounted() {
     this.getList();
   },
   methods: {
-    bindMenuItem(name, index) {
-      this.current = index;
-      this.formValidate.gid = name.id;
-      this.getListHeader();
-      this.getList();
+    money(value) {
+      const amount = Number(value || 0);
+      return Number.isInteger(amount) ? amount.toFixed(0) : amount.toFixed(2);
     },
-    // 列表
     getList() {
       this.loading = true;
       membershipDataListApi(this.formValidate)
-        .then(async (res) => {
-          let data = res.data;
-          this.tabList = data.list;
-          this.total = data.count;
-          this.loading = false;
+        .then((res) => {
+          this.tabList = (res.data && res.data.list) || [];
         })
         .catch((res) => {
-          this.loading = false;
-          this.$message.error(res.msg);
-        });
-    },
-    // 列表
-    getTaskList() {
-      this.taskLoading = true;
-      levelTaskListDataAddApi(this.taskData)
-        .then(async (res) => {
-          let data = res.data;
-          this.taskTabList = data.list;
-          this.taskTotal = data.count;
-          this.taskLoading = false;
+          this.$message.error(res.msg || '身份规则加载失败');
         })
-        .catch((res) => {
-          this.taskLoading = false;
-          this.$message.error(res.msg);
+        .finally(() => {
+          this.loading = false;
         });
     },
-    // 表格搜索
     search() {
-      this.formValidate.page = 1;
       this.getList();
-    },
-    searchTask() {
-      this.taskData.page = 1;
-      this.getTaskList();
-    },
-    taskEdit() {
-      this.$modalForm(getTaskNumFormApi(this.id)).then(() => this.getList());
-    },
-    // 添加表单
-    groupAdd() {
-      this.$modalForm(membershipDataAddApi({}, '/agent/level/create')).then(() => this.getList());
-    },
-    taskAdd() {
-      this.$modalForm(levelTaskDataAddApi({}, '/agent/level_task/create?level_id=' + this.taskData.id)).then(() =>
-        this.getTaskList(),
-      );
-    },
-    // 修改是否显示
-    onchangeIsShow(row) {
-      membershipSetApi(`agent/level/set_status/${row.id}/${row.status}`)
-        .then(async (res) => {
-          this.$message.success(res.msg);
-          this.getList();
-        })
-        .catch((res) => {
-          this.$message.error(res.msg);
-        });
-    },
-    // 修改是否显示
-    onchangeTaskIsShow(row) {
-      levelTaskSetApi(`agent/level_task/set_status/${row.id}/${row.status}`)
-        .then(async (res) => {
-          this.$message.success(res.msg);
-          this.getTaskList();
-        })
-        .catch((res) => {
-          this.$message.error(res.msg);
-        });
-    },
-    //添加等级任务
-    addTask(row) {
-      this.id = row.id;
-      this.modal2 = true;
-      this.taskData.id = row.id;
-      this.getTaskList();
-    },
-    // 编辑
-    edit(row) {
-      let data = {
-        gid: row.gid,
-      };
-      this.$modalForm(membershipDataEditApi(data, `agent/level/${row.id}/edit`)).then(() => this.getList());
-    },
-    // 编辑
-    editTask(row) {
-      let data = {
-        gid: row.gid,
-      };
-      this.$modalForm(levelTaskDataEditApi(data, `agent/level_task/${row.id}/edit`)).then(() => this.getTaskList());
-    },
-    // 删除
-    del(row, tit, num) {
-      let delfromData = {
-        title: tit,
-        num: num,
-        url: `agent/level/${row.id}`,
-        method: 'DELETE',
-        ids: '',
-      };
-      this.$modalSure(delfromData)
-        .then((res) => {
-          this.$message.success(res.msg);
-          this.tabList.splice(num, 1);
-        })
-        .catch((res) => {
-          this.$message.error(res.msg);
-        });
-    },
-    // 删除
-    delTask(row, tit, num) {
-      let delfromData = {
-        title: tit,
-        num: num,
-        url: `agent/level_task/${row.id}`,
-        method: 'DELETE',
-        ids: '',
-      };
-      this.$modalSure(delfromData)
-        .then((res) => {
-          this.$message.success(res.msg);
-          this.taskTabList.splice(num, 1);
-        })
-        .catch((res) => {
-          this.$message.error(res.msg);
-        });
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-::v-deep .ivu-menu-vertical .ivu-menu-item-group-title {
-  display: none;
-}
-::v-deep .ivu-menu-vertical.ivu-menu-light:after {
-  display: none;
-}
-.left-wrapper {
-  height: 904px;
-  background: #fff;
-  border-right: 1px solid #f2f2f2;
-}
-.menu-item {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  word-break: break-all;
-  .icon-box {
-    z-index: 3;
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: none;
-  }
-  &:hover .icon-box {
-    display: block;
-  }
-  .right-menu {
-    z-index: 10;
-    position: absolute;
-    right: -106px;
-    top: -11px;
-    width: auto;
-    min-width: 121px;
-  }
-}
-.tabBox-img {
-  width: 36px;
-  height: 36px;
-  border-radius: 4px;
-  cursor: pointer;
-
-  img {
-    width: 100%;
-    height: 100%;
-  }
-}
-.ivu-menu {
-  z-index: auto;
-}
-.header,
-.headers {
-  display: flex;
-  flex-direction: column;
-  background-color: #f2f2f2;
-  padding: 8px;
-  .search {
+.distribution-policy-page {
+  .policy-header,
+  .table-toolbar {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .policy-title,
+  .table-title {
+    color: #17233d;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .table-title {
+    font-size: 17px;
+  }
+
+  .policy-subtitle,
+  .table-tip {
+    margin-top: 5px;
+    color: #808695;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .policy-alert {
+    margin-top: 20px;
+  }
+
+  .policy-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .summary-item {
+    min-height: 92px;
+    padding: 18px 20px;
+    border: 1px solid #e5f2ea;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f7fcf8 0%, #ffffff 100%);
+
+    strong {
+      display: block;
+      margin-top: 9px;
+      color: #087a4f;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+  }
+
+  .summary-label {
+    color: #808695;
+    font-size: 13px;
+  }
+
+  .table-search {
+    display: flex;
+    gap: 10px;
+    width: 340px;
+  }
+
+  .identity-code {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 5px 12px rgba(8, 122, 79, 0.16);
+  }
+
+  .identity-c {
+    background: #2f8f68;
+  }
+
+  .identity-m {
+    background: #159d6b;
+  }
+
+  .identity-d {
+    background: #3b82d0;
+  }
+
+  .identity-h {
+    background: #e79a2c;
+  }
+
+  .quota-value,
+  .commission-value {
+    color: #17233d;
+    font-size: 18px;
+  }
+
+  .commission-value {
+    color: #159d6b;
+  }
+
+  .commission-value.second {
+    color: #3b82d0;
+  }
+
+  .unit {
+    margin-left: 4px;
+    color: #808695;
+    font-size: 12px;
+  }
+
+  .rule-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .formula-box {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+
+    div {
+      padding: 16px;
+      border-radius: 9px;
+      background: #f7f8fa;
+    }
+
+    span,
+    strong {
+      display: block;
+    }
+
+    span {
+      margin-bottom: 8px;
+      color: #808695;
+      font-size: 13px;
+    }
+
+    strong {
+      color: #17233d;
+      font-size: 17px;
+    }
+
+    .formula-total {
+      background: #eff9f3;
+
+      strong {
+        color: #087a4f;
+        font-size: 22px;
+      }
+    }
+  }
+
+  .rule-note {
+    padding: 12px 14px;
+    margin-top: 12px;
+    color: #7a5b19;
+    line-height: 1.7;
+    border: 1px solid #f3dfac;
+    border-radius: 8px;
+    background: #fffaf0;
+  }
+
+  .definition-list {
+    margin-top: 12px;
+
     > div {
-      margin-right: 10px;
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      padding: 11px 0;
+      border-bottom: 1px solid #f0f1f3;
+    }
+
+    > div:last-child {
+      border-bottom: 0;
+    }
+
+    span {
+      color: #17233d;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      color: #606266;
+      line-height: 1.6;
+    }
+  }
+
+  .status-flow {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+
+    > i {
+      flex: 0 0 auto;
+      margin: 0 8px;
+      color: #a9b0bb;
+    }
+  }
+
+  .flow-step {
+    flex: 1 0 92px;
+    min-height: 82px;
+    padding: 12px 8px;
+    text-align: center;
+    border: 1px solid #e4eee8;
+    border-radius: 9px;
+    background: #f8fcf9;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      margin-bottom: 8px;
+      color: #fff;
+      font-size: 12px;
+      border-radius: 50%;
+      background: #16a36a;
+    }
+
+    strong {
+      display: block;
+      color: #344050;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+  }
+
+  .withdraw-example {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    margin-top: 16px;
+    border-radius: 9px;
+    background: #f7f8fa;
+
+    span {
+      color: #808695;
+    }
+
+    i {
+      color: #a9b0bb;
+      font-style: normal;
+    }
+
+    .received {
+      color: #087a4f;
+      font-size: 18px;
+    }
+  }
+
+  .display-groups {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+
+    > div {
+      padding: 16px;
+      border: 1px solid #ebeef5;
+      border-radius: 9px;
+    }
+
+    strong {
+      color: #17233d;
+      font-size: 15px;
+    }
+
+    p {
+      margin: 9px 0 0;
+      color: #606266;
+      line-height: 1.6;
+    }
+  }
+
+  .activation-list {
+    margin-top: 12px;
+
+    > div {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 0;
+    }
+
+    .identity-code {
+      flex: 0 0 36px;
+    }
+
+    p {
+      margin: 0;
+      color: #606266;
+      line-height: 1.6;
+    }
+
+    strong {
+      color: #17233d;
     }
   }
 }
-.search ::v-deep .ivu-select-selection {
-  border: 1px solid #dcdee2 !important;
-}
-.headers {
-  background-color: #fff;
-  margin-bottom: 20px;
-}
-::v-deep .ivu-modal-mask {
-  z-index: 100 !important;
-}
-::v-deep .ivu-modal-wrap {
-  z-index: 100 !important;
-}
-.add-task {
-  margin: 10px 0;
+
+@media (max-width: 900px) {
+  .distribution-policy-page {
+    .policy-summary {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .table-toolbar,
+    .rule-grid {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .rule-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .table-search {
+      width: 100%;
+    }
+
+    .formula-box,
+    .display-groups {
+      grid-template-columns: 1fr;
+    }
+
+    .withdraw-example {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 6px;
+    }
+  }
 }
 </style>

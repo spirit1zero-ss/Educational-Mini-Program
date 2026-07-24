@@ -16,6 +16,8 @@ class DistributionServices extends BaseServices
 {
     public const PENDING_SETTLEMENT_TIME = 2147483647;
 
+    private const CAMP_ORDER_TABLE = 'miniapp_training_camp_order';
+
     private const LEVELS = [
         0 => ['key' => 'C', 'name' => '普通会员', 'initialQuota' => 1, 'firstCommission' => '120.00'],
         1 => ['key' => 'M', 'name' => '盟友', 'initialQuota' => 30, 'firstCommission' => '150.00'],
@@ -30,6 +32,26 @@ class DistributionServices extends BaseServices
         'one_member_brokerage',
         'two_member_brokerage',
     ];
+
+    /**
+     * Return the single source of truth used by payment settlement and admin display.
+     */
+    public function policyList(): array
+    {
+        $list = [];
+        foreach (self::LEVELS as $agentLevel => $level) {
+            $list[] = [
+                'id' => $agentLevel,
+                'levelId' => $agentLevel,
+                'levelKey' => $level['key'],
+                'levelName' => $level['name'],
+                'initialQuota' => $level['initialQuota'],
+                'firstCommission' => $level['firstCommission'],
+                'secondCommission' => self::SECOND_COMMISSION,
+            ];
+        }
+        return $list;
+    }
 
     public function profile(array $user): array
     {
@@ -74,22 +96,165 @@ class DistributionServices extends BaseServices
         $user = Db::name('user')->where('uid', $uid)->field('uid,agent_level')->find() ?: ['uid' => $uid];
         $profile = $this->profile($user);
 
-        $firstLevelUids = Db::name('user')
-            ->where('spread_uid', $uid)
-            ->where('is_del', 0)
-            ->column('uid');
-        $firstLevelCount = $this->countActiveMembers($firstLevelUids);
-
-        $secondLevelUids = $firstLevelUids
-            ? Db::name('user')->whereIn('spread_uid', $firstLevelUids)->where('is_del', 0)->column('uid')
-            : [];
-        $secondLevelCount = $this->countActiveMembers($secondLevelUids);
+        $firstLevelUids = $this->teamMemberUids($uid, 1);
+        $firstLevelCount = count($firstLevelUids);
+        $secondLevelUids = $this->teamMemberUids($uid, 2);
+        $secondLevelCount = count($secondLevelUids);
+        $usedQuota = $firstLevelCount;
 
         return array_merge($profile, [
             'firstLevelCount' => $firstLevelCount,
             'secondLevelCount' => $secondLevelCount,
             'pullNewCount' => $firstLevelCount + $secondLevelCount,
+            'usedQuota' => $usedQuota,
+            'remainingQuota' => max(0, (int)$profile['initialQuota'] - $usedQuota),
         ]);
+    }
+
+    /**
+     * Effective paid team member UIDs. Grade 2 is only expanded from an
+     * effective paid first-level member, keeping the business hierarchy clear.
+     */
+    public function teamMemberUids(int $uid, int $grade = 1): array
+    {
+        $directUids = Db::name('user')
+            ->where('spread_uid', $uid)
+            ->where('is_del', 0)
+            ->column('uid');
+        $firstLevelUids = $this->activePaidMemberUids($directUids);
+        if ($grade !== 2) {
+            return $firstLevelUids;
+        }
+        $secondLevelCandidates = $firstLevelUids
+            ? Db::name('user')->whereIn('spread_uid', $firstLevelUids)->where('is_del', 0)->column('uid')
+            : [];
+        return $this->activePaidMemberUids($secondLevelCandidates);
+    }
+
+    /**
+     * Administrator-facing distribution account snapshot.
+     */
+    public function adminOverview(int $uid): array
+    {
+        $user = Db::name('user')
+            ->where('uid', $uid)
+            ->field('uid,nickname,avatar,phone,agent_level,is_ever_level,is_money_level,overdue_time,is_promoter,spread_open,status,is_del,brokerage_price')
+            ->find();
+        if (!$user) {
+            throw new AdminException('用户不存在');
+        }
+
+        $team = $this->teamStats($uid);
+        $income = $this->incomeSummary($uid, (string)($user['brokerage_price'] ?? '0'));
+
+        return [
+            'user' => [
+                'uid' => (int)$user['uid'],
+                'nickname' => (string)($user['nickname'] ?? ''),
+                'avatar' => (string)($user['avatar'] ?? ''),
+                'phone' => (string)($user['phone'] ?? ''),
+                'isMember' => (int)($user['is_ever_level'] ?? 0) === 1,
+                'canPromote' => (int)($user['is_promoter'] ?? 0) === 1
+                    && (int)($user['spread_open'] ?? 0) === 1
+                    && (int)($user['status'] ?? 0) === 1
+                    && (int)($user['is_del'] ?? 0) === 0,
+            ],
+            'identity' => $this->profile($user),
+            'team' => [
+                'initialQuota' => (int)$team['initialQuota'],
+                'usedQuota' => (int)$team['usedQuota'],
+                'remainingQuota' => (int)$team['remainingQuota'],
+                'firstLevelCount' => (int)$team['firstLevelCount'],
+                'secondLevelCount' => (int)$team['secondLevelCount'],
+                'pullNewCount' => (int)$team['pullNewCount'],
+            ],
+            'income' => $income,
+            'rules' => [
+                'customerPrice' => '399.00',
+                'firstCommission' => (string)$team['firstCommission'],
+                'secondCommission' => (string)$team['secondCommission'],
+                'withdrawalFeeRate' => number_format((float)sys_config('withdrawal_fee', 0.6), 2, '.', ''),
+                'quotaRule' => '仅一级有效支付订单占用名额；二级成交不占用上级名额',
+            ],
+        ];
+    }
+
+    /**
+     * Paginated paid members in the first- or second-level team.
+     */
+    public function adminTeamMembers(int $uid, int $grade, array $where = []): array
+    {
+        if (!Db::name('user')->where('uid', $uid)->find()) {
+            throw new AdminException('用户不存在');
+        }
+        $grade = $grade === 2 ? 2 : 1;
+        $targetUids = $this->teamMemberUids($uid, $grade);
+
+        $keyword = trim((string)($where['keyword'] ?? ''));
+        $page = max(1, (int)($where['page'] ?? 1));
+        $limit = max(1, min(100, (int)($where['limit'] ?? 10)));
+        if (!$targetUids) {
+            return ['list' => [], 'count' => 0];
+        }
+
+        $query = Db::name('user')
+            ->whereIn('uid', $targetUids)
+            ->where('is_del', 0)
+            ->where('status', 1);
+        if ($keyword !== '') {
+            $query->where(function ($query) use ($keyword) {
+                $query->whereLike('nickname|phone|uid', '%' . $keyword . '%');
+            });
+        }
+        $count = (clone $query)->count();
+        $rows = $query
+            ->field('uid,nickname,avatar,phone,agent_level,spread_uid,spread_time,add_time')
+            ->order('spread_time', 'desc')
+            ->page($page, $limit)
+            ->select()
+            ->toArray();
+        if (!$rows) {
+            return ['list' => [], 'count' => $count];
+        }
+
+        $paidRows = Db::name(self::CAMP_ORDER_TABLE)
+            ->alias('c')
+            ->leftJoin('other_order o', 'o.id = c.other_order_id')
+            ->whereIn('c.uid', array_column($rows, 'uid'))
+            ->where('c.order_state', 'paid')
+            ->where('c.refund_state', '<>', 'refunded')
+            ->field('c.uid,c.order_id,o.pay_time')
+            ->order('c.id', 'desc')
+            ->select()
+            ->toArray();
+        $paidMap = [];
+        foreach ($paidRows as $paidRow) {
+            $paidUid = (int)$paidRow['uid'];
+            if (!isset($paidMap[$paidUid])) {
+                $paidMap[$paidUid] = $paidRow;
+            }
+        }
+
+        $list = array_map(function (array $row) use ($grade, $paidMap) {
+            $profile = $this->profile($row);
+            $paid = $paidMap[(int)$row['uid']] ?? [];
+            return [
+                'uid' => (int)$row['uid'],
+                'nickname' => (string)($row['nickname'] ?? ''),
+                'avatar' => (string)($row['avatar'] ?? ''),
+                'phone' => (string)($row['phone'] ?? ''),
+                'grade' => $grade,
+                'identityCode' => $profile['identityCode'],
+                'levelName' => $profile['levelName'],
+                'orderId' => (string)($paid['order_id'] ?? ''),
+                'paidTime' => !empty($paid['pay_time']) ? date('Y-m-d H:i:s', (int)$paid['pay_time']) : '',
+                'joinedTime' => !empty($row['spread_time'])
+                    ? date('Y-m-d H:i:s', (int)$row['spread_time'])
+                    : (!empty($row['add_time']) ? date('Y-m-d H:i:s', (int)$row['add_time']) : ''),
+            ];
+        }, $rows);
+
+        return compact('list', 'count');
     }
 
     public function memberIncomeTypes(): array
@@ -231,17 +396,90 @@ class DistributionServices extends BaseServices
         return $user;
     }
 
-    private function countActiveMembers(array $uids): int
+    private function activePaidMemberUids(array $uids): array
     {
         if (!$uids) {
-            return 0;
+            return [];
         }
-        return (int)Db::name('user')
-            ->whereIn('uid', array_values(array_unique(array_map('intval', $uids))))
+        $uids = array_values(array_unique(array_filter(array_map('intval', $uids))));
+        if (!$uids) {
+            return [];
+        }
+        $activeUsers = Db::name('user')
+            ->whereIn('uid', $uids)
             ->where('is_del', 0)
             ->where('status', 1)
-            ->where('is_ever_level', 1)
-            ->count();
+            ->column('uid');
+        if (!$activeUsers) {
+            return [];
+        }
+        return array_values(array_unique(array_map('intval', Db::name(self::CAMP_ORDER_TABLE)
+            ->whereIn('uid', $activeUsers)
+            ->where('order_state', 'paid')
+            ->where('refund_state', '<>', 'refunded')
+            ->column('uid'))));
+    }
+
+    private function incomeSummary(int $uid, string $brokerageBalance): array
+    {
+        $positive = Db::name('user_brokerage')
+            ->where('uid', $uid)
+            ->whereIn('type', self::MEMBER_INCOME_TYPES)
+            ->where('pm', 1)
+            ->where('status', 1);
+        $totalAmount = (string)(clone $positive)->sum('number');
+        $pendingAmount = (string)(clone $positive)->where('frozen_time', '>', time())->sum('number');
+        $firstAmount = (string)(clone $positive)
+            ->whereIn('type', ['self_member_brokerage', 'one_member_brokerage'])
+            ->sum('number');
+        $secondAmount = (string)(clone $positive)->where('type', 'two_member_brokerage')->sum('number');
+        $revokedAmount = (string)Db::name('user_brokerage')
+            ->where('uid', $uid)
+            ->whereIn('type', self::MEMBER_INCOME_TYPES)
+            ->where('pm', 1)
+            ->where('status', -1)
+            ->sum('number');
+        $availableAmount = bcsub($brokerageBalance, $pendingAmount, 2);
+        if (bccomp($availableAmount, '0', 2) < 0) {
+            $availableAmount = '0.00';
+        }
+
+        $withdrawingAmount = (string)Db::name('user_extract')
+            ->where('uid', $uid)
+            ->where('extract_type', 'weixin')
+            ->where(function ($query) {
+                $query->where('status', 0)->whereOr(function ($query) {
+                    $query->where('status', 1)->where('state', '<>', 'SUCCESS');
+                });
+            })
+            ->sum('extract_price');
+        $withdrawnBase = Db::name('user_extract')
+            ->where('uid', $uid)
+            ->where('extract_type', 'weixin')
+            ->where('status', 1)
+            ->where('state', 'SUCCESS');
+        $withdrawnAmount = bcsub(
+            (string)(clone $withdrawnBase)->sum('extract_price'),
+            (string)(clone $withdrawnBase)->sum('extract_fee'),
+            2
+        );
+
+        return [
+            'totalAmount' => $this->money($totalAmount),
+            'pendingAmount' => $this->money($pendingAmount),
+            'availableAmount' => $this->money($availableAmount),
+            'withdrawingAmount' => $this->money($withdrawingAmount),
+            'withdrawnAmount' => $this->money($withdrawnAmount),
+            'firstAmount' => $this->money($firstAmount),
+            'secondAmount' => $this->money($secondAmount),
+            'revokedAmount' => $this->money($revokedAmount),
+            'balanceAmount' => $this->money($brokerageBalance),
+        ];
+    }
+
+    private function money($amount): string
+    {
+        return number_format((float)$amount, 2, '.', '');
     }
 
     private function normalizeAgentLevel(int $agentLevel): int

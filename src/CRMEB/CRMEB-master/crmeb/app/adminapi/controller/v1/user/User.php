@@ -12,6 +12,7 @@ namespace app\adminapi\controller\v1\user;
 
 use app\services\user\UserServices;
 use app\services\user\UserCancelServices;
+use app\services\user\DistributionServices;
 use app\adminapi\controller\AuthController;
 use think\exception\ValidateException;
 use think\facade\App;
@@ -72,6 +73,34 @@ class User extends AuthController
         ]);
         $where['label_id'] = toIntArray($where['label_id']);
         return app('json')->success($this->services->index($where));
+    }
+
+    /**
+     * 单个用户的训练营分销账户、团队名额和收入概览。
+     */
+    public function distributionOverview($uid)
+    {
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
+        return app('json')->success($distributionServices->adminOverview((int)$uid));
+    }
+
+    /**
+     * 单个用户的一级或二级有效付费团队明细。
+     */
+    public function distributionTeam($uid)
+    {
+        $where = $this->request->getMore([
+            ['grade', 1],
+            ['keyword', ''],
+            ['page', 1],
+            ['limit', 10],
+        ]);
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
+        return app('json')->success(
+            $distributionServices->adminTeamMembers((int)$uid, (int)$where['grade'], $where)
+        );
     }
 
     /**

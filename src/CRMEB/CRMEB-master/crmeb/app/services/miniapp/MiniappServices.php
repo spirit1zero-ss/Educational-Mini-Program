@@ -338,12 +338,10 @@ class MiniappServices extends BaseServices
     public function getInviteRecords(int $uid, int $grade = 0, string $sort = '', string $keyword = ''): array
     {
         $user = $this->requireMemberUser($uid);
-        /** @var UserServices $userServices */
-        $userServices = app()->make(UserServices::class);
         /** @var DistributionServices $distributionServices */
         $distributionServices = app()->make(DistributionServices::class);
-        $firstLevelUids = $userServices->getUserSpredadUids($uid, 1);
-        $secondLevelUids = $userServices->getUserSpredadUids($uid, 2);
+        $firstLevelUids = $distributionServices->teamMemberUids($uid, 1);
+        $secondLevelUids = $distributionServices->teamMemberUids($uid, 2);
         $targetUids = (int)$grade === 1 ? $secondLevelUids : $firstLevelUids;
         $list = [];
 
@@ -352,7 +350,6 @@ class MiniappServices extends BaseServices
                 ->whereIn('uid', $targetUids)
                 ->where('is_del', 0)
                 ->where('status', 1)
-                ->where('is_ever_level', 1)
                 ->field('uid,nickname,avatar,phone,add_time,spread_time,spread_uid,is_ever_level,is_money_level,overdue_time,level,pay_count')
                 ->order('spread_time', 'desc')
                 ->select()
@@ -997,7 +994,7 @@ class MiniappServices extends BaseServices
         $isMember = $this->isTrainingCampMember($item);
         // A referral binding is only an invitation. It becomes "registered" after
         // the invited user has actually obtained the training-camp membership.
-        $status = $isMember ? 'registered' : 'pending';
+        $status = $fallbackStatus === 'registered' || $isMember ? 'registered' : 'pending';
         $time = $status === 'pending'
             ? (int)($item['locked_at'] ?? $item['spread_time'] ?? $item['add_time'] ?? 0)
             : (int)($item['spread_time'] ?? $item['add_time'] ?? 0);

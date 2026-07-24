@@ -395,6 +395,15 @@
                 <span class="el-dropdown-link">更多<i class="el-icon-arrow-down el-icon--right"></i> </span>
                 <el-dropdown-menu slot="dropdown">
                   <!-- <el-dropdown-item command="1">编辑</el-dropdown-item> -->
+                  <el-dropdown-item
+                    v-if="
+                      scope.row.isMember ||
+                      Number(scope.row.is_ever_level || 0) === 1 ||
+                      Number(scope.row.agent_level || 0) > 0
+                    "
+                    v-auth="['admin-user-distribution-overview']"
+                    command="11"
+                  >分销详情</el-dropdown-item>
                   <el-dropdown-item command="2">修改余额</el-dropdown-item>
                   <el-dropdown-item command="8">修改积分</el-dropdown-item>
                   <el-dropdown-item command="3">赠送会员</el-dropdown-item>
@@ -427,6 +436,8 @@
     <!-- 发送优惠券-->
     <!-- 会员详情-->
     <user-details ref="userDetails"></user-details>
+    <!-- 训练营分销详情 -->
+    <distribution-details ref="distributionDetails"></distribution-details>
     <!--发送图文消息 -->
     <!--修改推广人-->
     <el-dialog :visible.sync="promoterShow" title="修改推广人" width="540px" :show-close="true">
@@ -527,6 +538,7 @@ import { agentSpreadApi } from '@/api/agent';
 import { exportUserList } from '@/api/export';
 import editFrom from '../../../components/from/from';
 import userDetails from './handle/userDetails';
+import distributionDetails from './handle/distributionDetails';
 import customerInfo from '@/components/customerInfo';
 import { cityList } from '@/api/app';
 import { membershipDataListApi } from '@/api/membershipLevel';
@@ -537,6 +549,7 @@ export default {
     expandRow,
     editFrom,
     userDetails,
+    distributionDetails,
     customerInfo,
     userLabel,
     userEdit,
@@ -937,6 +950,9 @@ export default {
           break;
         case '10':
           this.cancelUser(row);
+          break;
+        case '11':
+          this.$refs.distributionDetails.open(row);
           break;
         default:
           this.del(row, '解除【 ' + this.tenText(row.nickname) + ' 】的上级推广人', index, 'tuiguang');

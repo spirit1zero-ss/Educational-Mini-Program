@@ -1,0 +1,64 @@
+# 数据库补丁说明
+
+本目录保留历史补丁用于审计和旧环境升级，不代表需要把所有 SQL 文件逐个导入。
+
+## 必需基线
+
+截图中的以下十份 SQL 全部属于项目必需基线，不能按“旧补丁”废弃：
+
+1. `database/install/membership_level_upgrade.sql`
+2. `2026-07-06-hide-points-menus.sql`
+3. `2026-07-07-remove-education-assessment-admin.sql`
+4. `2026-07-07-tighten-retired-admin-surface.sql`
+5. `2026-07-08-training-camp-registration.sql`
+6. `2026-07-10-training-camp-member-price.sql`
+7. `upgrade/versions/20260701_miniapp_member_referrer_locks.sql`
+8. `2026-07-16-miniapp-virtual-payment.sql`
+9. `2026-07-22-training-camp-admin-cleanup.sql`
+10. `2026-07-24-release.sql`
+
+2026-07-24 已逐项核验本地数据库：上述十份补丁产生的表、配置、价格、菜单和权限均已存在。
+其中本次补入了第 8、9、10 项，其余项目在本地持久化数据库中此前已经执行。
+
+完成上述基线后，再执行：
+
+11. `2026-07-24-admin-distribution-ui-merged.sql`
+
+第 11 项是 `2026-07-24-release.sql` 之后唯一需要导入的后台增量文件，合并了：
+
+- 精简后台菜单：隐藏旧会员配置、无对应页面的旧协议设置和未使用的接口配置；
+- 在“付费会员”下提供“分销政策”和“小程序协议”入口；
+- 三份小程序协议的数据库文案和读写权限；
+- 用户管理中的“分销详情”及一级、二级有效团队接口权限；
+- 财务佣金页面中的训练营佣金列表和人工结算审核权限。
+
+三份协议的初始数据库内容与小程序前端兜底文案一致。该文件不删除接口、订单、
+会员、佣金或提现数据，新增菜单和权限均通过 `unique_auth` 防止重复创建。
+
+“全部必需”不等于每次启动都重新执行。已经执行过的数据库不能强行重复运行，
+尤其 `membership_level_upgrade.sql` 会新增会员等级记录，重复执行会产生重复等级。
+
+## 合并关系
+
+`2026-07-24-release.sql` 已合并以下五份基础补丁：
+
+- `2026-07-23-disable-virtual-payment-reconcile-timer.sql`
+- `2026-07-23-miniapp-offline-locations.sql`
+- `2026-07-23-miniapp-agreements.sql`
+- `2026-07-23-miniapp-withdrawal-window.sql`
+- `2026-07-24-distribution-fixed-commission.sql`
+
+同一数据库只能选择导入 `2026-07-24-release.sql`，或者分别导入上述五份原子补丁，不能两种方式都执行。
+当前必需基线采用 `2026-07-24-release.sql`，不再单独导入上述五份原子补丁。
+
+`2026-07-24-admin-distribution-ui-merged.sql` 则合并本轮后台界面所需的菜单、
+协议和接口权限增量。它不是 `2026-07-24-release.sql` 的替代品；已经导入 release
+的生产环境只需再导入这一份增量文件。
+
+## 注意
+
+- `membership_level_upgrade.sql` 是现有升级数据库的必需补丁；全新安装库若已由
+  `crmeb.sql` 内置相同等级结构则不重复执行。
+- 历史补丁文件不要删除，它们用于识别旧环境处于哪个升级阶段。
+- 导入前先检查目标数据库的表、配置项和菜单权限，再确定缺失项。
+- 生产环境已经执行过的补丁不要因文件内容相似而再次导入。

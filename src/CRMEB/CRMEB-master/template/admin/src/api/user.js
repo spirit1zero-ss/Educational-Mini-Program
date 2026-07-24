@@ -11,6 +11,27 @@
 import request from '@/libs/request';
 
 /**
+ * @description 用户训练营分销账户概览
+ */
+export function userDistributionOverviewApi(uid) {
+  return request({
+    url: `user/user/${uid}/distribution`,
+    method: 'get',
+  });
+}
+
+/**
+ * @description 用户一级/二级有效付费团队明细
+ */
+export function userDistributionTeamApi(uid, params) {
+  return request({
+    url: `user/user/${uid}/distribution/team`,
+    method: 'get',
+    params,
+  });
+}
+
+/**
  * @description 用户管理--列表
  * @param {Object} param data {Object} 传值参数
  */

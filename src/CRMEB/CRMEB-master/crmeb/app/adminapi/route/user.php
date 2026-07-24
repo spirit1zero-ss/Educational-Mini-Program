@@ -29,6 +29,8 @@ Route::group('user', function () {
                 'delete' => '删除用户'
             ]
         ]);
+        Route::get('user/:uid/distribution', 'v1.user.User/distributionOverview')->option(['real_name' => '获取用户训练营分销详情']);
+        Route::get('user/:uid/distribution/team', 'v1.user.User/distributionTeam')->option(['real_name' => '获取用户训练营团队明细']);
         //添加用户保存
         Route::post('user/save', 'v1.user.User/save_info')->option(['real_name' => '添加用户']);
         //同步微信用户

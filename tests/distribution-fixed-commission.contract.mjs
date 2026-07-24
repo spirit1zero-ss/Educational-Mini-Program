@@ -15,6 +15,8 @@ const [
   minePage,
   teamPage,
   incomePage,
+  agentLevelController,
+  agentLevelPage,
   patch,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/services/user/DistributionServices.php'),
@@ -27,6 +29,8 @@ const [
   read('homepage-home-v1/miniprogram/pages/mine/mine.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/invite-records/invite-records.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/my-income/my-income.js'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/controller/v1/agent/AgentLevel.php'),
+  read('src/CRMEB/CRMEB-master/template/admin/src/pages/setting/membershipLevel/index.vue'),
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-24-release.sql'),
 ])
 
@@ -54,7 +58,8 @@ assert.match(miniService, /'pullNewCount'/)
 assert.match(miniService, /'firstLevelCount'/)
 assert.match(miniService, /'secondLevelCount'/)
 assert.match(miniService, /'withdrawnAmount'/)
-assert.match(miniService, /where\('is_ever_level', 1\)/)
+assert.match(miniService, /teamMemberUids\(\$uid, 1\)/)
+assert.match(miniService, /teamMemberUids\(\$uid, 2\)/)
 assert.doesNotMatch(
   miniService.slice(miniService.indexOf('public function getInviteRecords'), miniService.indexOf('public function getIncomeRecords')),
   /getPendingInviteRecords/
@@ -78,6 +83,17 @@ assert.match(teamPage, /label: '二级团队'/)
 assert.match(incomePage, /label: '待结算'/)
 assert.match(incomePage, /label: '可提现'/)
 assert.match(incomePage, /label: '已到账'/)
+
+assert.match(distribution, /function policyList\(\): array/)
+assert.match(agentLevelController, /mode'\s*,\s*''/)
+assert.match(agentLevelController, /policyList\(\)/)
+assert.match(agentLevelPage, /mode: 'training_camp'/)
+assert.match(agentLevelPage, /一级固定返佣/)
+assert.match(agentLevelPage, /二级固定返佣/)
+assert.match(agentLevelPage, /团队初始名额/)
+assert.doesNotMatch(agentLevelPage, /one_brokerage_percent/)
+assert.doesNotMatch(agentLevelPage, /two_brokerage_percent/)
+assert.doesNotMatch(agentLevelPage, /一级分佣比例/)
 
 assert.match(patch, /M 盟友/)
 assert.match(patch, /D 代理/)
