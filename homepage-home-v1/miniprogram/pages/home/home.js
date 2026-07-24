@@ -153,13 +153,21 @@ Page({
     })
   },
 
-  onEntrySelect(event) {
-    const item = event.detail && event.detail.item
+  onModuleTap(event) {
+    const index = Number(event.currentTarget.dataset.index)
+    const item = this.data.modules[index]
     this.openPath(item && item.path)
   },
 
-  onTabChange(event) {
-    const item = event.detail && event.detail.item
+  onActionTap(event) {
+    const index = Number(event.currentTarget.dataset.index)
+    const item = this.data.actions[index]
+    this.openPath(item && item.path)
+  },
+
+  onTabTap(event) {
+    const index = Number(event.currentTarget.dataset.index)
+    const item = this.data.tabs[index]
 
     if (!item || item.key === 'home') return
     this.openPath(item.path, true)

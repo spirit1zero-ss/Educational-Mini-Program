@@ -1,1 +1,64 @@
 @import "../module-3-habit/module-3-habit.wxss";
+
+.page--drive,
+.page--drive .module-long,
+.page--drive .poster {
+  background: #fff4e6;
+}
+
+.page--drive .hero-poster {
+  background: #fff8ed;
+}
+
+.page--drive .hero-title {
+  color: #8d4007;
+}
+
+.page--drive .hero-quote {
+  border-left-color: #f28a20;
+}
+
+.page--drive .hero-quote-text {
+  color: #70472c;
+}
+
+.page--drive .quote-mark,
+.page--drive .highlight {
+  color: #ef7c0b;
+}
+
+.page--drive .definition-strip {
+  border-color: rgba(239, 124, 11, 0.22);
+}
+
+.page--drive .definition-icon-wrap {
+  background: #fff1df;
+}
+
+.page--drive .section-index,
+.page--drive .paragraph::before {
+  background: #ef7c0b;
+}
+
+.page--drive .section-index {
+  box-shadow: 0 8rpx 18rpx rgba(239, 124, 11, 0.2);
+}
+
+.page--drive .section-title {
+  color: #6f3105;
+}
+
+.page--drive .poster-card {
+  border-color: rgba(239, 124, 11, 0.16);
+  box-shadow: 0 14rpx 34rpx rgba(156, 92, 28, 0.1);
+}
+
+.page--drive .paragraph {
+  border-bottom-color: #eadbca;
+  color: #604b3d;
+}
+
+.page--drive .assessment-bar {
+  background: #ef7c0b;
+  box-shadow: 0 16rpx 32rpx rgba(239, 124, 11, 0.24);
+}

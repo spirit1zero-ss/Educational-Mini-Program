@@ -10,7 +10,7 @@
           <view>
             <view class="summary-kicker">门店位置</view>
             <view class="summary-title">线下体验点展示</view>
-            <view class="summary-desc">这里用于展示线下门店位置。当前先放置前端占位数据，后续可由后台返回门店名称、地址、电话和经纬度。</view>
+            <view class="summary-desc">查看开放中的线下体验点，获取训练营咨询、学习规划与家长沟通服务。</view>
           </view>
           <image class="summary-icon" src="{{heroIcon}}" mode="aspectFit"></image>
         </view>
@@ -18,6 +18,8 @@
 
       <view class="store-panel">
         <view class="section-title">门店列表</view>
+        <view class="store-empty" wx:if="{{loading}}">正在加载线下地址...</view>
+        <view class="store-empty" wx:elif="{{!stores.length}}">暂无线下体验点，请稍后再来查看</view>
         <view
           class="store-card"
           wx:for="{{stores}}"
@@ -34,14 +36,23 @@
           </view>
           <view class="store-address">{{item.address}}</view>
           <view class="store-service">{{item.service}}</view>
-          <view class="store-action">查看位置 ›</view>
+          <view class="store-meta" wx:if="{{item.businessHours}}">营业时间：{{item.businessHours}}</view>
+          <view class="store-actions">
+            <view class="store-action">查看位置 ›</view>
+            <view
+              class="store-action store-action--phone"
+              wx:if="{{item.phone}}"
+              catchtap="onCallPhone"
+              data-phone="{{item.phone}}"
+            >电话咨询</view>
+          </view>
         </view>
       </view>
 
       <view class="notice-card">
-        <view class="notice-title">后台接入字段</view>
-        <view class="notice-line">门店名称、城市、详细地址、联系电话、营业时间、经纬度。</view>
-        <view class="notice-line">接入经纬度后，可在本页点击门店直接打开地图导航。</view>
+        <view class="notice-title">到店提醒</view>
+        <view class="notice-line">建议到店前先电话联系，确认营业时间和接待安排。</view>
+        <view class="notice-line">点击体验点可打开地图导航；未配置坐标时会复制详细地址。</view>
       </view>
     </view>
   </scroll-view>

@@ -178,6 +178,10 @@ Route::group('user', function () {
         Route::post('member/training_camp/order/:id/sync', 'v1.user.member.TrainingCampOrder/sync')->option(['real_name' => '同步训练营微信支付状态']);
         Route::post('member/training_camp/order/:id/retry_delivery', 'v1.user.member.TrainingCampOrder/retryDelivery')->option(['real_name' => '重试训练营权益发货确认']);
         Route::post('member/training_camp/order/:id/refund_review', 'v1.user.member.TrainingCampOrder/reviewRefund')->option(['real_name' => '处理训练营退款会员权益']);
+        //小程序线下地址
+        Route::get('member/offline_location', 'v1.user.member.OfflineLocation/index')->option(['real_name' => '线下地址列表']);
+        Route::post('member/offline_location/save/:id', 'v1.user.member.OfflineLocation/save')->option(['real_name' => '保存线下地址']);
+        Route::delete('member/offline_location/:id', 'v1.user.member.OfflineLocation/delete')->option(['real_name' => '删除线下地址']);
     })->option(['parent' => 'user', 'cate_name' => '付费会员']);
 
 

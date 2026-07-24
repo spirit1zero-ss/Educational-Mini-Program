@@ -293,6 +293,11 @@
   font-weight: 600;
 }
 
+.agreement-link {
+  color: #0f7f50;
+  font-weight: 800;
+}
+
 .bottom-spacer {
   height: 42rpx;
 }

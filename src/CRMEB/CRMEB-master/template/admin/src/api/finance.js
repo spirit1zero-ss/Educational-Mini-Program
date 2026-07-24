@@ -45,6 +45,28 @@ export function commissionListApi(data) {
 }
 
 /**
+ * @description 训练营固定返佣 -- 结算列表
+ */
+export function memberCommissionListApi(data) {
+  return request({
+    url: 'finance/finance/member_commission_list',
+    method: 'get',
+    params: data,
+  });
+}
+
+/**
+ * @description 训练营固定返佣 -- 审核
+ */
+export function reviewMemberCommissionApi(id, data) {
+  return request({
+    url: `finance/finance/member_commission/${id}/review`,
+    method: 'put',
+    data,
+  });
+}
+
+/**
  * @description 佣金记录 -- 详情
  * @param {Number} param id {Number} 佣金记录ID
  */

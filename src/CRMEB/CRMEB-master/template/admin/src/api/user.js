@@ -547,6 +547,29 @@ export function trainingCampRegistrationDelete(id) {
   });
 }
 
+export function offlineLocationList(data) {
+  return request({
+    url: '/user/member/offline_location',
+    method: 'get',
+    params: data,
+  });
+}
+
+export function offlineLocationSave(id, data) {
+  return request({
+    url: `/user/member/offline_location/save/${id || 0}`,
+    method: 'post',
+    data,
+  });
+}
+
+export function offlineLocationDelete(id) {
+  return request({
+    url: `/user/member/offline_location/${id}`,
+    method: 'delete',
+  });
+}
+
 export function trainingCampOrderList(data) {
   return request({
     url: '/user/member/training_camp/orders',

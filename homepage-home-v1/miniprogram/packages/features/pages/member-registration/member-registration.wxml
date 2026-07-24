@@ -106,6 +106,7 @@
         <view class="tips-title">信息安全</view>
         <view class="tips-line">本页只保存文字信息，不上传图片或附件。</view>
         <view class="tips-line">信息仅用于训练营服务沟通和后续跟进。</view>
+        <view class="tips-link" bindtap="onOpenRegistrationNotice">查看《报名信息使用说明》 ›</view>
       </view>
 
       <view class="bottom-spacer"></view>

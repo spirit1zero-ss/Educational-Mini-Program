@@ -227,6 +227,14 @@
   content: "";
 }
 
+.tips-link {
+  margin-top: 18rpx;
+  color: #245c4a;
+  font-size: 23rpx;
+  font-weight: 800;
+  line-height: 34rpx;
+}
+
 .bottom-spacer {
   height: 36rpx;
 }

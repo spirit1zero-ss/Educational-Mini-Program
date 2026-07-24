@@ -1,58 +1,95 @@
-<view class="page">
+<view class="page page--drive">
   <custom-nav title="内驱力" showBack="{{true}}" showHome="{{true}}"></custom-nav>
 
   <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
-    <view class="content">
-      <view class="hero">
-        <view class="hero-title">慧眼读心赋能法</view>
-      </view>
-
-      <block wx:for="{{articleBlocks}}" wx:key="id">
-        <view wx:if="{{item.type === 'quote'}}" class="quote-card">
-          <view class="quote-mark quote-mark--left">“</view>
-          <view class="quote-text">{{item.text}}</view>
-          <view class="quote-mark quote-mark--right">”</view>
+    <view class="module-long">
+      <view class="hero-poster">
+        <image class="hero-landscape" src="{{dividerImage}}" mode="aspectFill"></image>
+        <image class="hero-art" src="{{heroIllustration}}" mode="aspectFit"></image>
+        <view class="hero-copy">
+          <view class="hero-title">慧眼读心赋能法</view>
+          <view class="hero-quote">
+            <view class="quote-mark">“</view>
+            <view class="hero-quote-text">{{articleBlocks[0].text}}</view>
+            <view class="quote-mark quote-mark--end">”</view>
+          </view>
         </view>
 
-        <view wx:elif="{{item.type === 'definition'}}" class="definition-card">
+        <view class="definition-strip">
           <view class="definition-icon-wrap">
-            <image class="definition-icon" src="{{iconBase}}{{item.icon}}" mode="aspectFit"></image>
+            <image class="definition-icon" src="{{iconBase}}{{articleBlocks[1].icon}}" mode="aspectFit"></image>
           </view>
           <view class="definition-copy">
-            <text>{{item.prefix}}</text><text class="highlight">{{item.highlight}}</text>
+            <text>{{articleBlocks[1].prefix}}</text>
+            <text class="highlight">{{articleBlocks[1].highlight}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="poster poster--first">
+        <view class="poster-card spotlight-card">
+          <image class="spotlight-art" src="{{sectionIllustration}}" mode="aspectFit"></image>
+          <view class="section-head section-head--center">
+            <view class="section-index">{{articleBlocks[2].index}}</view>
+            <view class="section-title">{{articleBlocks[2].title}}</view>
+          </view>
+          <view class="section-body">
+            <view class="paragraph" wx:for="{{articleBlocks[2].lines}}" wx:key="*this">{{item}}</view>
+          </view>
+        </view>
+      </view>
+
+      <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+
+      <view class="poster poster--second">
+        <view class="poster-card">
+          <view class="section-head">
+            <view class="section-index">{{articleBlocks[3].index}}</view>
+            <view class="section-title">{{articleBlocks[3].title}}</view>
+          </view>
+          <view class="section-body">
+            <view class="paragraph" wx:for="{{articleBlocks[3].lines}}" wx:key="*this">{{item}}</view>
+          </view>
+        </view>
+      </view>
+
+      <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+
+      <view class="poster poster--third">
+        <view class="poster-card">
+          <view class="section-head">
+            <view class="section-index">{{articleBlocks[4].index}}</view>
+            <view class="section-title">{{articleBlocks[4].title}}</view>
+          </view>
+          <view class="section-body">
+            <view class="paragraph" wx:for="{{articleBlocks[4].lines}}" wx:key="*this">{{item}}</view>
           </view>
         </view>
 
-        <view wx:elif="{{item.type === 'section'}}" class="article-card">
+        <view class="poster-card closing-card">
           <view class="section-head">
-            <view class="section-index">{{item.index}}</view>
-            <view class="section-title">{{item.title}}</view>
+            <view class="section-index">{{articleBlocks[5].index}}</view>
+            <view class="section-title">{{articleBlocks[5].title}}</view>
           </view>
-
-          <view wx:if="{{item.lines}}">
-            <view class="paragraph" wx:for="{{item.lines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
-          </view>
-
-          <view wx:if="{{item.noteLines}}" class="note-box">
+          <view class="note-box">
             <image class="note-icon" src="{{iconBase}}callout-star.png" mode="aspectFit"></image>
             <view class="note-text">
-              <view wx:for="{{item.noteLines}}" wx:for-item="line" wx:key="*this">{{line}}</view>
+              <view wx:for="{{articleBlocks[5].noteLines}}" wx:key="*this">{{item}}</view>
             </view>
           </view>
-
         </view>
-      </block>
 
-      <view class="bottom-spacer"></view>
+        <view class="assessment-bar" bindtap="onStartAssessment" role="button" aria-label="开始家长读心测评">
+          <image class="assessment-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
+          <view class="assessment-copy">
+            <view class="assessment-title">点击：测评</view>
+            <view class="assessment-subtitle">一张图让家长学会识别孩子的个性，读懂孩子的内心。</view>
+          </view>
+          <image class="assessment-arrow" src="/assets/home/home-tap-arrow-white.png" mode="aspectFit"></image>
+        </view>
+
+        <view class="safe-bottom"></view>
+      </view>
     </view>
   </scroll-view>
-
-  <view class="assessment-bar" bindtap="onStartAssessment">
-    <image class="assessment-icon" src="{{iconBase}}assessment-clipboard.png" mode="aspectFit"></image>
-    <view class="assessment-copy">
-      <view class="assessment-title">点击：测评</view>
-      <view class="assessment-subtitle">一张图让家长学会识别孩子的个性，读懂孩子的内心。</view>
-    </view>
-    <view class="assessment-arrow">›</view>
-  </view>
 </view>

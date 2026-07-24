@@ -35,6 +35,10 @@ class AgentJob extends BaseJobs
     {
         //检测分销员等级升级
         try {
+            // 训练营合作身份由后台人工设置，禁止任务系统自动改写 M/D/H。
+            if ((int)sys_config('miniapp_distribution_manual_levels', 1) === 1) {
+                return true;
+            }
             //商城分销是否开启
             if (!sys_config('brokerage_func_status')) {
                 return true;

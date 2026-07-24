@@ -153,6 +153,12 @@ Page({
     })
   },
 
+  onOpenRegistrationNotice() {
+    wx.navigateTo({
+      url: '/packages/features/pages/legal-document/legal-document?key=registration'
+    })
+  },
+
   validateForm() {
     const form = this.data.form
     const childName = (form.child_name || '').trim()

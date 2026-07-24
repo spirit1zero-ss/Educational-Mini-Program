@@ -37,6 +37,9 @@ Route::group('finance', function () {
         Route::get('finance/list', 'v1.finance.Finance/list')->option(['real_name' => '资金记录列表']);
         //佣金记录
         Route::get('finance/commission_list', 'v1.finance.Finance/get_commission_list')->option(['real_name' => '佣金记录列表']);
+        //训练营固定返佣结算
+        Route::get('finance/member_commission_list', 'v1.finance.Finance/member_commission_list')->option(['real_name' => '训练营返佣结算列表']);
+        Route::put('finance/member_commission/:id/review', 'v1.finance.Finance/review_member_commission')->option(['real_name' => '审核训练营返佣结算']);
         //佣金详情用户信息
         Route::get('finance/user_info/:id', 'v1.finance.Finance/user_info')->option(['real_name' => '佣金详情用户信息']);
         //佣金提现记录个人列表

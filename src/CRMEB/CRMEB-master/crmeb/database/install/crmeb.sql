@@ -24,9 +24,9 @@ CREATE TABLE IF NOT EXISTS `eb_agent_level` (
 --
 
 INSERT INTO `eb_agent_level` (`id`, `name`, `image`, `one_brokerage`, `one_brokerage_percent`, `two_brokerage`, `two_brokerage_percent`, `grade`, `status`, `is_del`, `add_time`) VALUES
-(1, '一级分销', '/statics/system_images/spread_level_1.png', 1, '11.00', 1, '6.00', 1, 0, 0, 1630310923),
-(2, '二级分销', '/statics/system_images/spread_level_2.png', 2, '12.00', 1, '7.00', 2, 0, 0, 1630311000),
-(3, '三级分销', '/statics/system_images/spread_level_3.png', 3, '13.00', 1, '8.00', 3, 0, 0, 1630311024),
+(1, 'M 盟友', '/statics/system_images/spread_level_1.png', 1, '11.00', 1, '6.00', 1, 1, 0, 1630310923),
+(2, 'D 代理', '/statics/system_images/spread_level_2.png', 2, '12.00', 1, '7.00', 2, 1, 0, 1630311000),
+(3, 'H 合伙人', '/statics/system_images/spread_level_3.png', 3, '13.00', 1, '8.00', 3, 1, 0, 1630311024),
 (4, '四级分销', '/statics/system_images/spread_level_4.png', 4, '14.00', 1, '9.00', 4, 0, 0, 1630311052),
 (5, '五级分销', '/statics/system_images/spread_level_5.png', 5, '15.00', 1, '10.00', 5, 0, 0, 1630311069);
 
@@ -33835,7 +33835,7 @@ INSERT INTO `eb_system_config` (`id`, `menu_name`, `type`, `input_type`, `config
 (155, 'admin_refund_switch', 'radio', '', 20, '0=>关闭\n1=>开启', 0, '', 0, 0, '0', '用户退款管理员提醒开关', '用户退款管理员提醒开关', 0, 1, 0, 0, 0),
 (156, 'admin_confirm_take_over_switch', 'radio', '', 20, '0=>关闭\n1=>开启', 0, '', 0, 0, '0', '用户确认收货管理员短信提醒', '用户确认收货管理员短信提醒', 0, 1, 0, 0, 0),
 (158, 'recharge_attention', 'textarea', '', 28, '', 0, '', 100, 5, '\"\\u5145\\u503c\\u540e\\u5e10\\u6237\\u7684\\u91d1\\u989d\\u4e0d\\u80fd\\u63d0\\u73b0\\uff0c\\u53ef\\u7528\\u4e8e\\u5546\\u57ce\\u6d88\\u8d39\\u4f7f\\u7528\\n\\u4f63\\u91d1\\u5bfc\\u5165\\u8d26\\u6237\\u4e4b\\u540e\\u4e0d\\u80fd\\u518d\\u6b21\\u5bfc\\u51fa\\u3001\\u4e0d\\u53ef\\u63d0\\u73b0\\n\\u8d26\\u6237\\u5145\\u503c\\u51fa\\u73b0\\u95ee\\u9898\\u53ef\\u8054\\u7cfb\\u5546\\u57ce\\u5ba2\\u670d\\uff0c\\u4e5f\\u53ef\\u62e8\\u6253\\u5546\\u57ce\\u5ba2\\u670d\\u70ed\\u7ebf\\uff1a4008888888\\n\\n\\n\"', '充值注意事项', '充值注意事项', 0, 1, 0, 0, 0),
-(159, 'extract_time', 'text', 'input', 73, '', 0, '', 100, 0, '\"0\"', '冻结时间', '防止用户退款，佣金被提现了，所以需要设置佣金冻结时间(天)', 0, 1, 0, 0, 0),
+(159, 'extract_time', 'text', 'input', 73, '', 0, '', 100, 0, '\"0\"', '冻结时间', '训练营佣金不按固定天数自动冻结，用户仅能在提现窗口申请并由管理员审核', 0, 1, 0, 0, 0),
 (160, 'store_brokerage_price', 'text', 'input', 72, '', 0, '', 100, 0, '\"100\"', '满额分销最低金额', '满额分销满足金额开通分销权限', 0, 1, 0, 0, 0),
 (162, 'price_revision_switch', 'radio', 'input', 20, '0=>关闭\n1=>开启', 0, '', 0, 0, '0', '改价短信提醒开关', '改价短信提醒开关', 0, 1, 0, 0, 0),
 (168, 'site_logo_square', 'upload', 'input', 122, '', 1, '', 0, 0, '\"\\/statics\\/system_images\\/admin_logo_small.png\"', '后台小LOGO', '后台菜单缩进小LOGO，尺寸180*180', 90, 1, 0, 0, 0),
@@ -33985,7 +33985,7 @@ INSERT INTO `eb_system_config` (`id`, `menu_name`, `type`, `input_type`, `config
 (454, 'sign_give_point', 'text', 'number', 126, '', 1, '', 0, 0, '0', '签到赠送积分', '签到赠送积分，每日签到赠送的积分值', 75, 1, 0, 0, 0),
 (455, 'mer_type', 'radio', 'input', 4, '0=>微信支付商户模式\n1=>微信支付服务商模式', 1, '', 0, 0, '0', '商户类型', '商户类型，目前支持普通微信商户模式和普通微信服务商模式；', 0, 1, 0, 0, 0),
 (456, 'pay_sub_merchant_id', 'text', 'input', 4, '', 1, '', 0, 0, '\"\"', '子商户商户号', '微信支付服务商子商户商户号', 0, 1, 0, 0, 0),
-(457, 'withdrawal_fee', 'text', 'number', 74, '', 1, '', 100, 0, '\"0\"', '提现手续费', '提现手续费百分比，范围0-100，0为无提现手续费，例：设置10，即收取10%手续费，提现100元，到账90元，10元手续费', 0, 1, 0, 0, 0),
+(457, 'withdrawal_fee', 'text', 'number', 74, '', 1, '', 100, 0, '\"0.6\"', '提现手续费', '提现手续费百分比，范围0-100；当前训练营分销提现按0.6%收取', 0, 1, 0, 0, 0),
 (458, 'routine_auth_type', 'checkbox', 'input', 132, '1=>微信授权\n2=>手动填写', 1, '', 0, 0, '[\"1\",\"2\"]', '手机号获取方式', '小程序获取手机号的方式，微信授权和手机号验证码', 90, 1, 0, 0, 0),
 (460, 'refund_time_available', 'text', 'input', 71, '', 1, '', 100, 0, '0', '售后期限', '订单收货之后，在多少天内可以进行退款，超出天数前端不显示退款按钮，设置0则永远显示', 0, 1, 0, 0, 0),
 (461, 'routine_api', 'text', 'input', 133, '', 1, '', 100, 0, '\"\\/api\\/wechat\\/miniServe\"', '接口地址', '配置小程序消息推送使用的接口地址，直接复制输入框内容（此项系统生成，无法修改）', 0, 1, 0, 0, 0),
@@ -34017,7 +34017,9 @@ INSERT INTO `eb_system_config` (`id`, `menu_name`, `type`, `input_type`, `config
 (487, 'alipay_cert_path', 'upload', 'input', 63, '', 3, '', 0, 0, '\"\"', '支付宝公钥证书', '支付宝接口加签完成下载的支付宝公钥证书', 0, 1, 1, 489, 1),
 (488, 'alipay_root_cert_path', 'upload', 'input', 63, '', 3, '', 0, 0, '\"\"', '支付宝根证书', '支付宝接口加签完成下载的支付宝根证书', 0, 1, 1, 489, 1),
 (489, 'alipay_sign_type', 'radio', 'input', 63, '0=>密钥\n1=>证书', 1, '', 0, 0, '0', '接口加签类型', '接口加签类型：密钥或证书', 80, 1, 0, 0, 0),
-(490, 'image_thumb_status', 'radio', 'input', 31, '1=>开启\n0=>关闭', 1, '', 0, 0, '0', '缩略图开关', '是否开启缩略图', 0, 1, 0, 0, 0);
+(490, 'image_thumb_status', 'radio', 'input', 31, '1=>开启\n0=>关闭', 1, '', 0, 0, '0', '缩略图开关', '是否开启缩略图', 0, 1, 0, 0, 0),
+(491, 'miniapp_withdraw_start_day', 'text', 'number', 74, '', 1, 'required:true,number:true,min:1,max:31', 100, 0, '\"1\"', '提现开放开始日', '小程序用户每月可提交提现申请的开始日期，管理员审核不受此日期限制', 12, 1, 0, 0, 0),
+(492, 'miniapp_withdraw_end_day', 'text', 'number', 74, '', 1, 'required:true,number:true,min:1,max:31', 100, 0, '\"7\"', '提现开放结束日', '小程序用户每月可提交提现申请的结束日期，管理员审核不受此日期限制', 11, 1, 0, 0, 0);
 -- --------------------------------------------------------
 
 --
@@ -51570,7 +51572,7 @@ INSERT INTO `eb_system_timer` (`id`, `name`, `mark`, `content`, `type`, `week`, 
 (9, '清除昨日海报', 'clearPoster', '每天0时30分0秒执行一次清除昨日海报', 5, 1, 1, 0, 30, 0, 0, 1670862600, 1670815378, 0, 1),
 (10, '自动开具/冲红电子发票', 'autoInvoice', '每隔10分钟执行自动开具/冲红电子发票', 2, 1, 1, 1, 10, 0, 0, 0, 1715760152, 0, 1),
 (11, '未签到提醒', 'signRemind', '每隔10分钟执行未签到提醒', 2, 1, 1, 1, 10, 0, 0, 0, 1715760152, 0, 1),
-(12, '训练营虚拟支付补偿', 'virtualPaymentReconcile', '每隔1分钟查询支付状态并补发权益确认', 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1);
+(12, '训练营虚拟支付补偿', 'virtualPaymentReconcile', '仅保留人工或按需核对，默认不启用后台定时任务', 2, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0);
 
 -- --------------------------------------------------------
 

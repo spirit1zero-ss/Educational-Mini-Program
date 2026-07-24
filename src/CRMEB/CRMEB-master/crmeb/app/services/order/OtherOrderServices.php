@@ -17,6 +17,7 @@ use app\services\BaseServices;
 use app\services\pay\PayServices;
 use app\services\statistic\CapitalFlowServices;
 use app\services\user\member\MemberShipServices;
+use app\services\user\DistributionServices;
 use app\services\user\UserBillServices;
 use app\services\user\UserBrokerageServices;
 use app\services\user\UserServices;
@@ -24,6 +25,7 @@ use app\services\user\member\MemberCardServices;
 use crmeb\exceptions\ApiException;
 use think\App;
 use app\jobs\OtherOrderJob;
+use think\facade\Db;
 
 /**
  * Class OtherOrderServices
@@ -337,14 +339,20 @@ class OtherOrderServices extends BaseServices
             $capitalFlowServices->setFlow($orderInfo, $type);
         }
         $res = $res1 && $res2 && $res3 && $res4;
-        //购买付费会员返佣设置
-        if (sys_config('member_brokerage', 0) == 1 && sys_config('brokerage_func_status', 0) == 1) {
-            $spread_one = sys_config('is_self_brokerage') ? $orderInfo['uid'] : $userServices->getSpreadUid($orderInfo['uid']);
-            $spread_two = sys_config('brokerage_level', 2) == 2 ? $userServices->getSpreadUid($spread_one, [], false) : 0;
-            $spread_one_price = bcmul((string)$orderInfo['pay_price'], (string)bcdiv((string)sys_config('store_brokerage_ratio', 0), '100', 4), 2);
-            $spread_two_price = bcmul((string)$orderInfo['pay_price'], (string)bcdiv((string)sys_config('store_brokerage_two', 0), '100', 4), 2);
-            if ($spread_one && $spread_one_price > 0 && $userServices->checkUserPromoter($spread_one)) $this->memberBrokerage($spread_one, $spread_one_price, sys_config('is_self_brokerage') ? 'get_self_member_brokerage' : 'get_member_brokerage', $orderInfo);
-            if ($spread_two && $spread_two_price > 0 && $userServices->checkUserPromoter($spread_two)) $this->memberBrokerage($spread_two, $spread_two_price, 'get_two_member_brokerage', $orderInfo);
+        // 训练营统一按推广人的合作身份发放固定返佣；399 元订单款始终进入公司账户。
+        if ($type === 'pay_member' && bccomp((string)$orderInfo['pay_price'], '0', 2) > 0) {
+            /** @var DistributionServices $distributionServices */
+            $distributionServices = app()->make(DistributionServices::class);
+            $spread_one = (int)$userServices->getSpreadUid((int)$orderInfo['uid']);
+            $spread_two = $spread_one > 0 ? (int)$userServices->getSpreadUid($spread_one, [], false) : 0;
+            $spread_one_price = $distributionServices->firstCommissionForUid($spread_one);
+            $spread_two_price = $distributionServices->secondCommissionForUid($spread_two);
+            if ($spread_one > 0 && bccomp($spread_one_price, '0', 2) > 0) {
+                $this->memberBrokerage($spread_one, $spread_one_price, 'get_member_brokerage', $orderInfo);
+            }
+            if ($spread_two > 0 && bccomp($spread_two_price, '0', 2) > 0) {
+                $this->memberBrokerage($spread_two, $spread_two_price, 'get_two_member_brokerage', $orderInfo);
+            }
         }
 
         $orderInfo['pay_type'] = $paytype;
@@ -362,27 +370,54 @@ class OtherOrderServices extends BaseServices
      */
     public function memberBrokerage($uid, $price, $type, $orderInfo)
     {
-        /** @var UserServices $userServices */
-        $userServices = app()->make(UserServices::class);
-        $userInfo = $userServices->get($uid);
-        // 上级推广员返佣之后的金额
-        $balance = bcadd($userInfo['brokerage_price'], $price, 2);
-        // 添加用户佣金
-        $res1 = $userServices->bcInc($uid, 'brokerage_price', $price, 'uid');
-        if ($res1) {
-            //冻结时间
-            $broken_time = intval(sys_config('extract_time'));
-            $frozen_time = time() + $broken_time * 86400;
-            // 添加佣金记录
+        $storedType = [
+            'get_self_member_brokerage' => 'self_member_brokerage',
+            'get_member_brokerage' => 'one_member_brokerage',
+            'get_two_member_brokerage' => 'two_member_brokerage',
+        ][$type] ?? $type;
+        return (bool)Db::transaction(function () use ($uid, $price, $type, $storedType, $orderInfo) {
+            // 锁定受益人账户，让同一订单的重复支付回调串行执行。
+            $userInfo = Db::name('user')->where('uid', (int)$uid)->lock(true)->find();
+            if (!$userInfo) {
+                return false;
+            }
+            $exists = Db::name('user_brokerage')
+                ->where('uid', (int)$uid)
+                ->where('link_id', (string)$orderInfo['id'])
+                ->where('type', $storedType)
+                ->where('pm', 1)
+                ->find();
+            if ($exists) {
+                return true;
+            }
+
+            /** @var UserServices $userServices */
+            $userServices = app()->make(UserServices::class);
+            $balance = bcadd((string)$userInfo['brokerage_price'], (string)$price, 2);
+            if (!$userServices->bcInc((int)$uid, 'brokerage_price', $price, 'uid')) {
+                return false;
+            }
+
+            // 所有训练营返佣先待结算，后台审核通过后才变为可提现。
+            $frozen_time = DistributionServices::PENDING_SETTLEMENT_TIME;
             /** @var UserBrokerageServices $userBrokerageServices */
             $userBrokerageServices = app()->make(UserBrokerageServices::class);
-            $userBrokerageServices->income($type, $uid, [
-                'nickname' => $userInfo['nickname'],
+            $buyer = $userServices->get((int)$orderInfo['uid']);
+            /** @var DistributionServices $distributionServices */
+            $distributionServices = app()->make(DistributionServices::class);
+            $profile = $distributionServices->profile($userInfo);
+            $saved = $userBrokerageServices->income($type, (int)$uid, [
+                'nickname' => $buyer['nickname'] ?? ('用户' . (int)$orderInfo['uid']),
+                'level_name' => $profile['levelKey'] . $profile['levelName'],
                 'pay_price' => floatval($orderInfo['pay_price']),
                 'number' => floatval($price),
                 'frozen_time' => $frozen_time
-            ], $balance, $orderInfo['id']);
-        }
+            ], bccomp($balance, '0', 2) < 0 ? '0.00' : $balance, $orderInfo['id']);
+            if (!$saved) {
+                throw new \RuntimeException('训练营佣金记录写入失败');
+            }
+            return true;
+        });
     }
 
     /**

@@ -54,9 +54,14 @@
         <button class="contact-button" open-type="contact" show-message-card>联系客服</button>
       </view>
 
-      <view class="agreement-row" bindtap="onToggleAgreement">
-        <view class="check-dot {{agreed ? 'check-dot--active' : ''}}"></view>
-        <view class="agreement-copy">我已确认课程内容、价格与入班流程，同意完成报名支付。</view>
+      <view class="agreement-row">
+        <view class="check-dot {{agreed ? 'check-dot--active' : ''}}" bindtap="onToggleAgreement"></view>
+        <view class="agreement-copy">
+          <text bindtap="onToggleAgreement">我已确认课程内容、价格与入班流程，并阅读同意</text>
+          <text class="agreement-link" catchtap="onOpenAgreement" data-key="service">《训练营服务协议》</text>
+          <text>和</text>
+          <text class="agreement-link" catchtap="onOpenAgreement" data-key="privacy">《隐私政策》</text>
+        </view>
       </view>
 
       <view class="bottom-spacer"></view>

@@ -6,6 +6,7 @@ Page({
     iconBase: "../../assets/module-2-logic/icons/",
     dividerImage: "../../assets/module-5-camp/camp-landscape-divider-v2.webp",
     heroTreeImage: "../../assets/module-2-logic/illustrations/hero-tree-v3.webp",
+    definitionBookImage: "../../assets/module-2-logic/illustrations/definition-book-v4.webp",
     stagePosterImage: "../../assets/module-2-logic/illustrations/stage-study-v2.webp",
     englishIllustration: "../../assets/module-2-logic/illustrations/english-abc-v2.webp",
     englishBricksImage: "../../assets/module-2-logic/illustrations/english-bricks-v3.webp",

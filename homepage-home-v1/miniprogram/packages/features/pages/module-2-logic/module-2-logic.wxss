@@ -36,7 +36,7 @@
 
 .hero-poster {
   position: relative;
-  min-height: 700rpx;
+  min-height: 660rpx;
   margin: 0 -30rpx;
   overflow: hidden;
   background: #eef9ff;
@@ -49,20 +49,20 @@
   left: 0;
   z-index: 0;
   width: 100%;
-  height: 390rpx;
+  height: 370rpx;
 }
 
 .hero-copy {
   position: absolute;
-  top: 54rpx;
-  right: 34rpx;
+  top: 42rpx;
+  right: 30rpx;
   z-index: 2;
-  width: 356rpx;
+  width: 378rpx;
 }
 
 .hero-title {
   color: #07184f;
-  font-size: 56rpx;
+  font-size: 58rpx;
   font-weight: 900;
   line-height: 1.17;
   letter-spacing: 1rpx;
@@ -72,15 +72,15 @@
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  margin-top: 34rpx;
-  padding: 0 30rpx;
+  margin-top: 28rpx;
+  padding: 0 20rpx;
 }
 
 .hero-quote-text {
   color: #122551;
-  font-size: 29rpx;
+  font-size: 30rpx;
   font-weight: 800;
-  line-height: 48rpx;
+  line-height: 49rpx;
 }
 
 .quote-mark {
@@ -102,18 +102,18 @@
 
 .hero-definition {
   position: absolute;
-  right: 38rpx;
-  bottom: 24rpx;
-  left: 38rpx;
+  right: 28rpx;
+  bottom: 20rpx;
+  left: 28rpx;
   z-index: 4;
   display: flex;
   align-items: center;
-  gap: 18rpx;
+  gap: 14rpx;
   box-sizing: border-box;
   width: auto;
-  min-height: 112rpx;
+  min-height: 118rpx;
   margin: 0;
-  padding: 18rpx 24rpx;
+  padding: 14rpx 18rpx;
   border: 1rpx solid rgba(21, 148, 83, 0.16);
   border-radius: 24rpx;
   background: rgba(255, 255, 255, 0.94);
@@ -121,16 +121,18 @@
 }
 
 .hero-definition-icon {
-  width: 58rpx;
-  height: 58rpx;
+  width: 54rpx;
+  height: 54rpx;
   flex: 0 0 auto;
 }
 
 .hero-definition-copy {
+  min-width: 0;
   color: #294254;
-  font-size: 27rpx;
-  font-weight: 650;
+  font-size: 28rpx;
+  font-weight: 700;
   line-height: 42rpx;
+  flex: 1;
 }
 
 .hero-highlight {
@@ -141,11 +143,17 @@
 
 .hero-tree {
   position: absolute;
-  bottom: 104rpx;
-  left: -22rpx;
+  bottom: 98rpx;
+  left: -12rpx;
   z-index: 1;
-  width: 390rpx;
-  height: 560rpx;
+  width: 365rpx;
+  height: 510rpx;
+}
+
+.hero-definition-book {
+  width: 128rpx;
+  height: 92rpx;
+  flex: 0 0 128rpx;
 }
 
 .poster-card {
@@ -160,7 +168,7 @@
 
 .english-card {
   margin-top: 0;
-  padding-top: 24rpx;
+  padding: 20rpx 24rpx 30rpx;
   border-radius: 58rpx 58rpx 30rpx 30rpx;
 }
 
@@ -182,7 +190,7 @@
   background: #159453;
   box-shadow: 0 7rpx 14rpx rgba(20, 132, 79, 0.17);
   color: #ffffff;
-  font-size: 33rpx;
+  font-size: 35rpx;
   font-weight: 900;
   line-height: 70rpx;
   flex: 0 0 auto;
@@ -191,16 +199,16 @@
 .section-title {
   min-width: 0;
   color: #07184f;
-  font-size: 42rpx;
+  font-size: 44rpx;
   font-weight: 900;
-  line-height: 54rpx;
+  line-height: 56rpx;
 }
 
 .english-art {
   display: block;
-  width: 370rpx;
-  height: 286rpx;
-  margin: 0 auto -6rpx;
+  width: 350rpx;
+  height: 250rpx;
+  margin: 0 auto -2rpx;
 }
 
 .section-heading--english {
@@ -209,13 +217,13 @@
 }
 
 .reading-block {
-  margin-top: 32rpx;
-  padding: 0 10rpx;
+  margin-top: 22rpx;
+  padding: 0;
 }
 
 .reading-row {
   position: relative;
-  padding: 22rpx 8rpx 22rpx 38rpx;
+  padding: 19rpx 4rpx 19rpx 32rpx;
   border-bottom: 1rpx dashed #d9e4e0;
 }
 
@@ -225,10 +233,10 @@
 
 .reading-dot {
   position: absolute;
-  top: 39rpx;
+  top: 36rpx;
   left: 2rpx;
-  width: 16rpx;
-  height: 16rpx;
+  width: 14rpx;
+  height: 14rpx;
   border-radius: 50%;
   background: #159453;
 }
@@ -236,8 +244,8 @@
 .paragraph {
   margin-top: 20rpx;
   color: #30485d;
-  font-size: 29rpx;
-  font-weight: 500;
+  font-size: 30rpx;
+  font-weight: 600;
   line-height: 49rpx;
 }
 
@@ -253,8 +261,8 @@
 .logic-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
-  margin-top: 28rpx;
+  gap: 14rpx;
+  margin-top: 22rpx;
 }
 
 .logic-row {
@@ -263,8 +271,8 @@
   align-items: center;
   gap: 18rpx;
   box-sizing: border-box;
-  min-height: 116rpx;
-  padding: 18rpx 126rpx 18rpx 20rpx;
+  min-height: 112rpx;
+  padding: 16rpx 112rpx 16rpx 18rpx;
   border: 1rpx solid rgba(21, 148, 83, 0.2);
   border-radius: 20rpx;
   background: #f6faf4;
@@ -279,14 +287,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64rpx;
-  height: 64rpx;
+  width: 60rpx;
+  height: 60rpx;
   border-radius: 50%;
   background: #159453;
   color: #ffffff;
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 900;
-  line-height: 64rpx;
+  line-height: 60rpx;
   flex: 0 0 auto;
 }
 
@@ -297,41 +305,41 @@
 .logic-text {
   min-width: 0;
   color: #243b4f;
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 750;
-  line-height: 46rpx;
+  line-height: 45rpx;
   flex: 1;
 }
 
 .logic-art {
   position: absolute;
-  top: 12rpx;
-  right: 12rpx;
-  width: 100rpx;
-  height: 92rpx;
+  top: 8rpx;
+  right: 10rpx;
+  width: 90rpx;
+  height: 86rpx;
 }
 
 .takeaway {
   display: flex;
   align-items: center;
-  gap: 22rpx;
-  margin-top: 28rpx;
-  padding: 28rpx 28rpx;
+  gap: 18rpx;
+  margin-top: 20rpx;
+  padding: 23rpx 24rpx;
   border: 1rpx solid rgba(225, 164, 47, 0.36);
   border-radius: 22rpx;
   background: #fffdf7;
 }
 
 .takeaway-icon {
-  width: 72rpx;
-  height: 72rpx;
+  width: 64rpx;
+  height: 64rpx;
   flex: 0 0 auto;
 }
 
 .takeaway-text {
   min-width: 0;
   color: #a96708;
-  font-size: 29rpx;
+  font-size: 30rpx;
   font-weight: 800;
   line-height: 47rpx;
   flex: 1;
@@ -430,17 +438,17 @@
 
 .stage-title {
   color: #0d7c4b;
-  font-size: 30rpx;
+  font-size: 33rpx;
   font-weight: 900;
-  line-height: 44rpx;
+  line-height: 48rpx;
 }
 
 .stage-line {
   margin-top: 8rpx;
   color: #405568;
-  font-size: 27rpx;
-  font-weight: 500;
-  line-height: 43rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 47rpx;
 }
 
 .poster--three {
@@ -460,9 +468,9 @@
 .closing-quote {
   margin-top: 30rpx;
   color: #07184f;
-  font-size: 39rpx;
+  font-size: 42rpx;
   font-weight: 900;
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .closing-art {
@@ -474,9 +482,9 @@
 
 .closing-education {
   color: #30495b;
-  font-size: 30rpx;
-  font-weight: 650;
-  line-height: 49rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  line-height: 52rpx;
 }
 
 .gold-emphasis {
@@ -548,9 +556,9 @@
 .subject-text {
   min-width: 0;
   color: #14784a;
-  font-size: 29rpx;
+  font-size: 32rpx;
   font-weight: 800;
-  line-height: 46rpx;
+  line-height: 50rpx;
   flex: 1;
 }
 
@@ -573,9 +581,9 @@
 .final-copy {
   margin-top: 24rpx;
   color: #18354a;
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 750;
-  line-height: 48rpx;
+  line-height: 51rpx;
 }
 
 .assessment-bar {
@@ -617,8 +625,8 @@
 .assessment-subtitle {
   margin-top: 3rpx;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 27rpx;
-  line-height: 37rpx;
+  font-size: 29rpx;
+  line-height: 40rpx;
 }
 
 .assessment-arrow {
@@ -678,8 +686,8 @@
   }
 
   .section-title {
-    font-size: 38rpx;
-    line-height: 50rpx;
+    font-size: 41rpx;
+    line-height: 53rpx;
   }
 
   .english-art {

@@ -14,6 +14,8 @@ Route::group(function () {
     Route::get('index', 'v1.PublicController/index')->name('index')->option(['real_name' => 'health index']);
     Route::get('site_config', 'v1.PublicController/getSiteConfig')->name('getSiteConfig')->option(['real_name' => 'site config']);
     Route::get('miniapp/training-camp/member-plans', 'v1.miniapp.MineController/memberPlans')->name('miniappTrainingCampMemberPlans')->option(['real_name' => 'Miniapp training camp member plans']);
+    Route::get('miniapp/offline-locations', 'v1.PublicController/offlineLocations')->name('miniappOfflineLocations')->option(['real_name' => 'Miniapp offline locations']);
+    Route::get('miniapp/agreements', 'v1.PublicController/miniappAgreements')->name('miniappAgreements')->option(['real_name' => 'Miniapp agreements']);
 })->middleware(\app\http\middleware\AllowOriginMiddleware::class)
     ->middleware(\app\api\middleware\StationOpenMiddleware::class, false)
     ->option(['mark' => 'public', 'mark_name' => 'Public miniapp support']);

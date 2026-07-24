@@ -302,6 +302,10 @@ class SystemConfig extends AuthController
                 return app('json')->fail('提现最低金额只能为数字');
             }
         }
+        if (isset($post['miniapp_withdraw_start_day'], $post['miniapp_withdraw_end_day'])
+            && (int)$post['miniapp_withdraw_start_day'] > (int)$post['miniapp_withdraw_end_day']) {
+            return app('json')->fail('提现开放开始日不能晚于结束日');
+        }
         if (isset($post['wss_open'])) {
             $this->services->saveSslFilePath((int)$post['wss_open'], $post['wss_local_pk'] ?? '', $post['wss_local_cert'] ?? '');
         }

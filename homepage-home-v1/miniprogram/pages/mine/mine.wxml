@@ -34,6 +34,19 @@
           </view>
           <image class="section-icon" src="../../assets/mine/icon-referral.svg" mode="aspectFit"></image>
         </view>
+        <view class="identity-strip" wx:if="{{referralIdentity}}">
+          <view class="identity-main">
+            <view class="identity-badge">{{referralIdentity.levelKey}}</view>
+            <view>
+              <view class="identity-name">{{referralIdentity.levelName}}</view>
+              <view class="identity-code">{{referralIdentity.identityCode}}</view>
+            </view>
+          </view>
+          <view class="identity-quota">
+            <text class="identity-quota-value">{{referralIdentity.initialQuota}}</text>
+            <text class="identity-quota-label">团队初始名额</text>
+          </view>
+        </view>
         <view class="stats-row">
           <view class="stat-item" wx:for="{{stats}}" wx:key="key">
             <view class="stat-value">{{item.value}}</view>

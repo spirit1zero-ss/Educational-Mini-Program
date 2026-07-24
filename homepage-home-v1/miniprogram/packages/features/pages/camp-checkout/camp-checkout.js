@@ -16,7 +16,7 @@ Page({
     planLoadError: false,
     selectedPlanId: 0,
     showOriginPrice: false,
-    agreed: true,
+    agreed: false,
     product: {
       title: "21天线上特训营",
       subtitle: "直播课 + 打卡陪跑 + 答疑服务",
@@ -159,6 +159,13 @@ Page({
       .then(() => {
         this.setData({ submitting: false });
       });
+  },
+
+  onOpenAgreement(e) {
+    const key = e.currentTarget.dataset.key || 'service'
+    wx.navigateTo({
+      url: `/packages/features/pages/legal-document/legal-document?key=${key}`
+    })
   },
 
   onPaymentSuccess() {

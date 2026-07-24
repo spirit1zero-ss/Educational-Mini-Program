@@ -102,7 +102,7 @@ WHERE `pay_type` = 'virtual' AND `member_type` <> '';
 
 INSERT INTO `eb_system_timer`
 (`name`, `mark`, `content`, `type`, `week`, `day`, `hour`, `minute`, `second`, `last_execution_time`, `next_execution_time`, `add_time`, `is_del`, `is_open`)
-SELECT 'Training camp virtual payment reconciliation', 'virtualPaymentReconcile', 'Query XPay and retry entitlement delivery every minute', 2, 1, 1, 1, 1, 0, 0, 0, UNIX_TIMESTAMP(), 0, 1
+SELECT 'Training camp virtual payment reconciliation', 'virtualPaymentReconcile', 'Query XPay and retry entitlement delivery every minute', 2, 1, 1, 1, 1, 0, 0, 0, UNIX_TIMESTAMP(), 0, 0
 WHERE NOT EXISTS (
   SELECT 1 FROM `eb_system_timer` WHERE `mark` = 'virtualPaymentReconcile' AND `is_del` = 0
 );

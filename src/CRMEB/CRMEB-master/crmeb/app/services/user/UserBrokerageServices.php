@@ -38,14 +38,14 @@ class UserBrokerageServices extends BaseServices
         'get_member_brokerage' => [
             'title' => '获得下级购买付费会员佣金',
             'type' => 'one_member_brokerage',
-            'mark' => '{%nickname%}成功消费{%pay_price%}元,奖励推广佣金{%number%}',
+            'mark' => '{%nickname%}成功消费{%pay_price%}元，按{%level_name%}身份奖励一级佣金{%number%}',
             'status' => 1,
             'pm' => 1
         ],
         'get_two_member_brokerage' => [
             'title' => '获得二级购买付费会员佣金',
             'type' => 'two_member_brokerage',
-            'mark' => '二级推广人{%nickname%}成功消费{%pay_price%}元,奖励推广佣金{%number%}',
+            'mark' => '二级推广人{%nickname%}成功消费{%pay_price%}元，奖励二级佣金{%number%}',
             'status' => 1,
             'pm' => 1
         ],

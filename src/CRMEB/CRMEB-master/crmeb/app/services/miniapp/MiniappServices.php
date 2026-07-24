@@ -10,6 +10,7 @@ use app\services\pay\PayServices;
 use app\services\pay\PaymentLockService;
 use app\services\pay\VirtualPaymentServices;
 use app\services\user\member\MemberCardServices;
+use app\services\user\DistributionServices;
 use app\services\user\UserServices;
 use app\services\user\UserExtractServices;
 use app\services\wechat\RoutineServices;
@@ -336,11 +337,13 @@ class MiniappServices extends BaseServices
 
     public function getInviteRecords(int $uid, int $grade = 0, string $sort = '', string $keyword = ''): array
     {
-        $this->requireMemberUser($uid);
+        $user = $this->requireMemberUser($uid);
         /** @var UserServices $userServices */
         $userServices = app()->make(UserServices::class);
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
         $firstLevelUids = $userServices->getUserSpredadUids($uid, 1);
-        $secondLevelUids = sys_config('brokerage_level', 2) == 2 ? $userServices->getUserSpredadUids($uid, 2) : [];
+        $secondLevelUids = $userServices->getUserSpredadUids($uid, 2);
         $targetUids = (int)$grade === 1 ? $secondLevelUids : $firstLevelUids;
         $list = [];
 
@@ -348,6 +351,8 @@ class MiniappServices extends BaseServices
             $users = Db::name('user')
                 ->whereIn('uid', $targetUids)
                 ->where('is_del', 0)
+                ->where('status', 1)
+                ->where('is_ever_level', 1)
                 ->field('uid,nickname,avatar,phone,add_time,spread_time,spread_uid,is_ever_level,is_money_level,overdue_time,level,pay_count')
                 ->order('spread_time', 'desc')
                 ->select()
@@ -357,24 +362,26 @@ class MiniappServices extends BaseServices
             }
         }
 
-        if ((int)$grade === 0) {
-            $list = array_merge($this->getPendingInviteRecords($uid), $list);
-        }
         $pendingCount = count(array_filter($list, function ($item) {
             return ($item['status'] ?? '') === 'pending';
         }));
         $registeredCount = count(array_filter($list, function ($item) {
             return ($item['status'] ?? '') === 'registered';
         }));
+        $team = $distributionServices->teamStats($uid);
 
         return [
             'summary' => [
                 'invitedCount' => $pendingCount + $registeredCount,
                 'pendingCount' => $pendingCount,
                 'registeredCount' => $registeredCount,
-                'secondLevelCount' => count($secondLevelUids),
+                'teamInitialQuota' => $team['initialQuota'],
+                'pullNewCount' => $team['pullNewCount'],
+                'firstLevelCount' => $team['firstLevelCount'],
+                'secondLevelCount' => $team['secondLevelCount'],
             ],
-            'brokerageLevel' => (int)sys_config('brokerage_level', 2),
+            'identity' => $distributionServices->profile($user),
+            'brokerageLevel' => 2,
             'list' => $list,
             'count' => count($list),
         ];
@@ -403,28 +410,42 @@ class MiniappServices extends BaseServices
             ->where('uid', $uid)
             ->whereIn('type', $this->memberIncomeTypes())
             ->where('pm', 1)
+            ->where('status', 1)
             ->sum('number');
         $pendingAmount = Db::name('user_brokerage')
             ->where('uid', $uid)
             ->whereIn('type', $this->memberIncomeTypes())
             ->where('pm', 1)
+            ->where('status', 1)
             ->where('frozen_time', '>', time())
             ->sum('number');
-        $settledAmount = Db::name('user_brokerage')
+        $availableAmount = Db::name('user_brokerage')
             ->where('uid', $uid)
             ->whereIn('type', $this->memberIncomeTypes())
             ->where('pm', 1)
+            ->where('status', 1)
             ->where(function ($query) {
                 $query->where('frozen_time', '<=', time())->whereOr('frozen_time', 0);
             })
             ->sum('number');
+        $withdrawnBase = Db::name('user_extract')
+            ->where('uid', $uid)
+            ->where('extract_type', 'weixin')
+            ->where('status', 1)
+            ->where('state', 'SUCCESS');
+        $withdrawnAmount = bcsub(
+            (string)(clone $withdrawnBase)->sum('extract_price'),
+            (string)(clone $withdrawnBase)->sum('extract_fee'),
+            2
+        );
 
         return [
             'summary' => [
                 'totalAmount' => $this->formatAmount($totalAmount),
-                'availableAmount' => $this->formatAmount($settledAmount),
+                'availableAmount' => $this->formatAmount($availableAmount),
                 'pendingAmount' => $this->formatAmount($pendingAmount),
-                'settledAmount' => $this->formatAmount($settledAmount),
+                'withdrawnAmount' => $this->formatAmount($withdrawnAmount),
+                'settledAmount' => $this->formatAmount($availableAmount),
             ],
             'list' => $list,
             'count' => $count,
@@ -483,6 +504,7 @@ class MiniappServices extends BaseServices
     public function getWithdrawalOverview(int $uid): array
     {
         $user = $this->requireMemberUser($uid);
+        $window = $this->getWithdrawalWindow();
         /** @var UserExtractServices $extractServices */
         $extractServices = app()->make(UserExtractServices::class);
         $config = $extractServices->bank($uid);
@@ -514,6 +536,11 @@ class MiniappServices extends BaseServices
                 'id' => (int)$row['id'],
                 'amount' => $this->formatAmount($row['extract_price'] ?? 0),
                 'fee' => $this->formatAmount($row['extract_fee'] ?? 0),
+                'receivedAmount' => $this->formatAmount(bcsub(
+                    (string)($row['extract_price'] ?? 0),
+                    (string)($row['extract_fee'] ?? 0),
+                    2
+                )),
                 'status' => $statusKey,
                 'statusText' => $statusText,
                 'state' => $state,
@@ -535,6 +562,12 @@ class MiniappServices extends BaseServices
             'minAmount' => $this->formatAmount($config['minPrice'] ?? 0.1),
             'feeRate' => (string)($config['withdrawal_fee'] ?? 0),
             'hasPending' => Db::name('user_extract')->where('uid', $uid)->where('status', 0)->count() > 0,
+            'windowOpen' => $window['open'],
+            'windowStartDay' => $window['startDay'],
+            'windowEndDay' => $window['endDay'],
+            'windowLabel' => $window['label'],
+            'windowNotice' => $window['notice'],
+            'nextOpenDate' => $window['nextOpenDate'],
             'list' => $list,
         ];
     }
@@ -547,6 +580,10 @@ class MiniappServices extends BaseServices
         }
         if (!sys_config('weixin_extract_type', 0)) {
             throw new ApiException('后台尚未开启微信提现到零钱，请联系管理员');
+        }
+        $window = $this->getWithdrawalWindow();
+        if (!$window['open']) {
+            throw new ApiException($window['notice']);
         }
         if (!is_numeric($amount)) {
             throw new ApiException('请输入正确的提现金额');
@@ -575,6 +612,43 @@ class MiniappServices extends BaseServices
         });
 
         return $this->getWithdrawalOverview($uid);
+    }
+
+    private function getWithdrawalWindow(): array
+    {
+        $startDay = max(1, min(31, (int)sys_config('miniapp_withdraw_start_day', 1)));
+        $endDay = max(1, min(31, (int)sys_config('miniapp_withdraw_end_day', 7)));
+        if ($startDay > $endDay) {
+            $startDay = 1;
+            $endDay = 7;
+        }
+
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('Asia/Shanghai'));
+        $day = (int)$now->format('j');
+        $open = $day >= $startDay && $day <= $endDay;
+        $label = sprintf('每月%d日至%d日', $startDay, $endDay);
+        $nextOpenDate = '';
+
+        if (!$open) {
+            if ($day < $startDay) {
+                $nextOpen = $now->setDate((int)$now->format('Y'), (int)$now->format('n'), $startDay);
+            } else {
+                $nextOpen = $now->modify('first day of next month')
+                    ->modify(sprintf('+%d days', $startDay - 1));
+            }
+            $nextOpenDate = $nextOpen->format('Y-m-d');
+        }
+
+        return [
+            'open' => $open,
+            'startDay' => $startDay,
+            'endDay' => $endDay,
+            'label' => $label,
+            'nextOpenDate' => $nextOpenDate,
+            'notice' => $open
+                ? sprintf('当前可申请提现（%s）', $label)
+                : sprintf('提现申请时间为%s，下次开放：%s', $label, $nextOpenDate),
+        ];
     }
 
     /** Safely close stale unpaid training-camp orders from the cron worker. */
@@ -812,11 +886,14 @@ class MiniappServices extends BaseServices
     private function formatMember(array $user): array
     {
         $isMember = $this->isTrainingCampMember($user);
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
         return [
             'isMember' => $isMember,
             'uid' => $isMember ? $this->encodeMemberUid((int)$user['uid']) : '',
             'statusText' => $isMember ? $this->zh('\u0032\u0031\u5929\u8bad\u7ec3\u8425\u4f1a\u5458') : $this->zh('\u672a\u5f00\u901a\u8bad\u7ec3\u8425'),
             'expiresAt' => $this->formatOverdueTime((int)($user['overdue_time'] ?? 0)),
+            'distributionIdentity' => $isMember ? $distributionServices->profile($user) : null,
         ];
     }
 
@@ -827,23 +904,48 @@ class MiniappServices extends BaseServices
         if (!$isMember) {
             return [
                 'inviteCount' => 0,
+                'invitedCount' => 0,
                 'orderCount' => 0,
                 'incomeAmount' => '0.00',
+                'withdrawnAmount' => '0.00',
                 'posterCount' => 0,
                 'canPromote' => false,
                 'posterCtaText' => $this->zh('\u5f00\u901a\u540e\u751f\u6210\u63a8\u5e7f\u6d77\u62a5'),
             ];
         }
 
-        /** @var UserServices $userServices */
-        $userServices = app()->make(UserServices::class);
-        $inviteCount = (int)($user['spread_count'] ?? count($userServices->getUserSpredadUids($uid, 1)));
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
+        $team = $distributionServices->teamStats($uid);
+        $incomeTypes = $distributionServices->memberIncomeTypes();
+        $totalIncome = Db::name('user_brokerage')
+            ->where('uid', $uid)
+            ->whereIn('type', $incomeTypes)
+            ->where('pm', 1)
+            ->where('status', 1)
+            ->sum('number');
+        $withdrawnBase = Db::name('user_extract')
+            ->where('uid', $uid)
+            ->where('extract_type', 'weixin')
+            ->where('status', 1)
+            ->where('state', 'SUCCESS');
+        $withdrawnAmount = bcsub(
+            (string)(clone $withdrawnBase)->sum('extract_price'),
+            (string)(clone $withdrawnBase)->sum('extract_fee'),
+            2
+        );
         $canPromote = $this->canPromote($user);
 
         return [
-            'inviteCount' => $inviteCount,
+            'inviteCount' => $team['pullNewCount'],
+            'invitedCount' => $team['pullNewCount'],
             'orderCount' => (int)($user['pay_count'] ?? 0),
-            'incomeAmount' => $this->formatAmount($user['brokerage_price'] ?? 0),
+            'incomeAmount' => $this->formatAmount($totalIncome),
+            'withdrawnAmount' => $this->formatAmount($withdrawnAmount),
+            'teamInitialQuota' => $team['initialQuota'],
+            'firstLevelCount' => $team['firstLevelCount'],
+            'secondLevelCount' => $team['secondLevelCount'],
+            'identity' => $distributionServices->profile($user),
             'posterCount' => 0,
             'canPromote' => $canPromote,
             'posterCtaText' => $canPromote ? $this->zh('\u751f\u6210\u63a8\u5e7f\u6d77\u62a5') : '推广资格已关闭',
@@ -935,7 +1037,7 @@ class MiniappServices extends BaseServices
             ? $this->zh('\u4e8c\u7ea7\u4f1a\u5458\u4f63\u91d1')
             : $this->zh('\u4e00\u7ea7\u4f1a\u5458\u4f63\u91d1');
         $isFrozen = (int)($item['frozen_time'] ?? 0) > time();
-        $status = $isFrozen ? 'pending' : 'settled';
+        $status = (int)($item['status'] ?? 1) === -1 ? 'rejected' : ($isFrozen ? 'pending' : 'available');
 
         return [
             'id' => (string)($item['id'] ?? ''),
@@ -950,7 +1052,7 @@ class MiniappServices extends BaseServices
             'number' => $this->formatAmount($item['number'] ?? 0),
             'pm' => (int)($item['pm'] ?? 1),
             'statusKey' => $status,
-            'statusText' => $status === 'pending' ? $this->zh('\u5f85\u7ed3\u7b97') : $this->zh('\u5df2\u5230\u8d26'),
+            'statusText' => ['pending' => '待结算', 'available' => '可提现', 'rejected' => '已撤销'][$status],
             'isFrozen' => $isFrozen,
             'frozenTime' => $this->formatOverdueTime((int)($item['frozen_time'] ?? 0)),
             'linkId' => (int)($item['link_id'] ?? 0),

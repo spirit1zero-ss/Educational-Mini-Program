@@ -37,6 +37,7 @@ Page({
     },
     benefitText: '报名后开通会员权益',
     posterCtaText: '开通后生成推广海报',
+    referralIdentity: null,
     assetBase: '../../assets/mine/',
     heroImage: '../../assets/mine/mine-hero-training-camp.jpg',
     memberHeroImage: '../../assets/mine/mine-hero-member-active.jpg',
@@ -44,9 +45,9 @@ Page({
     redeemCode: '',
     redeemSubmitting: false,
     stats: [
-      { key: 'invited', value: '0人', label: '已邀请' },
-      { key: 'reward', value: '0元', label: '预计奖励' },
-      { key: 'withdraw', value: '0元', label: '可提现' }
+      { key: 'invited', value: '0人', label: '分销拉新人数' },
+      { key: 'reward', value: '0元', label: '总收入' },
+      { key: 'withdraw', value: '0元', label: '已提现' }
     ],
     quickActions: [
       {
@@ -56,7 +57,7 @@ Page({
       },
       {
         key: 'invite',
-        title: '邀请记录',
+        title: '我的团队',
         icon: '../../assets/mine/icon-invite-record.svg'
       },
       {
@@ -265,7 +266,7 @@ Page({
     const key = e.currentTarget.dataset.key
     const labels = {
       poster: '推广海报',
-      invite: '邀请记录',
+      invite: '我的团队',
       income: '我的收益',
       order: '训练营订单'
     }
@@ -530,8 +531,9 @@ Page({
       ? trainingCamp.memberPlan
       : (memberPlans.find((item) => item && item.type === 'ever' && !item.isFree) || null)
     const invitedCount = referral.invitedCount !== undefined ? referral.invitedCount : (referral.inviteCount || 0)
-    const incomeAmount = referral.estimatedRewardText || (referral.incomeAmount ? `${referral.incomeAmount}元` : '0元')
-    const withdrawableAmount = referral.withdrawableAmountText || (referral.availableAmount ? `${referral.availableAmount}元` : '0元')
+    const incomeAmount = referral.incomeAmount ? `${referral.incomeAmount}元` : '0元'
+    const withdrawnAmount = referral.withdrawnAmount ? `${referral.withdrawnAmount}元` : '0元'
+    const referralIdentity = referral.identity || member.distributionIdentity || null
 
     this.setData({
       isMember,
@@ -543,11 +545,12 @@ Page({
       memberStatusText: member.statusText || (isMember ? '训练营会员' : '当前未开通会员'),
       benefitText: member.benefitText || benefitText || trainingCamp.benefitText || (isMember ? '会员权益已生效' : '报名后开通会员权益'),
       trainingCamp,
+      referralIdentity,
       posterCtaText: referral.posterCtaText || (isMember ? '生成推广海报' : '开通后生成推广海报'),
       stats: [
-        { key: 'invited', value: `${invitedCount}人`, label: '已邀请' },
-        { key: 'reward', value: incomeAmount, label: '预计奖励' },
-        { key: 'withdraw', value: withdrawableAmount, label: '可提现' }
+        { key: 'invited', value: `${invitedCount}人`, label: '分销拉新人数' },
+        { key: 'reward', value: incomeAmount, label: '总收入' },
+        { key: 'withdraw', value: withdrawnAmount, label: '已提现' }
       ]
     })
   }

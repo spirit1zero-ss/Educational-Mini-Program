@@ -1,0 +1,10 @@
+<view class="page">
+  <custom-nav title="{{title}}" showBack="{{true}}" showHome="{{true}}"></custom-nav>
+  <scroll-view class="document-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="document-card">
+      <view class="loading" wx:if="{{loading}}">协议加载中...</view>
+      <rich-text wx:else class="document-content" nodes="{{content}}"></rich-text>
+    </view>
+    <view class="safe-spacer"></view>
+  </scroll-view>
+</view>

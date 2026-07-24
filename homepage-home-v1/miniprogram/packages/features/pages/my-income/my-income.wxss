@@ -27,10 +27,24 @@
   box-shadow: 0 12rpx 24rpx rgba(36, 92, 74, 0.16);
 }
 
+.primary-entry--disabled {
+  background: #dce6df;
+  color: #829289;
+  box-shadow: none;
+}
+
 .secondary-entry {
   border: 1rpx solid rgba(47, 107, 67, 0.16);
   background: #f2f7ef;
   color: #245c4a;
+}
+
+.withdraw-window-tip {
+  margin-top: 16rpx;
+  color: #75867d;
+  font-size: 22rpx;
+  line-height: 1.55;
+  text-align: center;
 }
 
 .record-icon {
@@ -47,7 +61,66 @@
   color: #496b59;
 }
 
+.status-badge--available {
+  background: rgba(47, 107, 67, 0.1);
+  color: #245c4a;
+}
+
+.status-badge--rejected {
+  background: rgba(190, 76, 76, 0.1);
+  color: #b44949;
+}
+
 .primary-entry:active,
 .secondary-entry:active {
   transform: scale(0.99);
 }
+
+.withdraw-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(18, 38, 29, 0.42);
+}
+
+.withdraw-dialog {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 38rpx 34rpx calc(34rpx + env(safe-area-inset-bottom));
+  border-radius: 34rpx 34rpx 0 0;
+  background: #fff;
+}
+
+.withdraw-title { color: #173c2f; font-size: 34rpx; font-weight: 800; }
+.withdraw-tip { margin-top: 12rpx; color: #7a8c83; font-size: 24rpx; }
+.withdraw-input-row { display: flex; align-items: center; margin-top: 30rpx; padding: 20rpx 0; border-bottom: 2rpx solid #dfe9e2; }
+.withdraw-currency { margin-right: 16rpx; color: #1d6048; font-size: 46rpx; font-weight: 800; }
+.withdraw-input { flex: 1; height: 64rpx; color: #173c2f; font-size: 46rpx; font-weight: 800; }
+.withdraw-fee { margin-top: 14rpx; color: #9a7b3a; font-size: 22rpx; }
+.withdraw-actions { display: flex; gap: 18rpx; margin-top: 34rpx; }
+.withdraw-actions button { flex: 1; height: 82rpx; border: 0; border-radius: 999rpx; font-size: 27rpx; font-weight: 800; line-height: 82rpx; }
+.withdraw-actions button::after { border: 0; }
+.withdraw-cancel { background: #edf3ef; color: #49685b; }
+.withdraw-submit { background: #178353; color: #fff; }
+
+.transfer-confirm {
+  position: fixed;
+  right: 24rpx;
+  bottom: calc(24rpx + env(safe-area-inset-bottom));
+  left: 24rpx;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 24rpx;
+  border: 1rpx solid #d7e8dc;
+  border-radius: 24rpx;
+  background: #fff;
+  box-shadow: 0 14rpx 34rpx rgba(29, 96, 72, 0.18);
+}
+.transfer-confirm-title { color: #173c2f; font-size: 26rpx; font-weight: 800; }
+.transfer-confirm-desc { margin-top: 6rpx; color: #87958e; font-size: 21rpx; }
+.transfer-confirm-button { margin: 0; padding: 0 28rpx; height: 66rpx; border: 0; border-radius: 999rpx; background: #178353; color: #fff; font-size: 24rpx; font-weight: 800; line-height: 66rpx; }
+.transfer-confirm-button::after { border: 0; }

@@ -55,6 +55,12 @@ export default {
       component: () => import('@/pages/user/grade/registration/index'),
     },
     {
+      path: 'grade/offlineLocations',
+      name: `${pre}offlineLocations`,
+      meta: { auth: ['admin-user-grade-offline-locations'], footer: true, title: '线下地址' },
+      component: () => import('@/pages/user/grade/offlineLocations/index'),
+    },
+    {
       path: 'grade/card',
       name: `${pre}card`,
       meta: { auth: ['admin-user-grade-card'], footer: true, title: '卡密会员' },
@@ -81,7 +87,7 @@ export default {
     {
       path: 'grade/agreement',
       name: `${pre}agreement`,
-      meta: { auth: ['admin-user-grade-agreement'], footer: true, title: '会员协议' },
+      meta: { auth: ['admin-user-grade-agreement'], footer: true, title: '小程序协议' },
       component: () => import('@/pages/user/grade/agreement/index'),
     },
   ],

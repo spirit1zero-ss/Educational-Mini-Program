@@ -10,6 +10,7 @@
 // +----------------------------------------------------------------------
 namespace app\adminapi\controller\v1\finance;
 
+use app\services\user\DistributionServices;
 use app\services\user\UserBillServices;
 use think\facade\App;
 use app\adminapi\controller\AuthController;
@@ -70,6 +71,37 @@ class Finance extends AuthController
             ['time', '']
         ]);
         return app('json')->success($this->services->getCommissionList($where));
+    }
+
+    /**
+     * 训练营固定返佣结算列表
+     */
+    public function member_commission_list()
+    {
+        $where = $this->request->getMore([
+            ['status', 'pending'],
+            ['keyword', ''],
+            ['page', 1],
+            ['limit', 20],
+        ]);
+        /** @var DistributionServices $services */
+        $services = app()->make(DistributionServices::class);
+        return app('json')->success($services->settlementList($where));
+    }
+
+    /**
+     * 审核一笔训练营固定返佣
+     */
+    public function review_member_commission($id)
+    {
+        [$decision, $reason] = $this->request->postMore([
+            ['decision', ''],
+            ['reason', ''],
+        ], true);
+        /** @var DistributionServices $services */
+        $services = app()->make(DistributionServices::class);
+        $services->reviewSettlement((int)$id, (string)$decision, (string)$reason);
+        return app('json')->success($decision === 'approve' ? '结算审核已通过' : '结算审核已驳回');
     }
 
     /**

@@ -13,15 +13,16 @@
               <view class="hero-quote-text">{{articleBlocks[0].text}}</view>
               <view class="quote-mark quote-mark--end">”</view>
             </view>
-            <view class="hero-definition">
-              <image class="hero-definition-icon" src="{{iconBase}}{{articleBlocks[1].icon}}" mode="aspectFit"></image>
-              <view class="hero-definition-copy">
-                <text>{{articleBlocks[1].prefix}}</text>
-                <text class="hero-highlight">{{articleBlocks[1].highlight}}</text>
-              </view>
-            </view>
           </view>
           <image class="hero-tree" src="{{heroTreeImage}}" mode="aspectFit"></image>
+          <view class="hero-definition">
+            <image class="hero-definition-icon" src="{{iconBase}}{{articleBlocks[1].icon}}" mode="aspectFit"></image>
+            <view class="hero-definition-copy">
+              <text>{{articleBlocks[1].prefix}}</text>
+              <text class="hero-highlight">{{articleBlocks[1].highlight}}</text>
+            </view>
+            <image class="hero-definition-book" src="{{definitionBookImage}}" mode="aspectFit"></image>
+          </view>
         </view>
 
         <view class="poster-card english-card">

@@ -1,23 +1,101 @@
 <view class="page">
   <view class="safe-header" style="{{safeTopStyle}}" aria-hidden="true"></view>
 
-  <home-hero modules="{{modules}}" bind:select="onEntrySelect"></home-hero>
+  <view class="hero">
+    <image
+      class="hero__background"
+      src="../../assets/home/homepage-background-clean.jpg"
+      mode="scaleToFill"
+      aria-hidden="true"
+    ></image>
+
+    <view class="hero__heading">
+      <view class="hero__eyebrow">
+        <image
+          class="hero__sprout"
+          src="../../assets/home/reference-module-leaf.png"
+          mode="aspectFit"
+        ></image>
+        <text>自主学习是AI时代的根本能力！</text>
+      </view>
+      <view class="hero__title">自主学习训练营</view>
+      <view class="hero__subtitle">大道至简：三大核心模块</view>
+    </view>
+
+    <view class="hero__module-list">
+      <view
+        wx:for="{{modules}}"
+        wx:for-index="moduleIndex"
+        wx:key="key"
+        class="module-card module-card--{{item.tone}}"
+        role="button"
+        aria-label="{{item.title}}，{{item.subtitle}}"
+        data-index="{{moduleIndex}}"
+        bindtap="onModuleTap"
+      >
+        <view class="module-card__copy">
+          <view class="module-card__title-row">
+            <view class="module-card__badge">{{item.badge}}</view>
+            <text class="module-card__title">{{item.title}}</text>
+          </view>
+          <text class="module-card__subtitle">{{item.subtitle}}</text>
+        </view>
+        <view class="module-card__visual" aria-hidden="true">
+          <image class="module-card__icon" src="{{item.icon}}" mode="aspectFit"></image>
+          <image class="module-card__click-mark" src="{{item.indicatorIcon}}" mode="aspectFit"></image>
+        </view>
+      </view>
+    </view>
+  </view>
 
   <view class="action-list">
-    <home-action-row
+    <view
       wx:for="{{actions}}"
+      wx:for-index="actionIndex"
       wx:key="key"
-      item="{{item}}"
-      bind:select="onEntrySelect"
-    ></home-action-row>
+      class="action-row action-row--{{item.tone}} {{item.solid ? 'action-row--solid' : ''}}"
+      role="button"
+      aria-label="{{item.title}}，{{item.action}}"
+      data-index="{{actionIndex}}"
+      bindtap="onActionTap"
+    >
+      <view class="action-row__icon-wrap">
+        <image class="action-row__icon" src="{{item.icon}}" mode="aspectFit"></image>
+      </view>
+
+      <view class="action-row__copy">
+        <text class="action-row__title">{{item.title}}</text>
+        <text class="action-row__description">{{item.description}}</text>
+      </view>
+
+      <view class="action-row__end">
+        <view class="action-row__button">
+          <text class="action-row__button-text">{{item.action}}</text>
+          <image class="action-row__button-mark" src="{{item.indicatorIcon}}" mode="aspectFit" aria-hidden="true"></image>
+        </view>
+      </view>
+    </view>
   </view>
 
   <view class="tabbar-placeholder" style="{{bottomPlaceholderStyle}}" aria-hidden="true"></view>
 
-  <home-tabbar
-    tabs="{{tabs}}"
-    active="home"
-    safe-bottom="{{safeBottom}}"
-    bind:change="onTabChange"
-  ></home-tabbar>
+  <view class="tabbar" style="padding-bottom: {{safeBottom}}px;">
+    <view
+      wx:for="{{tabs}}"
+      wx:for-index="tabIndex"
+      wx:key="key"
+      class="tabbar__item {{item.key === 'home' ? 'tabbar__item--active' : ''}}"
+      role="button"
+      aria-label="{{item.label}}"
+      data-index="{{tabIndex}}"
+      bindtap="onTabTap"
+    >
+      <image
+        class="tabbar__icon"
+        src="{{item.key === 'home' ? item.activeIcon : item.icon}}"
+        mode="aspectFit"
+      ></image>
+      <text class="tabbar__label">{{item.label}}</text>
+    </view>
+  </view>
 </view>

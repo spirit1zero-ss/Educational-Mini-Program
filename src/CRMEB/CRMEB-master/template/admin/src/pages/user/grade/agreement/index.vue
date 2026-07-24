@@ -1,18 +1,29 @@
 <template>
   <div>
     <el-card :bordered="false" shadow="never" class="ivu-mt">
-      <el-form label-width="85px" @submit.native.prevent>
+      <el-alert
+        title="这里维护小程序支付与报名页面展示的正式协议。发布前请由业务负责人核对文本。"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="agreement-tip"
+      />
+      <el-tabs v-model="activeKey" @tab-click="loadAgreement">
+        <el-tab-pane v-for="item in types" :key="item.key" :label="item.label" :name="item.key" />
+      </el-tabs>
+      <el-form label-width="100px" @submit.native.prevent v-loading="loading">
         <el-form-item label="协议名称：">
-          <el-input v-model="agreement.title"></el-input>
+          <el-input v-model="agreement.title" maxlength="200" show-word-limit />
         </el-form-item>
         <el-form-item label="协议内容：">
-          <WangEditor :content="agreement.content" @editorContent="getEditorContent"></WangEditor>
-        </el-form-item>
-        <el-form-item label="开启状态：">
-          <el-switch :active-value="1" :inactive-value="0" v-model="agreement.status" size="large"> </el-switch>
+          <WangEditor
+            :key="activeKey + '-' + editorVersion"
+            :content="agreement.content"
+            @editorContent="getEditorContent"
+          />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" v-db-click @click="memberAgreementSave">保存</el-button>
+          <el-button type="primary" v-db-click :loading="saving" @click="saveAgreement">保存当前协议</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -21,68 +32,85 @@
 
 <script>
 import WangEditor from '@/components/wangEditor/index.vue';
-import { memberAgreement, memberAgreementSave } from '@/api/user';
+import { getAgreements, setAgreements } from '@/api/system';
 
 export default {
+  name: 'miniappAgreements',
   components: { WangEditor },
   data() {
     return {
-      ueConfig: {
-        autoHeightEnabled: false,
-        initialFrameHeight: 500,
-        initialFrameWidth: '100%',
-        UEDITOR_HOME_URL: '/UEditor/',
-        serverUrl: '',
-      },
-      id: 0,
+      types: [
+        { key: 'service', label: '训练营服务协议', type: 1 },
+        { key: 'privacy', label: '隐私政策', type: 3 },
+        { key: 'registration', label: '报名信息使用说明', type: 9 },
+      ],
+      activeKey: 'service',
+      loading: false,
+      saving: false,
+      editorVersion: 0,
       agreement: {
+        id: 0,
+        type: 1,
         title: '',
         content: '',
-        status: 1,
       },
-      spinShow: false,
     };
   },
   created() {
-    this.memberAgreement();
+    this.loadAgreement();
   },
   methods: {
-    getEditorContent(data) {
-      this.agreement.content = data;
+    currentType() {
+      return this.types.find((item) => item.key === this.activeKey) || this.types[0];
     },
-    memberAgreement() {
-      this.spinShow = true;
-      memberAgreement()
+    getEditorContent(content) {
+      this.agreement.content = content;
+    },
+    loadAgreement() {
+      const current = this.currentType();
+      this.loading = true;
+      getAgreements(current.type)
         .then((res) => {
-          this.spinShow = false;
-          const { title, content, status, id } = res.data;
-          this.agreement.title = title;
-          this.agreement.content = content;
-          this.agreement.status = status;
-          this.id = id;
+          const data = res.data || {};
+          this.agreement = {
+            id: Number(data.id || 0),
+            type: current.type,
+            title: data.title || current.label,
+            content: data.content || '',
+          };
+          this.editorVersion += 1;
         })
-        .catch((err) => {
-          this.$message.error(err);
-          this.spinShow = false;
+        .catch((error) => this.$message.error(error.msg || '协议加载失败'))
+        .finally(() => {
+          this.loading = false;
         });
     },
-    // 保存
-    memberAgreementSave() {
-      memberAgreementSave(this.id, this.agreement)
+    saveAgreement() {
+      if (!this.agreement.title.trim()) {
+        this.$message.warning('请填写协议名称');
+        return;
+      }
+      if (!this.agreement.content.trim()) {
+        this.$message.warning('请填写协议内容');
+        return;
+      }
+      this.saving = true;
+      setAgreements(this.agreement)
         .then((res) => {
-          this.$message.success('保存成功');
-          this.memberAgreement();
+          this.$message.success(res.msg || '保存成功');
+          this.loadAgreement();
         })
-        .catch((err) => {
-          this.$message.error(err);
+        .catch((error) => this.$message.error(error.msg || '保存失败'))
+        .finally(() => {
+          this.saving = false;
         });
     },
   },
 };
 </script>
 
-<style lang="scss" scoped>
-::v-deep .ivu-form-item-content {
-  line-height: unset !important;
+<style scoped>
+.agreement-tip {
+  margin-bottom: 18px;
 }
 </style>

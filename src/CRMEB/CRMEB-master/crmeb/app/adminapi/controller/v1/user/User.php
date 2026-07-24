@@ -408,6 +408,7 @@ class User extends AuthController
             ['integration', 0],
             ['status', 0],
             ['level', 0],
+            ['agent_level', 0],
             ['phone', 0],
             ['addres', ''],
             ['label_id', []],

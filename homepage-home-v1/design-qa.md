@@ -2,7 +2,7 @@
 
 source visual truth path: `reference/homepage-reference.jpg`
 
-latest implementation screenshot path: `reference/homepage-implementation-icon-button-width-before-fix.png`
+latest implementation screenshot path: removed during the confirmed unused-asset cleanup on 2026-07-23.
 
 viewport: 408 x 451 cropped iPhone-style WeChat simulator view.
 
@@ -93,5 +93,68 @@ The supplied screenshot identifies two remaining issues: the third/fourth list i
 1. Recompile `pages/home/home` in WeChat Developer Tools.
 2. Confirm all four list icons are complete and visually centered.
 3. Confirm all four button rectangles and arrow columns align.
+
+final result: blocked
+
+### Iteration — adaptive poster height
+
+- pre-fix implementation screenshot: `C:/Users/lenovo/AppData/Local/Temp/codex-clipboard-68a078bf-d4bc-4692-9c77-0bb5337bc4e2.png`.
+- visible defect: the inner-drive section 02 card ended near the middle of its colored poster, while a forced `900rpx` poster minimum left a large empty background before the landscape divider.
+- root cause: the shared learning-habit stylesheet applied `min-height: 900rpx` to every poster and `min-height: 800rpx` to the first spotlight card; the inner-drive page imports the same stylesheet, so both pages inherited the gap.
+- fix: removed both fixed minimum heights so poster and spotlight sections now size from their actual text and illustration content, retaining the existing 56rpx section-bottom breathing room.
+- related-page audit: learning habit and inner drive share the repaired rule; the subject-logic and 21-day training-camp pages do not use the same fixed `900rpx` poster minimum and therefore were not changed.
+- content and interaction: no text, image source, navigation path, CTA, API, or business logic changed.
+- blocker: the user requested no desktop control, so refreshed WeChat simulator screenshots remain user-supplied.
+
+final result: blocked
+
+## Learning Habit and Inner Drive — large-poster redesign
+
+- homepage module reference: `C:/Users/lenovo/AppData/Local/Temp/codex-clipboard-3a72f8a1-d301-4a52-a688-288931d7297f.png`.
+- visual-system reference: the existing 21-day training-camp page and its large illustration, 39rpx-plus section headings, 26–30rpx body scale, rounded white cards, landscape dividers, and in-flow action card.
+- implementation files: `miniprogram/packages/features/pages/module-3-habit/module-3-habit.*` and `miniprogram/packages/features/pages/module-4-drive/module-4-drive.*`.
+- built-in ImageGen assets: `habit-hero-v2.webp`, `habit-child-v2.webp`, `drive-hero-v2.webp`, and `drive-family-v2.webp`; generated as soft educational illustrations, chroma-keyed, and saved with transparent backgrounds.
+- layout changes: both text-card pages now use a large illustrated hero, definition strip, three poster-like reading sections, landscape separators, 40rpx section titles, 31rpx body copy, and a large in-flow CTA that does not cover text.
+- content and interaction audit: every original `articleBlocks` string, navigation title, CTA label, and target route is unchanged; JavaScript diffs contain only the three new asset paths per page.
+- automated validation: `npm run test:miniprogram` passed with 34 JavaScript files, 31 JSON files, and 21 pages; `git diff --check` reported no whitespace errors for both modules and their new assets.
+- blocker: the user explicitly requested no desktop control, so no automated WeChat simulator capture was attempted. Refreshed user screenshots are required for final visual comparison.
+
+final result: blocked
+
+## Subject Logic — selected visual option 2
+
+- source visual truth path: `C:/Users/lenovo/.codex/generated_images/019f7d60-c91f-7ca2-bf7d-d704cc210274/exec-c38550b5-6ae4-4db8-9e38-2fde79a91ef4.png`
+- selected direction: large flowering tree on the left, headline and quotation on the right, a white definition strip, then a large ABC illustration and editorial reading rhythm.
+- implementation files: `miniprogram/packages/features/pages/module-2-logic/module-2-logic.wxml`, `module-2-logic.wxss`, and `module-2-logic.js`.
+- generated transparent assets: `hero-tree-v3.webp`, `english-bricks-v3.webp`, and `english-frame-v3.webp`.
+- copy audit: every original quote, definition, English paragraph, English rule, takeaway, math paragraph, math rule, stage line, closing statement, subject line, and final line remains data-driven and rendered; the assessment navigation is unchanged.
+- automated validation: `npm run test:miniprogram` passed with 34 JavaScript files, 31 JSON files, and 21 pages.
+- visual capture status: WeChat Developer Tools is running, but its captured window is currently covered by another full-screen application and could not be activated through the desktop-control API. A same-viewport post-build screenshot is still needed for pixel-level comparison.
+
+### Iteration — hero overlap repair
+
+- pre-fix implementation screenshot path: `C:/Users/lenovo/AppData/Local/Temp/codex-clipboard-f3530437-1cbb-4b4e-a50b-fa5f14b65988.png`
+- normalized comparison path: `C:/Users/lenovo/.codex/visualizations/2026/07/20/019f7d60-c91f-7ca2-bf7d-d704cc210274/subject-logic-reference-vs-implementation-20260723.png`
+- source pixels: 840 x 1760; pre-fix implementation pixels: 431 x 887; comparison normalized to equal height.
+- state: first poster at the top of the `学科开窍` page with native mini-program navigation retained.
+- [P0 fixed in code] `.hero-definition` was absolutely positioned inside `.hero-copy`, so its containing block was the narrow headline column. It overlapped the headline and quotation and forced definition copy into near-vertical wrapping. The definition card is now a sibling of `.hero-copy` and is positioned against `.hero-poster`.
+- [P1 fixed in code] Hero proportions drifted from the selected design. Hero height, landscape crop, tree scale, headline width, quote metrics, and bottom-card insets were remeasured and tightened.
+- [P1 fixed in code] The first content poster was too sparse and tall. English illustration, reading spacing, list-row height, supporting icons, and takeaway padding were reduced while preserving every source sentence.
+- [P2 fixed in assets] Added `definition-book-v4.webp`, a transparent built-in ImageGen asset matching the source's open-book-and-sprout motif.
+- automated validation: mini-program smoke test passed; `git diff --check` reported no whitespace errors.
+- blocker: the Windows capture API continues to return an unrelated full-screen surface for the WeChat Developer Tools window, so a truthful post-fix rendered comparison cannot yet be produced.
+
+final result: blocked
+
+### Iteration — 21-day camp typography scale
+
+- implementation evidence supplied by user: `C:/Users/lenovo/AppData/Local/Temp/codex-clipboard-0ab69e72-f33f-4f66-b49f-c70fc8cdb214.png`, `codex-clipboard-cd22a31d-ae6b-49d4-ab81-55ed6fdab4c1.png`, and `codex-clipboard-769238e8-60a1-47a5-86e5-4227364ce5a0.png`.
+- typography comparison path: `C:/Users/lenovo/.codex/visualizations/2026/07/20/019f7d60-c91f-7ca2-bf7d-d704cc210274/logic-typography-vs-camp-reference-20260723.png`.
+- reference implementation: `miniprogram/packages/features/pages/module-5-camp/module-5-camp.wxss`, especially its 39rpx section titles, 30–35rpx card titles, 26–30rpx body copy, and stronger 600–900 text weights.
+- finding: the repaired layout is structurally acceptable, but long-form body copy, definition copy, rule rows, stage details, subject rows, and supporting text read materially smaller and lighter than the 21-day camp page.
+- fix: enlarged the logic page's body scale to 30–32rpx, section titles to 44rpx, stage titles to 33rpx, closing headline to 42rpx, and supporting labels to 28–29rpx; increased matching line heights and weights to preserve comfortable reading rhythm.
+- interaction and content: all original text, scrolling behavior, navigation, and the assessment action remain unchanged.
+- automated validation: mini-program smoke test passed.
+- blocker: the user explicitly requested no desktop control, so no automated WeChat simulator capture was attempted. A refreshed user screenshot is required for the post-fix visual comparison.
 
 final result: blocked

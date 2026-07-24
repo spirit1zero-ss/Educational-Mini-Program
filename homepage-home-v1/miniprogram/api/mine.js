@@ -18,6 +18,14 @@ function getMemberPlans() {
   return get('/api/miniapp/training-camp/member-plans', {}, { noAuth: true })
 }
 
+function getOfflineLocations() {
+  return get('/api/miniapp/offline-locations', {}, { noAuth: true })
+}
+
+function getMiniappAgreements() {
+  return get('/api/miniapp/agreements', {}, { noAuth: true })
+}
+
 function createTrainingCampMemberOrder(data) {
   return post('/api/miniapp/training-camp/member-order', data || {})
 }
@@ -42,6 +50,14 @@ function getIncomeRecords(data) {
   return get('/api/miniapp/referral/income', data)
 }
 
+function getWithdrawalOverview() {
+  return get('/api/miniapp/referral/withdrawal')
+}
+
+function applyWithdrawal(data) {
+  return post('/api/miniapp/referral/withdrawal', data || {})
+}
+
 function getTrainingCampOrders(data) {
   return get('/api/miniapp/training-camp/orders', data)
 }
@@ -59,12 +75,16 @@ module.exports = {
   createReferralPoster,
   useRedeemCode,
   getMemberPlans,
+  getOfflineLocations,
+  getMiniappAgreements,
   createTrainingCampMemberOrder,
   payTrainingCampMemberOrder,
   confirmTrainingCampMemberOrder,
   cancelTrainingCampMemberOrder,
   getInviteRecords,
   getIncomeRecords,
+  getWithdrawalOverview,
+  applyWithdrawal,
   getTrainingCampOrders,
   getTrainingCampRegistration,
   saveTrainingCampRegistration

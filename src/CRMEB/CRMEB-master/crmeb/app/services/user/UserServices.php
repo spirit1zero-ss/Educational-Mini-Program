@@ -678,7 +678,8 @@ class UserServices extends BaseServices
                         $item['vip_name'] = $item['level'] != '无' ? $item['level'] : false;
                     }
                 }
-                $item['agent_level_name'] = $agentLevel[$item['agent_level']] ?? '无';
+                $item['agent_level_name'] = $agentLevel[$item['agent_level']]
+                    ?? ((int)$item['is_ever_level'] === 1 ? 'C 普通会员' : '无');
                 $item['labels'] = $userlabel[$item['uid']] ?? '';
                 $item['isMember'] = $item['is_money_level'] > 0 ? 1 : 0;
                 $item['svip_over_day'] = $item['overdue_time'] ? ceil(($item['overdue_time'] - time()) / 86400) : '';
@@ -726,6 +727,14 @@ class UserServices extends BaseServices
             return $menus;
         };
         $f[] = Form::select('level', '用户等级', (int)$user->getData('level'))->setOptions(FormBuilder::setOptions($setOptionLevel))->filterable(true);
+        $f[] = Form::select('agent_level', '分销合作身份', (int)$user->getData('agent_level'))
+            ->info('普通会员购买训练营后自动获得C身份；M/D/H由后台人工设置')
+            ->setOptions(FormBuilder::setOptions([
+                ['value' => 0, 'label' => 'C 普通会员（初始名额1，直推120元）'],
+                ['value' => 1, 'label' => 'M 盟友（初始名额30，直推150元）'],
+                ['value' => 2, 'label' => 'D 代理（初始名额50，直推200元）'],
+                ['value' => 3, 'label' => 'H 合伙人（初始名额200，直推300元）'],
+            ]));
         $systemGroupList = app()->make(UserGroupServices::class)->getGroupList();
         $setOptionGroup = function () use ($systemGroupList) {
             $menus = [];
@@ -896,6 +905,16 @@ class UserServices extends BaseServices
             $edit['mark'] = $data['mark'];
             $edit['is_promoter'] = $data['is_promoter'];
             $edit['level'] = $data['level'];
+            if (isset($data['agent_level'])) {
+                $edit['agent_level'] = max(0, min(3, (int)$data['agent_level']));
+                if ($edit['agent_level'] > 0) {
+                    $edit['is_ever_level'] = 1;
+                    $edit['is_money_level'] = max(1, (int)($user['is_money_level'] ?? 0));
+                    $edit['overdue_time'] = 0;
+                    $edit['is_promoter'] = 1;
+                    $edit['spread_open'] = 1;
+                }
+            }
             $edit['phone'] = $data['phone'];
             $edit['addres'] = $data['addres'];
             $edit['group_id'] = $data['group_id'];
@@ -1934,6 +1953,7 @@ class UserServices extends BaseServices
             'is_money_level' => $source,
             'overdue_time' => 0,
             'is_promoter' => 1,
+            'spread_open' => 1,
         ];
         $res = $this->dao->update(['uid' => $userId], $setData);
         if ($res) {

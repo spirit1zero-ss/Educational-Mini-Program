@@ -6,17 +6,17 @@ Page({
     navStyle: '',
     scrollStyle: '',
     memberUid: '',
-    activeStatus: 'all',
+    identity: null,
+    activeStatus: 'first',
     summary: [
-      { key: 'invited', value: '0人', label: '累计邀请' },
-      { key: 'registered', value: '0人', label: '已报名' },
-      { key: 'reward', value: '0元', label: '预计奖励' }
+      { key: 'quota', value: '1', label: '团队初始名额' },
+      { key: 'pullNew', value: '0人', label: '分销拉新人数' },
+      { key: 'first', value: '0人', label: '一级团队' },
+      { key: 'second', value: '0人', label: '二级团队' }
     ],
     statusTabs: [
-      { key: 'all', text: '全部', count: 0 },
-      { key: 'registered', text: '已报名', count: 0 },
-      { key: 'pending', text: '待转化', count: 0 },
-      { key: 'settled', text: '已结算', count: 0 }
+      { key: 'first', text: '一级团队', count: 0 },
+      { key: 'second', text: '二级团队', count: 0 }
     ],
     records: [],
     filteredRecords: []
@@ -55,18 +55,21 @@ Page({
   loadInviteRecords() {
     wx.showNavigationBarLoading()
 
-    getInviteRecords({ grade: 0 })
+    const grade = this.data.activeStatus === 'second' ? 1 : 0
+    getInviteRecords({ grade })
       .then((response) => {
         const data = response && response.data ? response.data : {}
         const source = Array.isArray(data.list) ? data.list : []
         const records = source.map((item, index) => {
           const orderCount = Number(item.orderCount || item.order_count || 0)
           const status = item.status || (orderCount > 0 ? 'registered' : 'pending')
+          const name = item.nickname || item.name || ''
 
           return {
             id: String(item.uid || item.id || index),
             avatar: item.avatar || '',
-            name: item.nickname || item.name || '',
+            avatarText: name ? name.slice(0, 1) : '友',
+            name,
             phone: item.phone || '',
             time: item.time || item.add_time || '',
             source: item.source || '',
@@ -77,40 +80,26 @@ Page({
           }
         })
 
-        const registeredCount = records.filter((item) => item.status === 'registered').length
-        const pendingCount = records.filter((item) => item.status === 'pending').length
-        const rewardAmount = records.reduce((sum, item) => {
-          const value = Number(String(item.reward || 0).replace(/[^0-9.-]/g, ''))
-          return sum + (Number.isFinite(value) ? value : 0)
-        }, 0)
         const backendSummary = data.summary || {}
-        const invitedCount = backendSummary.invitedCount !== undefined
-          ? Number(backendSummary.invitedCount)
-          : records.length
-        const backendRegisteredCount = backendSummary.registeredCount !== undefined
-          ? Number(backendSummary.registeredCount)
-          : registeredCount
+        const firstLevelCount = Number(backendSummary.firstLevelCount || 0)
+        const secondLevelCount = Number(backendSummary.secondLevelCount || 0)
         const statusTabs = this.data.statusTabs.map((item) => {
-          const countMap = {
-            all: records.length,
-            registered: registeredCount,
-            pending: pendingCount,
-            settled: records.filter((record) => record.status === 'settled').length
-          }
+          const countMap = { first: firstLevelCount, second: secondLevelCount }
           return Object.assign({}, item, { count: countMap[item.key] || 0 })
         })
 
         this.setData({
+          identity: data.identity || null,
           records,
+          filteredRecords: records,
           statusTabs,
           summary: this.data.summary.map((item) => {
-            if (item.key === 'invited') return Object.assign({}, item, { value: invitedCount + '\u4eba' })
-            if (item.key === 'registered') return Object.assign({}, item, { value: backendRegisteredCount + '\u4eba' })
-            if (item.key === 'reward') return Object.assign({}, item, { value: rewardAmount.toFixed(2) + '\u5143' })
+            if (item.key === 'quota') return Object.assign({}, item, { value: String(backendSummary.teamInitialQuota || 1) })
+            if (item.key === 'pullNew') return Object.assign({}, item, { value: `${Number(backendSummary.pullNewCount || 0)}人` })
+            if (item.key === 'first') return Object.assign({}, item, { value: `${firstLevelCount}人` })
+            if (item.key === 'second') return Object.assign({}, item, { value: `${secondLevelCount}人` })
             return item
           })
-        }, () => {
-          this.updateFilteredRecords()
         })
       })
       .catch((error) => {
@@ -119,7 +108,7 @@ Page({
           records: [],
           filteredRecords: [],
           summary: this.data.summary.map((item) => Object.assign({}, item, {
-            value: item.key === 'reward' ? '0\u5143' : '0\u4eba'
+            value: item.key === 'quota' ? '1' : '0\u4eba'
           })),
           statusTabs: this.data.statusTabs.map((item) => Object.assign({}, item, { count: 0 }))
         })
@@ -127,15 +116,6 @@ Page({
       .finally(() => {
         wx.hideNavigationBarLoading()
       })
-  },
-
-  updateFilteredRecords() {
-    const { activeStatus, records } = this.data
-    const filteredRecords = activeStatus === 'all'
-      ? records
-      : records.filter((item) => item.status === activeStatus)
-
-    this.setData({ filteredRecords })
   },
 
   onBackTap() {
@@ -150,9 +130,7 @@ Page({
     const key = e.currentTarget.dataset.key
     if (!key || key === this.data.activeStatus) return
 
-    this.setData({ activeStatus: key }, () => {
-      this.updateFilteredRecords()
-    })
+    this.setData({ activeStatus: key, records: [], filteredRecords: [] }, () => this.loadInviteRecords())
   },
 
   onPosterTap() {

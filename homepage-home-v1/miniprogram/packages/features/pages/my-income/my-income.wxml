@@ -24,9 +24,15 @@
         </view>
 
         <view class="action-row">
-          <view class="secondary-entry" bindtap="onInviteTap">查看邀请记录</view>
-          <view class="primary-entry" bindtap="onWithdrawTap">申请提现</view>
+          <view class="secondary-entry" bindtap="onInviteTap">查看我的团队</view>
+          <view
+            class="primary-entry {{withdrawal && !withdrawal.windowOpen ? 'primary-entry--disabled' : ''}}"
+            bindtap="onWithdrawTap"
+          >
+            {{withdrawal && !withdrawal.windowOpen ? '暂未开放' : '申请提现'}}
+          </view>
         </view>
+        <view class="withdraw-window-tip" wx:if="{{withdrawal}}">{{withdrawal.windowNotice}}</view>
       </view>
 
       <view class="status-tabs">
@@ -65,8 +71,32 @@
         <image class="empty-icon" src="/assets/mine/icon-income.svg" mode="aspectFit"></image>
         <view class="empty-title">暂无对应收益记录</view>
         <view class="empty-desc">邀请好友报名后，奖励会在这里展示</view>
-        <view class="empty-button" bindtap="onInviteTap">查看邀请记录</view>
+        <view class="empty-button" bindtap="onInviteTap">查看我的团队</view>
       </view>
     </view>
   </scroll-view>
+
+  <view class="withdraw-mask" wx:if="{{withdrawalVisible}}" bindtap="closeWithdrawal">
+    <view class="withdraw-dialog" catchtap="noop">
+      <view class="withdraw-title">申请微信提现</view>
+      <view class="withdraw-tip">可提现 {{withdrawal.availableAmount}} 元，最低 {{withdrawal.minAmount}} 元</view>
+      <view class="withdraw-input-row">
+        <text class="withdraw-currency">¥</text>
+        <input class="withdraw-input" type="digit" value="{{withdrawalAmount}}" bindinput="onWithdrawalAmountInput" placeholder="请输入提现金额" />
+      </view>
+      <view class="withdraw-fee" wx:if="{{withdrawal.feeRate > 0}}">提现手续费：{{withdrawal.feeRate}}%</view>
+      <view class="withdraw-actions">
+        <button class="withdraw-cancel" bindtap="closeWithdrawal">取消</button>
+        <button class="withdraw-submit" loading="{{withdrawalSubmitting}}" bindtap="submitWithdrawal">提交审核</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="transfer-confirm" wx:if="{{withdrawal && withdrawal.list.length && withdrawal.list[0].canConfirm}}">
+    <view>
+      <view class="transfer-confirm-title">有一笔提现待确认收款</view>
+      <view class="transfer-confirm-desc">实际到账 ¥{{withdrawal.list[0].receivedAmount}} · {{withdrawal.list[0].addTime}}</view>
+    </view>
+    <button class="transfer-confirm-button" data-id="{{withdrawal.list[0].id}}" bindtap="onConfirmTransfer">确认收款</button>
+  </view>
 </view>

@@ -1,37 +1,14 @@
 const HOME_PATH = '/pages/home/home'
 const MINE_PATH = '/pages/mine/mine'
+const { getOfflineLocations } = require('../../api/mine')
 
 Page({
   data: {
     navStyle: '',
     scrollStyle: '',
     heroIcon: '../../assets/mine/tab-offline-active.svg',
-    stores: [
-      {
-        id: 'hangzhou',
-        name: '杭州线下体验点',
-        city: '杭州',
-        address: '详细地址待后台配置',
-        service: '训练营咨询 / 线下体验 / 家长沟通',
-        status: '待开放'
-      },
-      {
-        id: 'ningbo',
-        name: '宁波线下体验点',
-        city: '宁波',
-        address: '详细地址待后台配置',
-        service: '训练营咨询 / 学习规划',
-        status: '筹备中'
-      },
-      {
-        id: 'shaoxing',
-        name: '绍兴线下体验点',
-        city: '绍兴',
-        address: '详细地址待后台配置',
-        service: '训练营咨询 / 家长交流',
-        status: '筹备中'
-      }
-    ],
+    stores: [],
+    loading: true,
     tabs: [
       {
         key: 'home',
@@ -59,6 +36,25 @@ Page({
 
   onLoad() {
     this.setNavigationMetrics()
+    this.loadStores()
+  },
+
+  loadStores() {
+    this.setData({ loading: true })
+    return getOfflineLocations()
+      .then((response) => {
+        this.setData({
+          stores: Array.isArray(response && response.data) ? response.data : []
+        })
+      })
+      .catch((error) => {
+        console.warn('[offline] load locations failed:', error)
+        wx.showToast({
+          title: error.message || error.errMsg || error.msg || '线下地址加载失败',
+          icon: 'none'
+        })
+      })
+      .finally(() => this.setData({ loading: false }))
   },
 
   setNavigationMetrics() {
@@ -83,10 +79,32 @@ Page({
 
   onStoreTap(e) {
     const item = e.currentTarget.dataset.item
-    wx.showToast({
-      title: item && item.address !== '详细地址待后台配置' ? '导航待接入' : '地址待后台配置',
-      icon: 'none'
+    if (!item || !item.address) {
+      wx.showToast({ title: '暂无可导航地址', icon: 'none' })
+      return
+    }
+    const latitude = Number(item.latitude)
+    const longitude = Number(item.longitude)
+    if (Number.isFinite(latitude) && Number.isFinite(longitude) && latitude && longitude) {
+      wx.openLocation({
+        latitude,
+        longitude,
+        name: item.name || '线下体验点',
+        address: item.address,
+        scale: 16
+      })
+      return
+    }
+    wx.setClipboardData({
+      data: item.address,
+      success: () => wx.showToast({ title: '地址已复制', icon: 'success' })
     })
+  },
+
+  onCallPhone(e) {
+    const phone = String(e.currentTarget.dataset.phone || '').trim()
+    if (!phone) return
+    wx.makePhoneCall({ phoneNumber: phone })
   },
 
   onTabTap(e) {

@@ -4,6 +4,9 @@ Page({
   data: {
     assessmentPath: MODULE_B_PATH,
     iconBase: "../../assets/module-2-logic/icons/",
+    dividerImage: "../../assets/module-5-camp/camp-landscape-divider-v2.webp",
+    heroIllustration: "../../assets/module-4-drive/illustrations/drive-hero-v2.webp",
+    sectionIllustration: "../../assets/module-4-drive/illustrations/drive-family-v2.webp",
     articleBlocks: [
       {
         id: "opening",
