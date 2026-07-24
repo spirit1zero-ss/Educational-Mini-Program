@@ -68,8 +68,7 @@
     },
     "config": {
         "preferred-install": "dist",
-        "platform-check": true,
-        "sort-packages": true
+        "platform-check": false
     },
     "scripts": {
         "post-autoload-dump": [

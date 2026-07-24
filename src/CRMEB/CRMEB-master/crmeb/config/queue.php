@@ -11,9 +11,7 @@
 use think\facade\Env;
 
 return [
-    // 云托管默认不依赖 Redis；后续启用 Redis 队列时通过
-    // PHP_QUEUE_DRIVER=redis 显式切换。
-    'default'     => Env::get('queue.driver', 'sync'),
+    'default'     => 'redis',
     'prefix'      => 'crmeb_',
     'connections' => [
         'sync'     => [

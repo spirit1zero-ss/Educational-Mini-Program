@@ -85,11 +85,11 @@
 - 确认 `.env` 使用正式强密码和正式小程序配置。
 - 确认 `APP_DEBUG=false`。
 - 确认小程序 `routine_appId` 和 `routine_appsecret` 已配置。
-- 确认云托管通过 `composer.lock` 自动安装 PHP `vendor`，并通过 `composer check-platform-reqs`。
+- 确认 PHP `vendor` 依赖完整，不靠手动复制容器文件。
 - 确认 Nginx 只暴露业务入口。
 - 确认后台域名、API 域名、CORS 白名单一致。
 - 确认安全头在预发环境验证通过。
-- 确认当前线上保持 `PHP_CACHE_DRIVER=file`、`PHP_SESSION_TYPE=file`、`PHP_QUEUE_DRIVER=sync`，不把 Redis 当作上线前置条件。
+- 确认当前线上保持 `PHP_CACHE_DRIVER=file`、`PHP_SESSION_TYPE=file`，不把 Redis 当作上线前置条件。
 
 ## 7. 当前业务上线边界
 
