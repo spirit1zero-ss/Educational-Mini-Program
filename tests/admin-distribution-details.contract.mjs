@@ -81,13 +81,15 @@ for (const label of [
 }
 
 assert.match(policy, /¥399订单款全部进入公司账户/);
-assert.match(policy, /3 × ¥150 = ¥450/);
-assert.match(policy, /2 × ¥20 = ¥40/);
-assert.match(policy, /实际到账 ¥487\.06/);
+assert.match(policy, /allyFirstCommission \* 3/);
+assert.match(policy, /secondCommission \* 2/);
+assert.match(policy, /firstCommissionSummary/);
+assert.doesNotMatch(policy, /实际到账 ¥487\.06/);
 assert.match(policy, /第一版不做自动升级/);
 assert.match(policy, /团队初始名额/);
 assert.match(policy, /名额用完后/);
 assert.match(policy, /训练营分销/);
+assert.match(policy, /不展示返佣名额/);
 
 assert.match(miniService, /teamMemberUids\(\$uid, 1\)/);
 assert.match(miniService, /teamMemberUids\(\$uid, 2\)/);

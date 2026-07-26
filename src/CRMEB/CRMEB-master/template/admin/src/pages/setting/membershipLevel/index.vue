@@ -6,21 +6,11 @@
           <div class="policy-title">训练营分销身份与返佣规则</div>
           <div class="policy-subtitle">终端客户统一支付 ¥399，订单款进入公司账户，再按推广人身份产生固定返佣。</div>
         </div>
-        <div class="switch-control">
-          <span>训练营分销</span>
-          <el-switch
-            v-model="distributionEnabled"
-            :disabled="switchLoading"
-            active-text="开启"
-            inactive-text="关闭"
-            @change="changeDistributionSwitch"
-          />
-        </div>
       </div>
 
       <el-alert
         class="policy-alert"
-        title="这是训练营独立分销配置，不再使用旧商城分销开关和百分比字段。关闭后停止生成推广关系和新佣金，历史团队、佣金与提现记录仍保留。"
+        title="这是训练营独立分销规则，不再使用旧商城分销开关和百分比字段。开关与金额请在“基础分销配置”的分销模式、返佣设置中调整。"
         type="success"
         :closable="false"
         show-icon
@@ -33,11 +23,11 @@
         </div>
         <div class="summary-item">
           <span class="summary-label">一级返佣</span>
-          <strong>¥120–¥300</strong>
+          <strong>{{ firstCommissionSummary }}</strong>
         </div>
         <div class="summary-item">
           <span class="summary-label">二级返佣</span>
-          <strong>统一 ¥20</strong>
+          <strong>统一 ¥{{ money(secondCommission) }}</strong>
         </div>
         <div class="summary-item">
           <span class="summary-label">结算方式</span>
@@ -120,15 +110,15 @@
         <div class="formula-box">
           <div>
             <span>一级收入</span>
-            <strong>3 × ¥150 = ¥450</strong>
+            <strong>3 × ¥{{ money(allyFirstCommission) }} = ¥{{ money(allyFirstCommission * 3) }}</strong>
           </div>
           <div>
             <span>二级收入</span>
-            <strong>2 × ¥20 = ¥40</strong>
+            <strong>2 × ¥{{ money(secondCommission) }} = ¥{{ money(secondCommission * 2) }}</strong>
           </div>
           <div class="formula-total">
             <span>总收入</span>
-            <strong>¥490</strong>
+            <strong>¥{{ money(allyFirstCommission * 3 + secondCommission * 2) }}</strong>
           </div>
         </div>
         <div class="rule-note">
@@ -150,7 +140,7 @@
           </div>
           <div>
             <span>名额占用</span>
-            <p>M/D/H 仅一级有效订单占用高返佣名额；名额用完后一级按普通会员 ¥120/单返佣。</p>
+            <p>M/D/H 仅一级有效订单占用高返佣名额；名额用完后一级按 ¥{{ money(fallbackCommission) }}/单返佣。</p>
           </div>
           <div>
             <span>退款恢复</span>
@@ -158,7 +148,7 @@
           </div>
           <div>
             <span>普通会员</span>
-            <p>C 身份页面固定显示 1 个名额，暂不消耗也不递减，一级始终返佣 ¥120/单。</p>
+            <p>C 身份固定显示 1 个名额，暂不消耗也不递减，一级始终返佣 ¥{{ money(regularFirstCommission) }}/单。</p>
           </div>
         </div>
       </el-card>
@@ -176,14 +166,6 @@
           <i v-if="index < flowSteps.length - 1" :key="step + '-arrow'" class="el-icon-arrow-right"></i>
         </template>
       </div>
-      <div class="withdraw-example">
-        <span>提现示例</span>
-        <strong>申请 ¥490</strong>
-        <i>−</i>
-        <strong>手续费 ¥2.94（0.6%）</strong>
-        <i>=</i>
-        <strong class="received">实际到账 ¥487.06</strong>
-      </div>
     </el-card>
 
     <div class="rule-grid mt16">
@@ -198,8 +180,8 @@
           </div>
           <div>
             <strong>我的团队</strong>
-            <p>团队初始名额、已使用名额、剩余名额</p>
-            <p>一级团队、二级团队及成员明细</p>
+            <p>分销拉新人数、一级团队、二级团队</p>
+            <p>仅展示有效付费成员明细，不展示返佣名额</p>
           </div>
           <div>
             <strong>我的收益</strong>
@@ -236,10 +218,7 @@
 </template>
 
 <script>
-import {
-  membershipDataListApi,
-  trainingCampDistributionSwitchApi,
-} from '@/api/membershipLevel';
+import { membershipDataListApi } from '@/api/membershipLevel';
 
 export default {
   name: 'trainingCampDistributionPolicy',
@@ -251,8 +230,6 @@ export default {
       },
       tabList: [],
       loading: false,
-      switchLoading: false,
-      distributionEnabled: true,
       flowSteps: [
         '客户支付399元',
         '开通永久会员',
@@ -269,6 +246,32 @@ export default {
   mounted() {
     this.getList();
   },
+  computed: {
+    firstCommissionSummary() {
+      const values = this.tabList
+        .map((item) => Number(item.firstCommission || 0))
+        .filter((value) => Number.isFinite(value));
+      if (!values.length) return '加载中';
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      return min === max ? `¥${this.money(min)}` : `¥${this.money(min)}–¥${this.money(max)}`;
+    },
+    secondCommission() {
+      return Number((this.tabList[0] && this.tabList[0].secondCommission) || 0);
+    },
+    allyFirstCommission() {
+      const policy = this.tabList.find((item) => item.levelKey === 'M');
+      return Number((policy && policy.firstCommission) || 0);
+    },
+    regularFirstCommission() {
+      const policy = this.tabList.find((item) => item.levelKey === 'C');
+      return Number((policy && policy.firstCommission) || 0);
+    },
+    fallbackCommission() {
+      const policy = this.tabList.find((item) => item.quotaLimited);
+      return Number((policy && policy.fallbackCommission) || 0);
+    },
+  },
   methods: {
     money(value) {
       const amount = Number(value || 0);
@@ -279,7 +282,6 @@ export default {
       membershipDataListApi(this.formValidate)
         .then((res) => {
           this.tabList = (res.data && res.data.list) || [];
-          this.distributionEnabled = !!(res.data && res.data.enabled);
         })
         .catch((res) => {
           this.$message.error(res.msg || '身份规则加载失败');
@@ -290,20 +292,6 @@ export default {
     },
     search() {
       this.getList();
-    },
-    changeDistributionSwitch(enabled) {
-      this.switchLoading = true;
-      trainingCampDistributionSwitchApi(enabled)
-        .then((res) => {
-          this.$message.success(res.msg || (enabled ? '训练营分销已开启' : '训练营分销已关闭'));
-        })
-        .catch((res) => {
-          this.distributionEnabled = !enabled;
-          this.$message.error(res.msg || '训练营分销开关保存失败');
-        })
-        .finally(() => {
-          this.switchLoading = false;
-        });
     },
   },
 };
@@ -317,14 +305,6 @@ export default {
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-  }
-
-  .switch-control {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    color: #515a6e;
-    white-space: nowrap;
   }
 
   .policy-title,

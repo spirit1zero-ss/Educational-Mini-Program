@@ -357,8 +357,8 @@ class PayClient extends BaseClient
     {
         $res = $this->request($this->getApiUrl(self::API_TRANSFER_QUERY_URL, ['out_bill_no'], [$outBillNo]), 'GET');
 
-        if (!$res) {
-            throw new PayException('发起退款查询失败');
+        if (!$res || isset($res['code'], $res['message'])) {
+            throw new PayException($res['message'] ?? '商家转账查询失败');
         }
 
         return $res;

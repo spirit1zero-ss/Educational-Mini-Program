@@ -9,7 +9,6 @@ Page({
     identity: null,
     activeStatus: 'first',
     summary: [
-      { key: 'quota', value: '1', label: '团队初始名额' },
       { key: 'pullNew', value: '0人', label: '分销拉新人数' },
       { key: 'first', value: '0人', label: '一级团队' },
       { key: 'second', value: '0人', label: '二级团队' }
@@ -94,7 +93,6 @@ Page({
           filteredRecords: records,
           statusTabs,
           summary: this.data.summary.map((item) => {
-            if (item.key === 'quota') return Object.assign({}, item, { value: String(backendSummary.teamInitialQuota || 1) })
             if (item.key === 'pullNew') return Object.assign({}, item, { value: `${Number(backendSummary.pullNewCount || 0)}人` })
             if (item.key === 'first') return Object.assign({}, item, { value: `${firstLevelCount}人` })
             if (item.key === 'second') return Object.assign({}, item, { value: `${secondLevelCount}人` })
@@ -108,7 +106,7 @@ Page({
           records: [],
           filteredRecords: [],
           summary: this.data.summary.map((item) => Object.assign({}, item, {
-            value: item.key === 'quota' ? '1' : '0\u4eba'
+            value: '0\u4eba'
           })),
           statusTabs: this.data.statusTabs.map((item) => Object.assign({}, item, { count: 0 }))
         })

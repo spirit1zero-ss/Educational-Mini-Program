@@ -21,13 +21,42 @@ class DistributionServices extends BaseServices
     private const ENABLE_CONFIG_KEY = 'training_camp_distribution_enabled';
 
     private const LEVELS = [
-        0 => ['key' => 'C', 'name' => '普通会员', 'initialQuota' => 1, 'firstCommission' => '120.00'],
-        1 => ['key' => 'M', 'name' => '盟友', 'initialQuota' => 30, 'firstCommission' => '150.00'],
-        2 => ['key' => 'D', 'name' => '代理', 'initialQuota' => 50, 'firstCommission' => '200.00'],
-        3 => ['key' => 'H', 'name' => '合伙人', 'initialQuota' => 200, 'firstCommission' => '300.00'],
+        0 => [
+            'key' => 'C',
+            'name' => '普通会员',
+            'initialQuota' => 1,
+            'quotaConfig' => '',
+            'firstCommission' => '120.00',
+            'commissionConfig' => 'training_camp_c_first_commission',
+        ],
+        1 => [
+            'key' => 'M',
+            'name' => '盟友',
+            'initialQuota' => 30,
+            'quotaConfig' => 'training_camp_m_initial_quota',
+            'firstCommission' => '150.00',
+            'commissionConfig' => 'training_camp_m_first_commission',
+        ],
+        2 => [
+            'key' => 'D',
+            'name' => '代理',
+            'initialQuota' => 50,
+            'quotaConfig' => 'training_camp_d_initial_quota',
+            'firstCommission' => '200.00',
+            'commissionConfig' => 'training_camp_d_first_commission',
+        ],
+        3 => [
+            'key' => 'H',
+            'name' => '合伙人',
+            'initialQuota' => 200,
+            'quotaConfig' => 'training_camp_h_initial_quota',
+            'firstCommission' => '300.00',
+            'commissionConfig' => 'training_camp_h_first_commission',
+        ],
     ];
 
-    private const SECOND_COMMISSION = '20.00';
+    private const FALLBACK_COMMISSION_CONFIG = 'training_camp_fallback_commission';
+    private const SECOND_COMMISSION_CONFIG = 'training_camp_second_commission';
 
     private const MEMBER_INCOME_TYPES = [
         'self_member_brokerage',
@@ -53,7 +82,7 @@ class DistributionServices extends BaseServices
                 'menu_name' => self::ENABLE_CONFIG_KEY,
                 'type' => 'radio',
                 'input_type' => 'input',
-                'config_tab_id' => 74,
+                'config_tab_id' => 72,
                 'parameter' => "1=>开启\n0=>关闭",
                 'upload_type' => 1,
                 'required' => '',
@@ -79,7 +108,10 @@ class DistributionServices extends BaseServices
     public function policyList(): array
     {
         $list = [];
-        foreach (self::LEVELS as $agentLevel => $level) {
+        $levels = $this->levels();
+        $fallbackCommission = $this->configuredMoney(self::FALLBACK_COMMISSION_CONFIG, '120.00');
+        $secondCommission = $this->configuredMoney(self::SECOND_COMMISSION_CONFIG, '20.00');
+        foreach ($levels as $agentLevel => $level) {
             $list[] = [
                 'id' => $agentLevel,
                 'levelId' => $agentLevel,
@@ -87,8 +119,8 @@ class DistributionServices extends BaseServices
                 'levelName' => $level['name'],
                 'initialQuota' => $level['initialQuota'],
                 'firstCommission' => $level['firstCommission'],
-                'fallbackCommission' => self::LEVELS[0]['firstCommission'],
-                'secondCommission' => self::SECOND_COMMISSION,
+                'fallbackCommission' => $fallbackCommission,
+                'secondCommission' => $secondCommission,
                 'quotaLimited' => $agentLevel > 0,
             ];
         }
@@ -99,7 +131,7 @@ class DistributionServices extends BaseServices
     {
         $uid = (int)($user['uid'] ?? 0);
         $agentLevel = $this->normalizeAgentLevel((int)($user['agent_level'] ?? 0));
-        $level = self::LEVELS[$agentLevel];
+        $level = $this->levels()[$agentLevel];
 
         return [
             'levelId' => $agentLevel,
@@ -108,7 +140,7 @@ class DistributionServices extends BaseServices
             'identityCode' => $uid > 0 ? $level['key'] . str_pad((string)$uid, 5, '0', STR_PAD_LEFT) : '',
             'initialQuota' => $level['initialQuota'],
             'firstCommission' => $level['firstCommission'],
-            'secondCommission' => self::SECOND_COMMISSION,
+            'secondCommission' => $this->configuredMoney(self::SECOND_COMMISSION_CONFIG, '20.00'),
         ];
     }
 
@@ -130,16 +162,57 @@ class DistributionServices extends BaseServices
         }
         $profile = $this->profile($user);
         if ((int)$profile['levelId'] === 0) {
-            return self::LEVELS[0]['firstCommission'];
+            return (string)$profile['firstCommission'];
         }
         return $this->premiumQuotaUsed($uid) < (int)$profile['initialQuota']
             ? (string)$profile['firstCommission']
-            : self::LEVELS[0]['firstCommission'];
+            : $this->configuredMoney(self::FALLBACK_COMMISSION_CONFIG, '120.00');
     }
 
     public function secondCommissionForUid(int $uid): string
     {
-        return $this->eligibleUser($uid) ? self::SECOND_COMMISSION : '0.00';
+        return $this->eligibleUser($uid)
+            ? $this->configuredMoney(self::SECOND_COMMISSION_CONFIG, '20.00')
+            : '0.00';
+    }
+
+    /**
+     * Resolve the editable training-camp policy while retaining safe defaults
+     * during deployments where code and database patches are applied separately.
+     */
+    private function levels(): array
+    {
+        $levels = [];
+        foreach (self::LEVELS as $agentLevel => $level) {
+            $quota = $level['quotaConfig'] === ''
+                ? (int)$level['initialQuota']
+                : $this->configuredQuota($level['quotaConfig'], (int)$level['initialQuota']);
+            $levels[$agentLevel] = [
+                'key' => $level['key'],
+                'name' => $level['name'],
+                'initialQuota' => $quota,
+                'firstCommission' => $this->configuredMoney(
+                    $level['commissionConfig'],
+                    (string)$level['firstCommission']
+                ),
+            ];
+        }
+        return $levels;
+    }
+
+    private function configuredQuota(string $key, int $default): int
+    {
+        $value = sys_config($key, $default);
+        return is_numeric($value) ? max(0, (int)$value) : $default;
+    }
+
+    private function configuredMoney(string $key, string $default): string
+    {
+        $value = sys_config($key, $default);
+        if (!is_numeric($value) || (float)$value < 0) {
+            $value = $default;
+        }
+        return number_format((float)$value, 2, '.', '');
     }
 
     public function teamStats(int $uid): array

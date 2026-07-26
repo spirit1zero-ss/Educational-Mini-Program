@@ -512,6 +512,17 @@ class MiniappServices extends BaseServices
             ->limit(10)
             ->select()
             ->toArray();
+        $synced = 0;
+        foreach ($records as $index => $record) {
+            $state = strtoupper((string)($record['state'] ?? ''));
+            if ($synced < 3
+                && (int)($record['status'] ?? 0) === 1
+                && !empty($record['out_bill_no'])
+                && !in_array($state, ['SUCCESS', 'FAIL', 'CANCELLED'], true)) {
+                $records[$index] = $extractServices->syncMerchantTransfer($record);
+                $synced++;
+            }
+        }
 
         $list = array_map(function (array $row) {
             $status = (int)($row['status'] ?? 0);
@@ -553,7 +564,7 @@ class MiniappServices extends BaseServices
         }, $records);
 
         return [
-            'enabled' => (bool)sys_config('weixin_extract_type', 0),
+            'enabled' => (bool)sys_config('training_camp_withdraw_enabled', 0),
             'eligible' => (int)($user['is_promoter'] ?? 0) === 1 && (int)($user['spread_open'] ?? 0) === 1,
             'availableAmount' => $this->formatAmount(max(0, (float)($config['commissionCount'] ?? 0))),
             'minAmount' => $this->formatAmount($config['minPrice'] ?? 0.1),
@@ -575,8 +586,8 @@ class MiniappServices extends BaseServices
         if ((int)($user['is_promoter'] ?? 0) !== 1 || (int)($user['spread_open'] ?? 0) !== 1) {
             throw new ApiException('当前账号没有有效的推广提现资格');
         }
-        if (!sys_config('weixin_extract_type', 0)) {
-            throw new ApiException('后台尚未开启微信提现到零钱，请联系管理员');
+        if (!sys_config('training_camp_withdraw_enabled', 0)) {
+            throw new ApiException('后台已暂停训练营微信提现，请联系管理员');
         }
         $window = $this->getWithdrawalWindow();
         if (!$window['open']) {

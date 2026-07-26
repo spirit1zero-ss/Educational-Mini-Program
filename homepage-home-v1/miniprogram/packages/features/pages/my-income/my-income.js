@@ -281,7 +281,7 @@ Page({
       appId: transfer.appId,
       package: transfer.package,
       success: () => {
-        wx.showToast({ title: '已确认收款', icon: 'success' })
+        wx.showToast({ title: '已打开收款确认页', icon: 'none' })
         setTimeout(() => this.loadWithdrawalOverview(), 1200)
       },
       fail: (error) => {

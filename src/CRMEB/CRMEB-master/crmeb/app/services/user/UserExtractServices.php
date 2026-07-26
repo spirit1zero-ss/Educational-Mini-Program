@@ -15,6 +15,7 @@ namespace app\services\user;
 use app\dao\user\UserExtractDao;
 use app\services\BaseServices;
 use app\services\order\StoreOrderCreateServices;
+use app\services\pay\PayTransferNotifyServices;
 use app\services\statistic\CapitalFlowServices;
 use app\services\system\admin\SystemAdminServices;
 use app\services\wechat\WechatUserServices;
@@ -22,9 +23,7 @@ use crmeb\exceptions\AdminException;
 use crmeb\exceptions\ApiException;
 use crmeb\services\AliPayService;
 use crmeb\services\FormBuilder as Form;
-use crmeb\services\app\WechatService;
 use crmeb\services\pay\Pay;
-use crmeb\services\wechat\Payment;
 use crmeb\services\workerman\ChannelService;
 use EasyWeChat\Payment\Order;
 use think\exception\ValidateException;
@@ -57,6 +56,50 @@ class UserExtractServices extends BaseServices
     public function getExtract(int $id, array $field = [])
     {
         return $this->dao->get($id, $field);
+    }
+
+    /**
+     * 主动查询微信商家转账状态，作为异步回调的兜底。
+     */
+    public function syncMerchantTransfer(array $record): array
+    {
+        $state = strtoupper((string)($record['state'] ?? ''));
+        if ((int)($record['status'] ?? 0) !== 1
+            || ($record['extract_type'] ?? '') !== 'weixin'
+            || empty($record['out_bill_no'])
+            || in_array($state, ['SUCCESS', 'FAIL', 'CANCELLED'], true)) {
+            return $record;
+        }
+
+        try {
+            $response = (new Pay('v3_wechat_pay'))->queryTransferBills((string)$record['out_bill_no']);
+            $state = strtoupper((string)($response['state'] ?? $state));
+            $transferBillNo = (string)($response['transfer_bill_no'] ?? ($record['transfer_bill_no'] ?? ''));
+            $failReason = (string)($response['fail_reason'] ?? ($record['fail_reason'] ?? ''));
+            $update = ['state' => $state];
+            if ($transferBillNo !== '') {
+                $update['transfer_bill_no'] = $transferBillNo;
+            }
+            if ($failReason !== '') {
+                $update['fail_reason'] = $failReason;
+            }
+            if (in_array($state, ['SUCCESS', 'FAIL', 'CANCELLED'], true)) {
+                app()->make(PayTransferNotifyServices::class)->wechatTx(
+                    (string)$record['out_bill_no'],
+                    $transferBillNo,
+                    $state,
+                    $failReason
+                );
+            } else {
+                $this->dao->update((int)$record['id'], $update);
+            }
+
+            $fresh = $this->dao->get((int)$record['id']);
+            return $fresh ? $fresh->toArray() : array_merge($record, $update);
+        } catch (\Throwable $e) {
+            // 查单失败不能阻塞用户查看记录，等待下一次页面刷新或微信回调重试。
+            return $record;
+        }
     }
 
     /**
@@ -190,8 +233,12 @@ class UserExtractServices extends BaseServices
         $order_id = $userExtract['wechat_order_id'] != '' ? $userExtract['wechat_order_id'] : app()->make(StoreOrderCreateServices::class)->getNewOrderId('tx');
         $insertData = ['wechat_order_id' => $order_id, 'nickname' => $nickname, 'phone' => $phone];
 
-        //微信自动提现到零钱
-        if (sys_config('weixin_extract_type', 0) && $userExtract['extract_type'] == 'weixin') {
+        // 训练营小程序提现固定走微信支付 V3 商家转账；旧开关仅兼容其他历史微信提现。
+        $isTrainingCampWithdrawal = $userExtract['extract_type'] === 'weixin'
+            && $userExtract['channel_type'] === 'routine';
+        $isLegacyAutomaticWechat = $userExtract['extract_type'] === 'weixin'
+            && (bool)sys_config('weixin_extract_type', 0);
+        if ($isTrainingCampWithdrawal || $isLegacyAutomaticWechat) {
             $type = '';
             $openid = $wechatServices->uidToOpenid($userExtract['uid'], $userExtract['channel_type']);
             if ($userExtract['channel_type'] == 'wechat') {
@@ -216,58 +263,56 @@ class UserExtractServices extends BaseServices
             if (!$openid) {
                 throw new ValidateException('该用户暂不支持自动转账到零钱，请手动转账');
             }
-            //v3商家转账
-            if (sys_config('pay_wechat_type')) {
-                $pay = new Pay('v3_wechat_pay');
-                if (sys_config('v3_pay_public_key') != '') {
-                    $res = $pay->merchantPayNew(
-                        $type,
-                        $order_id,
-                        sys_config('v3_transfer_scene_id', '1000'),
-                        $openid,
-                        $userExtract['real_name'],
-                        bcmul($extractNumber, '100', 0),
-                        '佣金提现到零钱',
-                        sys_config('site_url') . '/api/transfer/notify/' . $type,
-                        '劳务报酬',
-                        [
-                            [
-                                'info_type' => '岗位类型',
-                                'info_content' => '推广员奖励'
-                            ],
-                            [
-                                'info_type' => '报酬说明',
-                                'info_content' => '推广订单奖励提现'
-                            ],
-                        ]
-                    );
-                    $this->dao->update($id, [
-                        'out_bill_no' => $res['out_bill_no'] ?? '',
-                        'package_info' => $res['package_info'] ?? '',
-                        'state' => $res['state'] ?? '',
-                        'transfer_bill_no' => $res['transfer_bill_no'] ?? '',
-                        'fail_reason' => $res['fail_reason'] ?? '',
-                        'status' => 1
-                    ]);
-                    event('NoticeListener', [['uid' => $userExtract['uid'], 'order_id' => $order_id, 'extractNumber' => $extractNumber, 'type' => 1], 'revenue_received']);
-                    return 'v3_extract';
-                } else {
-                    $res = $pay->merchantPay($openid, $order_id, $extractNumber, [
-                        'type' => $type,
-                        'batch_name' => '提现佣金到零钱',
-                        'batch_remark' => '您于' . date('Y-m-d H:i:s') . '提现.' . $extractNumber . '元'
-                    ]);
-                    $this->dao->update($id, ['wechat_order_id' => $order_id]);
-                }
-
-            } else {
-                // 微信提现
-                $res = WechatService::merchantPay($openid, $order_id, (string)$extractNumber, '提现佣金到零钱');
+            if (!(bool)sys_config('pay_wechat_type', 0)) {
+                throw new AdminException('请先启用微信支付 V3，训练营提现不支持旧版企业付款接口');
+            }
+            if (trim((string)sys_config('v3_pay_public_key', '')) === '') {
+                throw new AdminException('请先配置微信支付平台证书，才能发起商家转账');
+            }
+            if (trim((string)sys_config('pay_weixin_mchid', '')) === '') {
+                throw new AdminException('请先配置微信支付商户号');
+            }
+            if ($type === 'mini' && trim((string)sys_config('routine_appId', '')) === '') {
+                throw new AdminException('请先配置微信小程序 AppID');
+            }
+            $siteUrl = rtrim(trim((string)sys_config('site_url', '')), '/');
+            if (!filter_var($siteUrl, FILTER_VALIDATE_URL)
+                || strtolower((string)parse_url($siteUrl, PHP_URL_SCHEME)) !== 'https') {
+                throw new AdminException('请先配置可公网访问的 HTTPS 站点地址，供微信回调转账结果');
             }
 
-            if (!$res) {
-                throw new ApiException('企业付款到零钱失败，请稍后再试');
-            }
+            $pay = new Pay('v3_wechat_pay');
+            $res = $pay->merchantPayNew(
+                $type,
+                $order_id,
+                sys_config('v3_transfer_scene_id', '1000'),
+                $openid,
+                $userExtract['real_name'],
+                bcmul($extractNumber, '100', 0),
+                '训练营推广奖励提现',
+                $siteUrl . '/api/transfer/notify/' . $type,
+                '现金奖励',
+                [
+                    [
+                        'info_type' => '活动名称',
+                        'info_content' => '21天训练营推广活动'
+                    ],
+                    [
+                        'info_type' => '奖励说明',
+                        'info_content' => '训练营推广奖励提现'
+                    ],
+                ]
+            );
+            $this->dao->update($id, [
+                'out_bill_no' => $res['out_bill_no'] ?? '',
+                'package_info' => $res['package_info'] ?? '',
+                'state' => $res['state'] ?? '',
+                'transfer_bill_no' => $res['transfer_bill_no'] ?? '',
+                'fail_reason' => $res['fail_reason'] ?? '',
+                'status' => 1
+            ]);
+            event('NoticeListener', [['uid' => $userExtract['uid'], 'order_id' => $order_id, 'extractNumber' => $extractNumber, 'type' => 1], 'revenue_received']);
+            return 'v3_extract';
         }
         if (sys_config('alipay_extract_type', 0) && $userExtract['extract_type'] == 'alipay') {
             // 构造支付宝提现参数
@@ -528,7 +573,12 @@ class UserExtractServices extends BaseServices
             throw new ApiException('数据不存在');
         }
 
-        if ($data['extract_type'] == 'weixin' && !sys_config('weixin_extract_type', 0) && !$data['weixin']) {
+        $isTrainingCampWithdrawal = $data['extract_type'] === 'weixin'
+            && ($data['channel_type'] ?? '') === 'routine';
+        if ($data['extract_type'] == 'weixin'
+            && !$isTrainingCampWithdrawal
+            && !sys_config('weixin_extract_type', 0)
+            && !$data['weixin']) {
             throw new ApiException('请输入微信账号');
         }
 
@@ -541,8 +591,10 @@ class UserExtractServices extends BaseServices
         $openid = $wechatServices->uidToOpenid($uid, 'wechat');
         if (!$openid) $openid = $wechatServices->uidToOpenid($uid, 'routine');
 
-        if ($data['extract_type'] == 'weixin' && sys_config('weixin_extract_type', 0) && !$openid) {
-            throw new ApiException('请先关注公众号');
+        if ($data['extract_type'] == 'weixin'
+            && ($isTrainingCampWithdrawal || sys_config('weixin_extract_type', 0))
+            && !$openid) {
+            throw new ApiException($isTrainingCampWithdrawal ? '请先登录小程序并授权微信账号' : '请先关注公众号');
         }
 
         /** @var UserBrokerageServices $services */
@@ -606,9 +658,9 @@ class UserExtractServices extends BaseServices
             $insertData['real_name'] = $data['user_name'];
             $insertData['qrcode_url'] = $data['qrcode_url'];
             $mark = '使用微信提现' . $insertData['extract_price'] . '元' . $feeMark;
-            if (sys_config('weixin_extract_type', 0) && $openid) {
+            if (($isTrainingCampWithdrawal || sys_config('weixin_extract_type', 0)) && $openid) {
                 if ($data['extract_price'] < 0.1) {
-                    throw new ApiException('企业微信付款到零钱最低金额为1元');
+                    throw new ApiException('微信提现最低金额为0.1元');
                 }
             }
         }

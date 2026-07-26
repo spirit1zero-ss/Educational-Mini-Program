@@ -23,6 +23,8 @@ const [
   agentRoutes,
   commissionPage,
   virtualPaymentService,
+  settingsPatch,
+  configValidator,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/services/user/DistributionServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/order/OtherOrderServices.php'),
@@ -42,12 +44,15 @@ const [
   read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/agent.php'),
   read('src/CRMEB/CRMEB-master/template/admin/src/pages/finance/commission/index.vue'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/VirtualPaymentServices.php'),
+  read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-settings.sql'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/validate/setting/SystemConfigValidata.php'),
 ])
 
 for (const amount of ['120.00', '150.00', '200.00', '300.00']) {
   assert.match(distribution, new RegExp(`'firstCommission'\\s*=>\\s*'${amount.replace('.', '\\.')}'`))
 }
-assert.match(distribution, /SECOND_COMMISSION\s*=\s*'20\.00'/)
+assert.match(distribution, /training_camp_second_commission/)
+assert.match(distribution, /training_camp_fallback_commission/)
 assert.match(distribution, /initialQuota'\s*=>\s*1/)
 assert.match(distribution, /initialQuota'\s*=>\s*30/)
 assert.match(distribution, /initialQuota'\s*=>\s*50/)
@@ -55,7 +60,8 @@ assert.match(distribution, /initialQuota'\s*=>\s*200/)
 assert.match(distribution, /PENDING_SETTLEMENT_TIME\s*=\s*2147483647/)
 assert.match(distribution, /training_camp_distribution_enabled/)
 assert.match(distribution, /premiumQuotaUsed\(\$uid\)\s*<\s*\(int\)\$profile\['initialQuota'\]/)
-assert.match(distribution, /self::LEVELS\[0\]\['firstCommission'\]/)
+assert.match(distribution, /configuredMoney\(/)
+assert.match(distribution, /configuredQuota\(/)
 assert.match(distribution, /'quotaLimited'\s*=>\s*\$quotaLimited/)
 assert.match(distribution, /'review_time'\s*=>\s*\$reviewTime/)
 
@@ -94,7 +100,7 @@ assert.match(userService, /\$edit\['spread_open'\] = 1/)
 assert.match(minePage, /label: '分销拉新人数'/)
 assert.match(minePage, /label: '总收入'/)
 assert.match(minePage, /label: '已提现'/)
-assert.match(teamPage, /label: '团队初始名额'/)
+assert.doesNotMatch(teamPage, /团队初始名额/)
 assert.match(teamPage, /label: '一级团队'/)
 assert.match(teamPage, /label: '二级团队'/)
 assert.match(incomePage, /label: '待结算'/)
@@ -109,10 +115,13 @@ assert.match(agentLevelController, /'enabled'\s*=>\s*\$distributionServices->isE
 assert.match(agentLevelPage, /mode: 'training_camp'/)
 assert.match(agentLevelPage, /名额内一级返佣/)
 assert.match(agentLevelPage, /名额用完后/)
-assert.match(agentLevelPage, /C 身份页面固定显示 1 个名额/)
+assert.match(agentLevelPage, /C 身份固定显示 1 个名额/)
 assert.match(agentLevelPage, /二级固定返佣/)
 assert.match(agentLevelPage, /团队初始名额/)
-assert.match(agentLevelPage, /trainingCampDistributionSwitchApi/)
+assert.match(agentLevelPage, /不展示返佣名额/)
+assert.match(agentLevelPage, /firstCommissionSummary/)
+assert.doesNotMatch(agentLevelPage, /trainingCampDistributionSwitchApi/)
+assert.match(agentLevelPage, /基础分销配置/)
 assert.doesNotMatch(agentLevelPage, /one_brokerage_percent/)
 assert.doesNotMatch(agentLevelPage, /two_brokerage_percent/)
 assert.doesNotMatch(agentLevelPage, /一级分佣比例/)
@@ -126,6 +135,22 @@ assert.match(distributionPatch, /training_camp_distribution_enabled/)
 assert.match(distributionPatch, /admin-user-grade-distribution-policy-switch/)
 assert.match(distributionPatch, /menu_name`\s*=\s*'brokerage_func_status'/)
 assert.match(distributionPatch, /SET `status`\s*=\s*0/)
+assert.match(settingsPatch, /training_camp_distribution_enabled/)
+assert.match(settingsPatch, /training_camp_withdraw_enabled/)
+for (const key of [
+  'training_camp_c_first_commission',
+  'training_camp_m_initial_quota',
+  'training_camp_m_first_commission',
+  'training_camp_d_initial_quota',
+  'training_camp_d_first_commission',
+  'training_camp_h_initial_quota',
+  'training_camp_h_first_commission',
+  'training_camp_fallback_commission',
+  'training_camp_second_commission',
+]) {
+  assert.match(settingsPatch, new RegExp(key))
+  assert.match(configValidator, new RegExp(key))
+}
 assert.match(membershipApi, /agent\/level\/distribution-switch/)
 assert.match(agentRoutes, /level\/distribution-switch/)
 assert.match(commissionPage, /审核时间/)

@@ -21,6 +21,9 @@ const [
   virtualPaymentService,
   orderAdminService,
   distributionPatch,
+  userExtractService,
+  payClient,
+  settingsPatch,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/services/miniapp/MiniappServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/api/controller/v1/miniapp/MineController.php'),
@@ -38,6 +41,9 @@ const [
   read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/VirtualPaymentServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/miniapp/TrainingCampOrderAdminServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-distribution-refund.sql'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/services/user/UserExtractServices.php'),
+  read('src/CRMEB/CRMEB-master/crmeb/crmeb/services/easywechat/v3pay/PayClient.php'),
+  read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-settings.sql'),
 ])
 
 assert.doesNotMatch(miniService, /\|\| \(int\)\(\$user\['level'\]/, 'legacy user level must not grant training-camp access')
@@ -54,6 +60,8 @@ assert.match(miniApi, /getWithdrawalOverview/)
 assert.match(miniApi, /applyWithdrawal/)
 assert.match(incomePage, /wx\.requestMerchantTransfer/)
 assert.match(incomePage, /withdrawalSubmitting/)
+assert.match(incomePage, /已打开收款确认页/)
+assert.doesNotMatch(incomePage, /已确认收款/)
 
 assert.match(cancelService, /'is_del'\s*=>\s*1/)
 assert.match(cancelService, /'is_promoter'\s*=>\s*0/)
@@ -65,7 +73,26 @@ assert.match(adminRoutes, /member\/registration\/:id/)
 assert.match(adminApi, /trainingCampRegistrationDelete/)
 assert.match(registrationPage, /deleteRegistration/)
 
-assert.match(callbackService, /\$userExtract = is_array\(\$userExtractInfo\)/)
+assert.match(miniService, /training_camp_withdraw_enabled/)
+assert.doesNotMatch(
+  miniService.slice(miniService.indexOf('public function getWithdrawalOverview'), miniService.indexOf('private function getWithdrawalWindow')),
+  /weixin_extract_type/
+)
+assert.match(userExtractService, /v3_transfer_scene_id', '1000'/)
+assert.match(userExtractService, /'现金奖励'/)
+assert.match(userExtractService, /'info_type'\s*=>\s*'活动名称'/)
+assert.match(userExtractService, /'info_type'\s*=>\s*'奖励说明'/)
+assert.doesNotMatch(
+  userExtractService.slice(userExtractService.indexOf('public function changeSuccess'), userExtractService.indexOf("if (sys_config('alipay_extract_type")),
+  /'劳务报酬'|'岗位类型'|'报酬说明'/
+)
+assert.match(userExtractService, /function syncMerchantTransfer/)
+assert.match(userExtractService, /queryTransferBills/)
+assert.match(payClient, /商家转账查询失败/)
+assert.match(callbackService, /Db::transaction/)
+assert.match(callbackService, /lock\(true\)/)
+assert.match(callbackService, /in_array\(\$state, \$terminalFailures, true\)/)
+assert.match(settingsPatch, /training_camp_withdraw_enabled/)
 assert.match(menuPatch, /user-user-level/)
 assert.match(menuPatch, /admin-user-training-camp-registration-delete/)
 assert.match(virtualPaymentService, /private function freezeRefundedAccount/)
