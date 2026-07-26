@@ -55,8 +55,12 @@
           <div class="value">{{ psInfo.status ? '开启' : '锁定' }}</div>
         </div>
         <div class="item">
-          <div>用户等级：</div>
-          <div class="value">{{ psInfo.vip_name || '-' }}</div>
+          <div>分销身份：</div>
+          <div class="value">{{ psInfo.agent_level_name || 'C 普通会员' }}</div>
+        </div>
+        <div class="item">
+          <div>身份编号：</div>
+          <div class="value">{{ psInfo.distribution_identity_code || '-' }}</div>
         </div>
         <div class="item">
           <div>用户标签：</div>

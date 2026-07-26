@@ -425,6 +425,22 @@ class User extends AuthController
      */
     public function update($id)
     {
+        if (!$id) return app('json')->fail('参数错误');
+        $currentUser = $this->services->get((int)$id);
+        if (!$currentUser) return app('json')->fail('用户不存在');
+        $distributionOnly = (string)$this->request->post('distribution_only', '');
+        if ($distributionOnly === 'identity') {
+            $agentLevel = (int)$this->request->post('agent_level', 0);
+            return app('json')->success(
+                $this->services->updateDistributionIdentity((int)$id, $agentLevel) ? '分销身份已更新' : '分销身份更新失败'
+            );
+        }
+        if ($distributionOnly === 'promotion') {
+            $enabled = (bool)$this->request->post('enabled', 0);
+            return app('json')->success(
+                $this->services->updatePromotionQualification((int)$id, $enabled) ? '推广资格已更新' : '推广资格更新失败'
+            );
+        }
         $data = $this->request->postMore([
             ['money_status', 0],
             ['is_promoter', 0],
@@ -436,8 +452,8 @@ class User extends AuthController
             ['integration_status', 0],
             ['integration', 0],
             ['status', 0],
-            ['level', 0],
-            ['agent_level', 0],
+            ['level', (int)$currentUser->getData('level')],
+            ['agent_level', (int)$currentUser->getData('agent_level')],
             ['phone', 0],
             ['addres', ''],
             ['label_id', []],

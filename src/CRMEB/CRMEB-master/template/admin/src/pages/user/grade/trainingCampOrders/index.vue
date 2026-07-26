@@ -247,6 +247,9 @@ export default {
     };
   },
   created() {
+    if (this.$route.query.keyword) {
+      this.form.keyword = String(this.$route.query.keyword);
+    }
     this.loadList();
   },
   methods: {

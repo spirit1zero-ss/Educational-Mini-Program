@@ -72,16 +72,12 @@
       <div class="section">
         <div class="section-hd">用户概况</div>
         <div class="section-bd">
-          <div class="item">
-            <el-form-item label="用户等级：">
-              <el-select v-model="formItem.level" class="form-sty" clearable>
-                <el-option
-                  v-for="(item, index) in infoData.levelInfo"
-                  :key="index"
-                  :value="item.id"
-                  :label="item.name"
-                ></el-option>
-              </el-select>
+          <div class="item lang identity-item">
+            <el-form-item label="分销身份：">
+              <distribution-identity-select v-model="formItem.agent_level" compact />
+              <div class="tip identity-tip">
+                M / D / H 会同步开通训练营会员与推广资格；C 只调整返佣档位，不撤销现有会员资格。
+              </div>
             </el-form-item>
           </div>
           <div class="item">
@@ -173,13 +169,14 @@
 
 <script>
 import userLabel from '@/components/userLabel';
+import DistributionIdentitySelect from '@/components/distribution/identitySelect';
 
 import { userLabelAddApi, getUserInfo, editUser, setUser } from '@/api/user';
 import dayjs from 'dayjs';
 
 export default {
   name: 'userInfo',
-  components: { userLabel },
+  components: { userLabel, DistributionIdentitySelect },
   props: {
     userId: {
       type: Number,
@@ -217,6 +214,7 @@ export default {
         pwd: '',
         true_pwd: '',
         level: '',
+        agent_level: 0,
         group_id: '',
         label_id: [],
         spread_open: 0,
@@ -337,6 +335,7 @@ export default {
         pwd: '',
         true_pwd: '',
         level: '',
+        agent_level: 0,
         group_id: '',
         label_id: [],
         spread_open: 0,
@@ -422,6 +421,19 @@ export default {
 
     .item.lang {
       width: 100%;
+    }
+
+    .identity-item {
+      ::v-deep .el-form-item__content {
+        max-width: 820px;
+      }
+    }
+
+    .identity-tip {
+      margin-top: 8px;
+      color: #909399;
+      font-size: 12px;
+      line-height: 18px;
     }
 
     .value {

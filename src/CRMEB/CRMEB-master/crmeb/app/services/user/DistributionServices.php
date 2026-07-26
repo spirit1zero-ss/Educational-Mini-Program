@@ -260,6 +260,213 @@ class DistributionServices extends BaseServices
     }
 
     /**
+     * Training-camp distributor workspace. This deliberately avoids the legacy
+     * store_order and percentage-brokerage aggregates used by the mall module.
+     */
+    public function adminAgentPage(array $where): array
+    {
+        $page = max(1, (int)($where['page'] ?? 1));
+        $limit = max(1, min(100, (int)($where['limit'] ?? 15)));
+        $query = $this->adminAgentQuery($where);
+        $count = (clone $query)->count();
+        $rows = $query
+            ->field('u.uid,u.nickname,u.real_name,u.avatar,u.phone,u.agent_level,u.is_ever_level,u.is_money_level,u.overdue_time,u.is_promoter,u.spread_open,u.status,u.is_del,u.spread_uid,u.brokerage_price,u.add_time')
+            ->order('u.uid', 'desc')
+            ->page($page, $limit)
+            ->select()
+            ->toArray();
+
+        $spreadUids = array_values(array_unique(array_filter(array_map('intval', array_column($rows, 'spread_uid')))));
+        $spreadMap = $spreadUids
+            ? Db::name('user')->whereIn('uid', $spreadUids)->column('nickname', 'uid')
+            : [];
+
+        $list = array_map(function (array $row) use ($spreadMap) {
+            $uid = (int)$row['uid'];
+            $profile = $this->profile($row);
+            $team = $this->teamStats($uid);
+            $income = $this->incomeSummary($uid, (string)($row['brokerage_price'] ?? '0'));
+            $isMember = $this->isActiveMemberRecord($row);
+            $canPromote = $isMember
+                && (int)($row['status'] ?? 0) === 1
+                && (int)($row['is_promoter'] ?? 0) === 1
+                && (int)($row['spread_open'] ?? 0) === 1
+                && (int)($row['is_del'] ?? 0) === 0;
+            $spreadUid = (int)($row['spread_uid'] ?? 0);
+
+            return [
+                'uid' => $uid,
+                'nickname' => (string)($row['nickname'] ?? ''),
+                'realName' => (string)($row['real_name'] ?? ''),
+                'avatar' => (string)($row['avatar'] ?? ''),
+                'phone' => (string)($row['phone'] ?? ''),
+                'agentLevel' => (int)$profile['levelId'],
+                'levelKey' => (string)$profile['levelKey'],
+                'levelName' => (string)$profile['levelName'],
+                'identityCode' => (string)$profile['identityCode'],
+                'isMember' => $isMember,
+                'memberStatusText' => $isMember ? '训练营会员' : '未开通会员',
+                'canPromote' => $canPromote,
+                'promotionStatusText' => $canPromote ? '推广正常' : '推广已冻结',
+                'spreadOpen' => (int)($row['spread_open'] ?? 0),
+                'isPromoter' => (int)($row['is_promoter'] ?? 0),
+                'status' => (int)($row['status'] ?? 0),
+                'initialQuota' => (int)$team['initialQuota'],
+                'usedQuota' => (int)$team['usedQuota'],
+                'remainingQuota' => (int)$team['remainingQuota'],
+                'firstLevelCount' => (int)$team['firstLevelCount'],
+                'secondLevelCount' => (int)$team['secondLevelCount'],
+                'pullNewCount' => (int)$team['pullNewCount'],
+                'income' => $income,
+                'spreadUid' => $spreadUid,
+                'spreadName' => $spreadUid > 0
+                    ? (string)($spreadMap[$spreadUid] ?? '用户') . '/' . $spreadUid
+                    : '--',
+                'joinedAt' => !empty($row['add_time']) ? date('Y-m-d H:i:s', (int)$row['add_time']) : '',
+            ];
+        }, $rows);
+
+        return compact('list', 'count');
+    }
+
+    /**
+     * Summary cards for the training-camp distributor workspace.
+     */
+    public function adminAgentSummary(array $where): array
+    {
+        $summaryUsers = $this->adminAgentQuery($where)
+            ->field('u.uid,u.is_ever_level,u.is_money_level,u.overdue_time')
+            ->select()
+            ->toArray();
+        $uids = [];
+        foreach ($summaryUsers as $summaryUser) {
+            if ($this->isActiveMemberRecord($summaryUser)) {
+                $uids[] = (int)$summaryUser['uid'];
+            }
+        }
+        $uids = array_values(array_unique($uids));
+        if (!$uids) {
+            return [
+                'memberCount' => 0,
+                'inviteCount' => 0,
+                'orderCount' => 0,
+                'orderAmount' => '0.00',
+                'pendingAmount' => '0.00',
+                'availableAmount' => '0.00',
+                'withdrawnAmount' => '0.00',
+            ];
+        }
+
+        $effectiveTeamUids = [];
+        foreach ($uids as $uid) {
+            $effectiveTeamUids = array_merge(
+                $effectiveTeamUids,
+                $this->teamMemberUids($uid, 1),
+                $this->teamMemberUids($uid, 2)
+            );
+        }
+        $effectiveTeamUids = array_values(array_unique(array_map('intval', $effectiveTeamUids)));
+        $orderCount = 0;
+        $orderAmountFen = 0;
+        if ($effectiveTeamUids) {
+            $validOrders = Db::name(self::CAMP_ORDER_TABLE)
+                ->whereIn('uid', $effectiveTeamUids)
+                ->where('order_state', 'paid')
+                ->where('refund_state', '<>', 'refunded');
+            $orderCount = (int)(clone $validOrders)->count();
+            $orderAmountFen = (int)(clone $validOrders)->sum('price_fen');
+        }
+
+        $positive = Db::name('user_brokerage')
+            ->whereIn('uid', $uids)
+            ->whereIn('type', self::MEMBER_INCOME_TYPES)
+            ->where('pm', 1)
+            ->where('status', 1);
+        $pendingAmount = (string)(clone $positive)->where('frozen_time', '>', time())->sum('number');
+        $balanceAmount = (string)Db::name('user')->whereIn('uid', $uids)->sum('brokerage_price');
+        $availableAmount = bcsub($balanceAmount, $pendingAmount, 2);
+        if (bccomp($availableAmount, '0', 2) < 0) {
+            $availableAmount = '0.00';
+        }
+
+        $withdrawnBase = Db::name('user_extract')
+            ->whereIn('uid', $uids)
+            ->where('extract_type', 'weixin')
+            ->where('status', 1)
+            ->where('state', 'SUCCESS');
+        $withdrawnAmount = bcsub(
+            (string)(clone $withdrawnBase)->sum('extract_price'),
+            (string)(clone $withdrawnBase)->sum('extract_fee'),
+            2
+        );
+
+        return [
+            'memberCount' => count($uids),
+            'inviteCount' => count($effectiveTeamUids),
+            'orderCount' => $orderCount,
+            'orderAmount' => $this->money($orderAmountFen / 100),
+            'pendingAmount' => $this->money($pendingAmount),
+            'availableAmount' => $this->money($availableAmount),
+            'withdrawnAmount' => $this->money($withdrawnAmount),
+        ];
+    }
+
+    private function adminAgentQuery(array $where)
+    {
+        $query = Db::name('user')->alias('u')
+            ->where('u.is_del', 0)
+            ->where(function ($query) {
+                $query->where('u.is_ever_level', 1)
+                    ->whereOr('u.is_money_level', '>', 0)
+                    ->whereOr('u.agent_level', '>', 0)
+                    ->whereOr('u.is_promoter', 1);
+            });
+
+        $keyword = trim((string)($where['nickname'] ?? $where['keyword'] ?? ''));
+        if ($keyword !== '') {
+            $query->where(function ($query) use ($keyword) {
+                $query->whereLike('u.nickname|u.real_name|u.phone|u.uid', '%' . $keyword . '%');
+            });
+        }
+
+        $agentLevel = $where['agent_level'] ?? '';
+        if ($agentLevel !== '' && $agentLevel !== null) {
+            $query->where('u.agent_level', $this->normalizeAgentLevel((int)$agentLevel));
+        }
+
+        $promotionStatus = trim((string)($where['promotion_status'] ?? ''));
+        if ($promotionStatus === 'active') {
+            $query->where('u.status', 1)->where('u.is_promoter', 1)->where('u.spread_open', 1);
+        } elseif ($promotionStatus === 'frozen') {
+            $query->where(function ($query) {
+                $query->where('u.status', 0)->whereOr('u.is_promoter', 0)->whereOr('u.spread_open', 0);
+            });
+        }
+
+        $dateRange = trim((string)($where['data'] ?? ''));
+        if ($dateRange !== '' && strpos($dateRange, '-') !== false) {
+            [$start, $end] = array_map('trim', explode('-', $dateRange, 2));
+            $startTime = strtotime($start . ' 00:00:00');
+            $endTime = strtotime($end . ' 23:59:59');
+            if ($startTime && $endTime) {
+                $query->whereBetween('u.add_time', [$startTime, $endTime]);
+            }
+        }
+
+        return $query;
+    }
+
+    private function isActiveMemberRecord(array $user): bool
+    {
+        if ((int)($user['is_ever_level'] ?? 0) === 1) {
+            return true;
+        }
+        $overdueTime = (int)($user['overdue_time'] ?? 0);
+        return (int)($user['is_money_level'] ?? 0) > 0
+            && ($overdueTime === 0 || $overdueTime > time());
+    }
+
+    /**
      * Administrator-facing distribution account snapshot.
      */
     public function adminOverview(int $uid): array

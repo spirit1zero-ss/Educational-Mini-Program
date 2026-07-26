@@ -404,12 +404,11 @@
                     v-auth="['admin-user-distribution-overview']"
                     command="11"
                   >分销详情</el-dropdown-item>
-                  <el-dropdown-item command="2">修改余额</el-dropdown-item>
-                  <el-dropdown-item command="8">修改积分</el-dropdown-item>
-                  <el-dropdown-item command="3">赠送会员</el-dropdown-item>
+                  <el-dropdown-item command="12">设置分销身份</el-dropdown-item>
+                  <el-dropdown-item command="13">退款会员处理</el-dropdown-item>
                   <!--                                <el-dropdown-item command="4" v-if="row.vip_name">清除等级</el-dropdown-item>-->
-                  <el-dropdown-item command="7">修改上级推广人</el-dropdown-item>
-                  <el-dropdown-item command="99" v-if="scope.row.spread_uid">清除上级推广人</el-dropdown-item>
+                  <el-dropdown-item command="7">调整邀请关系</el-dropdown-item>
+                  <el-dropdown-item command="99" v-if="scope.row.spread_uid">解除邀请关系</el-dropdown-item>
                   <el-dropdown-item v-auth="['admin-user-delete']" command="10" divided>注销用户</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
@@ -438,6 +437,7 @@
     <user-details ref="userDetails"></user-details>
     <!-- 训练营分销详情 -->
     <distribution-details ref="distributionDetails"></distribution-details>
+    <distribution-identity-dialog ref="distributionIdentityDialog" @success="getList"></distribution-identity-dialog>
     <!--发送图文消息 -->
     <!--修改推广人-->
     <el-dialog :visible.sync="promoterShow" title="修改推广人" width="540px" :show-close="true">
@@ -539,6 +539,7 @@ import { exportUserList } from '@/api/export';
 import editFrom from '../../../components/from/from';
 import userDetails from './handle/userDetails';
 import distributionDetails from './handle/distributionDetails';
+import DistributionIdentityDialog from '@/components/distribution/identityDialog';
 import customerInfo from '@/components/customerInfo';
 import { cityList } from '@/api/app';
 import { membershipDataListApi } from '@/api/membershipLevel';
@@ -550,6 +551,7 @@ export default {
     editFrom,
     userDetails,
     distributionDetails,
+    DistributionIdentityDialog,
     customerInfo,
     userLabel,
     userEdit,
@@ -953,6 +955,12 @@ export default {
           break;
         case '11':
           this.$refs.distributionDetails.open(row);
+          break;
+        case '12':
+          this.$refs.distributionIdentityDialog.open(row);
+          break;
+        case '13':
+          this.$router.push({ name: 'user_trainingCampOrders', query: { keyword: String(row.uid) } });
           break;
         default:
           this.del(row, '解除【 ' + this.tenText(row.nickname) + ' 】的上级推广人', index, 'tuiguang');

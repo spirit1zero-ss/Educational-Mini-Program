@@ -52,6 +52,8 @@ class AgentManage extends AuthController
         $where = $this->request->getMore([
             ['nickname', ''],
             ['data', ''],
+            ['page', 1],
+            ['limit', 15],
         ]);
         // 调用服务层获取分销商列表
         return app('json')->success($this->services->agentSystemPage($where));
@@ -68,7 +70,7 @@ class AgentManage extends AuthController
     {
         // 获取请求参数
         $where = $this->request->getMore([
-            ['data', '', '', 'time'],
+            ['data', ''],
             ['nickname', ''],
         ]);
         // 返回分销统计数据

@@ -938,6 +938,45 @@ class UserServices extends BaseServices
     }
 
     /**
+     * Update only the training-camp distribution identity. This endpoint is
+     * intentionally independent from profile fields such as phone and name.
+     */
+    public function updateDistributionIdentity(int $id, int $agentLevel): bool
+    {
+        $user = $this->getUserInfo($id);
+        if (!$user) {
+            throw new AdminException('用户不存在');
+        }
+        $agentLevel = max(0, min(3, $agentLevel));
+        $edit = ['agent_level' => $agentLevel];
+        if ($agentLevel > 0) {
+            $edit['is_ever_level'] = 1;
+            $edit['is_money_level'] = max(1, (int)($user['is_money_level'] ?? 0));
+            $edit['overdue_time'] = 0;
+            $edit['is_promoter'] = 1;
+            $edit['spread_open'] = 1;
+        }
+        return $this->dao->update($id, $edit) !== false;
+    }
+
+    /**
+     * Freeze or restore promotion eligibility without changing membership,
+     * account status, historical teams, commissions, or withdrawals.
+     */
+    public function updatePromotionQualification(int $id, bool $enabled): bool
+    {
+        $user = $this->getUserInfo($id);
+        if (!$user) {
+            throw new AdminException('用户不存在');
+        }
+        $edit = ['spread_open' => $enabled ? 1 : 0];
+        if ($enabled) {
+            $edit['is_promoter'] = 1;
+        }
+        return $this->dao->update($id, $edit) !== false;
+    }
+
+    /**
      * 编辑其他
      * @param $id
      * @return mixed
@@ -1357,6 +1396,9 @@ class UserServices extends BaseServices
             }
         }
         $userInfo['vip_name'] = app()->make(SystemUserLevelServices::class)->value(['id' => $userInfo['level']], 'name');
+        $distributionProfile = app()->make(DistributionServices::class)->profile($userInfo->toArray());
+        $userInfo['agent_level_name'] = $distributionProfile['levelKey'] . ' ' . $distributionProfile['levelName'];
+        $userInfo['distribution_identity_code'] = $distributionProfile['identityCode'];
         $userInfo['group_name'] = app()->make(UserGroupServices::class)->value(['id' => $userInfo['group_id']], 'group_name');
         $userInfo['spread_uid_nickname'] = $this->dao->value(['uid' => $userInfo['spread_uid']], 'nickname') . '/' . $userInfo['spread_uid'];
         $userInfo['label_list'] = implode(',', array_column(app()->make(UserLabelRelationServices::class)->getUserLabelList([$uid]), 'label_name'));

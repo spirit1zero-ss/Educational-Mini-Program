@@ -19,6 +19,7 @@ use app\services\system\attachment\SystemAttachmentServices;
 use app\services\user\UserBrokerageFrozenServices;
 use app\services\user\UserBrokerageServices;
 use app\services\user\UserExtractServices;
+use app\services\user\DistributionServices;
 use app\services\user\UserServices;
 use crmeb\exceptions\AdminException;
 use crmeb\services\app\MiniProgramService;
@@ -42,45 +43,9 @@ class AgentManageServices extends BaseServices
      */
     public function agentSystemPage(array $where, $is_page = true)
     {
-        /** @var UserServices $userServices */
-        $userServices = app()->make(UserServices::class);
-        $data = $userServices->getAgentUserList($where, '*', $is_page);
-        /** @var UserBrokerageServices $frozenPrices */
-        $frozenPrices = app()->make(UserBrokerageServices::class);
-        /** @var StoreOrderServices $orderServices */
-        $orderServices = app()->make(StoreOrderServices::class);
-        foreach ($data['list'] as &$item) {
-            $item['headimgurl'] = $item['avatar'];
-            $item['extract_count_price'] = $item['extract'][0]['extract_count_price'] ?? 0;
-            $item['extract_count_num'] = $item['extract'][0]['extract_count_num'] ?? 0;
-            $item['spread_name'] = $item['spreadUser']['nickname'] ?? '';
-            if ($item['spread_name']) {
-                $item['spread_name'] .= '/' . $item['spread_uid'];
-            } else {
-                $item['spread_name'] = '--';
-            }
-            $item['spread_count'] = $item['spreadCount'][0]['spread_count'] ?? 0;
-            $item['order_price'] = $item['order'][0]['order_price'] ?? 0;
-            $item['order_count'] = $item['order'][0]['order_count'] ?? 0;
-            $item['broken_commission'] = $frozenPrices->getUserFrozenPrice($item['uid']);
-            if ($item['broken_commission'] < 0)
-                $item['broken_commission'] = 0;
-            $item['new_money'] = $item['bill'][0]['brokerage_money'] ?? 0;
-            if ($item['brokerage_price'] > $item['broken_commission'])
-                $item['new_money'] = bcsub((string)$item['brokerage_price'], (string)$item['broken_commission'], 2);
-            else
-                $item['new_money'] = 0;
-            $item['brokerage_money'] = bcadd((string)$item['brokerage_price'], (string)$item['extract_count_price'], 2);
-            unset($item['extract'], $item['order'], $item['bill'], $item['spreadUser'], $item['spreadCount']);
-            if (strpos($item['headimgurl'], '/statics/system_images/') !== false) {
-                $item['headimgurl'] = set_file_url($item['headimgurl']);
-            }
-            $item['spread_order'] = $orderServices->get(
-                [['spread_uid', '=', $item['uid']], ['paid', '=', 1], ['refund_status', '=', 0], ['pid', '>=', 0]],
-                ['sum(pay_price) as order_price', 'count(id) as order_count']
-            );
-        }
-        return $data;
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
+        return $distributionServices->adminAgentPage($where);
     }
 
     /**
@@ -93,79 +58,9 @@ class AgentManageServices extends BaseServices
      */
     public function getSpreadBadge($where)
     {
-        /** @var UserServices $userServices */
-        $userServices = app()->make(UserServices::class);
-        $uids = $userServices->getAgentUserIds($where);
-
-        //分销员人数
-        $data['uids'] = $uids;
-        $data['sum_count'] = count($uids);
-
-        //发展会员人数以及用户的可提现金额
-        $data['spread_sum'] = 0;
-        $data['extract_price'] = 0;
-        if ($data['sum_count']) {
-            //发展会员人数
-            $data['spread_sum'] = $userServices->getCount([['spread_uid', 'in', $uids]]);
-            //获取某个用户可提现金额
-            /** @var UserBrokerageFrozenServices $frozenPrices */
-            $frozenPrices = app()->make(UserBrokerageFrozenServices::class);
-            $data['extract_price'] = bcsub((string)$userServices->getSumBrokerage(['uid' => $uids]), $frozenPrices->getSumFrozenBrokerage($uids), 2);
-        }
-
-        //订单总数，订单金额，提现次数
-        $data['order_count'] = 0;
-        $data['pay_price'] = 0;
-        $data['extract_count'] = 0;
-        if ($data['sum_count']) {
-            /** @var StoreOrderServices $storeOrder */
-            $storeOrder = app()->make(StoreOrderServices::class);
-            //订单总数
-            $data['order_count'] = $storeOrder->getCount([['uid', 'in', $uids], ['paid', '=', 1], ['refund_status', '=', 0], ['pid', '<=', 0]]);
-            //订单金额
-            $data['pay_price'] = $storeOrder->sum([['uid', 'in', $uids], ['paid', '=', 1], ['refund_status', '=', 0], ['pid', '<=', 0]], 'pay_price');
-            //提现次数
-            $data['extract_count'] = app()->make(UserExtractServices::class)->getCount([['uid', 'in', $uids], ['status', '=', 1]]);
-        }
-
-        return [
-            [
-                'name' => '分销员人数(人)',
-                'count' => $data['sum_count'],
-                'className' => 'iconfaqirenshu',
-                'col' => 4,
-            ],
-            [
-                'name' => '推广用户数量(人)',
-                'count' => $data['spread_sum'],
-                'className' => 'icontuiguangrenshu',
-                'col' => 4,
-            ],
-            [
-                'name' => '订单数(单)',
-                'count' => $data['order_count'],
-                'className' => 'icondingdanliang',
-                'col' => 4,
-            ],
-            [
-                'name' => '订单金额(元)',
-                'count' => $data['pay_price'],
-                'className' => 'icondingdanjine',
-                'col' => 4,
-            ],
-            [
-                'name' => '提现次数(次)',
-                'count' => $data['extract_count'],
-                'className' => 'iconzhichujine',
-                'col' => 4,
-            ],
-            [
-                'name' => '未提现金额(元)',
-                'count' => $data['extract_price'],
-                'className' => 'iconjiaoyijine',
-                'col' => 4,
-            ],
-        ];
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
+        return $distributionServices->adminAgentSummary($where);
     }
 
     /**
