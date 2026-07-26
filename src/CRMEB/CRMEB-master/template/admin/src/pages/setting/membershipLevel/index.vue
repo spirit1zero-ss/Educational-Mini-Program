@@ -6,12 +6,21 @@
           <div class="policy-title">训练营分销身份与返佣规则</div>
           <div class="policy-subtitle">终端客户统一支付 ¥399，订单款进入公司账户，再按推广人身份产生固定返佣。</div>
         </div>
-        <el-tag type="success" effect="plain">固定金额模式</el-tag>
+        <div class="switch-control">
+          <span>训练营分销</span>
+          <el-switch
+            v-model="distributionEnabled"
+            :disabled="switchLoading"
+            active-text="开启"
+            inactive-text="关闭"
+            @change="changeDistributionSwitch"
+          />
+        </div>
       </div>
 
       <el-alert
         class="policy-alert"
-        title="此页面展示的是训练营实际结算规则，不再使用原分销等级的百分比字段。固定返佣先进入待结算，审核通过后才可提现。"
+        title="这是训练营独立分销配置，不再使用旧商城分销开关和百分比字段。关闭后停止生成推广关系和新佣金，历史团队、佣金与提现记录仍保留。"
         type="success"
         :closable="false"
         show-icon
@@ -76,10 +85,18 @@
             <span class="unit">人</span>
           </template>
         </el-table-column>
-        <el-table-column label="一级固定返佣" min-width="160">
+        <el-table-column label="名额内一级返佣" min-width="160">
           <template slot-scope="scope">
             <strong class="commission-value">¥{{ money(scope.row.firstCommission) }}</strong>
             <span class="unit">/ 单</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="名额用完后" min-width="145">
+          <template slot-scope="scope">
+            <span v-if="scope.row.quotaLimited">
+              ¥{{ money(scope.row.fallbackCommission) }} / 单
+            </span>
+            <span v-else>始终 ¥{{ money(scope.row.firstCommission) }} / 单</span>
           </template>
         </el-table-column>
         <el-table-column label="二级固定返佣" min-width="160">
@@ -133,11 +150,15 @@
           </div>
           <div>
             <span>名额占用</span>
-            <p>仅一级有效订单占用名额；二级成交不重复占用上级名额。</p>
+            <p>M/D/H 仅一级有效订单占用高返佣名额；名额用完后一级按普通会员 ¥120/单返佣。</p>
           </div>
           <div>
             <span>退款恢复</span>
             <p>订单退款后，团队人数减少、一级名额恢复、对应佣金撤销。</p>
+          </div>
+          <div>
+            <span>普通会员</span>
+            <p>C 身份页面固定显示 1 个名额，暂不消耗也不递减，一级始终返佣 ¥120/单。</p>
           </div>
         </div>
       </el-card>
@@ -215,7 +236,10 @@
 </template>
 
 <script>
-import { membershipDataListApi } from '@/api/membershipLevel';
+import {
+  membershipDataListApi,
+  trainingCampDistributionSwitchApi,
+} from '@/api/membershipLevel';
 
 export default {
   name: 'trainingCampDistributionPolicy',
@@ -227,6 +251,8 @@ export default {
       },
       tabList: [],
       loading: false,
+      switchLoading: false,
+      distributionEnabled: true,
       flowSteps: [
         '客户支付399元',
         '开通永久会员',
@@ -253,6 +279,7 @@ export default {
       membershipDataListApi(this.formValidate)
         .then((res) => {
           this.tabList = (res.data && res.data.list) || [];
+          this.distributionEnabled = !!(res.data && res.data.enabled);
         })
         .catch((res) => {
           this.$message.error(res.msg || '身份规则加载失败');
@@ -263,6 +290,20 @@ export default {
     },
     search() {
       this.getList();
+    },
+    changeDistributionSwitch(enabled) {
+      this.switchLoading = true;
+      trainingCampDistributionSwitchApi(enabled)
+        .then((res) => {
+          this.$message.success(res.msg || (enabled ? '训练营分销已开启' : '训练营分销已关闭'));
+        })
+        .catch((res) => {
+          this.distributionEnabled = !enabled;
+          this.$message.error(res.msg || '训练营分销开关保存失败');
+        })
+        .finally(() => {
+          this.switchLoading = false;
+        });
     },
   },
 };
@@ -276,6 +317,14 @@ export default {
     align-items: center;
     justify-content: space-between;
     gap: 24px;
+  }
+
+  .switch-control {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #515a6e;
+    white-space: nowrap;
   }
 
   .policy-title,

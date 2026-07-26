@@ -343,15 +343,18 @@ class OtherOrderServices extends BaseServices
         if ($type === 'pay_member' && bccomp((string)$orderInfo['pay_price'], '0', 2) > 0) {
             /** @var DistributionServices $distributionServices */
             $distributionServices = app()->make(DistributionServices::class);
-            $spread_one = (int)$userServices->getSpreadUid((int)$orderInfo['uid']);
-            $spread_two = $spread_one > 0 ? (int)$userServices->getSpreadUid($spread_one, [], false) : 0;
-            $spread_one_price = $distributionServices->firstCommissionForUid($spread_one);
-            $spread_two_price = $distributionServices->secondCommissionForUid($spread_two);
-            if ($spread_one > 0 && bccomp($spread_one_price, '0', 2) > 0) {
-                $this->memberBrokerage($spread_one, $spread_one_price, 'get_member_brokerage', $orderInfo);
-            }
-            if ($spread_two > 0 && bccomp($spread_two_price, '0', 2) > 0) {
-                $this->memberBrokerage($spread_two, $spread_two_price, 'get_two_member_brokerage', $orderInfo);
+            if ($distributionServices->isEnabled()) {
+                // 训练营使用自己的永久推荐关系，不再受商城旧分销总开关、自购和绑定时效配置影响。
+                $spread_one = (int)Db::name('user')->where('uid', (int)$orderInfo['uid'])->value('spread_uid');
+                $spread_two = $spread_one > 0
+                    ? (int)Db::name('user')->where('uid', $spread_one)->value('spread_uid')
+                    : 0;
+                if ($spread_one > 0) {
+                    $this->memberBrokerage($spread_one, null, 'get_member_brokerage', $orderInfo);
+                }
+                if ($spread_two > 0) {
+                    $this->memberBrokerage($spread_two, null, 'get_two_member_brokerage', $orderInfo);
+                }
             }
         }
 
@@ -393,6 +396,18 @@ class OtherOrderServices extends BaseServices
 
             /** @var UserServices $userServices */
             $userServices = app()->make(UserServices::class);
+            /** @var DistributionServices $distributionServices */
+            $distributionServices = app()->make(DistributionServices::class);
+            if ($storedType === 'one_member_brokerage') {
+                // The beneficiary row lock serializes concurrent buyers, so the
+                // premium quota check and commission write use one atomic order.
+                $price = $distributionServices->firstCommissionForUid((int)$uid);
+            } elseif ($storedType === 'two_member_brokerage') {
+                $price = $distributionServices->secondCommissionForUid((int)$uid);
+            }
+            if (bccomp((string)$price, '0', 2) <= 0) {
+                return true;
+            }
             $balance = bcadd((string)$userInfo['brokerage_price'], (string)$price, 2);
             if (!$userServices->bcInc((int)$uid, 'brokerage_price', $price, 'uid')) {
                 return false;
@@ -403,8 +418,6 @@ class OtherOrderServices extends BaseServices
             /** @var UserBrokerageServices $userBrokerageServices */
             $userBrokerageServices = app()->make(UserBrokerageServices::class);
             $buyer = $userServices->get((int)$orderInfo['uid']);
-            /** @var DistributionServices $distributionServices */
-            $distributionServices = app()->make(DistributionServices::class);
             $profile = $distributionServices->profile($userInfo);
             $saved = $userBrokerageServices->income($type, (int)$uid, [
                 'nickname' => $buyer['nickname'] ?? ('用户' . (int)$orderInfo['uid']),

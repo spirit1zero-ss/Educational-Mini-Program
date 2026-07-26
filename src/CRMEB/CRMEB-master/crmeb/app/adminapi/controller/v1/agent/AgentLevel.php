@@ -65,11 +65,32 @@ class AgentLevel extends AuthController
                         || mb_stripos($item['levelName'], $keyword) !== false;
                 }));
             }
-            return app('json')->success(['count' => count($list), 'list' => $list]);
+            return app('json')->success([
+                'count' => count($list),
+                'list' => $list,
+                'enabled' => $distributionServices->isEnabled(),
+            ]);
         }
         unset($where['mode']);
         // 调用服务层获取等级列表
         return app('json')->success($this->services->getLevelList($where));
+    }
+
+    /**
+     * 训练营独立分销开关。
+     */
+    public function distributionSwitch()
+    {
+        $enabled = (bool)$this->request->post('enabled', false);
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
+        if (!$distributionServices->setEnabled($enabled)) {
+            return app('json')->fail('训练营分销开关保存失败');
+        }
+        return app('json')->success(
+            $enabled ? '训练营分销已开启' : '训练营分销已关闭',
+            ['enabled' => $enabled]
+        );
     }
 
     /**

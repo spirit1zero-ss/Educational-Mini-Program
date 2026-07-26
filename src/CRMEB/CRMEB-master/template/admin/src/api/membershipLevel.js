@@ -24,6 +24,17 @@ export function membershipDataListApi(data) {
 }
 
 /**
+ * @description 修改训练营独立分销开关
+ */
+export function trainingCampDistributionSwitchApi(enabled) {
+  return request({
+    url: 'agent/level/distribution-switch',
+    method: 'put',
+    data: { enabled },
+  });
+}
+
+/**
  * @description 组合数据列表 -- 编辑表单
  * @param {Number} param id {Number} 组合数据列表id
  * @param {Object} param data {Object} 组合数据id对象

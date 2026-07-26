@@ -85,12 +85,6 @@ Page({
         icon: '../../assets/mine/icon-camp-order.svg'
       },
       {
-        key: 'redeem',
-        title: '兑换码',
-        desc: '输入兑换码开通权益',
-        icon: '../../assets/mine/icon-redeem-code.svg'
-      },
-      {
         key: 'benefit',
         title: '会员权益',
         desc: '查看训练营会员服务',

@@ -18,6 +18,11 @@ const [
   agentLevelController,
   agentLevelPage,
   patch,
+  distributionPatch,
+  membershipApi,
+  agentRoutes,
+  commissionPage,
+  virtualPaymentService,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/services/user/DistributionServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/order/OtherOrderServices.php'),
@@ -32,6 +37,11 @@ const [
   read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/controller/v1/agent/AgentLevel.php'),
   read('src/CRMEB/CRMEB-master/template/admin/src/pages/setting/membershipLevel/index.vue'),
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-24-release.sql'),
+  read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-distribution-refund.sql'),
+  read('src/CRMEB/CRMEB-master/template/admin/src/api/membershipLevel.js'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/agent.php'),
+  read('src/CRMEB/CRMEB-master/template/admin/src/pages/finance/commission/index.vue'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/VirtualPaymentServices.php'),
 ])
 
 for (const amount of ['120.00', '150.00', '200.00', '300.00']) {
@@ -43,9 +53,16 @@ assert.match(distribution, /initialQuota'\s*=>\s*30/)
 assert.match(distribution, /initialQuota'\s*=>\s*50/)
 assert.match(distribution, /initialQuota'\s*=>\s*200/)
 assert.match(distribution, /PENDING_SETTLEMENT_TIME\s*=\s*2147483647/)
+assert.match(distribution, /training_camp_distribution_enabled/)
+assert.match(distribution, /premiumQuotaUsed\(\$uid\)\s*<\s*\(int\)\$profile\['initialQuota'\]/)
+assert.match(distribution, /self::LEVELS\[0\]\['firstCommission'\]/)
+assert.match(distribution, /'quotaLimited'\s*=>\s*\$quotaLimited/)
+assert.match(distribution, /'review_time'\s*=>\s*\$reviewTime/)
 
 assert.match(orderService, /firstCommissionForUid/)
 assert.match(orderService, /secondCommissionForUid/)
+assert.match(orderService, /value\('spread_uid'\)/)
+assert.doesNotMatch(orderService, /getSpreadUid/)
 assert.doesNotMatch(orderService, /store_brokerage_ratio/)
 assert.doesNotMatch(orderService, /store_brokerage_two/)
 assert.match(orderService, /where\('link_id', \(string\)\$orderInfo\['id'\]\)/)
@@ -87,10 +104,15 @@ assert.match(incomePage, /label: '已到账'/)
 assert.match(distribution, /function policyList\(\): array/)
 assert.match(agentLevelController, /mode'\s*,\s*''/)
 assert.match(agentLevelController, /policyList\(\)/)
+assert.match(agentLevelController, /function distributionSwitch\(\)/)
+assert.match(agentLevelController, /'enabled'\s*=>\s*\$distributionServices->isEnabled\(\)/)
 assert.match(agentLevelPage, /mode: 'training_camp'/)
-assert.match(agentLevelPage, /一级固定返佣/)
+assert.match(agentLevelPage, /名额内一级返佣/)
+assert.match(agentLevelPage, /名额用完后/)
+assert.match(agentLevelPage, /C 身份页面固定显示 1 个名额/)
 assert.match(agentLevelPage, /二级固定返佣/)
 assert.match(agentLevelPage, /团队初始名额/)
+assert.match(agentLevelPage, /trainingCampDistributionSwitchApi/)
 assert.doesNotMatch(agentLevelPage, /one_brokerage_percent/)
 assert.doesNotMatch(agentLevelPage, /two_brokerage_percent/)
 assert.doesNotMatch(agentLevelPage, /一级分佣比例/)
@@ -98,5 +120,16 @@ assert.doesNotMatch(agentLevelPage, /一级分佣比例/)
 assert.match(patch, /M 盟友/)
 assert.match(patch, /D 代理/)
 assert.match(patch, /H 合伙人/)
+assert.match(distributionPatch, /review_time/)
+assert.match(distributionPatch, /refund_account_frozen/)
+assert.match(distributionPatch, /training_camp_distribution_enabled/)
+assert.match(distributionPatch, /admin-user-grade-distribution-policy-switch/)
+assert.match(distributionPatch, /menu_name`\s*=\s*'brokerage_func_status'/)
+assert.match(distributionPatch, /SET `status`\s*=\s*0/)
+assert.match(membershipApi, /agent\/level\/distribution-switch/)
+assert.match(agentRoutes, /level\/distribution-switch/)
+assert.match(commissionPage, /审核时间/)
+assert.match(virtualPaymentService, /freezeRefundedAccount/)
+assert.match(refundService, /'refund_account_frozen'\s*=>\s*0/)
 
 console.log('distribution fixed commission contract checks passed')

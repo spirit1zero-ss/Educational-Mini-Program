@@ -426,7 +426,9 @@ class UserServices extends BaseServices
      */
     public function recordPendingMemberReferrer(int $uid, int $spreadUid, int $ttl = 2592000): bool
     {
-        if ($uid <= 0 || $spreadUid <= 0 || $uid === $spreadUid) {
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
+        if (!$distributionServices->isEnabled() || $uid <= 0 || $spreadUid <= 0 || $uid === $spreadUid) {
             return false;
         }
 

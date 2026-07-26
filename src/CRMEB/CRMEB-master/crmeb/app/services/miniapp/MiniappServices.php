@@ -1052,6 +1052,7 @@ class MiniappServices extends BaseServices
             'statusText' => ['pending' => '待结算', 'available' => '可提现', 'rejected' => '已撤销'][$status],
             'isFrozen' => $isFrozen,
             'frozenTime' => $this->formatOverdueTime((int)($item['frozen_time'] ?? 0)),
+            'reviewTime' => $this->formatOverdueTime((int)($item['review_time'] ?? 0)),
             'linkId' => (int)($item['link_id'] ?? 0),
         ];
     }
@@ -1099,7 +1100,10 @@ class MiniappServices extends BaseServices
 
     private function canPromote(array $user): bool
     {
-        return $this->isTrainingCampMember($user)
+        /** @var DistributionServices $distributionServices */
+        $distributionServices = app()->make(DistributionServices::class);
+        return $distributionServices->isEnabled()
+            && $this->isTrainingCampMember($user)
             && (int)($user['is_promoter'] ?? 0) === 1
             && (int)($user['spread_open'] ?? 0) === 1;
     }

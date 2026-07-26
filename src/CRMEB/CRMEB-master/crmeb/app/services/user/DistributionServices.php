@@ -4,6 +4,7 @@ namespace app\services\user;
 
 use app\services\BaseServices;
 use crmeb\exceptions\AdminException;
+use crmeb\services\CacheService;
 use think\facade\Db;
 
 /**
@@ -17,6 +18,7 @@ class DistributionServices extends BaseServices
     public const PENDING_SETTLEMENT_TIME = 2147483647;
 
     private const CAMP_ORDER_TABLE = 'miniapp_training_camp_order';
+    private const ENABLE_CONFIG_KEY = 'training_camp_distribution_enabled';
 
     private const LEVELS = [
         0 => ['key' => 'C', 'name' => '普通会员', 'initialQuota' => 1, 'firstCommission' => '120.00'],
@@ -33,6 +35,44 @@ class DistributionServices extends BaseServices
         'two_member_brokerage',
     ];
 
+    public function isEnabled(): bool
+    {
+        return (bool)sys_config(self::ENABLE_CONFIG_KEY, 1);
+    }
+
+    public function setEnabled(bool $enabled): bool
+    {
+        $value = json_encode($enabled ? 1 : 0);
+        $config = Db::name('system_config')->where('menu_name', self::ENABLE_CONFIG_KEY)->find();
+        if ($config) {
+            $saved = Db::name('system_config')
+                ->where('menu_name', self::ENABLE_CONFIG_KEY)
+                ->update(['value' => $value]);
+        } else {
+            $saved = Db::name('system_config')->insert([
+                'menu_name' => self::ENABLE_CONFIG_KEY,
+                'type' => 'radio',
+                'input_type' => 'input',
+                'config_tab_id' => 74,
+                'parameter' => "1=>开启\n0=>关闭",
+                'upload_type' => 1,
+                'required' => '',
+                'width' => 0,
+                'high' => 0,
+                'value' => $value,
+                'info' => '训练营分销',
+                'desc' => '控制训练营推广关系和新佣金发放，关闭后历史团队、佣金和提现记录仍保留',
+                'sort' => 99,
+                'status' => 1,
+                'level' => 0,
+                'link_id' => 0,
+                'link_value' => 0,
+            ]);
+        }
+        CacheService::clear();
+        return $saved !== false;
+    }
+
     /**
      * Return the single source of truth used by payment settlement and admin display.
      */
@@ -47,7 +87,9 @@ class DistributionServices extends BaseServices
                 'levelName' => $level['name'],
                 'initialQuota' => $level['initialQuota'],
                 'firstCommission' => $level['firstCommission'],
+                'fallbackCommission' => self::LEVELS[0]['firstCommission'],
                 'secondCommission' => self::SECOND_COMMISSION,
+                'quotaLimited' => $agentLevel > 0,
             ];
         }
         return $list;
@@ -83,7 +125,16 @@ class DistributionServices extends BaseServices
     public function firstCommissionForUid(int $uid): string
     {
         $user = $this->eligibleUser($uid);
-        return $user ? $this->profile($user)['firstCommission'] : '0.00';
+        if (!$user) {
+            return '0.00';
+        }
+        $profile = $this->profile($user);
+        if ((int)$profile['levelId'] === 0) {
+            return self::LEVELS[0]['firstCommission'];
+        }
+        return $this->premiumQuotaUsed($uid) < (int)$profile['initialQuota']
+            ? (string)$profile['firstCommission']
+            : self::LEVELS[0]['firstCommission'];
     }
 
     public function secondCommissionForUid(int $uid): string
@@ -100,14 +151,18 @@ class DistributionServices extends BaseServices
         $firstLevelCount = count($firstLevelUids);
         $secondLevelUids = $this->teamMemberUids($uid, 2);
         $secondLevelCount = count($secondLevelUids);
-        $usedQuota = $firstLevelCount;
+        $quotaLimited = (int)$profile['levelId'] > 0;
+        $usedQuota = $quotaLimited ? min($firstLevelCount, (int)$profile['initialQuota']) : 0;
 
         return array_merge($profile, [
             'firstLevelCount' => $firstLevelCount,
             'secondLevelCount' => $secondLevelCount,
             'pullNewCount' => $firstLevelCount + $secondLevelCount,
             'usedQuota' => $usedQuota,
-            'remainingQuota' => max(0, (int)$profile['initialQuota'] - $usedQuota),
+            'remainingQuota' => $quotaLimited
+                ? max(0, (int)$profile['initialQuota'] - $usedQuota)
+                : (int)$profile['initialQuota'],
+            'quotaLimited' => $quotaLimited,
         ]);
     }
 
@@ -326,6 +381,7 @@ class DistributionServices extends BaseServices
                 'statusText' => ['pending' => '待结算', 'approved' => '可提现', 'rejected' => '已驳回'][$statusKey],
                 'mark' => (string)($row['mark'] ?? ''),
                 'addTime' => !empty($row['add_time']) ? date('Y-m-d H:i:s', (int)$row['add_time']) : '',
+                'reviewTime' => !empty($row['review_time']) ? date('Y-m-d H:i:s', (int)$row['review_time']) : '',
             ];
         }, $rows);
 
@@ -354,8 +410,12 @@ class DistributionServices extends BaseServices
                 throw new AdminException('该佣金已经完成结算');
             }
 
+            $reviewTime = time();
             if ($decision === 'approve') {
-                return Db::name('user_brokerage')->where('id', $id)->update(['frozen_time' => 0]) !== false;
+                return Db::name('user_brokerage')->where('id', $id)->update([
+                    'frozen_time' => 0,
+                    'review_time' => $reviewTime,
+                ]) !== false;
             }
 
             $user = Db::name('user')->where('uid', (int)$row['uid'])->lock(true)->find();
@@ -369,6 +429,7 @@ class DistributionServices extends BaseServices
             return Db::name('user_brokerage')->where('id', $id)->update([
                 'status' => -1,
                 'frozen_time' => 0,
+                'review_time' => $reviewTime,
                 'balance' => bccomp($newBalance, '0', 2) < 0 ? '0.00' : $newBalance,
                 'mark' => mb_substr((string)$row['mark'] . '；结算驳回：' . trim($reason), 0, 512),
             ]) !== false;
@@ -377,7 +438,7 @@ class DistributionServices extends BaseServices
 
     private function eligibleUser(int $uid): ?array
     {
-        if ($uid <= 0) {
+        if ($uid <= 0 || !$this->isEnabled()) {
             return null;
         }
         $user = Db::name('user')
@@ -394,6 +455,11 @@ class DistributionServices extends BaseServices
             return null;
         }
         return $user;
+    }
+
+    private function premiumQuotaUsed(int $uid): int
+    {
+        return count($this->teamMemberUids($uid, 1));
     }
 
     private function activePaidMemberUids(array $uids): array

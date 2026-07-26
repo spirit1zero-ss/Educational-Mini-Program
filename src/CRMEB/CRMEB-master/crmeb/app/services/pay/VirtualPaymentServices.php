@@ -510,7 +510,37 @@ class VirtualPaymentServices
                 'last_error' => $nextEntitlement === 'review' ? '检测到微信退款，请人工复核会员权益。' : (string)($camp['last_error'] ?? ''),
                 'update_time' => time(),
             ]);
+            if ($nextEntitlement === 'review' && $camp) {
+                $this->freezeRefundedAccount((int)$camp['uid'], (int)$camp['id']);
+            }
         }
+    }
+
+    /**
+     * Freeze only accounts that were active when the refund was detected.
+     * The marker prevents a later refund review from re-enabling an account
+     * that had already been disabled manually for another reason.
+     */
+    private function freezeRefundedAccount(int $uid, int $campId): void
+    {
+        if ($uid <= 0 || $campId <= 0) {
+            return;
+        }
+        Db::transaction(function () use ($uid, $campId) {
+            $camp = Db::name(self::CAMP_ORDER_TABLE)->where('id', $campId)->lock(true)->find();
+            if (!$camp || (int)($camp['refund_account_frozen'] ?? 0) === 1) {
+                return;
+            }
+            $user = Db::name('user')->where('uid', $uid)->lock(true)->find();
+            if (!$user || (int)($user['status'] ?? 0) !== 1) {
+                return;
+            }
+            Db::name('user')->where('uid', $uid)->update(['status' => 0]);
+            Db::name(self::CAMP_ORDER_TABLE)->where('id', $campId)->update([
+                'refund_account_frozen' => 1,
+                'update_time' => time(),
+            ]);
+        });
     }
 
     private function notifyEntitlementDelivered(array $attempt, string $wxOrderId): void

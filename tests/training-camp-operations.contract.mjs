@@ -18,6 +18,9 @@ const [
   incomePage,
   callbackService,
   menuPatch,
+  virtualPaymentService,
+  orderAdminService,
+  distributionPatch,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/services/miniapp/MiniappServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/api/controller/v1/miniapp/MineController.php'),
@@ -32,6 +35,9 @@ const [
   read('homepage-home-v1/miniprogram/packages/features/pages/my-income/my-income.js'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/PayTransferNotifyServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-22-training-camp-admin-cleanup.sql'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/VirtualPaymentServices.php'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/services/miniapp/TrainingCampOrderAdminServices.php'),
+  read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-distribution-refund.sql'),
 ])
 
 assert.doesNotMatch(miniService, /\|\| \(int\)\(\$user\['level'\]/, 'legacy user level must not grant training-camp access')
@@ -62,5 +68,11 @@ assert.match(registrationPage, /deleteRegistration/)
 assert.match(callbackService, /\$userExtract = is_array\(\$userExtractInfo\)/)
 assert.match(menuPatch, /user-user-level/)
 assert.match(menuPatch, /admin-user-training-camp-registration-delete/)
+assert.match(virtualPaymentService, /private function freezeRefundedAccount/)
+assert.match(virtualPaymentService, /'status'\s*=>\s*0/)
+assert.match(virtualPaymentService, /'refund_account_frozen'\s*=>\s*1/)
+assert.match(orderAdminService, /'refund_account_frozen'\s*=>\s*0/)
+assert.match(orderAdminService, /\$userUpdate\['status'\]\s*=\s*1/)
+assert.match(distributionPatch, /refund_account_frozen/)
 
 console.log('training camp operations contract checks passed')

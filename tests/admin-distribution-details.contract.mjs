@@ -14,6 +14,9 @@ const [
   policy,
   miniService,
   patch,
+  distributionPatch,
+  membershipApi,
+  agentRoutes,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/services/user/DistributionServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/controller/v1/user/User.php'),
@@ -24,6 +27,9 @@ const [
   read('src/CRMEB/CRMEB-master/template/admin/src/pages/setting/membershipLevel/index.vue'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/miniapp/MiniappServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-24-admin-distribution-ui-merged.sql'),
+  read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-distribution-refund.sql'),
+  read('src/CRMEB/CRMEB-master/template/admin/src/api/membershipLevel.js'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/route/agent.php'),
 ]);
 
 assert.match(distribution, /function adminOverview\(int \$uid\): array/);
@@ -80,11 +86,16 @@ assert.match(policy, /2 × ¥20 = ¥40/);
 assert.match(policy, /实际到账 ¥487\.06/);
 assert.match(policy, /第一版不做自动升级/);
 assert.match(policy, /团队初始名额/);
+assert.match(policy, /名额用完后/);
+assert.match(policy, /训练营分销/);
 
 assert.match(miniService, /teamMemberUids\(\$uid, 1\)/);
 assert.match(miniService, /teamMemberUids\(\$uid, 2\)/);
 assert.match(patch, /admin-user-distribution-overview/);
 assert.match(patch, /admin-user-distribution-team/);
 assert.match(patch, /admin-user-grade-distribution-policy-read/);
+assert.match(distributionPatch, /admin-user-grade-distribution-policy-switch/);
+assert.match(membershipApi, /trainingCampDistributionSwitchApi/);
+assert.match(agentRoutes, /trainingCampDistributionSwitch/);
 
 console.log('admin distribution details contract passed');

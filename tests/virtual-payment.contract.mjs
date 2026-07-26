@@ -66,7 +66,12 @@ assert.match(miniappService, /\(string\)\(\$item\['type'\]\s*\?\?\s*''\)\s*===\s
 assert.match(miniappService, /Training camp only supports permanent membership/)
 assert.match(miniappService, /getMiniappMemberInviteCode\(\$memberUid,\s*\$page,\s*false\)/, 'CloudBase referral posters must not depend on container-local image URLs')
 assert.match(qrcodeService, /data:image\/jpeg;base64,[\s\S]*base64_encode\(\$body\)/, 'referral codes must support inline image delivery')
-assert.match(miniappService, /\$status\s*=\s*\$isMember\s*\?\s*'registered'\s*:\s*'pending'/, 'invite registration status must require training-camp membership')
+assert.match(miniappService, /teamMemberUids\(\$uid,\s*1\)/, 'invite list must use effective paid first-level members')
+assert.doesNotMatch(
+  miniappService.slice(miniappService.indexOf('public function getInviteRecords'), miniappService.indexOf('public function getIncomeRecords')),
+  /getPendingInviteRecords/,
+  'team list must not expose pending or unpaid invitations'
+)
 assert.match(wechatMiniProgramService, /Env::get\('miniapp\.app_id'/, 'mini-program AppID must support cloud environment configuration')
 assert.match(wechatMiniProgramService, /Env::get\('miniapp\.app_secret'/, 'mini-program AppSecret must support cloud environment configuration')
 assert.match(qrcodeService, /Env::get\('miniapp\.code_env_version',\s*'release'\)/, 'mini-program codes must default to the release version')

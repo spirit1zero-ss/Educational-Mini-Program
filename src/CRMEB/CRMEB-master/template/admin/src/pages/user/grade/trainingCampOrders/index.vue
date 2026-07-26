@@ -108,6 +108,7 @@
         <el-table-column label="退款" min-width="105">
           <template slot-scope="scope">
             <el-tag size="small" :type="refundTagType(scope.row.refundState)">{{ scope.row.refundStateText }}</el-tag>
+            <div v-if="scope.row.refundAccountFrozen" class="muted">账号已冻结待复核</div>
           </template>
         </el-table-column>
         <el-table-column label="时间" min-width="155">
@@ -175,7 +176,10 @@
             <div><span>本地订单</span><strong>{{ detail.order.orderStateText }}</strong></div>
             <div><span>会员权益</span><strong>{{ detail.order.entitlementStateText }}</strong></div>
             <div><span>发货确认</span><strong>{{ detail.order.deliveryStateText }}</strong></div>
-            <div><span>退款</span><strong>{{ detail.order.refundStateText }}</strong></div>
+            <div>
+              <span>退款</span>
+              <strong>{{ detail.order.refundStateText }}{{ detail.order.refundAccountFrozen ? '（账号已冻结）' : '' }}</strong>
+            </div>
           </div>
           <el-alert
             v-if="detail.order.lastError"
@@ -289,8 +293,8 @@ export default {
       const revoke = decision === 'revoke';
       const title = revoke ? '撤销退款订单会员' : '保留退款订单会员';
       const message = revoke
-        ? '仅在微信退款已经完成、且会员确由这笔订单开通时撤销。系统会同步关闭会员/分销资格，并扣回本订单尚可扣回的佣金。请输入处理备注：'
-        : '该操作会保留用户的永久会员。请输入保留原因：';
+        ? '仅在微信退款已经完成、且会员确由这笔订单开通时撤销。系统会关闭会员/分销资格、扣回本订单佣金，并解除退款冻结。请输入处理备注：'
+        : '该操作会保留用户的永久会员，并解除退款冻结。请输入保留原因：';
       this.$prompt(message, title, {
         confirmButtonText: revoke ? '确认撤销' : '确认保留',
         cancelButtonText: '取消',

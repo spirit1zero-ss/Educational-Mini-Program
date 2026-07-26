@@ -49,6 +49,8 @@ Route::group('agent', function () {
 
     /** 分销等级 */
     Route::group(function () {
+        // 训练营独立分销开关，必须放在资源路由之前，避免 distribution-switch 被识别为等级 ID。
+        Route::put('level/distribution-switch', 'v1.agent.AgentLevel/distributionSwitch')->name('trainingCampDistributionSwitch')->option(['real_name' => '修改训练营分销开关']);
         //分销员等级资源路由
         Route::resource('level', 'v1.agent.AgentLevel')->except(['read'])->name('AgentLevel')->option([
             'real_name' => [

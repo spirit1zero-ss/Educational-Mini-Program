@@ -41,6 +41,9 @@
         </el-table-column>
         <el-table-column prop="orderId" label="订单号" min-width="180" />
         <el-table-column prop="addTime" label="产生时间" min-width="150" />
+        <el-table-column label="审核时间" min-width="150">
+          <template slot-scope="scope">{{ scope.row.reviewTime || '—' }}</template>
+        </el-table-column>
         <el-table-column prop="statusText" label="状态" min-width="80" />
         <el-table-column label="操作" fixed="right" min-width="150">
           <template slot-scope="scope">

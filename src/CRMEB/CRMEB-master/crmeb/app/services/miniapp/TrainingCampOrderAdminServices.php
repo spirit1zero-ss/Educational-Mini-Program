@@ -130,11 +130,12 @@ class TrainingCampOrderAdminServices extends BaseServices
                 throw new ApiException('原会员订单状态异常，不能执行退款复核');
             }
 
+            $user = Db::name('user')->where('uid', (int)$camp['uid'])->lock(true)->find();
+            if (!$user) {
+                throw new ApiException('退款订单对应用户不存在');
+            }
+            $userUpdate = [];
             if ($decision === 'revoke') {
-                $user = Db::name('user')->where('uid', (int)$camp['uid'])->lock(true)->find();
-                if (!$user) {
-                    throw new ApiException('退款订单对应用户不存在');
-                }
                 $source = (int)($user['is_money_level'] ?? 0);
                 $isPermanent = (int)($user['is_ever_level'] ?? 0);
                 if (($source === 0 && $isPermanent === 1) || ($source !== 0 && $source !== 1)) {
@@ -144,7 +145,7 @@ class TrainingCampOrderAdminServices extends BaseServices
                     throw new ApiException('用户付费会员状态异常，不能直接撤销，请人工核实');
                 }
                 if ($source === 1 && $isPermanent === 1) {
-                    Db::name('user')->where('uid', (int)$camp['uid'])->update([
+                    $userUpdate = array_merge($userUpdate, [
                         'is_ever_level' => 0,
                         'is_money_level' => 0,
                         'overdue_time' => 0,
@@ -155,9 +156,16 @@ class TrainingCampOrderAdminServices extends BaseServices
 
                 $this->reverseMemberBrokerage((int)$camp['other_order_id']);
             }
+            if ((int)($camp['refund_account_frozen'] ?? 0) === 1) {
+                $userUpdate['status'] = 1;
+            }
+            if ($userUpdate) {
+                Db::name('user')->where('uid', (int)$camp['uid'])->update($userUpdate);
+            }
 
             Db::name(self::CAMP_ORDER_TABLE)->where('id', $id)->update([
                 'entitlement_state' => $resolvedState,
+                'refund_account_frozen' => 0,
                 'last_error' => '',
                 'update_time' => time(),
             ]);
@@ -403,6 +411,7 @@ class TrainingCampOrderAdminServices extends BaseServices
             'deliveryStateText' => $this->deliveryStateText((string)$row['delivery_state']),
             'refundState' => (string)$row['refund_state'],
             'refundStateText' => $this->refundStateText((string)$row['refund_state']),
+            'refundAccountFrozen' => (bool)($row['refund_account_frozen'] ?? false),
             'lastError' => (string)($row['last_error'] ?? ''),
             'addTime' => $this->formatTime((int)$row['add_time']),
             'payTime' => $this->formatTime((int)($row['pay_time'] ?? 0)),
