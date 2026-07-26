@@ -24,7 +24,7 @@ class TrainingCampRegistrationServices extends BaseServices
 
         return [
             'completed' => !empty($row),
-            'canRegister' => !empty($row) || !empty($memberStatus['hasPaidMemberOrder']),
+            'canRegister' => !empty($memberStatus['isMember']),
             'memberStatus' => $memberStatus,
             'form' => $row ? $this->formatMiniappRow($row) : $this->emptyForm(),
             'problemOptions' => $this->problemOptions(),
@@ -39,7 +39,7 @@ class TrainingCampRegistrationServices extends BaseServices
 
         return [
             'completed' => !empty($row),
-            'canRegister' => !empty($row) || !empty($memberStatus['hasPaidMemberOrder']),
+            'canRegister' => !empty($memberStatus['isMember']),
             'memberStatus' => $memberStatus,
         ];
     }
@@ -49,8 +49,9 @@ class TrainingCampRegistrationServices extends BaseServices
         $this->requireUid($uid);
         $exists = $this->getRawByUid($uid);
         $latestOrder = $this->getLatestPaidMemberOrder($uid);
-        if (!$exists && !$latestOrder) {
-            throw new ApiException('请支付成功后再填写会员登记表');
+        $memberStatus = $this->getMemberStatus($uid);
+        if (empty($memberStatus['isMember'])) {
+            throw new ApiException('请开通训练营会员后再填写会员登记表');
         }
 
         $data = $this->validateInput($input);

@@ -405,6 +405,9 @@
                     command="11"
                   >分销详情</el-dropdown-item>
                   <el-dropdown-item command="12">设置分销身份</el-dropdown-item>
+                  <el-dropdown-item command="14">
+                    {{ scope.row.isMember ? '撤销付费会员' : '设为付费会员' }}
+                  </el-dropdown-item>
                   <el-dropdown-item command="13">退款会员处理</el-dropdown-item>
                   <!--                                <el-dropdown-item command="4" v-if="row.vip_name">清除等级</el-dropdown-item>-->
                   <el-dropdown-item command="7">调整邀请关系</el-dropdown-item>
@@ -962,9 +965,40 @@ export default {
         case '13':
           this.$router.push({ name: 'user_trainingCampOrders', query: { keyword: String(row.uid) } });
           break;
+        case '14':
+          this.togglePaidMembership(row);
+          break;
         default:
           this.del(row, '解除【 ' + this.tenText(row.nickname) + ' 】的上级推广人', index, 'tuiguang');
       }
+    },
+    togglePaidMembership(row) {
+      const enabled = !Boolean(row.isMember);
+      const action = enabled ? '设为付费会员' : '撤销付费会员';
+      const detail = enabled
+        ? '开通永久训练营会员并恢复推广资格；不会生成订单或支付记录。'
+        : '撤销训练营会员和推广资格；身份等级、历史订单、团队、佣金及提现记录会保留。';
+      this.$confirm(`${detail}确认将“${row.nickname || `UID ${row.uid}`}”${action}吗？`, action, {
+        type: enabled ? 'warning' : 'error',
+        confirmButtonText: `确认${action}`,
+        cancelButtonText: '取消',
+      })
+        .then(() =>
+          editUser({
+            uid: Number(row.uid),
+            distribution_only: 'membership',
+            enabled: enabled ? 1 : 0,
+          }),
+        )
+        .then((res) => {
+          this.$message.success(res.msg || `${action}成功`);
+          this.getList();
+        })
+        .catch((error) => {
+          if (error !== 'cancel' && error !== 'close') {
+            this.$message.error(error.msg || `${action}失败`);
+          }
+        });
     },
     cancelUser(row) {
       this.$confirm(

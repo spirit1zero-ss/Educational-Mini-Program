@@ -441,6 +441,12 @@ class User extends AuthController
                 $this->services->updatePromotionQualification((int)$id, $enabled) ? '推广资格已更新' : '推广资格更新失败'
             );
         }
+        if ($distributionOnly === 'membership') {
+            $enabled = (bool)$this->request->post('enabled', 0);
+            return app('json')->success(
+                $this->services->updatePaidMembership((int)$id, $enabled) ? '付费会员状态已更新' : '付费会员状态更新失败'
+            );
+        }
         $data = $this->request->postMore([
             ['money_status', 0],
             ['is_promoter', 0],

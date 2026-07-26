@@ -683,7 +683,11 @@ class UserServices extends BaseServices
                 $item['agent_level_name'] = $agentLevel[$item['agent_level']]
                     ?? ((int)$item['is_ever_level'] === 1 ? 'C 普通会员' : '无');
                 $item['labels'] = $userlabel[$item['uid']] ?? '';
-                $item['isMember'] = $item['is_money_level'] > 0 ? 1 : 0;
+                $overdueTime = (int)($item['overdue_time'] ?? 0);
+                $item['isMember'] = (int)($item['is_ever_level'] ?? 0) === 1
+                    || ((int)($item['is_money_level'] ?? 0) > 0 && ($overdueTime === 0 || $overdueTime > time()))
+                    ? 1
+                    : 0;
                 $item['svip_over_day'] = $item['overdue_time'] ? ceil(($item['overdue_time'] - time()) / 86400) : '';
                 $item['svip_overdue_time'] = date('Y-m-d', $item['overdue_time']);
                 if (strpos($item['avatar'], '/statics/system_images/') !== false) {
@@ -974,6 +978,38 @@ class UserServices extends BaseServices
             $edit['is_promoter'] = 1;
         }
         return $this->dao->update($id, $edit) !== false;
+    }
+
+    /**
+     * Manually grant or revoke the permanent training-camp membership.
+     * Source 3 denotes an administrator grant and does not create a fake order.
+     */
+    public function updatePaidMembership(int $id, bool $enabled): bool
+    {
+        $user = $this->getUserInfo($id);
+        if (!$user) {
+            throw new AdminException('用户不存在');
+        }
+        $edit = $enabled
+            ? [
+                'is_ever_level' => 1,
+                'is_money_level' => 3,
+                'overdue_time' => 0,
+                'is_promoter' => 1,
+                'spread_open' => 1,
+            ]
+            : [
+                'is_ever_level' => 0,
+                'is_money_level' => 0,
+                'overdue_time' => 0,
+                'is_promoter' => 0,
+                'spread_open' => 0,
+            ];
+        $updated = $this->dao->update($id, $edit) !== false;
+        if ($updated && $enabled) {
+            $this->bindPendingMemberReferrer($id);
+        }
+        return $updated;
     }
 
     /**
