@@ -10,6 +10,8 @@ use think\facade\Db;
 /** Safe WeChat reconciliation and manual refund-entitlement review for training-camp orders. */
 class TrainingCampOrderAdminServices extends BaseServices
 {
+    private const COMMISSION_REFUND_TYPE = 'training_camp_commission_refund';
+
     private const CAMP_ORDER_TABLE = 'miniapp_training_camp_order';
     private const ATTEMPT_TABLE = 'miniapp_virtual_payment_attempt';
 
@@ -81,8 +83,133 @@ class TrainingCampOrderAdminServices extends BaseServices
     }
 
     /**
-     * Resolve the local membership after staff has completed the money refund
-     * in WeChat's virtual-payment console. This method never starts a refund.
+     * Record a full refund that staff has already paid outside WeChat virtual
+     * payment. This method records evidence and freezes the account, but never
+     * sends money and never revokes membership or commission by itself.
+     */
+    public function registerOfflineRefund(int $id, array $data, int $adminId, string $adminName = ''): array
+    {
+        $channel = strtolower(trim((string)($data['channel'] ?? '')));
+        $reference = trim((string)($data['reference'] ?? ''));
+        $note = trim((string)($data['note'] ?? ''));
+        $refundTimeText = trim((string)($data['refund_time'] ?? ''));
+        $refundTime = $refundTimeText !== '' ? strtotime($refundTimeText) : 0;
+        $amountFen = (int)round((float)($data['amount'] ?? 0) * 100);
+        $channels = $this->offlineRefundChannels();
+
+        if (!isset($channels[$channel])) {
+            throw new ApiException('请选择正确的线下退款渠道');
+        }
+        if ($amountFen <= 0) {
+            throw new ApiException('退款金额必须大于 0');
+        }
+        if ($refundTime <= 0 || $refundTime > time() + 300) {
+            throw new ApiException('请选择正确的实际退款时间');
+        }
+        if ($channel !== 'cash' && $reference === '') {
+            throw new ApiException('请填写线下退款流水号');
+        }
+        if (mb_strlen($reference) > 96) {
+            throw new ApiException('退款流水号不能超过 96 个字');
+        }
+        if ($note === '') {
+            throw new ApiException('请填写线下退款原因和备注');
+        }
+        if (mb_strlen($note) > 255) {
+            throw new ApiException('退款备注不能超过 255 个字');
+        }
+
+        $message = Db::transaction(function () use (
+            $id,
+            $amountFen,
+            $channel,
+            $channels,
+            $reference,
+            $refundTime,
+            $note,
+            $adminId,
+            $adminName
+        ) {
+            $camp = Db::name(self::CAMP_ORDER_TABLE)->where('id', $id)->lock(true)->find();
+            if (!$camp) {
+                throw new ApiException('训练营订单不存在');
+            }
+            if ((string)$camp['order_state'] !== 'paid'
+                || (string)$camp['refund_state'] !== 'none'
+                || (string)$camp['entitlement_state'] !== 'granted') {
+                throw new ApiException('仅已支付、未退款且会员权益正常的订单可以登记线下退款');
+            }
+            if ($amountFen !== (int)$camp['price_fen']) {
+                throw new ApiException('当前仅支持登记全额退款，金额必须等于订单实付金额');
+            }
+
+            $order = Db::name('other_order')
+                ->where('id', (int)$camp['other_order_id'])
+                ->lock(true)
+                ->find();
+            if (!$order || (int)$order['paid'] !== 1) {
+                throw new ApiException('原会员订单状态异常，不能登记线下退款');
+            }
+
+            $user = Db::name('user')->where('uid', (int)$camp['uid'])->lock(true)->find();
+            if (!$user) {
+                throw new ApiException('退款订单对应用户不存在');
+            }
+            $refundAccountFrozen = 0;
+            if ((int)($user['status'] ?? 0) === 1) {
+                Db::name('user')->where('uid', (int)$camp['uid'])->update(['status' => 0]);
+                $refundAccountFrozen = 1;
+            }
+
+            $operatorName = trim($adminName) !== '' ? trim($adminName) : '管理员';
+            Db::name(self::CAMP_ORDER_TABLE)->where('id', $id)->update([
+                'order_state' => 'refunded',
+                'active_uid_key' => null,
+                'refund_state' => 'refunded',
+                'entitlement_state' => 'review',
+                'refund_account_frozen' => $refundAccountFrozen,
+                'refund_source' => 'offline',
+                'refund_amount_fen' => $amountFen,
+                'refund_channel' => $channel,
+                'refund_reference' => $reference,
+                'refund_time' => $refundTime,
+                'refund_operator_id' => $adminId,
+                'refund_operator_name' => mb_substr($operatorName, 0, 64),
+                'refund_note' => mb_substr($note, 0, 255),
+                'last_error' => '已登记线下退款，请人工复核会员权益。',
+                'update_time' => time(),
+            ]);
+
+            $referenceText = $reference !== '' ? '；流水号：' . $reference : '';
+            Db::name('other_order_status')->insert([
+                'oid' => (int)$camp['other_order_id'],
+                'change_type' => 'offline_refund_registered',
+                'change_message' => mb_substr(
+                    '登记线下全额退款：' . number_format($amountFen / 100, 2, '.', '') . '元'
+                    . '；渠道：' . $channels[$channel]
+                    . $referenceText
+                    . '；退款时间：' . date('Y-m-d H:i:s', $refundTime)
+                    . '；操作人：' . $operatorName . '(ID ' . $adminId . ')'
+                    . '；备注：' . $note,
+                    0,
+                    256
+                ),
+                'shop_type' => (int)($order['type'] ?? 1),
+                'change_time' => time(),
+            ]);
+
+            return '线下退款已登记，账号已进入退款复核流程';
+        });
+
+        return [
+            'message' => $message,
+            'detail' => $this->detail($id),
+        ];
+    }
+
+    /**
+     * Resolve local membership after either a verified WeChat refund or an
+     * audited offline refund registration. This method never sends money.
      */
     public function reviewRefund(int $id, string $decision, string $note, int $adminId, string $adminName = ''): array
     {
@@ -115,14 +242,24 @@ class TrainingCampOrderAdminServices extends BaseServices
                 throw new ApiException('仅已退款且权益待复核的订单可以处理');
             }
 
-            $attempt = Db::name(self::ATTEMPT_TABLE)
-                ->where('uid', (int)$camp['uid'])
-                ->where('order_id', (string)$camp['order_id'])
-                ->order('id', 'desc')
-                ->lock(true)
-                ->find();
-            if (!$attempt || !in_array((int)$attempt['wx_status'], [5, 8], true)) {
-                throw new ApiException('微信退款尚未完成，请先核对支付状态');
+            $isOfflineRefund = (string)($camp['refund_source'] ?? '') === 'offline';
+            if ($isOfflineRefund) {
+                if ((int)($camp['refund_amount_fen'] ?? 0) <= 0
+                    || (string)($camp['refund_channel'] ?? '') === ''
+                    || (int)($camp['refund_time'] ?? 0) <= 0
+                    || (int)($camp['refund_operator_id'] ?? 0) <= 0) {
+                    throw new ApiException('线下退款登记信息不完整，不能执行退款复核');
+                }
+            } else {
+                $attempt = Db::name(self::ATTEMPT_TABLE)
+                    ->where('uid', (int)$camp['uid'])
+                    ->where('order_id', (string)$camp['order_id'])
+                    ->order('id', 'desc')
+                    ->lock(true)
+                    ->find();
+                if (!$attempt || !in_array((int)$attempt['wx_status'], [5, 8], true)) {
+                    throw new ApiException('微信退款尚未完成，请先核对支付状态');
+                }
             }
 
             $order = Db::name('other_order')->where('id', (int)$camp['other_order_id'])->lock(true)->find();
@@ -218,7 +355,7 @@ class TrainingCampOrderAdminServices extends BaseServices
             $alreadyReversed = Db::name('user_brokerage')
                 ->where('uid', $uid)
                 ->where('link_id', (string)$otherOrderId)
-                ->where('type', 'refund')
+                ->whereIn('type', [self::COMMISSION_REFUND_TYPE, 'refund'])
                 ->where('pm', 0)
                 ->find();
             if ($alreadyReversed) {
@@ -237,8 +374,8 @@ class TrainingCampOrderAdminServices extends BaseServices
             Db::name('user_brokerage')->insert([
                 'uid' => $uid,
                 'link_id' => (string)$otherOrderId,
-                'type' => 'refund',
-                'title' => '训练营退款退佣金',
+                'type' => self::COMMISSION_REFUND_TYPE,
+                'title' => '训练营退款扣回佣金',
                 'number' => $deduction,
                 'balance' => bccomp($newBalance, '0', 2) < 0 ? '0.00' : $newBalance,
                 'pm' => 0,
@@ -262,6 +399,9 @@ class TrainingCampOrderAdminServices extends BaseServices
     private function reconcileOne(int $id, bool $deliveryOnly): array
     {
         $row = $this->requireOrder($id);
+        if ((string)($row['refund_source'] ?? '') === 'offline') {
+            throw new ApiException('该订单已登记线下退款，不能再用微信状态覆盖本地退款记录');
+        }
         if ($deliveryOnly && (int)$row['paid'] !== 1) {
             throw new ApiException('订单尚未支付，不能重试权益发货');
         }
@@ -412,15 +552,53 @@ class TrainingCampOrderAdminServices extends BaseServices
             'refundState' => (string)$row['refund_state'],
             'refundStateText' => $this->refundStateText((string)$row['refund_state']),
             'refundAccountFrozen' => (bool)($row['refund_account_frozen'] ?? false),
+            'refundSource' => (string)($row['refund_source'] ?? ''),
+            'refundSourceText' => $this->refundSourceText((string)($row['refund_source'] ?? '')),
+            'refundAmount' => number_format((int)($row['refund_amount_fen'] ?? 0) / 100, 2, '.', ''),
+            'refundChannel' => (string)($row['refund_channel'] ?? ''),
+            'refundChannelText' => $this->refundChannelText((string)($row['refund_channel'] ?? '')),
+            'refundReference' => (string)($row['refund_reference'] ?? ''),
+            'refundTime' => $this->formatTime((int)($row['refund_time'] ?? 0)),
+            'refundOperatorId' => (int)($row['refund_operator_id'] ?? 0),
+            'refundOperatorName' => (string)($row['refund_operator_name'] ?? ''),
+            'refundNote' => (string)($row['refund_note'] ?? ''),
             'lastError' => (string)($row['last_error'] ?? ''),
             'addTime' => $this->formatTime((int)$row['add_time']),
             'payTime' => $this->formatTime((int)($row['pay_time'] ?? 0)),
             'updateTime' => $this->formatTime((int)$row['update_time']),
             'latestAttempt' => $attempt ? $this->formatAttempt($attempt) : null,
-            'canSync' => !empty($attempt),
-            'canRetryDelivery' => (int)$row['paid'] === 1 && (string)$row['delivery_state'] !== 'delivered' && !empty($attempt),
+            'canSync' => !empty($attempt) && (string)($row['refund_source'] ?? '') !== 'offline',
+            'canRetryDelivery' => (int)$row['paid'] === 1
+                && (string)$row['order_state'] === 'paid'
+                && (string)$row['delivery_state'] !== 'delivered'
+                && !empty($attempt),
+            'canRegisterOfflineRefund' => (int)$row['paid'] === 1
+                && (string)$row['order_state'] === 'paid'
+                && (string)$row['refund_state'] === 'none'
+                && (string)$row['entitlement_state'] === 'granted',
             'canReviewRefund' => (string)$row['refund_state'] === 'refunded' && (string)$row['entitlement_state'] === 'review',
         ];
+    }
+
+    private function offlineRefundChannels(): array
+    {
+        return [
+            'wechat_transfer' => '微信转账',
+            'bank' => '银行卡',
+            'alipay' => '支付宝',
+            'cash' => '现金',
+            'other' => '其他',
+        ];
+    }
+
+    private function refundSourceText(string $source): string
+    {
+        return ['wechat' => '微信虚拟支付退款', 'offline' => '线下退款'][$source] ?? '--';
+    }
+
+    private function refundChannelText(string $channel): string
+    {
+        return $this->offlineRefundChannels()[$channel] ?? '--';
     }
 
     private function formatAttempt(array $attempt): array

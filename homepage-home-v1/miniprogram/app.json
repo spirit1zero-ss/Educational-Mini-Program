@@ -9,6 +9,7 @@
       "root": "packages/features",
       "pages": [
         "pages/promo-poster/promo-poster",
+        "pages/distribution-center/distribution-center",
         "pages/invite-records/invite-records",
         "pages/my-income/my-income",
         "pages/camp-orders/camp-orders",

@@ -71,6 +71,71 @@
   color: #b44949;
 }
 
+.status-badge--deducted {
+  background: rgba(190, 76, 76, 0.12);
+  color: #a94238;
+}
+
+.reward-value--deducted {
+  color: #b44949;
+}
+
+.reward-value--rejected {
+  color: #8d9992;
+  text-decoration: line-through;
+}
+
+.summary-stats--income {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 0;
+}
+
+.summary-stats--income .summary-stat {
+  padding: 20rpx 8rpx;
+  border-right: 1rpx solid rgba(47, 107, 67, 0.08);
+  border-bottom: 1rpx solid rgba(47, 107, 67, 0.08);
+}
+
+.summary-stats--income .summary-stat:nth-child(2n) {
+  border-right: 0;
+}
+
+.summary-stats--income .summary-stat:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.income-debt-alert {
+  position: relative;
+  z-index: 1;
+  margin-top: 20rpx;
+  padding: 18rpx 20rpx;
+  border: 1rpx solid rgba(180, 73, 61, 0.15);
+  border-radius: 18rpx;
+  background: #fff4f1;
+}
+
+.income-debt-title {
+  color: #9e4136;
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.income-debt-desc {
+  margin-top: 6rpx;
+  color: #9a6b63;
+  font-size: 20rpx;
+  line-height: 30rpx;
+}
+
+.status-tabs {
+  gap: 4rpx;
+}
+
+.status-text {
+  font-size: 20rpx;
+}
+
 .primary-entry:active,
 .secondary-entry:active {
   transform: scale(0.99);

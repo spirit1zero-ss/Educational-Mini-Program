@@ -24,6 +24,18 @@ const [
   userExtractService,
   payClient,
   settingsPatch,
+  refundLedgerPatch,
+  distributionCenterPage,
+  distributionCenterView,
+  miniappManifest,
+  minePage,
+  mineView,
+  distributionService,
+  distributionDetails,
+  agentManage,
+  trainingCampOrderController,
+  trainingCampOrderPage,
+  offlineRefundPatch,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/services/miniapp/MiniappServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/api/controller/v1/miniapp/MineController.php'),
@@ -44,6 +56,18 @@ const [
   read('src/CRMEB/CRMEB-master/crmeb/app/services/user/UserExtractServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/crmeb/services/easywechat/v3pay/PayClient.php'),
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-settings.sql'),
+  read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-refund-ledger.sql'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/distribution-center/distribution-center.js'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/distribution-center/distribution-center.wxml'),
+  read('homepage-home-v1/miniprogram/app.json'),
+  read('homepage-home-v1/miniprogram/pages/mine/mine.js'),
+  read('homepage-home-v1/miniprogram/pages/mine/mine.wxml'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/services/user/DistributionServices.php'),
+  read('src/CRMEB/CRMEB-master/template/admin/src/pages/user/list/handle/distributionDetails.vue'),
+  read('src/CRMEB/CRMEB-master/template/admin/src/pages/agent/agentManage.vue'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/controller/v1/user/member/TrainingCampOrder.php'),
+  read('src/CRMEB/CRMEB-master/template/admin/src/pages/user/grade/trainingCampOrders/index.vue'),
+  read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-offline-refund.sql'),
 ])
 
 assert.doesNotMatch(miniService, /\|\| \(int\)\(\$user\['level'\]/, 'legacy user level must not grant training-camp access')
@@ -100,6 +124,56 @@ assert.match(virtualPaymentService, /'status'\s*=>\s*0/)
 assert.match(virtualPaymentService, /'refund_account_frozen'\s*=>\s*1/)
 assert.match(orderAdminService, /'refund_account_frozen'\s*=>\s*0/)
 assert.match(orderAdminService, /\$userUpdate\['status'\]\s*=\s*1/)
+assert.match(orderAdminService, /training_camp_commission_refund/)
+assert.match(orderAdminService, /\$newBalance\s*=\s*bcsub\(\$balance,\s*\$deduction,\s*2\)/)
+assert.match(miniService, /memberLedgerTypes/)
+assert.match(miniService, /'refundAmount'\s*=>/)
+assert.match(miniService, /'debtAmount'\s*=>/)
+assert.match(miniService, /bcmul\(\$netAvailableAmount,\s*'-1',\s*2\)/)
+assert.match(incomePage, /key:\s*'deducted'/)
+assert.match(incomePage, /debtActive/)
+assert.match(refundLedgerPatch, /training_camp_commission_refund/)
+assert.match(refundLedgerPatch, /INNER JOIN `eb_miniapp_training_camp_order`/)
+assert.match(distributionCenterPage, /Promise\.all/)
+assert.match(distributionCenterPage, /getIncomeRecords/)
+assert.match(distributionCenterPage, /debtAmount/)
+assert.match(distributionCenterView, /待抵扣佣金/)
+assert.match(distributionCenterView, /退款累计扣回/)
+assert.match(miniappManifest, /pages\/distribution-center\/distribution-center/)
+assert.match(minePage, /DISTRIBUTION_CENTER_PATH/)
+assert.match(mineView, /onDistributionCenterTap/)
+assert.match(distributionService, /COMMISSION_REFUND_TYPE/)
+assert.match(distributionService, /'refundAmount'\s*=>/)
+assert.match(distributionService, /'debtAmount'\s*=>/)
+assert.match(distributionService, /pending_amount/)
+assert.match(distributionDetails, /退款扣回/)
+assert.match(distributionDetails, /待抵扣佣金/)
+assert.match(agentManage, /refundAmount/)
+assert.match(agentManage, /debtAmount/)
+assert.match(orderAdminService, /function registerOfflineRefund/)
+assert.match(orderAdminService, /仅已支付、未退款且会员权益正常的订单可以登记线下退款/)
+assert.match(orderAdminService, /当前仅支持登记全额退款/)
+assert.match(orderAdminService, /'refund_source'\s*=>\s*'offline'/)
+assert.match(orderAdminService, /'entitlement_state'\s*=>\s*'review'/)
+assert.match(orderAdminService, /'offline_refund_registered'/)
+assert.match(orderAdminService, /\$isOfflineRefund/)
+const offlineRefundMethod = orderAdminService.slice(
+  orderAdminService.indexOf('public function registerOfflineRefund'),
+  orderAdminService.indexOf('public function reviewRefund')
+)
+assert.doesNotMatch(offlineRefundMethod, /reverseMemberBrokerage/)
+assert.doesNotMatch(offlineRefundMethod, /wx_status|ATTEMPT_TABLE/)
+assert.match(offlineRefundMethod, /'refund_account_frozen'\s*=>\s*\$refundAccountFrozen/)
+assert.match(trainingCampOrderController, /function registerOfflineRefund/)
+assert.match(adminRoutes, /offline_refund/)
+assert.match(adminApi, /trainingCampOrderRegisterOfflineRefund/)
+assert.match(trainingCampOrderPage, /登记线下退款/)
+assert.match(trainingCampOrderPage, /不会自动向用户付款/)
+assert.match(trainingCampOrderPage, /admin-user-training-camp-order-offline-refund/)
+assert.match(offlineRefundPatch, /refund_source/)
+assert.match(offlineRefundPatch, /refund_amount_fen/)
+assert.match(offlineRefundPatch, /admin-user-training-camp-order-offline-refund/)
+assert.match(virtualPaymentService, /'refund_source'/)
 assert.match(distributionPatch, /refund_account_frozen/)
 
 console.log('training camp operations contract checks passed')

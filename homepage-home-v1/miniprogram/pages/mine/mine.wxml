@@ -26,7 +26,7 @@
         </view>
       </view>
 
-      <view class="referral-card">
+      <view class="referral-card" bindtap="onDistributionCenterTap">
         <view class="section-head">
           <view>
             <view class="section-title">分销中心</view>
@@ -53,19 +53,12 @@
             <view class="stat-label">{{item.label}}</view>
           </view>
         </view>
-        <view class="poster-button {{isMember ? 'poster-button--primary' : 'poster-button--secondary'}}" bindtap="onPosterTap">{{posterCtaText}}</view>
-      </view>
-
-      <view class="quick-grid" wx:if="{{isMember}}">
-        <view
-          class="quick-item"
-          wx:for="{{quickActions}}"
-          wx:key="key"
-          bindtap="onActionTap"
-          data-key="{{item.key}}"
-        >
-          <image class="quick-icon" src="{{item.icon}}" mode="aspectFit"></image>
-          <view class="quick-title">{{item.title}}</view>
+        <view class="distribution-entry">
+          <view>
+            <view class="distribution-entry-title">进入分销中心</view>
+            <view class="distribution-entry-desc">查看返佣名额、资金账单与退款扣回</view>
+          </view>
+          <view class="distribution-entry-arrow">›</view>
         </view>
       </view>
 

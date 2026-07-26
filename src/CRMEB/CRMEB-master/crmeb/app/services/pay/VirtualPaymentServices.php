@@ -507,6 +507,18 @@ class VirtualPaymentServices
                 'active_uid_key' => null,
                 'refund_state' => 'refunded',
                 'entitlement_state' => $nextEntitlement,
+                'refund_source' => (string)($camp['refund_source'] ?? '') !== ''
+                    ? (string)$camp['refund_source']
+                    : 'wechat',
+                'refund_amount_fen' => (int)($camp['refund_amount_fen'] ?? 0) > 0
+                    ? (int)$camp['refund_amount_fen']
+                    : (int)($camp['price_fen'] ?? 0),
+                'refund_reference' => (string)($camp['refund_reference'] ?? '') !== ''
+                    ? (string)$camp['refund_reference']
+                    : (string)($remote['wxpay_order_id'] ?? $attempt['transaction_id'] ?? ''),
+                'refund_time' => (int)($camp['refund_time'] ?? 0) > 0
+                    ? (int)$camp['refund_time']
+                    : time(),
                 'last_error' => $nextEntitlement === 'review' ? '检测到微信退款，请人工复核会员权益。' : (string)($camp['last_error'] ?? ''),
                 'update_time' => time(),
             ]);

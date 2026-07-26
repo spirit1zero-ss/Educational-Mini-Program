@@ -620,6 +620,14 @@ export function trainingCampOrderRetryDelivery(id) {
   });
 }
 
+export function trainingCampOrderRegisterOfflineRefund(id, data) {
+  return request({
+    url: `/user/member/training_camp/order/${id}/offline_refund`,
+    method: 'post',
+    data,
+  });
+}
+
 export function trainingCampOrderReviewRefund(id, data) {
   return request({
     url: `/user/member/training_camp/order/${id}/refund_review`,

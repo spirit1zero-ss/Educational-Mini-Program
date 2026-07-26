@@ -57,6 +57,7 @@ class DistributionServices extends BaseServices
 
     private const FALLBACK_COMMISSION_CONFIG = 'training_camp_fallback_commission';
     private const SECOND_COMMISSION_CONFIG = 'training_camp_second_commission';
+    private const COMMISSION_REFUND_TYPE = 'training_camp_commission_refund';
 
     private const MEMBER_INCOME_TYPES = [
         'self_member_brokerage',
@@ -154,7 +155,7 @@ class DistributionServices extends BaseServices
         return $user ? $this->profile($user) : $this->profile(['uid' => $uid]);
     }
 
-    public function firstCommissionForUid(int $uid): string
+    public function firstCommissionForUid(int $uid, int $buyerUid = 0): string
     {
         $user = $this->eligibleUser($uid);
         if (!$user) {
@@ -164,7 +165,11 @@ class DistributionServices extends BaseServices
         if ((int)$profile['levelId'] === 0) {
             return (string)$profile['firstCommission'];
         }
-        return $this->premiumQuotaUsed($uid) < (int)$profile['initialQuota']
+        $effectiveTime = (int)($user['agent_level_time'] ?? 0);
+        if (!$this->isPremiumQuotaCandidate($uid, $buyerUid, $effectiveTime)) {
+            return $this->configuredMoney(self::FALLBACK_COMMISSION_CONFIG, '120.00');
+        }
+        return $this->premiumQuotaUsed($uid, $effectiveTime, $buyerUid) < (int)$profile['initialQuota']
             ? (string)$profile['firstCommission']
             : $this->configuredMoney(self::FALLBACK_COMMISSION_CONFIG, '120.00');
     }
@@ -217,7 +222,7 @@ class DistributionServices extends BaseServices
 
     public function teamStats(int $uid): array
     {
-        $user = Db::name('user')->where('uid', $uid)->field('uid,agent_level')->find() ?: ['uid' => $uid];
+        $user = Db::name('user')->where('uid', $uid)->field('uid,agent_level,agent_level_time')->find() ?: ['uid' => $uid];
         $profile = $this->profile($user);
 
         $firstLevelUids = $this->teamMemberUids($uid, 1);
@@ -225,7 +230,10 @@ class DistributionServices extends BaseServices
         $secondLevelUids = $this->teamMemberUids($uid, 2);
         $secondLevelCount = count($secondLevelUids);
         $quotaLimited = (int)$profile['levelId'] > 0;
-        $usedQuota = $quotaLimited ? min($firstLevelCount, (int)$profile['initialQuota']) : 0;
+        $effectiveTime = (int)($user['agent_level_time'] ?? 0);
+        $usedQuota = $quotaLimited && $effectiveTime > 0
+            ? min($this->premiumQuotaUsed($uid, $effectiveTime), (int)$profile['initialQuota'])
+            : 0;
 
         return array_merge($profile, [
             'firstLevelCount' => $firstLevelCount,
@@ -353,6 +361,8 @@ class DistributionServices extends BaseServices
                 'orderAmount' => '0.00',
                 'pendingAmount' => '0.00',
                 'availableAmount' => '0.00',
+                'debtAmount' => '0.00',
+                'refundAmount' => '0.00',
                 'withdrawnAmount' => '0.00',
             ];
         }
@@ -383,11 +393,34 @@ class DistributionServices extends BaseServices
             ->where('pm', 1)
             ->where('status', 1);
         $pendingAmount = (string)(clone $positive)->where('frozen_time', '>', time())->sum('number');
-        $balanceAmount = (string)Db::name('user')->whereIn('uid', $uids)->sum('brokerage_price');
-        $availableAmount = bcsub($balanceAmount, $pendingAmount, 2);
-        if (bccomp($availableAmount, '0', 2) < 0) {
-            $availableAmount = '0.00';
+        $pendingByUid = (clone $positive)
+            ->where('frozen_time', '>', time())
+            ->field('uid,SUM(number) AS pending_amount')
+            ->group('uid')
+            ->column('pending_amount', 'uid');
+        $balancesByUid = Db::name('user')
+            ->whereIn('uid', $uids)
+            ->column('brokerage_price', 'uid');
+        $availableAmount = '0.00';
+        $debtAmount = '0.00';
+        foreach ($uids as $uid) {
+            $netAvailable = bcsub(
+                (string)($balancesByUid[$uid] ?? '0'),
+                (string)($pendingByUid[$uid] ?? '0'),
+                2
+            );
+            if (bccomp($netAvailable, '0', 2) < 0) {
+                $debtAmount = bcadd($debtAmount, bcmul($netAvailable, '-1', 2), 2);
+            } else {
+                $availableAmount = bcadd($availableAmount, $netAvailable, 2);
+            }
         }
+        $refundAmount = (string)Db::name('user_brokerage')
+            ->whereIn('uid', $uids)
+            ->where('type', self::COMMISSION_REFUND_TYPE)
+            ->where('pm', 0)
+            ->where('status', 1)
+            ->sum('number');
 
         $withdrawnBase = Db::name('user_extract')
             ->whereIn('uid', $uids)
@@ -407,6 +440,8 @@ class DistributionServices extends BaseServices
             'orderAmount' => $this->money($orderAmountFen / 100),
             'pendingAmount' => $this->money($pendingAmount),
             'availableAmount' => $this->money($availableAmount),
+            'debtAmount' => $this->money($debtAmount),
+            'refundAmount' => $this->money($refundAmount),
             'withdrawnAmount' => $this->money($withdrawnAmount),
         ];
     }
@@ -723,7 +758,7 @@ class DistributionServices extends BaseServices
         }
         $user = Db::name('user')
             ->where('uid', $uid)
-            ->field('uid,agent_level,is_ever_level,is_money_level,overdue_time,is_promoter,spread_open,status,is_del')
+            ->field('uid,agent_level,agent_level_time,is_ever_level,is_money_level,overdue_time,is_promoter,spread_open,status,is_del')
             ->find();
         if (!$user
             || (int)$user['is_del'] === 1
@@ -737,9 +772,41 @@ class DistributionServices extends BaseServices
         return $user;
     }
 
-    private function premiumQuotaUsed(int $uid): int
+    /**
+     * Only direct members bound after the current identity became effective
+     * can consume that identity's premium commission quota.
+     */
+    private function premiumQuotaUsed(int $uid, int $effectiveTime, int $excludeUid = 0): int
     {
-        return count($this->teamMemberUids($uid, 1));
+        if ($uid <= 0 || $effectiveTime <= 0) {
+            return 0;
+        }
+        $query = Db::name('user')
+            ->where('spread_uid', $uid)
+            ->where('spread_time', '>=', $effectiveTime)
+            ->where('is_del', 0);
+        if ($excludeUid > 0) {
+            $query->where('uid', '<>', $excludeUid);
+        }
+        return count($this->activePaidMemberUids($query->column('uid')));
+    }
+
+    private function isPremiumQuotaCandidate(int $uid, int $buyerUid, int $effectiveTime): bool
+    {
+        if ($uid <= 0 || $buyerUid <= 0 || $effectiveTime <= 0) {
+            return false;
+        }
+        $buyer = Db::name('user')
+            ->where('uid', $buyerUid)
+            ->where('spread_uid', $uid)
+            ->where('spread_time', '>=', $effectiveTime)
+            ->where('is_del', 0)
+            ->field('uid')
+            ->find();
+        // This check runs inside the successful payment transaction. The camp
+        // mirror row is marked paid immediately after commission settlement, so
+        // requiring it here would incorrectly downgrade every current buyer.
+        return (bool)$buyer;
     }
 
     private function activePaidMemberUids(array $uids): array
@@ -785,8 +852,17 @@ class DistributionServices extends BaseServices
             ->where('pm', 1)
             ->where('status', -1)
             ->sum('number');
-        $availableAmount = bcsub($brokerageBalance, $pendingAmount, 2);
-        if (bccomp($availableAmount, '0', 2) < 0) {
+        $refundAmount = (string)Db::name('user_brokerage')
+            ->where('uid', $uid)
+            ->where('type', self::COMMISSION_REFUND_TYPE)
+            ->where('pm', 0)
+            ->where('status', 1)
+            ->sum('number');
+        $netAvailableAmount = bcsub($brokerageBalance, $pendingAmount, 2);
+        $debtAmount = '0.00';
+        $availableAmount = $netAvailableAmount;
+        if (bccomp($netAvailableAmount, '0', 2) < 0) {
+            $debtAmount = bcmul($netAvailableAmount, '-1', 2);
             $availableAmount = '0.00';
         }
 
@@ -814,6 +890,8 @@ class DistributionServices extends BaseServices
             'totalAmount' => $this->money($totalAmount),
             'pendingAmount' => $this->money($pendingAmount),
             'availableAmount' => $this->money($availableAmount),
+            'debtAmount' => $this->money($debtAmount),
+            'refundAmount' => $this->money($refundAmount),
             'withdrawingAmount' => $this->money($withdrawingAmount),
             'withdrawnAmount' => $this->money($withdrawnAmount),
             'firstAmount' => $this->money($firstAmount),

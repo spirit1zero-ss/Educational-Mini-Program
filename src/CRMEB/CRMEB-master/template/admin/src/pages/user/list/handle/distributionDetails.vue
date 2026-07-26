@@ -113,6 +113,16 @@
               <strong class="green">¥{{ overview.income.withdrawnAmount }}</strong>
               <small>实际到账净额</small>
             </div>
+            <div class="metric-card money refund">
+              <span>退款扣回</span>
+              <strong>¥{{ overview.income.refundAmount }}</strong>
+              <small>退款订单累计扣回佣金</small>
+            </div>
+            <div class="metric-card money debt">
+              <span>待抵扣佣金</span>
+              <strong>¥{{ overview.income.debtAmount }}</strong>
+              <small>后续佣金将优先抵扣</small>
+            </div>
           </div>
           <div class="income-breakdown">
             <span>一级收入 <strong>¥{{ overview.income.firstAmount }}</strong></span>
@@ -352,7 +362,7 @@ td small {
 }
 
 .income-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .metric-card {
@@ -386,6 +396,21 @@ td small {
 .metric-card.primary {
   border-color: #b8e2cb;
   background: #f5fbf7;
+}
+
+.metric-card.refund {
+  border-color: #f1d1bc;
+  background: #fff9f4;
+}
+
+.metric-card.debt {
+  border-color: #f1b9b9;
+  background: #fff7f7;
+}
+
+.metric-card.refund strong,
+.metric-card.debt strong {
+  color: #d64545;
 }
 
 .metric-card strong.green {

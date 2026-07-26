@@ -24,6 +24,7 @@ class MiniappServices extends BaseServices
 {
     private const PENDING_MEMBER_ORDER_TTL = 1800;
     private const CAMP_ORDER_TABLE = 'miniapp_training_camp_order';
+    private const COMMISSION_REFUND_TYPE = 'training_camp_commission_refund';
     private const TRAINING_CAMP_MEMBER_TYPE = 'ever';
 
     private const REFERRAL_POSTER_PAGES = [
@@ -391,11 +392,11 @@ class MiniappServices extends BaseServices
         $limit = $limit ?: $defaultLimit;
         $count = Db::name('user_brokerage')
             ->where('uid', $uid)
-            ->whereIn('type', $this->memberIncomeTypes())
+            ->whereIn('type', $this->memberLedgerTypes())
             ->count();
         $rows = Db::name('user_brokerage')
             ->where('uid', $uid)
-            ->whereIn('type', $this->memberIncomeTypes())
+            ->whereIn('type', $this->memberLedgerTypes())
             ->order('id', 'desc')
             ->page($page ?: 1, $limit)
             ->select()
@@ -416,14 +417,19 @@ class MiniappServices extends BaseServices
             ->where('status', 1)
             ->where('frozen_time', '>', time())
             ->sum('number');
-        $availableAmount = Db::name('user_brokerage')
+        /** @var UserExtractServices $extractServices */
+        $extractServices = app()->make(UserExtractServices::class);
+        $withdrawalConfig = $extractServices->bank($uid);
+        $netAvailableAmount = (string)($withdrawalConfig['commissionCount'] ?? '0');
+        $availableAmount = bccomp($netAvailableAmount, '0', 2) > 0 ? $netAvailableAmount : '0.00';
+        $debtAmount = bccomp($netAvailableAmount, '0', 2) < 0
+            ? bcmul($netAvailableAmount, '-1', 2)
+            : '0.00';
+        $refundAmount = Db::name('user_brokerage')
             ->where('uid', $uid)
-            ->whereIn('type', $this->memberIncomeTypes())
-            ->where('pm', 1)
+            ->where('type', self::COMMISSION_REFUND_TYPE)
+            ->where('pm', 0)
             ->where('status', 1)
-            ->where(function ($query) {
-                $query->where('frozen_time', '<=', time())->whereOr('frozen_time', 0);
-            })
             ->sum('number');
         $withdrawnBase = Db::name('user_extract')
             ->where('uid', $uid)
@@ -442,6 +448,8 @@ class MiniappServices extends BaseServices
                 'availableAmount' => $this->formatAmount($availableAmount),
                 'pendingAmount' => $this->formatAmount($pendingAmount),
                 'withdrawnAmount' => $this->formatAmount($withdrawnAmount),
+                'refundAmount' => $this->formatAmount($refundAmount),
+                'debtAmount' => $this->formatAmount($debtAmount),
                 'settledAmount' => $this->formatAmount($availableAmount),
             ],
             'list' => $list,
@@ -563,10 +571,17 @@ class MiniappServices extends BaseServices
             ];
         }, $records);
 
+        $netAvailableAmount = (string)($config['commissionCount'] ?? '0');
+        $availableAmount = bccomp($netAvailableAmount, '0', 2) > 0 ? $netAvailableAmount : '0.00';
+        $debtAmount = bccomp($netAvailableAmount, '0', 2) < 0
+            ? bcmul($netAvailableAmount, '-1', 2)
+            : '0.00';
+
         return [
             'enabled' => (bool)sys_config('training_camp_withdraw_enabled', 0),
             'eligible' => (int)($user['is_promoter'] ?? 0) === 1 && (int)($user['spread_open'] ?? 0) === 1,
-            'availableAmount' => $this->formatAmount(max(0, (float)($config['commissionCount'] ?? 0))),
+            'availableAmount' => $this->formatAmount($availableAmount),
+            'debtAmount' => $this->formatAmount($debtAmount),
             'minAmount' => $this->formatAmount($config['minPrice'] ?? 0.1),
             'feeRate' => (string)($config['withdrawal_fee'] ?? 0),
             'hasPending' => Db::name('user_extract')->where('uid', $uid)->where('status', 0)->count() > 0,
@@ -951,6 +966,9 @@ class MiniappServices extends BaseServices
             'incomeAmount' => $this->formatAmount($totalIncome),
             'withdrawnAmount' => $this->formatAmount($withdrawnAmount),
             'teamInitialQuota' => $team['initialQuota'],
+            'usedQuota' => $team['usedQuota'],
+            'remainingQuota' => $team['remainingQuota'],
+            'quotaLimited' => $team['quotaLimited'],
             'firstLevelCount' => $team['firstLevelCount'],
             'secondLevelCount' => $team['secondLevelCount'],
             'identity' => $distributionServices->profile($user),
@@ -1038,14 +1056,24 @@ class MiniappServices extends BaseServices
         return ['get_member_brokerage', 'get_self_member_brokerage', 'get_two_member_brokerage', 'self_member_brokerage', 'one_member_brokerage', 'two_member_brokerage'];
     }
 
+    private function memberLedgerTypes(): array
+    {
+        return array_merge($this->memberIncomeTypes(), [self::COMMISSION_REFUND_TYPE]);
+    }
+
     private function formatIncomeRecord(array $item): array
     {
         $type = (string)($item['type'] ?? '');
-        $typeText = in_array($type, ['get_two_member_brokerage', 'two_member_brokerage'], true)
-            ? $this->zh('\u4e8c\u7ea7\u4f1a\u5458\u4f63\u91d1')
-            : $this->zh('\u4e00\u7ea7\u4f1a\u5458\u4f63\u91d1');
+        $isRefundDeduction = $type === self::COMMISSION_REFUND_TYPE;
+        $typeText = $isRefundDeduction
+            ? '退款扣回佣金'
+            : (in_array($type, ['get_two_member_brokerage', 'two_member_brokerage'], true)
+                ? $this->zh('\u4e8c\u7ea7\u4f1a\u5458\u4f63\u91d1')
+                : $this->zh('\u4e00\u7ea7\u4f1a\u5458\u4f63\u91d1'));
         $isFrozen = (int)($item['frozen_time'] ?? 0) > time();
-        $status = (int)($item['status'] ?? 1) === -1 ? 'rejected' : ($isFrozen ? 'pending' : 'available');
+        $status = $isRefundDeduction
+            ? 'deducted'
+            : ((int)($item['status'] ?? 1) === -1 ? 'rejected' : ($isFrozen ? 'pending' : 'available'));
 
         return [
             'id' => (string)($item['id'] ?? ''),
@@ -1060,7 +1088,7 @@ class MiniappServices extends BaseServices
             'number' => $this->formatAmount($item['number'] ?? 0),
             'pm' => (int)($item['pm'] ?? 1),
             'statusKey' => $status,
-            'statusText' => ['pending' => '待结算', 'available' => '可提现', 'rejected' => '已撤销'][$status],
+            'statusText' => ['pending' => '待结算', 'available' => '可提现', 'rejected' => '已撤销', 'deducted' => '已扣回'][$status],
             'isFrozen' => $isFrozen,
             'frozenTime' => $this->formatOverdueTime((int)($item['frozen_time'] ?? 0)),
             'reviewTime' => $this->formatOverdueTime((int)($item['review_time'] ?? 0)),

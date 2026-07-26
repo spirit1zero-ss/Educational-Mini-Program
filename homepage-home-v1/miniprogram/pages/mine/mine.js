@@ -1,4 +1,5 @@
 const CAMP_PATH = '/packages/features/pages/module-5-camp/module-5-camp'
+const DISTRIBUTION_CENTER_PATH = '/packages/features/pages/distribution-center/distribution-center'
 const PROMO_POSTER_PATH = '/packages/features/pages/promo-poster/promo-poster'
 const INVITE_RECORDS_PATH = '/packages/features/pages/invite-records/invite-records'
 const MY_INCOME_PATH = '/packages/features/pages/my-income/my-income'
@@ -303,6 +304,20 @@ Page({
     }
 
     this.showComingSoon(labels[key])
+  },
+
+  onDistributionCenterTap() {
+    if (!this.data.isMember) {
+      wx.showToast({
+        title: '开通训练营会员后可使用',
+        icon: 'none'
+      })
+      return
+    }
+    wx.navigateTo({
+      url: DISTRIBUTION_CENTER_PATH,
+      fail: () => this.showComingSoon('分销中心')
+    })
   },
 
   onListTap(e) {

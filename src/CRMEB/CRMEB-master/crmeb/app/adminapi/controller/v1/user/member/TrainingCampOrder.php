@@ -44,6 +44,23 @@ class TrainingCampOrder extends AuthController
         return app('json')->success($this->services->retryDelivery((int)$id));
     }
 
+    public function registerOfflineRefund(Request $request, $id)
+    {
+        $data = $request->postMore([
+            ['amount', 0],
+            ['channel', ''],
+            ['reference', ''],
+            ['refund_time', ''],
+            ['note', ''],
+        ]);
+        return app('json')->success($this->services->registerOfflineRefund(
+            (int)$id,
+            $data,
+            (int)$this->adminId,
+            (string)($this->adminInfo['real_name'] ?? $this->adminInfo['account'] ?? '')
+        ));
+    }
+
     public function reviewRefund(Request $request, $id)
     {
         [$decision, $note] = $request->postMore([

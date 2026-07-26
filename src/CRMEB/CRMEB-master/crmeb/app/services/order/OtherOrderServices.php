@@ -401,7 +401,10 @@ class OtherOrderServices extends BaseServices
             if ($storedType === 'one_member_brokerage') {
                 // The beneficiary row lock serializes concurrent buyers, so the
                 // premium quota check and commission write use one atomic order.
-                $price = $distributionServices->firstCommissionForUid((int)$uid);
+                $price = $distributionServices->firstCommissionForUid(
+                    (int)$uid,
+                    (int)$orderInfo['uid']
+                );
             } elseif ($storedType === 'two_member_brokerage') {
                 $price = $distributionServices->secondCommissionForUid((int)$uid);
             }

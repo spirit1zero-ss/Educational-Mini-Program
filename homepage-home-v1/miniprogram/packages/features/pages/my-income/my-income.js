@@ -10,12 +10,16 @@ Page({
     summary: [
       { key: 'pending', value: '0元', label: '待结算' },
       { key: 'available', value: '0元', label: '可提现' },
-      { key: 'withdrawn', value: '0元', label: '已到账' }
+      { key: 'withdrawn', value: '0元', label: '已到账' },
+      { key: 'refund', value: '0元', label: '退款扣回' }
     ],
+    debtAmount: '0.00',
+    debtActive: false,
     statusTabs: [
       { key: 'all', text: '全部', count: 0 },
       { key: 'pending', text: '待结算', count: 0 },
       { key: 'available', text: '可提现', count: 0 },
+      { key: 'deducted', text: '退款', count: 0 },
       { key: 'withdraw', text: '提现', count: 0 }
     ],
     records: [],
@@ -58,6 +62,8 @@ Page({
         const records = incomeRecords.concat(withdrawalRecords)
         this.setData({
           withdrawal,
+          debtAmount: withdrawal.debtAmount || '0.00',
+          debtActive: Number(withdrawal.debtAmount || 0) > 0,
           records,
           summary: this.data.summary.map((item) => item.key === 'available'
             ? Object.assign({}, item, { value: `${withdrawal.availableAmount || '0.00'}元` })
@@ -141,6 +147,7 @@ Page({
             if (item.key === 'available') return Object.assign({}, item, { value: `${backendSummary.availableAmount || '0.00'}元` })
             if (item.key === 'pending') return Object.assign({}, item, { value: `${backendSummary.pendingAmount || '0.00'}元` })
             if (item.key === 'withdrawn') return Object.assign({}, item, { value: `${backendSummary.withdrawnAmount || '0.00'}元` })
+            if (item.key === 'refund') return Object.assign({}, item, { value: `${backendSummary.refundAmount || '0.00'}元` })
             return item
           })
         }, () => {

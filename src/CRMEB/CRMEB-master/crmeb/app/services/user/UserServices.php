@@ -912,8 +912,14 @@ class UserServices extends BaseServices
             $edit['is_promoter'] = $data['is_promoter'];
             $edit['level'] = $data['level'];
             if (isset($data['agent_level'])) {
-                $edit['agent_level'] = max(0, min(3, (int)$data['agent_level']));
-                if ($edit['agent_level'] > 0) {
+                $newAgentLevel = max(0, min(3, (int)$data['agent_level']));
+                $edit['agent_level'] = $newAgentLevel;
+                if ($newAgentLevel !== (int)($user['agent_level'] ?? 0)
+                    || ($newAgentLevel > 0 && (int)($user['agent_level_time'] ?? 0) <= 0)
+                ) {
+                    $edit['agent_level_time'] = $newAgentLevel > 0 ? time() : 0;
+                }
+                if ($newAgentLevel > 0) {
                     $edit['is_ever_level'] = 1;
                     $edit['is_money_level'] = max(1, (int)($user['is_money_level'] ?? 0));
                     $edit['overdue_time'] = 0;
@@ -953,6 +959,11 @@ class UserServices extends BaseServices
         }
         $agentLevel = max(0, min(3, $agentLevel));
         $edit = ['agent_level' => $agentLevel];
+        if ($agentLevel !== (int)($user['agent_level'] ?? 0)
+            || ($agentLevel > 0 && (int)($user['agent_level_time'] ?? 0) <= 0)
+        ) {
+            $edit['agent_level_time'] = $agentLevel > 0 ? time() : 0;
+        }
         if ($agentLevel > 0) {
             $edit['is_ever_level'] = 1;
             $edit['is_money_level'] = max(1, (int)($user['is_money_level'] ?? 0));

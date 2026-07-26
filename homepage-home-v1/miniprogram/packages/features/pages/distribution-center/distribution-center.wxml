@@ -1,0 +1,138 @@
+<view class="page">
+  <view class="custom-nav" style="{{navStyle}}">
+    <view class="back-button" bindtap="onBackTap">‹</view>
+    <view class="nav-title">分销中心</view>
+  </view>
+
+  <scroll-view class="center-scroll" style="{{scrollStyle}}" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="content">
+      <view class="identity-card">
+        <view class="identity-orbit"></view>
+        <view class="identity-head">
+          <view class="identity-badge">{{identity ? identity.levelKey : 'C'}}</view>
+          <view class="identity-copy">
+            <view class="identity-name">{{identity ? identity.levelName : '普通会员'}}</view>
+            <view class="identity-code">{{identity ? identity.identityCode : memberUid}}</view>
+          </view>
+          <view class="identity-status {{canPromote ? 'identity-status--active' : ''}}">
+            {{canPromote ? '推广正常' : '推广已冻结'}}
+          </view>
+        </view>
+
+        <view class="available-block">
+          <view class="available-label">当前可提现</view>
+          <view class="available-value"><text>¥</text>{{money.availableAmount}}</view>
+          <view class="available-note">退款产生的待抵扣佣金会优先从后续返佣中冲抵</view>
+        </view>
+
+        <view class="identity-summary">
+          <view class="identity-summary-item">
+            <view class="identity-summary-value">¥{{money.pendingAmount}}</view>
+            <view class="identity-summary-label">待结算</view>
+          </view>
+          <view class="identity-summary-item">
+            <view class="identity-summary-value">¥{{money.withdrawnAmount}}</view>
+            <view class="identity-summary-label">已提现</view>
+          </view>
+          <view class="identity-summary-item identity-summary-item--danger">
+            <view class="identity-summary-value">¥{{money.debtAmount}}</view>
+            <view class="identity-summary-label">待抵扣</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="debt-alert" wx:if="{{debtActive}}">
+        <view class="debt-alert-mark">!</view>
+        <view class="debt-alert-copy">
+          <view class="debt-alert-title">存在待抵扣佣金 ¥{{money.debtAmount}}</view>
+          <view class="debt-alert-desc">退款订单对应佣金已扣回，后续返佣将优先抵扣，清零后才能继续提现。</view>
+        </view>
+      </view>
+
+      <view class="section-card quota-card">
+        <view class="section-head">
+          <view>
+            <view class="section-title">返佣名额</view>
+            <view class="section-desc">
+              {{quota.limited ? '仅计算当前身份生效后新绑定的有效直属会员' : '普通会员固定展示 1 个名额，暂不递减'}}
+            </view>
+          </view>
+          <view class="quota-remaining">{{quota.limited ? quota.remaining : 1}}</view>
+        </view>
+        <view class="quota-track" wx:if="{{quota.limited}}">
+          <view class="quota-progress" style="width:{{quota.percent}}%;"></view>
+        </view>
+        <view class="quota-meta">
+          <text>总名额 {{quota.initial}}</text>
+          <text wx:if="{{quota.limited}}">已使用 {{quota.used}}</text>
+          <text wx:else>不消耗</text>
+        </view>
+      </view>
+
+      <view class="money-grid">
+        <view class="money-cell">
+          <view class="money-label">累计有效返佣</view>
+          <view class="money-value">¥{{money.totalAmount}}</view>
+        </view>
+        <view class="money-cell money-cell--refund">
+          <view class="money-label">退款累计扣回</view>
+          <view class="money-value">¥{{money.refundAmount}}</view>
+        </view>
+        <view class="money-cell">
+          <view class="money-label">一级有效团队</view>
+          <view class="money-value">{{team.first}}<text>人</text></view>
+        </view>
+        <view class="money-cell">
+          <view class="money-label">二级有效团队</view>
+          <view class="money-value">{{team.second}}<text>人</text></view>
+        </view>
+      </view>
+
+      <view class="section-card action-card">
+        <view class="section-title">常用功能</view>
+        <view class="action-list">
+          <view
+            class="action-row"
+            wx:for="{{actions}}"
+            wx:key="key"
+            bindtap="onActionTap"
+            data-key="{{item.key}}"
+          >
+            <image class="action-icon" src="{{item.icon}}" mode="aspectFit"></image>
+            <view class="action-copy">
+              <view class="action-title">{{item.title}}</view>
+              <view class="action-desc">{{item.desc}}</view>
+            </view>
+            <view class="action-arrow">›</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="section-card ledger-card">
+        <view class="section-head">
+          <view>
+            <view class="section-title">最近账单</view>
+            <view class="section-desc">返佣、撤销与退款扣回均保留完整记录</view>
+          </view>
+          <view class="section-link" bindtap="onViewAllRecords">全部</view>
+        </view>
+
+        <view class="ledger-list" wx:if="{{recentRecords.length}}">
+          <view class="ledger-row" wx:for="{{recentRecords}}" wx:key="id">
+            <view class="ledger-mark ledger-mark--{{item.tone}}"></view>
+            <view class="ledger-copy">
+              <view class="ledger-title">{{item.title}}</view>
+              <view class="ledger-desc">{{item.desc || item.statusText}}</view>
+              <view class="ledger-time">{{item.time}}</view>
+            </view>
+            <view class="ledger-amount ledger-amount--{{item.tone}}">{{item.amountText}}</view>
+          </view>
+        </view>
+        <view class="empty-ledger" wx:else>
+          <image src="/assets/mine/icon-income.svg" mode="aspectFit"></image>
+          <view>暂无返佣账单</view>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+</view>

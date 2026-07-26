@@ -108,6 +108,7 @@
         <el-table-column label="退款" min-width="105">
           <template slot-scope="scope">
             <el-tag size="small" :type="refundTagType(scope.row.refundState)">{{ scope.row.refundStateText }}</el-tag>
+            <div v-if="scope.row.refundSource" class="muted">{{ scope.row.refundSourceText }}</div>
             <div v-if="scope.row.refundAccountFrozen" class="muted">账号已冻结待复核</div>
           </template>
         </el-table-column>
@@ -117,7 +118,7 @@
             <div class="muted">更新 {{ scope.row.updateTime || '--' }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="300">
+        <el-table-column label="操作" fixed="right" width="390">
           <template slot-scope="scope">
             <el-button type="text" @click="openDetail(scope.row)">详情</el-button>
             <el-button
@@ -135,6 +136,14 @@
               :loading="actionId === scope.row.id"
               @click="retryDelivery(scope.row)"
             >重试权益确认</el-button>
+            <el-button
+              v-if="scope.row.canRegisterOfflineRefund"
+              v-auth="['admin-user-training-camp-order-offline-refund']"
+              type="text"
+              class="danger-action"
+              :loading="actionId === scope.row.id"
+              @click="openOfflineRefund(scope.row)"
+            >登记线下退款</el-button>
             <template v-if="scope.row.canReviewRefund">
               <el-button
                 v-auth="['admin-user-training-camp-order-refund-review']"
@@ -180,6 +189,21 @@
               <span>退款</span>
               <strong>{{ detail.order.refundStateText }}{{ detail.order.refundAccountFrozen ? '（账号已冻结）' : '' }}</strong>
             </div>
+            <template v-if="detail.order.refundSource">
+              <div><span>退款来源</span><strong>{{ detail.order.refundSourceText }}</strong></div>
+              <div><span>退款金额</span><strong>¥{{ detail.order.refundAmount }}</strong></div>
+              <div><span>退款渠道</span><strong>{{ detail.order.refundChannelText }}</strong></div>
+              <div><span>退款时间</span><strong>{{ detail.order.refundTime || '--' }}</strong></div>
+              <div><span>外部流水号</span><strong>{{ detail.order.refundReference || '--' }}</strong></div>
+              <div>
+                <span>登记人员</span>
+                <strong>
+                  {{ detail.order.refundOperatorName || '--' }}
+                  {{ detail.order.refundOperatorId ? `（ID ${detail.order.refundOperatorId}）` : '' }}
+                </strong>
+              </div>
+              <div class="detail-wide"><span>退款备注</span><strong>{{ detail.order.refundNote || '--' }}</strong></div>
+            </template>
           </div>
           <el-alert
             v-if="detail.order.lastError"
@@ -209,6 +233,84 @@
         </template>
       </div>
     </el-drawer>
+
+    <el-dialog
+      title="登记线下退款"
+      :visible.sync="offlineRefundVisible"
+      width="560px"
+      append-to-body
+      :close-on-click-modal="false"
+      @closed="resetOfflineRefund"
+    >
+      <el-alert
+        class="offline-refund-alert"
+        type="warning"
+        :closable="false"
+        show-icon
+        title="此处只登记已经在线下实际完成的退款，不会自动向用户付款。"
+        description="提交后账号会冻结并进入退款待复核；只有后续点击“撤销会员”时，才会撤销会员与分销资格并扣回本订单佣金。"
+      />
+      <el-form
+        ref="offlineRefundForm"
+        :model="offlineRefundForm"
+        :rules="offlineRefundRules"
+        label-width="110px"
+      >
+        <el-form-item label="训练营订单">
+          <div class="refund-order-readonly">
+            <strong>{{ offlineRefundOrder.orderId || '--' }}</strong>
+            <span>{{ offlineRefundOrder.nickname || '未设置昵称' }} · UID {{ offlineRefundOrder.uid || '--' }}</span>
+          </div>
+        </el-form-item>
+        <el-form-item label="退款金额" prop="amount">
+          <el-input v-model="offlineRefundForm.amount" disabled>
+            <template slot="append">元（仅支持全额）</template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="退款渠道" prop="channel">
+          <el-select v-model="offlineRefundForm.channel" placeholder="请选择实际付款渠道" style="width: 100%">
+            <el-option label="微信转账" value="wechat_transfer" />
+            <el-option label="银行卡" value="bank" />
+            <el-option label="支付宝" value="alipay" />
+            <el-option label="现金" value="cash" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="外部流水号" :required="offlineRefundForm.channel !== 'cash'">
+          <el-input
+            v-model.trim="offlineRefundForm.reference"
+            maxlength="96"
+            show-word-limit
+            :placeholder="offlineRefundForm.channel === 'cash' ? '现金退款可填写收据编号' : '请填写转账或退款流水号'"
+          />
+        </el-form-item>
+        <el-form-item label="实际退款时间" prop="refund_time">
+          <el-date-picker
+            v-model="offlineRefundForm.refund_time"
+            type="datetime"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            placeholder="选择线下实际付款时间"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="退款原因/备注" prop="note">
+          <el-input
+            v-model.trim="offlineRefundForm.note"
+            type="textarea"
+            :rows="4"
+            maxlength="255"
+            show-word-limit
+            placeholder="必填：说明退款原因、收款人或其他核验信息"
+          />
+        </el-form-item>
+      </el-form>
+      <template slot="footer">
+        <el-button :disabled="offlineRefundSubmitting" @click="offlineRefundVisible = false">取消</el-button>
+        <el-button type="danger" :loading="offlineRefundSubmitting" @click="submitOfflineRefund">
+          确认已线下退款并登记
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -218,6 +320,7 @@ import {
   trainingCampOrderDetail,
   trainingCampOrderSync,
   trainingCampOrderRetryDelivery,
+  trainingCampOrderRegisterOfflineRefund,
   trainingCampOrderReviewRefund,
 } from '@/api/user';
 
@@ -229,6 +332,22 @@ export default {
       detailLoading: false,
       drawerVisible: false,
       actionId: 0,
+      offlineRefundVisible: false,
+      offlineRefundSubmitting: false,
+      offlineRefundOrder: {},
+      offlineRefundForm: {
+        amount: '',
+        channel: '',
+        reference: '',
+        refund_time: '',
+        note: '',
+      },
+      offlineRefundRules: {
+        amount: [{ required: true, message: '缺少退款金额', trigger: 'blur' }],
+        channel: [{ required: true, message: '请选择退款渠道', trigger: 'change' }],
+        refund_time: [{ required: true, message: '请选择实际退款时间', trigger: 'change' }],
+        note: [{ required: true, message: '请填写退款原因和备注', trigger: 'blur' }],
+      },
       list: [],
       total: 0,
       detail: null,
@@ -292,11 +411,74 @@ export default {
     retryDelivery(row) {
       this.runAction(row, trainingCampOrderRetryDelivery, '确认重试微信会员权益交付确认？该操作不会重复开通会员。');
     },
+    openOfflineRefund(row) {
+      this.offlineRefundOrder = { ...row };
+      this.offlineRefundForm = {
+        amount: row.price || '',
+        channel: '',
+        reference: '',
+        refund_time: this.localDateTime(new Date()),
+        note: '',
+      };
+      this.offlineRefundVisible = true;
+      this.$nextTick(() => {
+        if (this.$refs.offlineRefundForm) this.$refs.offlineRefundForm.clearValidate();
+      });
+    },
+    submitOfflineRefund() {
+      if (this.offlineRefundSubmitting) return;
+      if (this.offlineRefundForm.channel !== 'cash' && !this.offlineRefundForm.reference) {
+        this.$message.warning('请填写线下退款流水号');
+        return;
+      }
+      this.$refs.offlineRefundForm.validate((valid) => {
+        if (!valid) return;
+        const row = this.offlineRefundOrder;
+        this.$confirm(
+          `请再次确认：已在线下向该用户实际退还 ¥${this.offlineRefundForm.amount}。本操作只登记事实，不会自动付款；提交后账号将被冻结。`,
+          '确认线下退款已完成',
+          {
+            type: 'warning',
+            confirmButtonText: '确认已付款并登记',
+            cancelButtonText: '返回检查',
+          }
+        ).then(() => {
+          this.offlineRefundSubmitting = true;
+          this.actionId = row.id;
+          return trainingCampOrderRegisterOfflineRefund(row.id, { ...this.offlineRefundForm });
+        }).then((res) => {
+          this.$message.success((res.data && res.data.message) || '线下退款已登记');
+          this.offlineRefundVisible = false;
+          this.loadList();
+          if (this.drawerVisible) this.openDetail(row);
+        }).catch((err) => {
+          if (err !== 'cancel' && err !== 'close') this.$message.error(err.msg || '线下退款登记失败');
+        }).finally(() => {
+          this.offlineRefundSubmitting = false;
+          this.actionId = 0;
+        });
+      });
+    },
+    resetOfflineRefund() {
+      this.offlineRefundOrder = {};
+      this.offlineRefundForm = {
+        amount: '',
+        channel: '',
+        reference: '',
+        refund_time: '',
+        note: '',
+      };
+    },
+    localDateTime(date) {
+      const pad = (value) => String(value).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    },
     reviewRefund(row, decision) {
       const revoke = decision === 'revoke';
       const title = revoke ? '撤销退款订单会员' : '保留退款订单会员';
+      const refundSource = row.refundSource === 'offline' ? '已登记的线下退款' : '微信退款';
       const message = revoke
-        ? '仅在微信退款已经完成、且会员确由这笔订单开通时撤销。系统会关闭会员/分销资格、扣回本订单佣金，并解除退款冻结。请输入处理备注：'
+        ? `仅在${refundSource}已经核验、且会员确由这笔订单开通时撤销。系统会关闭会员/分销资格、扣回本订单佣金，并解除退款冻结。请输入处理备注：`
         : '该操作会保留用户的永久会员，并解除退款冻结。请输入保留原因：';
       this.$prompt(message, title, {
         confirmButtonText: revoke ? '确认撤销' : '确认保留',
@@ -372,6 +554,10 @@ export default {
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; overflow: hidden; border: 1px solid #ebeef5; border-radius: 6px; background: #ebeef5; }
 .detail-grid > div { display: flex; min-height: 44px; padding: 10px 12px; background: #fff; }
 .detail-grid span { width: 82px; color: #909399; }.detail-grid strong { flex: 1; color: #303133; font-weight: 500; }
+.detail-grid .detail-wide { grid-column: 1 / -1; }
 .detail-alert { margin-top: 14px; }.empty-text { padding: 18px 0; color: #909399; text-align: center; }
+.offline-refund-alert { margin-bottom: 20px; }
+.refund-order-readonly { display: flex; flex-direction: column; min-height: 40px; padding: 8px 12px; border: 1px solid #ebeef5; border-radius: 4px; background: #f7f8fa; line-height: 22px; }
+.refund-order-readonly strong { color: #303133; }.refund-order-readonly span { color: #909399; font-size: 12px; }
 @media (max-width: 1200px) { .summary-grid { grid-template-columns: repeat(3, 1fr); } }
 </style>

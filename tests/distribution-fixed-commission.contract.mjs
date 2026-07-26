@@ -24,6 +24,7 @@ const [
   commissionPage,
   virtualPaymentService,
   settingsPatch,
+  quotaEffectiveTimePatch,
   configValidator,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/services/user/DistributionServices.php'),
@@ -45,6 +46,7 @@ const [
   read('src/CRMEB/CRMEB-master/template/admin/src/pages/finance/commission/index.vue'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/VirtualPaymentServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-settings.sql'),
+  read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-quota-effective-time.sql'),
   read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/validate/setting/SystemConfigValidata.php'),
 ])
 
@@ -59,7 +61,9 @@ assert.match(distribution, /initialQuota'\s*=>\s*50/)
 assert.match(distribution, /initialQuota'\s*=>\s*200/)
 assert.match(distribution, /PENDING_SETTLEMENT_TIME\s*=\s*2147483647/)
 assert.match(distribution, /training_camp_distribution_enabled/)
-assert.match(distribution, /premiumQuotaUsed\(\$uid\)\s*<\s*\(int\)\$profile\['initialQuota'\]/)
+assert.match(distribution, /premiumQuotaUsed\(\$uid,\s*\$effectiveTime,\s*\$buyerUid\)\s*<\s*\(int\)\$profile\['initialQuota'\]/)
+assert.match(distribution, /where\('spread_time',\s*'>=',\s*\$effectiveTime\)/)
+assert.match(distribution, /isPremiumQuotaCandidate\(\$uid,\s*\$buyerUid,\s*\$effectiveTime\)/)
 assert.match(distribution, /configuredMoney\(/)
 assert.match(distribution, /configuredQuota\(/)
 assert.match(distribution, /'quotaLimited'\s*=>\s*\$quotaLimited/)
@@ -75,12 +79,14 @@ assert.match(orderService, /where\('link_id', \(string\)\$orderInfo\['id'\]\)/)
 assert.match(orderService, /PENDING_SETTLEMENT_TIME/)
 assert.match(orderService, /Db::transaction/)
 assert.match(orderService, /where\('uid', \(int\)\$uid\)->lock\(true\)->find\(\)/)
+assert.match(orderService, /firstCommissionForUid\(\s*\(int\)\$uid,\s*\(int\)\$orderInfo\['uid'\]\s*\)/)
 
 assert.match(miniService, /'teamInitialQuota'/)
 assert.match(miniService, /'pullNewCount'/)
 assert.match(miniService, /'firstLevelCount'/)
 assert.match(miniService, /'secondLevelCount'/)
 assert.match(miniService, /'withdrawnAmount'/)
+assert.match(miniService, /'distributionIdentity'\s*=>\s*\$isMember\s*\?\s*\$distributionServices->profile\(\$user\)\s*:\s*null/)
 assert.match(miniService, /teamMemberUids\(\$uid, 1\)/)
 assert.match(miniService, /teamMemberUids\(\$uid, 2\)/)
 assert.doesNotMatch(
@@ -94,7 +100,8 @@ assert.match(financeController, /function review_member_commission/)
 assert.match(financeRoutes, /member_commission_list/)
 assert.match(financeRoutes, /member_commission\/:id\/review/)
 assert.match(userService, /分销合作身份/)
-assert.match(userService, /if \(\$edit\['agent_level'\] > 0\)/)
+assert.match(userService, /agent_level_time/)
+assert.match(userService, /if \(\$newAgentLevel > 0\)/)
 assert.match(userService, /\$edit\['spread_open'\] = 1/)
 
 assert.match(minePage, /label: '分销拉新人数'/)
@@ -137,6 +144,9 @@ assert.match(distributionPatch, /menu_name`\s*=\s*'brokerage_func_status'/)
 assert.match(distributionPatch, /SET `status`\s*=\s*0/)
 assert.match(settingsPatch, /training_camp_distribution_enabled/)
 assert.match(settingsPatch, /training_camp_withdraw_enabled/)
+assert.match(quotaEffectiveTimePatch, /agent_level_time/)
+assert.match(quotaEffectiveTimePatch, /SET `agent_level_time` = UNIX_TIMESTAMP\(\)/)
+assert.match(quotaEffectiveTimePatch, /WHERE `agent_level` > 0/)
 for (const key of [
   'training_camp_c_first_commission',
   'training_camp_m_initial_quota',

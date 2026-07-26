@@ -408,7 +408,7 @@
                   <el-dropdown-item command="14">
                     {{ scope.row.isMember ? '撤销付费会员' : '设为付费会员' }}
                   </el-dropdown-item>
-                  <el-dropdown-item command="13">退款会员处理</el-dropdown-item>
+                  <el-dropdown-item command="13">查看退款订单</el-dropdown-item>
                   <!--                                <el-dropdown-item command="4" v-if="row.vip_name">清除等级</el-dropdown-item>-->
                   <el-dropdown-item command="7">调整邀请关系</el-dropdown-item>
                   <el-dropdown-item command="99" v-if="scope.row.spread_uid">解除邀请关系</el-dropdown-item>

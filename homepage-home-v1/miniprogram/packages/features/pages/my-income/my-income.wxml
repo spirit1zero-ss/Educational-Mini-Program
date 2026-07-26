@@ -16,11 +16,16 @@
           <image class="summary-icon" src="/assets/mine/icon-income.svg" mode="aspectFit"></image>
         </view>
 
-        <view class="summary-stats">
+        <view class="summary-stats summary-stats--income">
           <view class="summary-stat" wx:for="{{summary}}" wx:key="key">
             <view class="summary-value">{{item.value}}</view>
             <view class="summary-label">{{item.label}}</view>
           </view>
+        </view>
+
+        <view class="income-debt-alert" wx:if="{{debtActive}}">
+          <view class="income-debt-title">待抵扣佣金 ¥{{debtAmount}}</view>
+          <view class="income-debt-desc">退款订单对应佣金已扣回，后续返佣将优先用于抵扣，清零后才可提现。</view>
         </view>
 
         <view class="action-row">
@@ -62,7 +67,7 @@
             <view class="record-meta">{{item.time}}</view>
           </view>
           <view class="reward-box">
-            <view class="reward-value">{{item.amount}}</view>
+            <view class="reward-value reward-value--{{item.status}}">{{item.amount}}</view>
           </view>
         </view>
       </view>

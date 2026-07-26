@@ -141,6 +141,12 @@
               <strong>¥{{ scope.row.income.totalAmount }}</strong>
               <span>待审核 ¥{{ scope.row.income.pendingAmount }}</span>
               <span>可提现 ¥{{ scope.row.income.availableAmount }}</span>
+              <span v-if="Number(scope.row.income.refundAmount) > 0" class="money-danger">
+                退款扣回 ¥{{ scope.row.income.refundAmount }}
+              </span>
+              <span v-if="Number(scope.row.income.debtAmount) > 0" class="money-danger">
+                待抵扣 ¥{{ scope.row.income.debtAmount }}
+              </span>
             </div>
           </template>
         </el-table-column>
@@ -166,7 +172,7 @@
                 <el-dropdown-item :command="scope.row.canPromote ? 'freeze' : 'resume'">
                   {{ scope.row.canPromote ? '冻结推广资格' : '恢复推广资格' }}
                 </el-dropdown-item>
-                <el-dropdown-item command="refund" divided>退款会员处理</el-dropdown-item>
+                <el-dropdown-item command="refund" divided>查看退款订单</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
           </template>
@@ -259,6 +265,8 @@ export default {
         { key: 'orderAmount', label: '有效订单金额', hint: '虚拟支付实付', tone: '', money: true },
         { key: 'pendingAmount', label: '待审核佣金', hint: '等待管理员审核', tone: 'tone-orange', money: true },
         { key: 'availableAmount', label: '可提现佣金', hint: '审核通过可申请', tone: 'tone-blue', money: true },
+        { key: 'refundAmount', label: '退款扣回佣金', hint: '退款订单累计扣回', tone: 'tone-red', money: true },
+        { key: 'debtAmount', label: '待抵扣佣金', hint: '后续佣金优先抵扣', tone: 'tone-red', money: true },
         { key: 'withdrawnAmount', label: '已提现金额', hint: '扣费后实际到账', tone: 'tone-green', money: true },
       ],
       formValidate: {
@@ -449,7 +457,7 @@ export default {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(145px, 1fr));
+  grid-template-columns: repeat(9, minmax(145px, 1fr));
   gap: 12px;
   margin: 16px 0;
   overflow-x: auto;
@@ -496,6 +504,10 @@ export default {
 
   .tone-orange {
     color: #d9822b;
+  }
+
+  .tone-red {
+    color: #d64545;
   }
 }
 
@@ -642,6 +654,10 @@ export default {
     color: #303133;
     font-size: 13px;
     font-variant-numeric: tabular-nums;
+  }
+
+  .money-danger {
+    color: #d64545;
   }
 }
 
