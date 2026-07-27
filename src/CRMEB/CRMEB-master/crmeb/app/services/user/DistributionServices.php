@@ -393,11 +393,16 @@ class DistributionServices extends BaseServices
             ->where('pm', 1)
             ->where('status', 1);
         $pendingAmount = (string)(clone $positive)->where('frozen_time', '>', time())->sum('number');
-        $pendingByUid = (clone $positive)
+        $pendingRows = (clone $positive)
             ->where('frozen_time', '>', time())
             ->field('uid,SUM(number) AS pending_amount')
             ->group('uid')
-            ->column('pending_amount', 'uid');
+            ->select()
+            ->toArray();
+        $pendingByUid = [];
+        foreach ($pendingRows as $pendingRow) {
+            $pendingByUid[(int)$pendingRow['uid']] = (string)$pendingRow['pending_amount'];
+        }
         $balancesByUid = Db::name('user')
             ->whereIn('uid', $uids)
             ->column('brokerage_price', 'uid');

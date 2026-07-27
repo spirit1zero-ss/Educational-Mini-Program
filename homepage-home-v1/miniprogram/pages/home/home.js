@@ -39,7 +39,7 @@ Page({
       {
         key: 'subject-test',
         title: '一张图让孩子学科开窍',
-        description: '帮孩子找到学习开窍的关键点',
+        description: '启发灵感，让学习更加生动有趣',
         action: '测评',
         tone: 'green',
         icon: '/assets/home/reference-icon-subject.png',
@@ -49,7 +49,7 @@ Page({
       {
         key: 'habit-tool',
         title: '一张图养成作业好习惯',
-        description: '运用工具，让流程更加科学',
+        description: '运用工具，让流程更加科学高效',
         action: '下载',
         tone: 'blue',
         icon: '/assets/home/reference-icon-habit.png',
