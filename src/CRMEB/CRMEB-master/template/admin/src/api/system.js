@@ -217,6 +217,20 @@ export function systemListApi(params) {
   });
 }
 
+export function refreshSystemCacheApi() {
+  return request({
+    url: `system/refresh_cache/cache`,
+    method: 'GET',
+  });
+}
+
+export function clearRuntimeLogApi() {
+  return request({
+    url: `system/refresh_cache/log`,
+    method: 'GET',
+  });
+}
+
 /**
  * @description 文件校验 -- 列表
  */

@@ -306,7 +306,7 @@ class DistributionServices extends BaseServices
                 'uid' => $uid,
                 'nickname' => (string)($row['nickname'] ?? ''),
                 'realName' => (string)($row['real_name'] ?? ''),
-                'avatar' => (string)($row['avatar'] ?? ''),
+                'avatar' => $this->cloudStoragePublicUrl((string)($row['avatar'] ?? '')),
                 'phone' => (string)($row['phone'] ?? ''),
                 'agentLevel' => (int)$profile['levelId'],
                 'levelKey' => (string)$profile['levelKey'],
@@ -526,7 +526,7 @@ class DistributionServices extends BaseServices
             'user' => [
                 'uid' => (int)$user['uid'],
                 'nickname' => (string)($user['nickname'] ?? ''),
-                'avatar' => (string)($user['avatar'] ?? ''),
+                'avatar' => $this->cloudStoragePublicUrl((string)($user['avatar'] ?? '')),
                 'phone' => (string)($user['phone'] ?? ''),
                 'isMember' => (int)($user['is_ever_level'] ?? 0) === 1,
                 'canPromote' => (int)($user['is_promoter'] ?? 0) === 1
@@ -616,7 +616,7 @@ class DistributionServices extends BaseServices
             return [
                 'uid' => (int)$row['uid'],
                 'nickname' => (string)($row['nickname'] ?? ''),
-                'avatar' => (string)($row['avatar'] ?? ''),
+                'avatar' => $this->cloudStoragePublicUrl((string)($row['avatar'] ?? '')),
                 'phone' => (string)($row['phone'] ?? ''),
                 'grade' => $grade,
                 'identityCode' => $profile['identityCode'],
@@ -909,6 +909,27 @@ class DistributionServices extends BaseServices
     private function money($amount): string
     {
         return number_format((float)$amount, 2, '.', '');
+    }
+
+    /**
+     * Browsers cannot render a WeChat CloudBase file ID directly. Keep the
+     * original cloud:// value in the database for mini-program ownership and
+     * deletion, and expose the public CDN URL only to administrator responses.
+     */
+    private function cloudStoragePublicUrl(string $fileId): string
+    {
+        if (
+            !preg_match(
+                '#^cloud://[a-zA-Z0-9-]+\.([a-zA-Z0-9-]+)/(.+)$#',
+                trim($fileId),
+                $matches
+            )
+        ) {
+            return $fileId;
+        }
+
+        $path = implode('/', array_map('rawurlencode', explode('/', $matches[2])));
+        return 'https://' . $matches[1] . '.tcb.qcloud.la/' . $path;
     }
 
     private function normalizeAgentLevel(int $agentLevel): int

@@ -71,7 +71,7 @@
         <el-table-column label="用户" min-width="190">
           <template slot-scope="scope">
             <div class="user-cell">
-              <img :src="scope.row.avatar || defaultAvatar" alt="" />
+              <img :src="scope.row.avatar || defaultAvatar" alt="" @error="useDefaultAvatar" />
               <div>
                 <strong>{{ scope.row.nickname || `用户 ${scope.row.uid}` }}</strong>
                 <span
@@ -286,6 +286,11 @@ export default {
     this.refresh();
   },
   methods: {
+    useDefaultAvatar(event) {
+      if (event && event.target && event.target.src !== this.defaultAvatar) {
+        event.target.src = this.defaultAvatar;
+      }
+    },
     refresh() {
       this.getList();
       this.getStatistics();

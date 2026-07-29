@@ -168,8 +168,6 @@ export default {
     uploadPictures,
   },
   mounted() {
-    this.getAuth();
-    this.getVersion();
     window.addEventListener('message', (e) => {
       if (e.data.event === 'onCancel') {
         this.cancel();

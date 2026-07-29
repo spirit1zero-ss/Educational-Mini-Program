@@ -36,6 +36,15 @@ export default {
       component: () => import('@/pages/system/maintain/systemLog/index'),
     },
     {
+      path: 'maintain/clear/index',
+      name: `${pre}clear`,
+      meta: {
+        auth: ['system-clear'],
+        title: '刷新缓存',
+      },
+      component: () => import('@/pages/system/maintain/clear/index'),
+    },
+    {
       path: 'maintain/system_databackup/index',
       name: `${pre}systemDatabackup`,
       meta: {
