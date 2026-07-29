@@ -91,6 +91,8 @@ assert.match(profileView, /open-type="chooseAvatar"/)
 assert.match(profileView, /仅支持 JPG、PNG、WebP 图片/)
 assert.match(miniappManifest, /pages\/profile-editor\/profile-editor/)
 assert.match(minePage, /PROFILE_EDITOR_PATH/)
+assert.match(minePage, /key:\s*'profile'[\s\S]*memberOnly:\s*true/)
+assert.match(minePage, /if\s*\(!this\.data\.isMember\)\s*\{\s*return\s*\}/)
 
 assert.match(service, /hash_hmac\('sha256',\s*\$uri\s*\.\s*'&'\s*\.\s*\$signData/)
 assert.match(service, /hash_hmac\('sha256',\s*\$signData,\s*\$sessionKey\)/)

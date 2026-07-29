@@ -9,10 +9,20 @@
       <view class="identity-card">
         <view class="identity-orbit"></view>
         <view class="identity-head">
-          <view class="identity-badge">{{identity ? identity.levelKey : 'C'}}</view>
+          <view class="identity-avatar-wrap">
+            <image
+              class="identity-avatar"
+              src="{{profile.avatar}}"
+              mode="aspectFill"
+              binderror="onAvatarError"
+            ></image>
+            <view class="identity-level">{{identity ? identity.levelKey : 'C'}}</view>
+          </view>
           <view class="identity-copy">
-            <view class="identity-name">{{identity ? identity.levelName : '普通会员'}}</view>
-            <view class="identity-code">{{identity ? identity.identityCode : memberUid}}</view>
+            <view class="identity-name">{{profile.nickname}}</view>
+            <view class="identity-code">
+              {{identity ? identity.levelName : '普通会员'}} · {{identity ? identity.identityCode : memberUid}}
+            </view>
           </view>
           <view class="identity-status {{canPromote ? 'identity-status--active' : ''}}">
             {{canPromote ? '推广正常' : '推广已冻结'}}

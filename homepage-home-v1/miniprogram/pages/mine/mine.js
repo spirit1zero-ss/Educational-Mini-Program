@@ -78,7 +78,8 @@ Page({
         key: 'profile',
         title: '个人资料',
         desc: '修改头像、昵称和手机号',
-        icon: '../../assets/mine/default-wechat-avatar.svg'
+        icon: '../../assets/mine/default-wechat-avatar.svg',
+        memberOnly: true
       },
       {
         key: 'registration',
@@ -338,6 +339,9 @@ Page({
     }
 
     if (key === 'profile') {
+      if (!this.data.isMember) {
+        return
+      }
       wx.navigateTo({
         url: PROFILE_EDITOR_PATH,
         fail: () => this.showComingSoon(labels[key])

@@ -65,7 +65,7 @@
       <view class="list-panel">
         <block wx:for="{{listItems}}" wx:key="key">
           <view
-            wx:if="{{!item.hidden}}"
+            wx:if="{{!item.hidden && (!item.memberOnly || isMember)}}"
             class="list-row"
             bindtap="onListTap"
             data-key="{{item.key}}"

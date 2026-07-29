@@ -2,6 +2,7 @@ const PROMO_POSTER_PATH = '/packages/features/pages/promo-poster/promo-poster'
 const INVITE_RECORDS_PATH = '/packages/features/pages/invite-records/invite-records'
 const MY_INCOME_PATH = '/packages/features/pages/my-income/my-income'
 const REFERRAL_RULES_PATH = '/packages/features/pages/referral-rules/referral-rules'
+const DEFAULT_AVATAR = '/assets/mine/default-wechat-avatar.svg'
 const {
   getMineOverview,
   getIncomeRecords,
@@ -15,6 +16,10 @@ Page({
     scrollStyle: '',
     loading: true,
     memberUid: '',
+    profile: {
+      nickname: '微信用户',
+      avatar: DEFAULT_AVATAR
+    },
     identity: null,
     canPromote: false,
     money: {
@@ -116,6 +121,10 @@ Page({
 
         this.setData({
           memberUid: member.uid || '',
+          profile: {
+            nickname: this.displayNickname(member.nickname),
+            avatar: String(member.avatar || '') || DEFAULT_AVATAR
+          },
           identity,
           canPromote: !!referral.canPromote,
           money: {
@@ -155,6 +164,16 @@ Page({
       })
 
     return this._centerRequest
+  },
+
+  displayNickname(value) {
+    const nickname = String(value || '').trim()
+    return !nickname || /^wx\d{6}$/i.test(nickname) ? '微信用户' : nickname
+  },
+
+  onAvatarError() {
+    if (this.data.profile.avatar === DEFAULT_AVATAR) return
+    this.setData({ 'profile.avatar': DEFAULT_AVATAR })
   },
 
   onBackTap() {

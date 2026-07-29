@@ -915,6 +915,8 @@ class MiniappServices extends BaseServices
         return [
             'isMember' => $isMember,
             'uid' => $isMember ? $this->encodeMemberUid((int)$user['uid']) : '',
+            'nickname' => (string)($user['nickname'] ?? ''),
+            'avatar' => (string)($user['avatar'] ?? ''),
             'statusText' => $isMember ? $this->zh('\u0032\u0031\u5929\u8bad\u7ec3\u8425\u4f1a\u5458') : $this->zh('\u672a\u5f00\u901a\u8bad\u7ec3\u8425'),
             'expiresAt' => $this->formatOverdueTime((int)($user['overdue_time'] ?? 0)),
             'distributionIdentity' => $isMember ? $distributionServices->profile($user) : null,

@@ -73,18 +73,39 @@
   align-items: center;
 }
 
-.identity-badge {
+.identity-avatar-wrap {
+  position: relative;
+  flex: 0 0 76rpx;
+  width: 76rpx;
+  height: 76rpx;
+}
+
+.identity-avatar {
+  display: block;
+  box-sizing: border-box;
+  width: 76rpx;
+  height: 76rpx;
+  border: 2rpx solid rgba(255, 244, 203, 0.55);
+  border-radius: 50%;
+  background: rgba(255, 248, 218, 0.13);
+}
+
+.identity-level {
+  position: absolute;
+  right: -4rpx;
+  bottom: -4rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 72rpx;
-  height: 72rpx;
-  border: 1rpx solid rgba(255, 244, 203, 0.32);
-  border-radius: 22rpx;
-  background: rgba(255, 248, 218, 0.13);
-  color: #fff1bd;
-  font-size: 38rpx;
+  width: 30rpx;
+  height: 30rpx;
+  border: 2rpx solid #245c4a;
+  border-radius: 50%;
+  background: #fff1bd;
+  color: #245c4a;
+  font-size: 18rpx;
   font-weight: 900;
+  line-height: 30rpx;
 }
 
 .identity-copy {
