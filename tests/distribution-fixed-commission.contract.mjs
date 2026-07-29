@@ -14,6 +14,7 @@ const [
   userService,
   minePage,
   teamPage,
+  teamView,
   incomePage,
   agentLevelController,
   agentLevelPage,
@@ -36,6 +37,7 @@ const [
   read('src/CRMEB/CRMEB-master/crmeb/app/services/user/UserServices.php'),
   read('homepage-home-v1/miniprogram/pages/mine/mine.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/invite-records/invite-records.js'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/invite-records/invite-records.wxml'),
   read('homepage-home-v1/miniprogram/packages/features/pages/my-income/my-income.js'),
   read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/controller/v1/agent/AgentLevel.php'),
   read('src/CRMEB/CRMEB-master/template/admin/src/pages/setting/membershipLevel/index.vue'),
@@ -110,6 +112,10 @@ assert.match(minePage, /label: '已提现'/)
 assert.doesNotMatch(teamPage, /团队初始名额/)
 assert.match(teamPage, /label: '一级团队'/)
 assert.match(teamPage, /label: '二级团队'/)
+assert.match(teamPage, /DEFAULT_TEAM_AVATAR/)
+assert.match(teamPage, /item\.nickname \|\| item\.name/)
+assert.match(teamPage, /onAvatarError/)
+assert.match(teamView, /binderror="onAvatarError"/)
 assert.match(incomePage, /label: '待结算'/)
 assert.match(incomePage, /label: '可提现'/)
 assert.match(incomePage, /label: '已到账'/)

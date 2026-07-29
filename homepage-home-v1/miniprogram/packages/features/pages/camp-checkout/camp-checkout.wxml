@@ -68,6 +68,76 @@
     </view>
   </scroll-view>
 
+  <view
+    class="profile-mask"
+    wx:if="{{profileVisible}}"
+    bindtap="closeProfileModal"
+    catchtouchmove="preventProfileMaskMove"
+  >
+    <view class="profile-dialog" catchtap="preventProfileMaskMove">
+      <view class="profile-dialog-head">
+        <view>
+          <view class="profile-kicker">支付前确认</view>
+          <view class="profile-title">注册成为会员</view>
+        </view>
+        <view class="profile-close" bindtap="closeProfileModal">×</view>
+      </view>
+
+      <button
+        class="profile-avatar-button"
+        open-type="chooseAvatar"
+        bindchooseavatar="onChooseAvatar"
+      >
+        <view class="profile-avatar-frame">
+          <image
+            wx:if="{{profile.avatarUrl}}"
+            class="profile-avatar"
+            src="{{profile.avatarUrl}}"
+            mode="aspectFill"
+          ></image>
+          <view wx:else class="profile-avatar-placeholder">＋</view>
+        </view>
+        <view class="profile-avatar-tip">点击上传头像</view>
+      </button>
+
+      <view class="profile-field">
+        <view class="profile-field-label">昵称</view>
+        <input
+          class="profile-input"
+          type="nickname"
+          maxlength="20"
+          value="{{profile.nickname}}"
+          placeholder="请选择微信昵称或输入称呼"
+          data-field="nickname"
+          bindinput="onProfileInput"
+        />
+      </view>
+
+      <view class="profile-field">
+        <view class="profile-field-label">手机号</view>
+        <input
+          class="profile-input"
+          type="number"
+          maxlength="11"
+          value="{{profile.phone}}"
+          placeholder="请输入11位手机号"
+          data-field="phone"
+          bindinput="onProfileInput"
+        />
+      </view>
+
+      <view class="profile-helper">请填写真实手机号，方便助教老师联系。</view>
+      <button
+        class="profile-submit"
+        loading="{{profileSubmitting}}"
+        disabled="{{profileSubmitting}}"
+        bindtap="submitProfileAndPay"
+      >
+        确认资料并支付
+      </button>
+    </view>
+  </view>
+
   <view class="pay-bar">
     <view class="pay-summary">
       <view class="pay-label">合计</view>

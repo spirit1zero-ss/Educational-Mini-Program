@@ -28,6 +28,8 @@ Route::group(function () {
 
 Route::group(function () {
     Route::get('miniapp/mine/overview', 'v1.miniapp.MineController/overview')->name('miniappMineOverview')->option(['real_name' => 'Miniapp mine overview']);
+    Route::get('miniapp/profile', 'v1.miniapp.MineController/profile')->name('miniappProfile')->option(['real_name' => 'Miniapp profile']);
+    Route::post('miniapp/profile', 'v1.miniapp.MineController/updateProfile')->name('miniappProfileUpdate')->option(['real_name' => 'Miniapp profile update']);
     Route::post('miniapp/referral/poster', 'v1.miniapp.MineController/poster')->name('miniappReferralPoster')->option(['real_name' => 'Miniapp referral poster']);
     Route::post('miniapp/redeem-code/use', 'v1.miniapp.MineController/redeemCode')->name('miniappRedeemCodeUse')->option(['real_name' => 'Miniapp redeem code']);
     Route::post('miniapp/training-camp/member-order', 'v1.miniapp.MineController/createMemberOrder')->name('miniappTrainingCampMemberOrder')->option(['real_name' => 'Miniapp training camp member order']);

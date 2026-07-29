@@ -7,6 +7,7 @@ const CAMP_ORDERS_PATH = '/packages/features/pages/camp-orders/camp-orders'
 const CAMP_CHECKOUT_PATH = '/packages/features/pages/camp-checkout/camp-checkout'
 const MEMBER_BENEFITS_PATH = '/packages/features/pages/member-benefits/member-benefits'
 const MEMBER_REGISTRATION_PATH = '/packages/features/pages/member-registration/member-registration'
+const PROFILE_EDITOR_PATH = '/packages/features/pages/profile-editor/profile-editor'
 const REFERRAL_RULES_PATH = '/packages/features/pages/referral-rules/referral-rules'
 const OFFLINE_PATH = '/pages/offline/offline'
 const {
@@ -74,10 +75,17 @@ Page({
     ],
     listItems: [
       {
+        key: 'profile',
+        title: '个人资料',
+        desc: '修改头像、昵称和手机号',
+        icon: '../../assets/mine/default-wechat-avatar.svg'
+      },
+      {
         key: 'registration',
         title: '会员登记表',
         desc: '填写孩子信息与主要问题',
-        icon: '../../assets/mine/icon-member-status.svg'
+        icon: '../../assets/mine/icon-member-status.svg',
+        hidden: true
       },
       {
         key: 'order',
@@ -323,9 +331,18 @@ Page({
   onListTap(e) {
     const key = e.currentTarget.dataset.key
     const labels = {
+      profile: '个人资料',
       redeem: '兑换码',
       benefit: '会员权益',
       rules: '分销规则'
+    }
+
+    if (key === 'profile') {
+      wx.navigateTo({
+        url: PROFILE_EDITOR_PATH,
+        fail: () => this.showComingSoon(labels[key])
+      })
+      return
     }
 
     if (key === 'registration') {

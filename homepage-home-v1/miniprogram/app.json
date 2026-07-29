@@ -14,6 +14,7 @@
         "pages/my-income/my-income",
         "pages/camp-orders/camp-orders",
         "pages/camp-checkout/camp-checkout",
+        "pages/profile-editor/profile-editor",
         "pages/member-registration/member-registration",
         "pages/legal-document/legal-document",
         "pages/member-benefits/member-benefits",

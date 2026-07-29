@@ -40,10 +40,15 @@
       </view>
 
       <view class="records-panel" wx:if="{{filteredRecords.length}}">
-        <view class="record-row" wx:for="{{filteredRecords}}" wx:key="id">
+        <view class="record-row" wx:for="{{filteredRecords}}" wx:for-index="recordIndex" wx:key="id">
           <view class="record-avatar">
-            <image wx:if="{{item.avatar}}" class="record-avatar-image" src="{{item.avatar}}" mode="aspectFill"></image>
-            <text wx:else>{{item.avatarText}}</text>
+            <image
+              class="record-avatar-image"
+              src="{{item.avatar}}"
+              mode="aspectFill"
+              data-index="{{recordIndex}}"
+              binderror="onAvatarError"
+            ></image>
           </view>
           <view class="record-main">
             <view class="record-top">

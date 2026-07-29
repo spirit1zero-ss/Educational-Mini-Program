@@ -6,6 +6,7 @@ use app\services\BaseServices;
 use app\services\order\OtherOrderServices;
 use app\services\order\OtherOrderStatusServices;
 use app\services\other\QrcodeServices;
+use app\services\other\UploadService;
 use app\services\pay\PayServices;
 use app\services\pay\PaymentLockService;
 use app\services\pay\VirtualPaymentServices;
@@ -1065,6 +1066,7 @@ class MiniappServices extends BaseServices
     {
         $type = (string)($item['type'] ?? '');
         $isRefundDeduction = $type === self::COMMISSION_REFUND_TYPE;
+        $mark = $this->maskGeneratedWechatNickname((string)($item['mark'] ?? ''));
         $typeText = $isRefundDeduction
             ? '退款扣回佣金'
             : (in_array($type, ['get_two_member_brokerage', 'two_member_brokerage'], true)
@@ -1080,8 +1082,8 @@ class MiniappServices extends BaseServices
             'type' => $type,
             'typeText' => $typeText,
             'title' => $typeText,
-            'desc' => $item['mark'] ?? '',
-            'mark' => $item['mark'] ?? '',
+            'desc' => $mark,
+            'mark' => $mark,
             'time' => $this->formatOverdueTime((int)($item['add_time'] ?? 0)),
             'add_time' => $this->formatOverdueTime((int)($item['add_time'] ?? 0)),
             'amount' => $this->formatAmount($item['number'] ?? 0),
@@ -1094,6 +1096,136 @@ class MiniappServices extends BaseServices
             'reviewTime' => $this->formatOverdueTime((int)($item['review_time'] ?? 0)),
             'linkId' => (int)($item['link_id'] ?? 0),
         ];
+    }
+
+    public function getProfile(int $uid): array
+    {
+        return $this->formatUser($this->requireUser($uid));
+    }
+
+    public function updateProfile(int $uid, array $input): array
+    {
+        $user = $this->requireUser($uid);
+        $nickname = trim(strip_tags((string)($input['nickname'] ?? '')));
+        $phone = preg_replace('/\s+/', '', (string)($input['phone'] ?? ''));
+        $avatarFileId = trim((string)($input['avatar_file_id'] ?? ''));
+        $avatarBase64 = trim((string)($input['avatar_base64'] ?? ''));
+
+        if ($nickname === '' || mb_strlen($nickname, 'UTF-8') > 20) {
+            throw new ApiException('请输入不超过20个字的昵称');
+        }
+        if (preg_match('/^wx\d{6}$/i', $nickname)) {
+            throw new ApiException('请选择微信昵称或输入常用称呼');
+        }
+        if (!preg_match('/^1[3-9]\d{9}$/', $phone)) {
+            throw new ApiException('请填写真实有效的11位手机号');
+        }
+
+        $nickname = filter_emoji($nickname);
+        if ($nickname === '') {
+            throw new ApiException('昵称不能只包含特殊符号');
+        }
+
+        $update = [
+            'nickname' => $nickname,
+            'phone' => $phone,
+        ];
+        if ($avatarFileId !== '') {
+            $update['avatar'] = $this->validateCloudAvatarFileId($avatarFileId);
+        } elseif ($avatarBase64 !== '') {
+            // Compatibility for previously released mini-program versions.
+            $update['avatar'] = $this->saveProfileAvatar($uid, $avatarBase64);
+        }
+
+        /** @var UserServices $userServices */
+        $userServices = app()->make(UserServices::class);
+        if ($userServices->update($uid, $update, 'uid') === false) {
+            throw new ApiException('会员资料保存失败，请重试');
+        }
+
+        return $this->formatUser(array_merge($user, $update));
+    }
+
+    /**
+     * Hide the random six-digit nickname assigned to users who have not set
+     * their WeChat nickname. Keep the original ledger mark in the database for
+     * internal auditing, but never expose the complete identifier to promoters.
+     */
+    private function maskGeneratedWechatNickname(string $text): string
+    {
+        $masked = preg_replace_callback(
+            '/(?<![A-Za-z0-9_])([wv]x)(\d{6})(?!\d)/i',
+            static function (array $matches): string {
+                return $matches[1] . '****' . substr($matches[2], -2);
+            },
+            $text
+        );
+
+        return $masked === null ? $text : $masked;
+    }
+
+    private function validateCloudAvatarFileId(string $fileId): string
+    {
+        if (
+            strlen($fileId) > 500
+            || !preg_match(
+                '#^cloud://[^/]+/member-avatars/\d{4}/\d{2}/[a-zA-Z0-9-]+\.(jpg|png|webp)$#i',
+                $fileId
+            )
+        ) {
+            throw new ApiException('头像云存储地址无效');
+        }
+
+        return $fileId;
+    }
+
+    private function saveProfileAvatar(int $uid, string $avatarBase64): string
+    {
+        if (strlen($avatarBase64) > 1600000) {
+            throw new ApiException('头像文件过大，请重新选择');
+        }
+
+        $avatarBase64 = preg_replace('/^data:image\/[a-zA-Z0-9.+-]+;base64,/', '', $avatarBase64);
+        $content = base64_decode((string)$avatarBase64, true);
+        if ($content === false || $content === '' || strlen($content) > 1000000) {
+            throw new ApiException('头像文件无效或过大');
+        }
+
+        $imageInfo = function_exists('getimagesizefromstring') ? getimagesizefromstring($content) : false;
+        $mime = is_array($imageInfo) ? (string)($imageInfo['mime'] ?? '') : '';
+        $width = is_array($imageInfo) ? (int)($imageInfo[0] ?? 0) : 0;
+        $height = is_array($imageInfo) ? (int)($imageInfo[1] ?? 0) : 0;
+        $extensions = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ];
+        if (!isset($extensions[$mime]) || $width <= 0 || $height <= 0) {
+            throw new ApiException('头像仅支持 JPG、PNG 或 WebP');
+        }
+        if ($width > 4096 || $height > 4096) {
+            throw new ApiException('头像尺寸不能超过4096×4096像素');
+        }
+
+        $name = sprintf('member-avatar-%d-%d.%s', $uid, time(), $extensions[$mime]);
+        $upload = UploadService::init();
+        if ($upload->to('routine/member/avatar')->setAuthThumb(false)->stream($content, $name) === false) {
+            throw new ApiException('头像上传失败，请重新选择');
+        }
+
+        $uploaded = $upload->getUploadInfo();
+        $avatar = (string)($uploaded['dir'] ?? '');
+        if ($avatar === '') {
+            throw new ApiException('头像上传结果无效');
+        }
+        if ((int)sys_config('upload_type', 1) === 1 && stripos($avatar, 'http') !== 0) {
+            $siteUrl = rtrim((string)sys_config('site_url', ''), '/');
+            if ($siteUrl !== '') {
+                $avatar = $siteUrl . '/' . ltrim($avatar, '/');
+            }
+        }
+
+        return $avatar;
     }
 
     private function formatTrainingCampOrder(array $item, int $grade): array

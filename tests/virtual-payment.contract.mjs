@@ -5,14 +5,16 @@ import { readFile } from 'node:fs/promises'
 const root = new URL('../', import.meta.url)
 const read = (path) => readFile(new URL(path, root), 'utf8')
 
-const [client, page, checkout, api, service, lockService, miniappService, qrcodeService, wechatMiniProgramService, easyWechatQrCode, crontabService, routes, config, schema, easyWechatCollection] = await Promise.all([
+const [client, page, checkout, checkoutView, api, service, lockService, miniappService, mineController, qrcodeService, wechatMiniProgramService, easyWechatQrCode, crontabService, routes, config, schema, easyWechatCollection, profilePage, profileView, miniappManifest, minePage, profileAvatar] = await Promise.all([
   read('homepage-home-v1/miniprogram/utils/virtual-payment.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/camp-orders/camp-orders.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/camp-checkout/camp-checkout.js'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/camp-checkout/camp-checkout.wxml'),
   read('homepage-home-v1/miniprogram/api/mine.js'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/VirtualPaymentServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/pay/PaymentLockService.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/miniapp/MiniappServices.php'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/api/controller/v1/miniapp/MineController.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/services/other/QrcodeServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/crmeb/services/app/MiniProgramService.php'),
   read('src/CRMEB/CRMEB-master/crmeb/vendor/overtrue/wechat/src/MiniProgram/QRCode/QRCode.php'),
@@ -20,7 +22,12 @@ const [client, page, checkout, api, service, lockService, miniappService, qrcode
   read('src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php'),
   read('src/CRMEB/CRMEB-master/crmeb/config/xpay.php'),
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-16-miniapp-virtual-payment.sql'),
-  read('src/CRMEB/CRMEB-master/crmeb/vendor/overtrue/wechat/src/Support/Collection.php')
+  read('src/CRMEB/CRMEB-master/crmeb/vendor/overtrue/wechat/src/Support/Collection.php'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/profile-editor/profile-editor.js'),
+  read('homepage-home-v1/miniprogram/packages/features/pages/profile-editor/profile-editor.wxml'),
+  read('homepage-home-v1/miniprogram/app.json'),
+  read('homepage-home-v1/miniprogram/pages/mine/mine.js'),
+  read('homepage-home-v1/miniprogram/utils/profile-avatar.js')
 ])
 
 const permanentPlanClients = await Promise.all([
@@ -36,12 +43,54 @@ assert.doesNotMatch(page, /wx\.requestPayment\s*\(/)
 assert.doesNotMatch(checkout, /wx\.requestPayment\s*\(/)
 assert.match(checkout, /requestTrainingCampVirtualPayment\(order\.orderId\)/)
 assert.doesNotMatch(checkout, /请到订单页继续支付/)
+assert.match(checkout, /saveMiniappProfile/)
+assert.match(checkout, /submitProfileAndPay/)
+assert.match(checkout, /startPayment\(\)/)
+assert.match(checkoutView, /请填写真实手机号，方便助教老师联系。/)
+assert.match(checkoutView, /open-type="chooseAvatar"/)
+assert.match(checkoutView, /type="nickname"/)
 assert.match(client, /payType:\s*'virtual'/)
 assert.match(client, /wx\.login\s*\(/)
 assert.match(client, /confirmTrainingCampMemberOrder/)
 assert.match(client, /payment\.alreadyConfirmed/)
 assert.match(api, /member-order\/confirm/)
+assert.match(api, /miniapp\/profile/)
+assert.match(api, /function getMiniappProfile/)
 assert.match(routes, /member-order\/confirm/)
+assert.match(routes, /miniapp\/profile/)
+assert.match(routes, /Route::get\('miniapp\/profile'/)
+assert.match(routes, /Route::post\('miniapp\/profile'/)
+assert.match(mineController, /function profile/)
+assert.match(mineController, /function updateProfile/)
+assert.match(miniappService, /function getProfile/)
+assert.match(miniappService, /function updateProfile/)
+assert.match(miniappService, /请填写真实有效的11位手机号/)
+assert.match(mineController, /avatar_file_id/)
+assert.match(miniappService, /validateCloudAvatarFileId/)
+assert.match(miniappService, /member-avatars/)
+assert.match(miniappService, /getimagesizefromstring/)
+assert.match(miniappService, /image\/jpeg/)
+assert.match(miniappService, /image\/png/)
+assert.match(miniappService, /image\/webp/)
+assert.match(miniappService, /\$width > 4096 \|\| \$height > 4096/)
+assert.match(profilePage, /getMiniappProfile/)
+assert.match(profilePage, /saveMiniappProfile/)
+assert.match(profilePage, /uploadAvatarToCloud/)
+assert.match(profilePage, /avatar_file_id/)
+assert.doesNotMatch(profilePage, /avatar_base64/)
+assert.match(checkout, /uploadAvatarToCloud/)
+assert.match(checkout, /avatar_file_id/)
+assert.doesNotMatch(checkout, /avatar_base64/)
+assert.match(profileAvatar, /wx\.getFileInfo/)
+assert.match(profileAvatar, /wx\.cloud\.uploadFile/)
+assert.match(profileAvatar, /wx\.cloud\.deleteFile/)
+assert.match(profileAvatar, /member-avatars/)
+assert.match(profileAvatar, /0x89[\s\S]*0x50[\s\S]*0x4e[\s\S]*0x47/)
+assert.match(profileAvatar, /0x57[\s\S]*0x45[\s\S]*0x42[\s\S]*0x50/)
+assert.match(profileView, /open-type="chooseAvatar"/)
+assert.match(profileView, /仅支持 JPG、PNG、WebP 图片/)
+assert.match(miniappManifest, /pages\/profile-editor\/profile-editor/)
+assert.match(minePage, /PROFILE_EDITOR_PATH/)
 
 assert.match(service, /hash_hmac\('sha256',\s*\$uri\s*\.\s*'&'\s*\.\s*\$signData/)
 assert.match(service, /hash_hmac\('sha256',\s*\$signData,\s*\$sessionKey\)/)

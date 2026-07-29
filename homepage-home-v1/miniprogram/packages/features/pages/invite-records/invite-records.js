@@ -1,4 +1,5 @@
 const PROMO_POSTER_PATH = '/packages/features/pages/promo-poster/promo-poster'
+const DEFAULT_TEAM_AVATAR = '/assets/mine/default-wechat-avatar.svg'
 const { getInviteRecords } = require('../../../../api/mine')
 
 Page({
@@ -62,12 +63,12 @@ Page({
         const records = source.map((item, index) => {
           const orderCount = Number(item.orderCount || item.order_count || 0)
           const status = item.status || (orderCount > 0 ? 'registered' : 'pending')
-          const name = item.nickname || item.name || ''
+          const storedName = String(item.nickname || item.name || '').trim()
+          const name = storedName && !/^wx\d{6}$/i.test(storedName) ? storedName : '微信用户'
 
           return {
             id: String(item.uid || item.id || index),
-            avatar: item.avatar || '',
-            avatarText: name ? name.slice(0, 1) : '友',
+            avatar: item.avatar || DEFAULT_TEAM_AVATAR,
             name,
             phone: item.phone || '',
             time: item.time || item.add_time || '',
@@ -129,6 +130,16 @@ Page({
     if (!key || key === this.data.activeStatus) return
 
     this.setData({ activeStatus: key, records: [], filteredRecords: [] }, () => this.loadInviteRecords())
+  },
+
+  onAvatarError(e) {
+    const index = Number(e.currentTarget.dataset.index)
+    if (!Number.isInteger(index) || index < 0 || index >= this.data.filteredRecords.length) return
+    if (this.data.filteredRecords[index].avatar === DEFAULT_TEAM_AVATAR) return
+
+    this.setData({
+      [`filteredRecords[${index}].avatar`]: DEFAULT_TEAM_AVATAR
+    })
   },
 
   onPosterTap() {

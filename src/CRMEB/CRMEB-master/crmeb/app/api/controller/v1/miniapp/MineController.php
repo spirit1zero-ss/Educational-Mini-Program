@@ -20,6 +20,23 @@ class MineController
         return app('json')->success($this->services->getMineOverview((int)$request->uid()));
     }
 
+    public function profile(Request $request)
+    {
+        return app('json')->success($this->services->getProfile((int)$request->uid()));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $data = $request->postMore([
+            ['nickname', ''],
+            ['phone', ''],
+            ['avatar_file_id', ''],
+            ['avatar_base64', ''],
+        ]);
+
+        return app('json')->success('会员资料已保存', $this->services->updateProfile((int)$request->uid(), $data));
+    }
+
     public function poster(Request $request)
     {
         [$page] = $request->postMore([

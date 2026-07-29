@@ -4,6 +4,14 @@ function getMineOverview(options) {
   return get('/api/miniapp/mine/overview', {}, options || {})
 }
 
+function getMiniappProfile() {
+  return get('/api/miniapp/profile')
+}
+
+function saveMiniappProfile(data) {
+  return post('/api/miniapp/profile', data || {})
+}
+
 function createReferralPoster(data) {
   return post('/api/miniapp/referral/poster', data || {
     page: 'pages/home/home'
@@ -72,6 +80,8 @@ function saveTrainingCampRegistration(data) {
 
 module.exports = {
   getMineOverview,
+  getMiniappProfile,
+  saveMiniappProfile,
   createReferralPoster,
   useRedeemCode,
   getMemberPlans,
