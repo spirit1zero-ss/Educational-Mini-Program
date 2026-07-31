@@ -173,7 +173,7 @@ export default {
             ? agent
             : this.$route.name === 'setting_message'
             ? sms
-            : this.$route.name === 'setting_setSystem'
+            : ['setting_setSystem', 'setting_setApp'].includes(this.$route.name)
             ? config
             : integral;
         dataFromApi(data, url)
