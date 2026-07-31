@@ -19,6 +19,10 @@ Route::group('finance', function () {
     Route::group(function () {
         //申请列表
         Route::get('extract', 'v1.finance.UserExtract/index')->option(['real_name' => '提现申请列表']);
+        //银行卡收款资料（仅未结束记录，查看行为由后台日志中间件审计）
+        Route::get('extract/bank-details/:id', 'v1.finance.UserExtract/bankDetails')->option(['real_name' => '查看银行卡提现资料']);
+        //确认线下银行转账
+        Route::put('extract/bank-paid/:id', 'v1.finance.UserExtract/confirmBankPayment')->option(['real_name' => '确认银行卡提现到账']);
         //编辑表单
         Route::get('extract/:id/edit', 'v1.finance.UserExtract/edit')->option(['real_name' => '提现记录修改表单']);
         //保存修改

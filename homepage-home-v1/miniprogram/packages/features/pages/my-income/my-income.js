@@ -25,8 +25,15 @@ Page({
     records: [],
     filteredRecords: [],
     withdrawal: null,
+    pendingTransfer: null,
     withdrawalVisible: false,
     withdrawalAmount: '',
+    withdrawalMethod: 'weixin',
+    bankWithdrawalEnabled: false,
+    bankRealName: '',
+    bankCard: '',
+    bankName: '',
+    bankConsent: false,
     withdrawalLoading: false,
     withdrawalSubmitting: false
   },
@@ -51,7 +58,7 @@ Page({
         if (!withdrawal) return null
         const withdrawalRecords = (withdrawal.list || []).map((item) => ({
           id: `withdraw-${item.id}`,
-          title: '微信提现',
+          title: item.methodText || '提现',
           desc: item.failReason || item.statusText,
           time: item.addTime || '',
           amount: `-${Number(item.amount || 0).toFixed(2)}`,
@@ -62,6 +69,8 @@ Page({
         const records = incomeRecords.concat(withdrawalRecords)
         this.setData({
           withdrawal,
+          pendingTransfer: (withdrawal.list || []).find((item) => item.canConfirm) || null,
+          bankWithdrawalEnabled: !!(withdrawal.methods && withdrawal.methods.bank && withdrawal.methods.bank.enabled),
           debtAmount: withdrawal.debtAmount || '0.00',
           debtActive: Number(withdrawal.debtAmount || 0) > 0,
           records,
@@ -221,7 +230,7 @@ Page({
       return
     }
     if (!withdrawal.enabled) {
-      wx.showToast({ title: '微信提现尚未开启', icon: 'none' })
+      wx.showToast({ title: '提现功能尚未开启', icon: 'none' })
       return
     }
     if (!withdrawal.windowOpen) {
@@ -232,15 +241,73 @@ Page({
       wx.showToast({ title: '已有提现正在审核', icon: 'none' })
       return
     }
-    this.setData({ withdrawalVisible: true, withdrawalAmount: withdrawal.availableAmount || '' })
+    const methods = withdrawal.methods || {}
+    const defaultMethod = methods.weixin && methods.weixin.enabled
+      ? 'weixin'
+      : (methods.bank && methods.bank.enabled ? 'bank' : 'weixin')
+    this.setData({
+      withdrawalVisible: true,
+      withdrawalAmount: withdrawal.availableAmount || '',
+      withdrawalMethod: defaultMethod,
+      bankRealName: '',
+      bankCard: '',
+      bankName: '',
+      bankConsent: false
+    })
   },
 
   onWithdrawalAmountInput(e) {
     this.setData({ withdrawalAmount: e.detail.value })
   },
 
+  onWithdrawalMethodTap(e) {
+    const method = e.currentTarget.dataset.method
+    const config = this.data.withdrawal && this.data.withdrawal.methods
+      ? this.data.withdrawal.methods[method]
+      : null
+    if (!config || !config.enabled) {
+      wx.showToast({ title: '该提现方式暂未开放', icon: 'none' })
+      return
+    }
+    const updates = { withdrawalMethod: method, bankConsent: false }
+    if (method !== 'bank') {
+      updates.bankRealName = ''
+      updates.bankCard = ''
+      updates.bankName = ''
+    }
+    this.setData(updates)
+  },
+
+  onBankRealNameInput(e) {
+    this.setData({ bankRealName: e.detail.value })
+  },
+
+  onBankCardInput(e) {
+    this.setData({ bankCard: String(e.detail.value || '').replace(/\D/g, '').slice(0, 19) })
+  },
+
+  onBankNameInput(e) {
+    this.setData({ bankName: e.detail.value })
+  },
+
+  onBankConsentTap() {
+    this.setData({ bankConsent: !this.data.bankConsent })
+  },
+
+  onOpenPrivacy() {
+    wx.navigateTo({ url: '/packages/features/pages/legal-document/legal-document?key=privacy' })
+  },
+
   closeWithdrawal() {
-    if (!this.data.withdrawalSubmitting) this.setData({ withdrawalVisible: false })
+    if (!this.data.withdrawalSubmitting) {
+      this.setData({
+        withdrawalVisible: false,
+        bankRealName: '',
+        bankCard: '',
+        bankName: '',
+        bankConsent: false
+      })
+    }
   },
 
   submitWithdrawal() {
@@ -257,11 +324,39 @@ Page({
       wx.showToast({ title: '请输入正确的提现金额', icon: 'none' })
       return
     }
+    const method = this.data.withdrawalMethod
+    const requestData = { amount: amount.toFixed(2), method }
+    if (method === 'bank') {
+      const realName = String(this.data.bankRealName || '').trim()
+      const bankCard = String(this.data.bankCard || '').replace(/\D/g, '')
+      const bankName = String(this.data.bankName || '').trim()
+      if (!realName || !bankName || bankCard.length < 12 || bankCard.length > 19) {
+        wx.showToast({ title: '请完整填写正确的银行卡收款资料', icon: 'none' })
+        return
+      }
+      if (!this.data.bankConsent) {
+        wx.showToast({ title: '请先阅读并同意银行卡信息处理说明', icon: 'none' })
+        return
+      }
+      const bankMethod = this.data.withdrawal.methods && this.data.withdrawal.methods.bank
+      requestData.realName = realName
+      requestData.bankCard = bankCard
+      requestData.bankName = bankName
+      requestData.bankConsent = true
+      requestData.bankConsentVersion = bankMethod ? bankMethod.consentVersion : ''
+    }
     this.setData({ withdrawalSubmitting: true })
-    applyWithdrawal({ amount: amount.toFixed(2) })
+    applyWithdrawal(requestData)
       .then(() => {
         wx.showToast({ title: '提现申请已提交', icon: 'success' })
-        this.setData({ withdrawalVisible: false, withdrawalAmount: '' })
+        this.setData({
+          withdrawalVisible: false,
+          withdrawalAmount: '',
+          bankRealName: '',
+          bankCard: '',
+          bankName: '',
+          bankConsent: false
+        })
         return this.loadIncomeRecords().then(() => this.loadWithdrawalOverview())
       })
       .catch((error) => wx.showToast({

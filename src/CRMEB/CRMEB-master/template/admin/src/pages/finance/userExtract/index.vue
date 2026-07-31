@@ -61,7 +61,7 @@
           <el-form-item label="搜索：">
             <el-input
               clearable
-              placeholder="微信昵称/姓名/支付宝账号/银行卡号"
+              placeholder="微信昵称/姓名/支付宝账号/银行卡尾号"
               v-model="formValidate.nireid"
               class="form_content_width"
             />
@@ -109,9 +109,9 @@
         <el-table-column label="提现方式" min-width="130">
           <template slot-scope="scope">
             <div class="type" v-if="scope.row.extract_type === 'bank'">
-              <div class="item">姓名:{{ scope.row.real_name }}</div>
-              <div class="item">银行卡号:{{ scope.row.bank_code }}</div>
-              <div class="item">银行开户地址:{{ scope.row.bank_address }}</div>
+              <div class="item">银行卡提现</div>
+              <div class="item">姓名：{{ scope.row.real_name || '已保护' }}</div>
+              <div class="item">卡号：{{ scope.row.bank_code || ('尾号 ' + scope.row.bank_code_last4) }}</div>
             </div>
             <div class="type" v-if="scope.row.extract_type === 'weixin'">
               <div class="item">昵称:{{ scope.row.nickname }}</div>
@@ -155,18 +155,44 @@
               <div></div>
             </div>
             <div class="statusVal" v-if="scope.row.status === 1">提现通过</div>
+            <div class="statusVal status-payment" v-if="scope.row.status === 2">审核通过，待财务转账</div>
             <div class="statusVal" v-if="scope.row.status === -1">
               提现未通过<br />未通过原因：{{ scope.row.fail_msg }}
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right" width="170">
-          <template slot-scope="scope" v-if="scope.row.status == 0">
-            <a href="javascript:void(0);" v-db-click @click="edit(scope.row)">编辑</a>
-            <el-divider direction="vertical"></el-divider>
-            <a class="item" v-db-click @click="adopt(scope.row, '审核通过', index)">通过</a>
-            <el-divider direction="vertical"></el-divider>
-            <a class="item" v-db-click @click="invalid(scope.row)">驳回</a>
+        <el-table-column label="操作" fixed="right" width="230">
+          <template slot-scope="scope">
+            <template v-if="scope.row.extract_type === 'bank' && (scope.row.status === 0 || scope.row.status === 2)">
+              <a href="javascript:void(0);" v-db-click @click="showBankDetails(scope.row)">查看收款资料</a>
+              <el-divider direction="vertical"></el-divider>
+            </template>
+            <template v-if="scope.row.status === 0">
+              <template v-if="scope.row.extract_type !== 'bank'">
+                <a href="javascript:void(0);" v-db-click @click="edit(scope.row)">编辑</a>
+                <el-divider direction="vertical"></el-divider>
+              </template>
+              <a class="item" v-db-click @click="adopt(scope.row, scope.row.extract_type === 'bank' ? '确认审核通过并转交财务付款？' : '审核通过')">
+                {{ scope.row.extract_type === 'bank' ? '通过审核' : '通过' }}
+              </a>
+              <el-divider direction="vertical"></el-divider>
+              <a class="item" v-db-click @click="invalid(scope.row)">驳回</a>
+            </template>
+            <template v-else-if="scope.row.extract_type === 'bank' && scope.row.status === 2">
+              <a class="item" v-db-click @click="openBankPayment(scope.row)">确认已转账</a>
+              <el-divider direction="vertical"></el-divider>
+              <a class="item" v-db-click @click="invalid(scope.row)">付款前驳回</a>
+            </template>
+            <template v-else-if="scope.row.extract_type === 'bank' && scope.row.status === 1">
+              <span>流水号：{{ scope.row.payout_reference || '--' }}</span>
+              <el-link
+                v-if="scope.row.payout_proof"
+                type="primary"
+                :href="scope.row.payout_proof"
+                target="_blank"
+                class="proof-link"
+              >付款凭证</el-link>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -190,13 +216,109 @@
         <el-button type="primary" size="small" v-db-click @click="oks">确定</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog
+      :visible.sync="bankDetailsVisible"
+      title="银行卡收款资料"
+      :close-on-click-modal="false"
+      width="560px"
+      @closed="clearBankDetails"
+    >
+      <el-alert
+        title="敏感资料仅限本次审核及付款使用，请勿复制到聊天工具或个人设备。"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="bank-security-alert"
+      />
+      <div v-loading="bankDetailsLoading" class="bank-details-box">
+        <el-descriptions v-if="bankDetails" :column="1" border>
+          <el-descriptions-item label="用户 UID">{{ bankDetails.uid }}</el-descriptions-item>
+          <el-descriptions-item label="开户姓名">{{ bankDetails.realName }}</el-descriptions-item>
+          <el-descriptions-item label="银行卡号">{{ bankDetails.bankCard }}</el-descriptions-item>
+          <el-descriptions-item label="开户银行">{{ bankDetails.bankName }}</el-descriptions-item>
+          <el-descriptions-item label="申请金额">¥{{ bankDetails.amount }}</el-descriptions-item>
+          <el-descriptions-item label="实际到账">¥{{ bankDetails.receivedAmount }}</el-descriptions-item>
+          <el-descriptions-item label="用户授权">
+            {{ bankDetails.consentAt ? '已授权' : '历史记录（无独立授权记录）' }}
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <div slot="footer">
+        <el-button @click="bankDetailsVisible = false">关闭</el-button>
+      </div>
+    </el-dialog>
+
+    <el-dialog
+      :visible.sync="bankPaymentVisible"
+      title="确认银行转账到账"
+      :close-on-click-modal="false"
+      width="560px"
+      @closed="clearBankPayment"
+    >
+      <el-alert
+        title="仅在银行转账已经成功后确认。确认后将计入用户“已到账”，且不可在本页面撤销。"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="bank-security-alert"
+      />
+      <el-form label-width="100px">
+        <el-form-item label="银行流水号" required>
+          <el-input
+            v-model.trim="bankPaymentForm.payout_reference"
+            maxlength="96"
+            show-word-limit
+            autocomplete="off"
+            placeholder="请输入银行回单或交易流水号"
+          />
+        </el-form-item>
+        <el-form-item label="付款凭证" required>
+          <el-upload
+            action="#"
+            :show-file-list="false"
+            :http-request="uploadProof"
+            :before-upload="beforeProofUpload"
+            accept="image/jpeg,image/png,image/webp"
+          >
+            <el-button :loading="proofUploading" type="primary" plain>
+              {{ bankPaymentForm.payout_proof ? '重新上传' : '上传图片凭证' }}
+            </el-button>
+          </el-upload>
+          <el-image
+            v-if="bankPaymentForm.payout_proof"
+            class="proof-preview"
+            :src="bankPaymentForm.payout_proof"
+            :preview-src-list="[bankPaymentForm.payout_proof]"
+            fit="cover"
+          />
+          <div class="proof-help">仅支持 JPG、PNG、WebP，大小不超过 5MB。</div>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="bankPaymentVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="bankPaymentSubmitting"
+          v-db-click
+          @click="confirmBankPayment"
+        >确认已经转账</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 <script>
 import cardsData from '@/components/cards/cards';
 import searchFrom from '@/components/publicSearchFrom';
 import { mapState } from 'vuex';
-import { cashListApi, cashEditApi, refuseApi } from '@/api/finance';
+import {
+  cashListApi,
+  cashEditApi,
+  refuseApi,
+  bankDetailsApi,
+  confirmBankPaymentApi,
+} from '@/api/finance';
+import { fileUpload } from '@/api/setting';
 import { formatDate } from '@/utils/validate';
 import editFrom from '@/components/from/from';
 export default {
@@ -238,6 +360,10 @@ export default {
             value: 0,
           },
           {
+            title: '待财务转账',
+            value: 2,
+          },
+          {
             title: '已通过',
             value: 1,
           },
@@ -273,6 +399,17 @@ export default {
       timeVal: [],
       FromData: null,
       extractId: 0,
+      bankDetailsVisible: false,
+      bankDetailsLoading: false,
+      bankDetails: null,
+      bankPaymentVisible: false,
+      bankPaymentSubmitting: false,
+      proofUploading: false,
+      bankPaymentId: 0,
+      bankPaymentForm: {
+        payout_reference: '',
+        payout_proof: '',
+      },
     };
   },
   watch: {
@@ -324,10 +461,10 @@ export default {
         });
     },
     // 通过
-    adopt(row, tit, num) {
+    adopt(row, tit) {
       let delfromData = {
         title: tit,
-        num: num,
+        num: row.id,
         url: `finance/extract/adopt/${row.id}`,
         method: 'put',
         ids: '',
@@ -340,6 +477,103 @@ export default {
         .catch((res) => {
           this.$message.error(res.msg);
         });
+    },
+    showBankDetails(row) {
+      this.bankDetailsVisible = true;
+      this.bankDetailsLoading = true;
+      this.bankDetails = null;
+      bankDetailsApi(row.id)
+        .then((res) => {
+          this.bankDetails = res.data;
+        })
+        .catch((res) => {
+          this.bankDetailsVisible = false;
+          this.$message.error(res.msg || '银行卡资料读取失败');
+        })
+        .finally(() => {
+          this.bankDetailsLoading = false;
+        });
+    },
+    clearBankDetails() {
+      this.bankDetails = null;
+      this.bankDetailsLoading = false;
+    },
+    openBankPayment(row) {
+      this.bankPaymentId = row.id;
+      this.bankPaymentForm = {
+        payout_reference: '',
+        payout_proof: '',
+      };
+      this.bankPaymentVisible = true;
+    },
+    beforeProofUpload(file) {
+      const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowed.includes(file.type)) {
+        this.$message.error('付款凭证仅支持 JPG、PNG 或 WebP 图片');
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        this.$message.error('付款凭证图片不能超过 5MB');
+        return false;
+      }
+      return true;
+    },
+    uploadProof(option) {
+      const formData = new FormData();
+      formData.append('file', option.file);
+      this.proofUploading = true;
+      fileUpload(formData)
+        .then((res) => {
+          const src = res && res.data ? res.data.src : '';
+          if (!src) throw new Error('付款凭证上传返回为空');
+          this.bankPaymentForm.payout_proof = src;
+          this.$message.success('付款凭证上传成功');
+        })
+        .catch((res) => {
+          this.$message.error(res.msg || res.message || '付款凭证上传失败');
+        })
+        .finally(() => {
+          this.proofUploading = false;
+        });
+    },
+    confirmBankPayment() {
+      const reference = String(this.bankPaymentForm.payout_reference || '').trim();
+      if (reference.length < 4) {
+        this.$message.error('请输入至少4位银行流水号');
+        return;
+      }
+      if (!this.bankPaymentForm.payout_proof) {
+        this.$message.error('请上传付款凭证图片');
+        return;
+      }
+      this.$confirm('请再次确认银行转账已经成功。确认后将计入用户已到账。', '确认到账', {
+        confirmButtonText: '已核对，确认到账',
+        cancelButtonText: '返回检查',
+        type: 'warning',
+      }).then(() => {
+        this.bankPaymentSubmitting = true;
+        confirmBankPaymentApi(this.bankPaymentId, this.bankPaymentForm)
+          .then((res) => {
+            this.$message.success(res.msg);
+            this.bankPaymentVisible = false;
+            this.getList();
+          })
+          .catch((res) => {
+            this.$message.error(res.msg || '确认银行转账失败');
+          })
+          .finally(() => {
+            this.bankPaymentSubmitting = false;
+          });
+      }).catch(() => {});
+    },
+    clearBankPayment() {
+      this.bankPaymentId = 0;
+      this.proofUploading = false;
+      this.bankPaymentSubmitting = false;
+      this.bankPaymentForm = {
+        payout_reference: '',
+        payout_proof: '',
+      };
     },
     // 具体日期
     onchangeTime(e) {
@@ -455,5 +689,31 @@ export default {
 }
 .f-price {
   color: green;
+}
+.status-payment {
+  color: #e6a23c;
+  font-weight: 600;
+}
+.proof-link {
+  display: block;
+  margin-top: 6px;
+}
+.bank-security-alert {
+  margin-bottom: 20px;
+}
+.bank-details-box {
+  min-height: 160px;
+}
+.proof-preview {
+  display: block;
+  width: 120px;
+  height: 90px;
+  margin-top: 12px;
+  border-radius: 6px;
+}
+.proof-help {
+  margin-top: 8px;
+  color: #909399;
+  font-size: 12px;
 }
 </style>

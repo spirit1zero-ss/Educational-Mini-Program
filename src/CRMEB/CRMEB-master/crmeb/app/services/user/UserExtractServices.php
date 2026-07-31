@@ -16,6 +16,7 @@ use app\dao\user\UserExtractDao;
 use app\services\BaseServices;
 use app\services\order\StoreOrderCreateServices;
 use app\services\pay\PayTransferNotifyServices;
+use app\services\security\BankAccountSecurityServices;
 use app\services\statistic\CapitalFlowServices;
 use app\services\system\admin\SystemAdminServices;
 use app\services\wechat\WechatUserServices;
@@ -139,9 +140,17 @@ class UserExtractServices extends BaseServices
     {
         [$page, $limit] = $this->getPageValue();
         $list = $this->dao->getExtractList($where, $field, $page, $limit);
+        /** @var BankAccountSecurityServices $bankSecurity */
+        $bankSecurity = app()->make(BankAccountSecurityServices::class);
         foreach ($list as &$item) {
             $item['nickname'] = $item['user']['nickname'] ?? '';
             $item['receive_price'] = bcsub((string)$item['extract_price'], (string)$item['extract_fee'], 2);
+            if (($item['extract_type'] ?? '') === 'bank') {
+                $lastFour = (string)($item['bank_code_last4'] ?? '');
+                $item['bank_code'] = $lastFour !== '' ? '**** **** **** ' . $lastFour : $bankSecurity->maskCardNumber((string)($item['bank_code'] ?? ''));
+                $item['real_name'] = $bankSecurity->maskRealName((string)($item['real_name'] ?? ''));
+            }
+            unset($item['bank_secure_payload']);
         }
         $count = $this->dao->count($where);
         return compact('list', 'count');
@@ -172,10 +181,23 @@ class UserExtractServices extends BaseServices
         $mark = '提现失败,退回佣金' . $extract_number . '元';
         $uid = $userExtract['uid'];
         $status = -1;
+        $failUpdate = ['fail_time' => $fail_time, 'fail_msg' => $message, 'status' => $status];
+        if (($userExtract['extract_type'] ?? '') === 'bank') {
+            /** @var BankAccountSecurityServices $bankSecurity */
+            $bankSecurity = app()->make(BankAccountSecurityServices::class);
+            $lastFour = (string)($userExtract['bank_code_last4'] ?? '');
+            if ($lastFour === '') {
+                $lastFour = substr($bankSecurity->normalizeCardNumber((string)($userExtract['bank_code'] ?? '')), -4);
+            }
+            $failUpdate['bank_secure_payload'] = null;
+            $failUpdate['bank_code_last4'] = $lastFour;
+            $failUpdate['bank_code'] = $lastFour !== '' ? '**** **** **** ' . $lastFour : '已删除';
+            $failUpdate['bank_address'] = '已删除';
+        }
         /** @var UserServices $userServices */
         $userServices = app()->make(UserServices::class);
         $user = $userServices->getUserInfo($uid);
-        $this->transaction(function () use ($user, $uid, $id, $extract_number, $message, $userServices, $status, $fail_time) {
+        $this->transaction(function () use ($user, $uid, $id, $extract_number, $userServices, $failUpdate) {
             //增加佣金记录
             /** @var UserBrokerageServices $userBrokerageServices */
             $userBrokerageServices = app()->make(UserBrokerageServices::class);
@@ -183,7 +205,7 @@ class UserExtractServices extends BaseServices
             $userBrokerageServices->income('extract_fail', $uid, $extract_number, $now_brokerage, $id);
             if (!$userServices->update($uid, ['brokerage_price' => bcadd((string)$user['brokerage_price'], (string)$extract_number, 2)], 'uid'))
                 throw new AdminException('增加用户佣金失败');
-            if (!$this->dao->update($id, ['fail_time' => $fail_time, 'fail_msg' => $message, 'status' => $status])) {
+            if (!$this->dao->update($id, $failUpdate)) {
                 throw new AdminException('修改失败');
             }
         });
@@ -191,6 +213,16 @@ class UserExtractServices extends BaseServices
         event('NoticeListener', [['uid' => $uid, 'userType' => strtolower($user['user_type']), 'extract_number' => $extract_number, 'nickname' => $user['nickname'], 'message' => $message], 'user_balance_change']);
 
         //自定义通知-用户提现失败
+        if (!is_array($userExtract) && method_exists($userExtract, 'toArray')) {
+            $userExtract = $userExtract->toArray();
+        }
+        if (($userExtract['extract_type'] ?? '') === 'bank') {
+            unset($userExtract['bank_secure_payload']);
+            $userExtract['bank_code'] = !empty($userExtract['bank_code_last4'])
+                ? '**** **** **** ' . $userExtract['bank_code_last4']
+                : '已保护';
+            $userExtract['bank_address'] = '已保护';
+        }
         $userExtract['nickname'] = $user['nickname'];
         $userExtract['message'] = $message;
         $userExtract['time'] = date('Y-m-d H:i:s');
@@ -404,8 +436,8 @@ class UserExtractServices extends BaseServices
         $list = $this->getUserExtractList($where);
         /** @var UserServices $userServices */
         $userServices = app()->make(UserServices::class);
-        //待提现金额
-        $where['status'] = 0;
+        //待审核和银行卡待付款金额
+        $where['status'] = [0, 2];
         $extract_statistics['price'] = $this->getExtractSum($where);
         //已提现金额
         $where['status'] = 1;
@@ -442,8 +474,7 @@ class UserExtractServices extends BaseServices
             $f[] = Form::input('wechat', '微信号', $UserExtract['wechat']);
         } else if ($UserExtract['extract_type'] == 'balance') {
         } else {
-            $f[] = Form::input('bank_code', '银行卡号', $UserExtract['bank_code']);
-            $f[] = Form::input('bank_address', '开户行', $UserExtract['bank_address']);
+            throw new AdminException('银行卡收款信息不允许直接编辑，如填写错误请驳回后让用户重新提交');
         }
         $f[] = Form::input('mark', '备注', $UserExtract['mark'])->type('textarea');
         return create_form('编辑', $f, Url::buildUrl('/finance/extract/' . $id), 'PUT');
@@ -451,6 +482,10 @@ class UserExtractServices extends BaseServices
 
     public function update(int $id, array $data)
     {
+        $extract = $this->getExtract($id);
+        if ($extract && $extract['extract_type'] === 'bank') {
+            throw new AdminException('银行卡收款信息不允许直接编辑');
+        }
         if (!$this->dao->update($id, $data))
             throw new AdminException('修改失败');
         else
@@ -464,6 +499,24 @@ class UserExtractServices extends BaseServices
      */
     public function refuse(int $id, string $message)
     {
+        $precheck = $this->getExtract($id);
+        if ($precheck && $precheck['extract_type'] === 'bank') {
+            return Db::transaction(function () use ($id, $message) {
+                $locked = Db::name('user_extract')->where('id', $id)->lock(true)->find();
+                if (!$locked) {
+                    throw new AdminException('数据不存在');
+                }
+                if ((int)$locked['status'] === 1) {
+                    throw new AdminException('已经提现');
+                }
+                if ((int)$locked['status'] === -1) {
+                    throw new AdminException('该提现申请已被拒绝');
+                }
+                // 与返还佣金余额使用同一事务锁，避免并发入账覆盖余额。
+                Db::name('user')->where('uid', (int)$locked['uid'])->lock(true)->find();
+                return $this->changeFail($id, $locked, $message);
+            });
+        }
         $extract = $this->getExtract($id);
         if (!$extract) {
             throw new AdminException('数据不存在');
@@ -489,7 +542,7 @@ class UserExtractServices extends BaseServices
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\ModelNotFoundException
      */
-    public function adopt(int $id)
+    public function adopt(int $id, int $adminId = 0)
     {
         $extract = $this->getExtract($id);
         if (!$extract) {
@@ -497,6 +550,9 @@ class UserExtractServices extends BaseServices
         }
         if ($extract->status == 1) {
             throw new AdminException('已经提现');
+        }
+        if ($extract->status == 2) {
+            throw new AdminException('银行卡提现已审核，正在等待财务付款');
         }
         if ($extract->status == -1) {
             throw new AdminException('您的提现申请已被拒绝');
@@ -512,7 +568,11 @@ class UserExtractServices extends BaseServices
                 throw new AdminException('用户会员或推广资格已经失效，请拒绝该提现申请并退回余额');
             }
         }
-        $res = $this->changeSuccess($id, $extract);
+        if ($extract['extract_type'] === 'bank') {
+            $res = $this->markBankPaymentPending($id, $extract, $adminId);
+        } else {
+            $res = $this->changeSuccess($id, $extract);
+        }
         if ($res) {
             return $res;
         } else {
@@ -520,12 +580,177 @@ class UserExtractServices extends BaseServices
         }
     }
 
+    private function markBankPaymentPending(int $id, $extract, int $adminId): string
+    {
+        // 审核前验证加密资料可读取，避免财务进入待付款后才发现密钥或数据异常。
+        $this->getBankPaymentDetails($id);
+        $updated = Db::name('user_extract')
+            ->where('id', $id)
+            ->where('status', 0)
+            ->update([
+                'status' => 2,
+                'reviewed_at' => time(),
+                'reviewed_admin_id' => $adminId,
+                'state' => 'BANK_PAYMENT_PENDING',
+            ]);
+        if ($updated !== 1) {
+            throw new AdminException('提现状态已经变化，请刷新后重试');
+        }
+        return 'bank_payment_pending';
+    }
+
+    /**
+     * Return full bank details only for an authenticated admin on an unfinished
+     * bank withdrawal. List endpoints always return masked values.
+     */
+    public function getBankPaymentDetails(int $id): array
+    {
+        $extract = $this->getExtract($id);
+        if (!$extract || $extract['extract_type'] !== 'bank') {
+            throw new AdminException('银行卡提现记录不存在');
+        }
+        if (!in_array((int)$extract['status'], [0, 2], true)) {
+            throw new AdminException('已结束的提现不再提供完整银行卡信息');
+        }
+
+        /** @var BankAccountSecurityServices $bankSecurity */
+        $bankSecurity = app()->make(BankAccountSecurityServices::class);
+        $securePayload = (string)($extract['bank_secure_payload'] ?? '');
+        if ($securePayload !== '') {
+            $details = $bankSecurity->decrypt(
+                $securePayload,
+                $bankSecurity->associatedData((int)$extract['uid'], (string)$extract['wechat_order_id'])
+            );
+            $legacy = false;
+        } else {
+            // Historical records may predate encrypted storage. They remain
+            // operable but are explicitly identified for later migration.
+            $details = $bankSecurity->validateDetails([
+                'real_name' => (string)$extract['real_name'],
+                'bank_code' => (string)$extract['bank_code'],
+                'bank_address' => (string)$extract['bank_address'],
+            ]);
+            $legacy = true;
+        }
+
+        return [
+            'id' => (int)$extract['id'],
+            'uid' => (int)$extract['uid'],
+            'realName' => $details['real_name'],
+            'bankCard' => $details['bank_code'],
+            'bankName' => $details['bank_address'],
+            'amount' => number_format((float)$extract['extract_price'], 2, '.', ''),
+            'fee' => number_format((float)$extract['extract_fee'], 2, '.', ''),
+            'receivedAmount' => bcsub((string)$extract['extract_price'], (string)$extract['extract_fee'], 2),
+            'consentAt' => (int)($extract['bank_consent_at'] ?? 0),
+            'consentVersion' => (string)($extract['bank_consent_version'] ?? ''),
+            'legacy' => $legacy,
+        ];
+    }
+
+    public function confirmBankPayment(int $id, array $data, int $adminId): bool
+    {
+        $reference = trim((string)($data['payout_reference'] ?? ''));
+        $proof = trim((string)($data['payout_proof'] ?? ''));
+        if (!preg_match('/^[\p{L}\p{N}._\-\/]{4,96}$/u', $reference)) {
+            throw new AdminException('请输入4至96位银行流水号');
+        }
+        if ($proof === ''
+            || preg_match('/[\x00-\x1F\x7F]/u', $proof)
+            || (strpos($proof, '/') !== 0 && strpos($proof, 'uploads/') !== 0 && strpos($proof, 'https://') !== 0)) {
+            throw new AdminException('请上传有效的付款凭证图片');
+        }
+
+        $paidAt = time();
+        $extract = Db::transaction(function () use ($id, $reference, $proof, $paidAt, $adminId) {
+            $row = Db::name('user_extract')->where('id', $id)->lock(true)->find();
+            if (!$row || ($row['extract_type'] ?? '') !== 'bank') {
+                throw new AdminException('银行卡提现记录不存在');
+            }
+            if ((int)$row['status'] === 1) {
+                throw new AdminException('该提现已经确认付款');
+            }
+            if ((int)$row['status'] !== 2) {
+                throw new AdminException('该提现尚未通过审核或状态已经变化');
+            }
+
+            $receivedAmount = bcsub((string)$row['extract_price'], (string)$row['extract_fee'], 2);
+            /** @var UserServices $userServices */
+            $userServices = app()->make(UserServices::class);
+            $user = $userServices->getUserInfo((int)$row['uid']);
+            if (!$user) {
+                throw new AdminException('提现用户不存在');
+            }
+
+            $updated = Db::name('user_extract')
+                ->where('id', $id)
+                ->where('status', 2)
+                ->update([
+                    'status' => 1,
+                    'state' => 'BANK_PAID',
+                    'payout_reference' => $reference,
+                    'payout_proof' => $proof,
+                    'payout_time' => $paidAt,
+                    'payout_admin_id' => $adminId,
+                    // 完成付款后不再保留可解密的完整银行卡资料。
+                    'bank_secure_payload' => null,
+                ]);
+            if ($updated !== 1) {
+                throw new AdminException('提现状态已经变化，请刷新后重试');
+            }
+
+            /** @var CapitalFlowServices $capitalFlowServices */
+            $capitalFlowServices = app()->make(CapitalFlowServices::class);
+            $capitalFlowServices->setFlow([
+                'order_id' => (string)$row['wechat_order_id'],
+                'uid' => (int)$row['uid'],
+                'price' => bcmul('-1', $receivedAmount, 2),
+                'pay_type' => 'bank',
+                'nickname' => (string)($user['nickname'] ?? ''),
+                'phone' => (string)($user['phone'] ?? ''),
+            ], 'extract');
+
+            $row['received_amount'] = $receivedAmount;
+            $row['nickname'] = (string)($user['nickname'] ?? '');
+            $row['phone'] = (string)($user['phone'] ?? '');
+            $row['user_type'] = (string)($user['user_type'] ?? '');
+            return $row;
+        });
+
+        event('NoticeListener', [[
+            'uid' => (int)$extract['uid'],
+            'userType' => strtolower((string)$extract['user_type']),
+            'extractNumber' => $extract['received_amount'],
+            'nickname' => $extract['nickname'],
+        ], 'user_extract']);
+
+        $notice = [
+            'uid' => (int)$extract['uid'],
+            'extract_type' => 'bank',
+            'nickname' => $extract['nickname'],
+            'phone' => $extract['phone'],
+            'time' => date('Y-m-d H:i:s', $paidAt),
+            'price' => $extract['received_amount'],
+        ];
+        event('CustomNoticeListener', [(int)$extract['uid'], $notice, 'extract_success']);
+        event('CustomEventListener', ['admin_extract_success', [
+            'uid' => (int)$extract['uid'],
+            'price' => $extract['received_amount'],
+            'pay_type' => 'bank',
+            'nickname' => $extract['nickname'],
+            'phone' => $extract['phone'],
+            'success_time' => date('Y-m-d H:i:s', $paidAt),
+        ]]);
+
+        return true;
+    }
+
     /**待提现的数量
      * @return int
      */
     public function userExtractCount()
     {
-        return $this->dao->count(['status' => 0]);
+        return $this->dao->count(['status' => [0, 2]]);
     }
 
     /**
@@ -652,7 +877,32 @@ class UserExtractServices extends BaseServices
             $insertData['real_name'] = $data['user_name'];
             $mark = '使用支付宝提现' . $insertData['extract_price'] . '元' . $feeMark;
         } else if ($data['extract_type'] == 'bank') {
-            $mark = '使用银联卡' . $insertData['bank_code'] . '提现' . $insertData['extract_price'] . '元' . $feeMark;
+            /** @var BankAccountSecurityServices $bankSecurity */
+            $bankSecurity = app()->make(BankAccountSecurityServices::class);
+            if (($data['channel_type'] ?? '') === 'routine') {
+                if (empty($data['bank_consent_at'])
+                    || ($data['bank_consent_version'] ?? '') !== $bankSecurity->consentVersion()) {
+                    throw new ApiException('请先阅读并单独同意银行卡提现信息处理说明');
+                }
+            }
+            $details = $bankSecurity->validateDetails([
+                'real_name' => $insertData['real_name'],
+                'bank_code' => $insertData['bank_code'],
+                'bank_address' => $insertData['bank_address'],
+            ]);
+            $lastFour = substr($details['bank_code'], -4);
+            $insertData['bank_secure_payload'] = $bankSecurity->encrypt(
+                $details,
+                $bankSecurity->associatedData((int)$insertData['uid'], (string)$insertData['wechat_order_id'])
+            );
+            $insertData['bank_code_last4'] = $lastFour;
+            $insertData['bank_consent_at'] = (int)($data['bank_consent_at'] ?? 0);
+            $insertData['bank_consent_version'] = (string)($data['bank_consent_version'] ?? '');
+            // Only masked placeholders remain in ordinary list/search fields.
+            $insertData['real_name'] = $bankSecurity->maskRealName($details['real_name']);
+            $insertData['bank_code'] = $bankSecurity->maskCardNumber($details['bank_code']);
+            $insertData['bank_address'] = '已加密保护';
+            $mark = '使用银行卡（尾号' . $lastFour . '）提现' . $insertData['extract_price'] . '元' . $feeMark;
         } else if ($data['extract_type'] == 'weixin') {
             $insertData['user_name'] = $data['user_name'];
             $insertData['real_name'] = $data['user_name'];

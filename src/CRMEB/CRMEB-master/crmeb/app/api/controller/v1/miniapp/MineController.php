@@ -131,8 +131,19 @@ class MineController
 
     public function applyWithdrawal(Request $request)
     {
-        [$amount] = $request->postMore([['amount', '0']], true);
-        return app('json')->success('提现申请已提交', $this->services->applyWithdrawal((int)$request->uid(), $amount));
+        $data = $request->postMore([
+            ['amount', '0'],
+            ['method', 'weixin'],
+            ['realName', ''],
+            ['bankCard', ''],
+            ['bankName', ''],
+            ['bankConsent', false],
+            ['bankConsentVersion', ''],
+        ]);
+        return app('json')->success(
+            '提现申请已提交',
+            $this->services->applyWithdrawal((int)$request->uid(), $data['amount'], $data)
+        );
     }
 
     public function orders(Request $request)

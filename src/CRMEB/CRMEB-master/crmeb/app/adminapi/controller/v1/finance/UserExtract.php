@@ -77,6 +77,9 @@ class UserExtract extends AuthController
         $id = (int)$id;
         $UserExtract = $this->services->getExtract($id);
         if (!$UserExtract) app('json')->fail('数据不存在');
+        if ($UserExtract['extract_type'] === 'bank') {
+            return app('json')->fail('银行卡收款资料由用户本人提交并加密保存，后台不可编辑');
+        }
         if ($UserExtract['extract_type'] == 'alipay') {
             $data = $this->request->postMore([
                 'real_name',
@@ -135,15 +138,40 @@ class UserExtract extends AuthController
     public function adopt($id)
     {
         if (!$id) app('json')->fail('参数错误');
-        $res = $this->services->adopt((int)$id);
+        $res = $this->services->adopt((int)$id, (int)$this->adminId);
         if ($res) {
             if ($res === 'v3_extract') {
                 return app('json')->success('提现成功，等待用户确认收款');
+            } elseif ($res === 'bank_payment_pending') {
+                return app('json')->success('审核已通过，请财务完成银行转账后确认到账');
             } else {
                 return app('json')->success('提现成功');
             }
         } else {
             return app('json')->success('操作失败');
         }
+    }
+
+    /**
+     * 完整银行卡资料只允许在未结束的银行卡提现中按需查看。
+     */
+    public function bankDetails($id)
+    {
+        if (!$id) return app('json')->fail('参数错误');
+        return app('json')->success($this->services->getBankPaymentDetails((int)$id));
+    }
+
+    /**
+     * 财务完成线下转账后，凭银行流水号和付款凭证确认到账。
+     */
+    public function confirmBankPayment($id)
+    {
+        if (!$id) return app('json')->fail('参数错误');
+        $data = $this->request->postMore([
+            ['payout_reference', ''],
+            ['payout_proof', ''],
+        ]);
+        $this->services->confirmBankPayment((int)$id, $data, (int)$this->adminId);
+        return app('json')->success('已确认银行转账到账');
     }
 }

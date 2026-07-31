@@ -83,8 +83,78 @@
 
   <view class="withdraw-mask" wx:if="{{withdrawalVisible}}" bindtap="closeWithdrawal">
     <view class="withdraw-dialog" catchtap="noop">
-      <view class="withdraw-title">申请微信提现</view>
+      <view class="withdraw-title">申请提现</view>
       <view class="withdraw-tip">可提现 {{withdrawal.availableAmount}} 元，最低 {{withdrawal.minAmount}} 元</view>
+
+      <view class="withdraw-methods">
+        <view
+          class="withdraw-method {{withdrawalMethod === 'weixin' ? 'withdraw-method--active' : ''}}"
+          data-method="weixin"
+          bindtap="onWithdrawalMethodTap"
+        >
+          <view class="withdraw-method-name">微信零钱</view>
+          <view class="withdraw-method-desc">审核后发起微信收款</view>
+        </view>
+        <view
+          wx:if="{{bankWithdrawalEnabled}}"
+          class="withdraw-method {{withdrawalMethod === 'bank' ? 'withdraw-method--active' : ''}} {{!bankWithdrawalEnabled ? 'withdraw-method--disabled' : ''}}"
+          data-method="bank"
+          bindtap="onWithdrawalMethodTap"
+        >
+          <view class="withdraw-method-name">银行卡</view>
+          <view class="withdraw-method-desc">{{bankWithdrawalEnabled ? '人工审核后银行转账' : '暂未开放'}}</view>
+        </view>
+      </view>
+
+      <view class="bank-guide" wx:if="{{withdrawalMethod === 'bank'}}">
+        <view class="bank-guide-title">填写前请确认</view>
+        <view class="bank-guide-line">1. 仅填写本人可正常收款的银行卡。</view>
+        <view class="bank-guide-line">2. 姓名须与银行开户信息保持一致。</view>
+        <view class="bank-guide-line">3. 提交后由财务审核并线下转账，可在账单查看进度。</view>
+        <view class="bank-guide-safe">银行卡资料会加密保存，仅授权财务在付款处理中查看。</view>
+      </view>
+
+      <view class="bank-fields" wx:if="{{withdrawalMethod === 'bank'}}">
+        <view class="bank-field">
+          <view class="bank-field-label">开户姓名</view>
+          <input
+            class="bank-field-input"
+            value="{{bankRealName}}"
+            maxlength="64"
+            bindinput="onBankRealNameInput"
+            placeholder="请输入真实姓名"
+          />
+        </view>
+        <view class="bank-field">
+          <view class="bank-field-label">银行卡号</view>
+          <input
+            class="bank-field-input"
+            type="number"
+            value="{{bankCard}}"
+            maxlength="19"
+            bindinput="onBankCardInput"
+            placeholder="请输入本人银行卡号"
+          />
+        </view>
+        <view class="bank-field">
+          <view class="bank-field-label">开户银行</view>
+          <input
+            class="bank-field-input"
+            value="{{bankName}}"
+            maxlength="100"
+            bindinput="onBankNameInput"
+            placeholder="如：中国工商银行北京××支行"
+          />
+        </view>
+        <view class="bank-consent" bindtap="onBankConsentTap">
+          <view class="bank-consent-check {{bankConsent ? 'bank-consent-check--active' : ''}}">{{bankConsent ? '✓' : ''}}</view>
+          <view class="bank-consent-text">
+            我已阅读并同意平台为本次提现处理、加密保存并向授权财务人员展示上述收款信息。
+            <text class="bank-consent-link" catchtap="onOpenPrivacy">查看《隐私政策》</text>
+          </view>
+        </view>
+      </view>
+
       <view class="withdraw-input-row">
         <text class="withdraw-currency">¥</text>
         <input class="withdraw-input" type="digit" value="{{withdrawalAmount}}" bindinput="onWithdrawalAmountInput" placeholder="请输入提现金额" />
@@ -97,11 +167,11 @@
     </view>
   </view>
 
-  <view class="transfer-confirm" wx:if="{{withdrawal && withdrawal.list.length && withdrawal.list[0].canConfirm}}">
+  <view class="transfer-confirm" wx:if="{{pendingTransfer}}">
     <view>
       <view class="transfer-confirm-title">有一笔提现待确认收款</view>
-      <view class="transfer-confirm-desc">实际到账 ¥{{withdrawal.list[0].receivedAmount}} · {{withdrawal.list[0].addTime}}</view>
+      <view class="transfer-confirm-desc">实际到账 ¥{{pendingTransfer.receivedAmount}} · {{pendingTransfer.addTime}}</view>
     </view>
-    <button class="transfer-confirm-button" data-id="{{withdrawal.list[0].id}}" bindtap="onConfirmTransfer">确认收款</button>
+    <button class="transfer-confirm-button" data-id="{{pendingTransfer.id}}" bindtap="onConfirmTransfer">确认收款</button>
   </view>
 </view>

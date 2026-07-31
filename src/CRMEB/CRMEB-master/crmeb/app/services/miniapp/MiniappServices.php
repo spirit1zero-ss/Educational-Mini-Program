@@ -10,6 +10,7 @@ use app\services\other\UploadService;
 use app\services\pay\PayServices;
 use app\services\pay\PaymentLockService;
 use app\services\pay\VirtualPaymentServices;
+use app\services\security\BankAccountSecurityServices;
 use app\services\user\member\MemberCardServices;
 use app\services\user\DistributionServices;
 use app\services\user\UserServices;
@@ -516,7 +517,7 @@ class MiniappServices extends BaseServices
         $config = $extractServices->bank($uid);
         $records = Db::name('user_extract')
             ->where('uid', $uid)
-            ->where('extract_type', 'weixin')
+            ->whereIn('extract_type', ['weixin', 'bank'])
             ->order('id', 'desc')
             ->limit(10)
             ->select()
@@ -536,9 +537,16 @@ class MiniappServices extends BaseServices
         $list = array_map(function (array $row) {
             $status = (int)($row['status'] ?? 0);
             $state = strtoupper((string)($row['state'] ?? ''));
+            $method = (string)($row['extract_type'] ?? 'weixin');
             $statusKey = $status === -1 ? 'rejected' : ($status === 0 ? 'reviewing' : 'processing');
             $statusText = $status === -1 ? '已拒绝' : ($status === 0 ? '审核中' : '处理中');
-            if ($status === 1 && $state === 'SUCCESS') {
+            if ($status === 2 && $method === 'bank') {
+                $statusKey = 'payment_pending';
+                $statusText = '待财务转账';
+            } elseif ($status === 1 && $method === 'bank') {
+                $statusKey = 'paid';
+                $statusText = '已到账';
+            } elseif ($status === 1 && $state === 'SUCCESS') {
                 $statusKey = 'paid';
                 $statusText = '已到账';
             } elseif ($status === 1 && !empty($row['package_info']) && in_array($state, ['', 'WAIT_USER_CONFIRM'], true)) {
@@ -561,9 +569,11 @@ class MiniappServices extends BaseServices
                 'status' => $statusKey,
                 'statusText' => $statusText,
                 'state' => $state,
+                'method' => $method,
+                'methodText' => $method === 'bank' ? '银行卡提现' : '微信提现',
                 'failReason' => (string)($row['fail_reason'] ?: ($row['fail_msg'] ?? '')),
                 'addTime' => !empty($row['add_time']) ? date('Y-m-d H:i:s', (int)$row['add_time']) : '',
-                'canConfirm' => $statusKey === 'confirm',
+                'canConfirm' => $method === 'weixin' && $statusKey === 'confirm',
                 'transfer' => $statusKey === 'confirm' ? [
                     'mchId' => (string)sys_config('pay_weixin_mchid', ''),
                     'appId' => (string)sys_config('routine_appId', ''),
@@ -577,6 +587,8 @@ class MiniappServices extends BaseServices
         $debtAmount = bccomp($netAvailableAmount, '0', 2) < 0
             ? bcmul($netAvailableAmount, '-1', 2)
             : '0.00';
+        /** @var BankAccountSecurityServices $bankSecurity */
+        $bankSecurity = app()->make(BankAccountSecurityServices::class);
 
         return [
             'enabled' => (bool)sys_config('training_camp_withdraw_enabled', 0),
@@ -585,7 +597,16 @@ class MiniappServices extends BaseServices
             'debtAmount' => $this->formatAmount($debtAmount),
             'minAmount' => $this->formatAmount($config['minPrice'] ?? 0.1),
             'feeRate' => (string)($config['withdrawal_fee'] ?? 0),
-            'hasPending' => Db::name('user_extract')->where('uid', $uid)->where('status', 0)->count() > 0,
+            'hasPending' => Db::name('user_extract')->where('uid', $uid)->whereIn('status', [0, 2])->count() > 0,
+            'methods' => [
+                'weixin' => ['enabled' => true, 'label' => '微信零钱'],
+                'bank' => [
+                    'enabled' => (bool)sys_config('training_camp_bank_withdraw_enabled', 0)
+                        && $bankSecurity->isConfigured(),
+                    'label' => '银行卡',
+                    'consentVersion' => $bankSecurity->consentVersion(),
+                ],
+            ],
             'windowOpen' => $window['open'],
             'windowStartDay' => $window['startDay'],
             'windowEndDay' => $window['endDay'],
@@ -596,14 +617,14 @@ class MiniappServices extends BaseServices
         ];
     }
 
-    public function applyWithdrawal(int $uid, $amount): array
+    public function applyWithdrawal(int $uid, $amount, array $payload = []): array
     {
         $user = $this->requireMemberUser($uid);
         if ((int)($user['is_promoter'] ?? 0) !== 1 || (int)($user['spread_open'] ?? 0) !== 1) {
             throw new ApiException('当前账号没有有效的推广提现资格');
         }
         if (!sys_config('training_camp_withdraw_enabled', 0)) {
-            throw new ApiException('后台已暂停训练营微信提现，请联系管理员');
+            throw new ApiException('后台已暂停训练营提现，请联系管理员');
         }
         $window = $this->getWithdrawalWindow();
         if (!$window['open']) {
@@ -617,22 +638,56 @@ class MiniappServices extends BaseServices
             throw new ApiException('提现金额不能小于0.10元');
         }
 
-        Db::transaction(function () use ($uid, $amount, $user) {
+        $method = trim((string)($payload['method'] ?? 'weixin'));
+        if (!in_array($method, ['weixin', 'bank'], true)) {
+            throw new ApiException('不支持的提现方式');
+        }
+        /** @var BankAccountSecurityServices $bankSecurity */
+        $bankSecurity = app()->make(BankAccountSecurityServices::class);
+        if ($method === 'bank') {
+            if (!sys_config('training_camp_bank_withdraw_enabled', 0)) {
+                throw new ApiException('银行卡提现暂未开放，请选择微信零钱');
+            }
+            if (!$bankSecurity->isConfigured()) {
+                throw new ApiException('银行卡提现暂未开放，请选择微信零钱');
+            }
+            if (empty($payload['bankConsent'])
+                || (string)($payload['bankConsentVersion'] ?? '') !== $bankSecurity->consentVersion()) {
+                throw new ApiException('请先阅读并单独同意银行卡提现信息处理说明');
+            }
+            $bankDetails = $bankSecurity->validateDetails([
+                'real_name' => (string)($payload['realName'] ?? ''),
+                'bank_code' => (string)($payload['bankCard'] ?? ''),
+                'bank_address' => (string)($payload['bankName'] ?? ''),
+            ]);
+        } else {
+            $bankDetails = [];
+        }
+
+        Db::transaction(function () use ($uid, $amount, $user, $method, $bankDetails, $bankSecurity) {
             Db::name('user')->where('uid', $uid)->lock(true)->find();
-            if (Db::name('user_extract')->where('uid', $uid)->where('status', 0)->find()) {
-                throw new ApiException('已有一笔提现正在审核，请勿重复提交');
+            if (Db::name('user_extract')->where('uid', $uid)->whereIn('status', [0, 2])->find()) {
+                throw new ApiException('已有一笔提现正在处理，请勿重复提交');
             }
 
             /** @var UserExtractServices $extractServices */
             $extractServices = app()->make(UserExtractServices::class);
-            $extractServices->cash($uid, [
-                'extract_type' => 'weixin',
+            $cashData = [
+                'extract_type' => $method,
                 'money' => $amount,
                 'channel_type' => 'routine',
                 'weixin' => '',
                 'user_name' => (string)($user['real_name'] ?? ($user['nickname'] ?? '微信用户')),
                 'qrcode_url' => '',
-            ]);
+            ];
+            if ($method === 'bank') {
+                $cashData['name'] = $bankDetails['real_name'];
+                $cashData['cardnum'] = $bankDetails['bank_code'];
+                $cashData['bankname'] = $bankDetails['bank_address'];
+                $cashData['bank_consent_at'] = time();
+                $cashData['bank_consent_version'] = $bankSecurity->consentVersion();
+            }
+            $extractServices->cash($uid, $cashData);
         });
 
         return $this->getWithdrawalOverview($uid);

@@ -41,6 +41,8 @@ class UserExtract extends BaseModel
     const FAIL_STATUS = -1;
     //已提现
     const SUCCESS_STATUS = 1;
+    //银行卡审核通过，等待财务实际付款
+    const PAYMENT_PENDING_STATUS = 2;
 
     /**
      * 状态
@@ -49,7 +51,8 @@ class UserExtract extends BaseModel
     protected static $status = [
         -1 => '未通过',
         0 => '审核中',
-        1 => '已提现'
+        1 => '已提现',
+        2 => '待付款'
     ];
 
     /**
@@ -92,7 +95,11 @@ class UserExtract extends BaseModel
     public function searchStatusAttr($query, $value)
     {
         if ($value !== '') {
-            $query->where('status', $value);
+            if (is_array($value)) {
+                $query->whereIn('status', $value);
+            } else {
+                $query->where('status', $value);
+            }
         }
     }
 
@@ -105,7 +112,7 @@ class UserExtract extends BaseModel
     {
         if ($value) {
             $query->where(function ($query) use ($value) {
-                $query->where('real_name|id|bank_code|alipay_code', 'LIKE', "%$value%")->whereOr('uid', 'in', function ($query) use ($value) {
+                $query->where('real_name|id|bank_code|bank_code_last4|alipay_code', 'LIKE', "%$value%")->whereOr('uid', 'in', function ($query) use ($value) {
                     $query->name('user')->whereLike('nickname', '%' . $value . '%')->field('uid')->select();
                 });
             });

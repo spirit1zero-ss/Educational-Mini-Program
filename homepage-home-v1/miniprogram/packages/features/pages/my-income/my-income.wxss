@@ -153,6 +153,8 @@
 .withdraw-dialog {
   box-sizing: border-box;
   width: 100%;
+  max-height: 92vh;
+  overflow-y: auto;
   padding: 38rpx 34rpx calc(34rpx + env(safe-area-inset-bottom));
   border-radius: 34rpx 34rpx 0 0;
   background: #fff;
@@ -160,6 +162,49 @@
 
 .withdraw-title { color: #173c2f; font-size: 34rpx; font-weight: 800; }
 .withdraw-tip { margin-top: 12rpx; color: #7a8c83; font-size: 24rpx; }
+.withdraw-methods { display: flex; gap: 16rpx; margin-top: 26rpx; }
+.withdraw-method {
+  flex: 1;
+  padding: 20rpx;
+  border: 2rpx solid #dce8e0;
+  border-radius: 20rpx;
+  background: #f8fbf9;
+}
+.withdraw-method--active { border-color: #178353; background: #f0faf4; box-shadow: 0 8rpx 22rpx rgba(23, 131, 83, 0.1); }
+.withdraw-method--disabled { opacity: 0.48; }
+.withdraw-method-name { color: #173c2f; font-size: 27rpx; font-weight: 800; }
+.withdraw-method-desc { margin-top: 6rpx; color: #7a8c83; font-size: 20rpx; line-height: 1.45; }
+.bank-guide {
+  margin-top: 22rpx;
+  padding: 22rpx 24rpx;
+  border: 1rpx solid #d9eadf;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #f4fbf6, #fbfaf3);
+}
+.bank-guide-title { color: #173c2f; font-size: 26rpx; font-weight: 800; }
+.bank-guide-line { margin-top: 9rpx; color: #526a5e; font-size: 22rpx; line-height: 1.55; }
+.bank-guide-safe { margin-top: 14rpx; color: #178353; font-size: 21rpx; font-weight: 700; line-height: 1.5; }
+.bank-fields { margin-top: 12rpx; }
+.bank-field { display: flex; align-items: center; min-height: 86rpx; border-bottom: 1rpx solid #e5ece8; }
+.bank-field-label { width: 150rpx; color: #43594e; font-size: 24rpx; font-weight: 700; }
+.bank-field-input { flex: 1; height: 68rpx; color: #173c2f; font-size: 25rpx; text-align: right; }
+.bank-consent { display: flex; align-items: flex-start; gap: 14rpx; margin-top: 22rpx; }
+.bank-consent-check {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34rpx;
+  height: 34rpx;
+  margin-top: 4rpx;
+  border: 2rpx solid #a7b9af;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 22rpx;
+}
+.bank-consent-check--active { border-color: #178353; background: #178353; }
+.bank-consent-text { flex: 1; color: #718078; font-size: 21rpx; line-height: 1.55; }
+.bank-consent-link { color: #178353; font-weight: 700; }
 .withdraw-input-row { display: flex; align-items: center; margin-top: 30rpx; padding: 20rpx 0; border-bottom: 2rpx solid #dfe9e2; }
 .withdraw-currency { margin-right: 16rpx; color: #1d6048; font-size: 46rpx; font-weight: 800; }
 .withdraw-input { flex: 1; height: 64rpx; color: #173c2f; font-size: 46rpx; font-weight: 800; }

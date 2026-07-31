@@ -137,6 +137,27 @@ export function adoptApi(id, data) {
 }
 
 /**
+ * @description 银行卡提现 -- 按需查看完整收款资料
+ */
+export function bankDetailsApi(id) {
+  return request({
+    url: `finance/extract/bank-details/${id}`,
+    method: 'get',
+  });
+}
+
+/**
+ * @description 银行卡提现 -- 财务确认线下转账到账
+ */
+export function confirmBankPaymentApi(id, data) {
+  return request({
+    url: `finance/extract/bank-paid/${id}`,
+    method: 'put',
+    data,
+  });
+}
+
+/**
  * @description 充值记录 -- 列表
  * @param {Object} param data {Object} 充值记录传值
  */

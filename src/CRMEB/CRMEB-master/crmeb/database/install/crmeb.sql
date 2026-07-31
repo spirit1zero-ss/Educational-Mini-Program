@@ -34028,7 +34028,8 @@ INSERT INTO `eb_system_config` (`id`, `menu_name`, `type`, `input_type`, `config
 (489, 'alipay_sign_type', 'radio', 'input', 63, '0=>密钥\n1=>证书', 1, '', 0, 0, '0', '接口加签类型', '接口加签类型：密钥或证书', 80, 1, 0, 0, 0),
 (490, 'image_thumb_status', 'radio', 'input', 31, '1=>开启\n0=>关闭', 1, '', 0, 0, '0', '缩略图开关', '是否开启缩略图', 0, 1, 0, 0, 0),
 (491, 'miniapp_withdraw_start_day', 'text', 'number', 74, '', 1, 'required:true,number:true,min:1,max:31', 100, 0, '\"1\"', '提现开放开始日', '小程序用户每月可提交提现申请的开始日期，管理员审核不受此日期限制', 12, 1, 0, 0, 0),
-(492, 'miniapp_withdraw_end_day', 'text', 'number', 74, '', 1, 'required:true,number:true,min:1,max:31', 100, 0, '\"7\"', '提现开放结束日', '小程序用户每月可提交提现申请的结束日期，管理员审核不受此日期限制', 11, 1, 0, 0, 0);
+(492, 'miniapp_withdraw_end_day', 'text', 'number', 74, '', 1, 'required:true,number:true,min:1,max:31', 100, 0, '\"7\"', '提现开放结束日', '小程序用户每月可提交提现申请的结束日期，管理员审核不受此日期限制', 11, 1, 0, 0, 0),
+(493, 'training_camp_bank_withdraw_enabled', 'radio', 'input', 74, '1=>开启\n0=>关闭', 1, '', 0, 0, '\"0\"', '银行卡人工提现', '控制小程序是否显示并允许银行卡人工提现；默认关闭，关闭不影响已有申请和历史记录', 10, 1, 0, 0, 0);
 -- --------------------------------------------------------
 
 --
@@ -51960,6 +51961,10 @@ CREATE TABLE IF NOT EXISTS `eb_user_extract` (
   `extract_type` varchar(32) NOT NULL DEFAULT 'bank' COMMENT 'bank = 银行卡 alipay = 支付宝wx=微信',
   `bank_code` varchar(32) NOT NULL DEFAULT '0' COMMENT '银行卡',
   `bank_address` varchar(256) NOT NULL DEFAULT '' COMMENT '开户地址',
+  `bank_secure_payload` text NULL COMMENT '银行卡收款资料AES-256-GCM密文',
+  `bank_code_last4` char(4) NOT NULL DEFAULT '' COMMENT '银行卡尾号，仅用于脱敏展示',
+  `bank_consent_at` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '用户单独授权银行卡资料处理时间',
+  `bank_consent_version` varchar(32) NOT NULL DEFAULT '' COMMENT '银行卡资料授权文案版本',
   `alipay_code` varchar(64) NOT NULL DEFAULT '' COMMENT '支付宝账号',
   `extract_price` decimal(12,2) UNSIGNED NOT NULL DEFAULT '0.00' COMMENT '提现金额',
   `extract_fee` decimal(12,2) UNSIGNED NOT NULL DEFAULT '0.00' COMMENT '提现手续费',
@@ -51968,7 +51973,7 @@ CREATE TABLE IF NOT EXISTS `eb_user_extract` (
   `fail_msg` varchar(128) NOT NULL DEFAULT '' COMMENT '无效原因',
   `fail_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '无效时间',
   `add_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '添加时间',
-  `status` tinyint(2) NOT NULL DEFAULT '0' COMMENT '-1 未通过 0 审核中 1 已提现',
+  `status` tinyint(2) NOT NULL DEFAULT '0' COMMENT '-1 未通过 0 审核中 1 已提现 2 银行卡待付款',
   `wechat` varchar(50) NOT NULL DEFAULT '' COMMENT '微信号',
   `qrcode_url` varchar(255) NOT NULL DEFAULT '' COMMENT '二维码地址',
   `channel_type` VARCHAR(32) NOT NULL DEFAULT '' COMMENT '提现来源',
@@ -51977,6 +51982,12 @@ CREATE TABLE IF NOT EXISTS `eb_user_extract` (
   `state` varchar(32) NOT NULL DEFAULT '' COMMENT '单据状态',
   `package_info` varchar(2000) NOT NULL DEFAULT '' COMMENT '跳转领取页面的package信息',
   `fail_reason` varchar(255) NOT NULL DEFAULT '' COMMENT '失败原因',
+  `reviewed_at` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '后台审核通过时间',
+  `reviewed_admin_id` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '审核管理员ID',
+  `payout_reference` varchar(96) NOT NULL DEFAULT '' COMMENT '银行付款流水号',
+  `payout_proof` varchar(255) NOT NULL DEFAULT '' COMMENT '银行付款凭证图片',
+  `payout_time` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '确认银行付款时间',
+  `payout_admin_id` int(10) UNSIGNED NOT NULL DEFAULT '0' COMMENT '确认付款管理员ID',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `extract_type` (`extract_type`) USING BTREE,
   KEY `status` (`status`) USING BTREE,
