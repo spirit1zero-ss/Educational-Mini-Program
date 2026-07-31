@@ -166,6 +166,9 @@ export default {
           integral = 'marketing/integral_config/edit_basics',
           sms = 'serve/sms_config/edit_basics',
           config = 'setting/config/edit_basics';
+        const isSystemConfig =
+          ['setting_setSystem', 'setting_setApp'].includes(this.$route.name) ||
+          this.$route.path.indexOf('/setting/system_config') === 0;
         let url =
           this.$route.name === 'setting_logistics'
             ? logistics
@@ -173,7 +176,7 @@ export default {
             ? agent
             : this.$route.name === 'setting_message'
             ? sms
-            : ['setting_setSystem', 'setting_setApp'].includes(this.$route.name)
+            : isSystemConfig
             ? config
             : integral;
         dataFromApi(data, url)
