@@ -99,7 +99,7 @@
 - 当用户询问是否可以正式上线时，应同时读取 Obsidian 的 `20_Projects/当前项目/上线前提醒.md`。
 # 银行卡提现（2026-07-31 新增）
 
-- 先导入 `crmeb/database/patches/2026-07-31-bank-withdrawal.sql`。
+- 先导入 `crmeb/database/patches/2026-07-31-withdrawal-and-payment-settings.sql`。
 - 在云托管密钥环境变量中配置 `PHP_SECURITY_BANK_DATA_KEY`，至少 32 个随机字符。
 - `training_camp_bank_withdraw_enabled` 默认保持关闭；完成财务流程测试后再主动开启。
 - 不要把安全密钥写入代码、数据库、截图或聊天记录；未配置时保持银行卡提现关闭。
