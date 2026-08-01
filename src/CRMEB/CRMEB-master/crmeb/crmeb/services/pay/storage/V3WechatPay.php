@@ -16,6 +16,7 @@ use app\services\system\SystemPemServices;
 use crmeb\exceptions\PayException;
 use crmeb\services\app\MiniProgramService;
 use crmeb\services\easywechat\Application;
+use crmeb\services\easywechat\v3pay\OfficialTransferClient;
 use crmeb\services\pay\BasePay;
 use crmeb\services\pay\PayInterface;
 use EasyWeChat\Payment\Order;
@@ -35,6 +36,11 @@ class V3WechatPay extends BasePay implements PayInterface
      * @var Application
      */
     protected $instance;
+
+    /**
+     * @var OfficialTransferClient
+     */
+    protected $transferClient;
 
     /**
      * @param array $config
@@ -78,6 +84,7 @@ class V3WechatPay extends BasePay implements PayInterface
         }
 
         $this->instance = new Application($config);
+        $this->transferClient = new OfficialTransferClient($config);
     }
 
     /**
@@ -178,7 +185,7 @@ class V3WechatPay extends BasePay implements PayInterface
 
     public function merchantPayNew($type, $order_id, $transfer_scene_id, $openid, $user_name, $transfer_amount, $transfer_remark, $notify_url, $user_recv_perception, $transfer_scene_report_infos)
     {
-        return $this->instance->v3pay->setType($type)->transferBills(
+        return $this->transferClient->setType($type)->transferBills(
             $order_id,
             $transfer_scene_id,
             $openid,
@@ -193,7 +200,7 @@ class V3WechatPay extends BasePay implements PayInterface
 
     public function queryTransferBills($order_id)
     {
-        return $this->instance->v3pay->queryTransferBills((string)$order_id);
+        return $this->transferClient->queryTransferBills((string)$order_id);
     }
 
     /**
@@ -245,7 +252,7 @@ class V3WechatPay extends BasePay implements PayInterface
 
     public function handleTransferNotify()
     {
-        return $this->instance->v3pay->handleTransferNotify(function ($notify, $successful) {
+        return $this->transferClient->handleTransferNotify(function ($notify, $successful) {
             if ($successful) {
                 $data = [
                     'out_bill_no' => $notify->out_bill_no,

@@ -327,7 +327,7 @@ class PayClient extends BaseClient
         if ($appid === '') {
             throw new PayException('暂时只支持微信用户、小程序用户、APP微信登录用户提现');
         }
-        if ($transfer_amount > 200000) {
+        if ($transfer_amount >= 200000) {
             if ($user_name === '') {
                 throw new PayException('金额大于等于2000时，收款人姓名必须填写');
             }

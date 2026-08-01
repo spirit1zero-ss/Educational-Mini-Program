@@ -114,6 +114,6 @@ class PayController
 
     public function transferNotify()
     {
-        return app()->make(Pay::class, ['v3_wechat_pay'])->handleTransferNotify()->getContent();
+        return app()->make(Pay::class, ['v3_wechat_pay'])->handleTransferNotify();
     }
 }
