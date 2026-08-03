@@ -4,12 +4,13 @@ import { readFile } from 'node:fs/promises'
 const root = new URL('../', import.meta.url)
 const read = (path) => readFile(new URL(path, root), 'utf8')
 
-const [composer, client, storage, controller, legacyClient] = await Promise.all([
+const [composer, client, storage, controller, legacyClient, settingsController] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/composer.json'),
   read('src/CRMEB/CRMEB-master/crmeb/crmeb/services/easywechat/v3pay/OfficialTransferClient.php'),
   read('src/CRMEB/CRMEB-master/crmeb/crmeb/services/pay/storage/V3WechatPay.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/api/controller/v1/PayController.php'),
   read('src/CRMEB/CRMEB-master/crmeb/crmeb/services/easywechat/v3pay/PayClient.php'),
+  read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/controller/v1/setting/SystemConfig.php'),
 ])
 
 const dependencies = JSON.parse(composer).require
@@ -51,5 +52,8 @@ assert.doesNotMatch(
   /handleTransferNotify\(\)->getContent\(\)/,
   'the callback HTTP status and headers must not be flattened into a string',
 )
+assert.match(settingsController, /'v3_pay_public_pem'\s*=>\s*'public_key'/)
+assert.match(settingsController, /\$systemPemServices->savePem\(\[/)
+assert.match(settingsController, /\$systemPemServices->getPemPath\(\$name\)/)
 
 console.log('official WeChat transfer SDK contract checks passed')

@@ -413,22 +413,39 @@ class SystemConfig extends AuthController
         if (isset($post['yue_pay_status']) && $post['yue_pay_status'] == 1) {
             $post['balance_func_status'] = 1;
         }
-        if (isset($post['pay_weixin_client_cert'])) {
-            $certData = [
+        $wechatPemFiles = [
+            'pay_weixin_client_cert' => 'cert',
+            'pay_weixin_client_key' => 'key',
+            'v3_pay_public_pem' => 'public_key',
+        ];
+        $systemPemServices = app()->make(SystemPemServices::class);
+        foreach ($wechatPemFiles as $name => $pathPrefix) {
+            if (!array_key_exists($name, $post)) {
+                continue;
+            }
+
+            $configuredPath = trim((string)$post[$name]);
+            $content = '';
+            if ($configuredPath !== '') {
+                $sourcePath = $this->getPemPath($configuredPath);
+                if (!is_file($sourcePath) || !is_readable($sourcePath)) {
+                    $sourcePath = $systemPemServices->getPemPath($name);
+                }
+                if (!is_file($sourcePath) || !is_readable($sourcePath)) {
+                    return app('json')->fail('微信支付证书文件不存在，请重新上传');
+                }
+                $content = file_get_contents($sourcePath);
+                if ($content === false || trim($content) === '') {
+                    return app('json')->fail('微信支付证书文件内容为空，请重新上传');
+                }
+            }
+
+            $systemPemServices->savePem([
                 'type' => 'wechat',
-                'name' => 'pay_weixin_client_cert',
-                'path' => 'cert' . time() . rand(1000, 9999),
-                'content' => $post['pay_weixin_client_cert'] != '' ? file_get_contents($this->getPemPath($post['pay_weixin_client_cert'])) : '',
-            ];
-            $keyData = [
-                'type' => 'wechat',
-                'name' => 'pay_weixin_client_key',
-                'path' => 'key' . time() . rand(1000, 9999),
-                'content' => $post['pay_weixin_client_key'] != '' ? file_get_contents($this->getPemPath($post['pay_weixin_client_key'])) : '',
-            ];
-            $systemPemServices = app()->make(SystemPemServices::class);
-            $systemPemServices->savePem($certData);
-            $systemPemServices->savePem($keyData);
+                'name' => $name,
+                'path' => $pathPrefix . time() . rand(1000, 9999),
+                'content' => $content,
+            ]);
         }
 
         if (isset($post['merchant_cert_path'])) {
