@@ -9,7 +9,6 @@
 // | Author: CRMEB Team <admin@crmeb.com>
 // +----------------------------------------------------------------------
 use think\facade\Route;
-use think\facade\Config;
 use think\Response;
 use app\http\middleware\AllowOriginMiddleware;
 
@@ -55,10 +54,7 @@ Route::group(function () {
  * miss 路由
  */
 Route::miss(function () {
-    if (app()->request->isOptions()) {
-        $header = Config::get('cookie.header');
-        $header['Access-Control-Allow-Origin'] = app()->request->header('origin');
-        return Response::create('ok')->code(200)->header($header);
-    } else
+    return (new AllowOriginMiddleware())->handle(app()->request, function () {
         return Response::create()->code(404);
+    });
 });

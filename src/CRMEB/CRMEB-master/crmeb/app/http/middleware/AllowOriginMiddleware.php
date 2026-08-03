@@ -24,13 +24,6 @@ use think\Response;
  */
 class AllowOriginMiddleware implements MiddlewareInterface
 {
-
-    /**
-     * 允许跨域的域名
-     * @var string
-     */
-    protected $cookieDomain;
-
     /**
      * @param Request $request
      * @param \Closure $next
@@ -38,12 +31,17 @@ class AllowOriginMiddleware implements MiddlewareInterface
      */
     public function handle(Request $request, \Closure $next)
     {
-        $this->cookieDomain = Config::get('cookie.domain', '');
-        $header = Config::get('cookie.header');
-        $origin = $request->header('origin');
+        $header = Config::get('cookie.header', []);
+        $origin = trim((string)$request->header('origin', ''));
 
-        if ($origin && ('' == $this->cookieDomain || strpos($origin, $this->cookieDomain)))
+        if ($origin !== '') {
+            if (!$this->isAllowedOrigin($request, $origin)) {
+                return Response::create('Forbidden')->code(403);
+            }
             $header['Access-Control-Allow-Origin'] = $origin;
+            $header['Access-Control-Allow-Credentials'] = 'true';
+            $header['Vary'] = 'Origin';
+        }
         if ($request->method(true) == 'OPTIONS') {
             $response = Response::create('ok')->code(200)->header($header);
         } else {
@@ -51,5 +49,46 @@ class AllowOriginMiddleware implements MiddlewareInterface
         }
 //        $request->filter(['strip_tags', 'addslashes', 'trim']);
         return $response;
+    }
+
+    /**
+     * 浏览器同域请求自动放行，跨域请求只接受环境变量中的完整 Origin。
+     */
+    protected function isAllowedOrigin(Request $request, string $origin): bool
+    {
+        $origin = $this->normalizeOrigin($origin);
+        if ($origin === '') {
+            return false;
+        }
+
+        $requestOrigin = $this->normalizeOrigin((string)$request->domain());
+        if ($requestOrigin !== '' && $origin === $requestOrigin) {
+            return true;
+        }
+
+        $allowedOrigins = Config::get('cookie.cors_allowed_origins', []);
+        foreach ((array)$allowedOrigins as $allowedOrigin) {
+            if ($origin === $this->normalizeOrigin((string)$allowedOrigin)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected function normalizeOrigin(string $origin): string
+    {
+        $parts = parse_url(trim($origin));
+        if (!is_array($parts)
+            || empty($parts['scheme'])
+            || empty($parts['host'])
+            || !in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
+            return '';
+        }
+
+        $normalized = strtolower($parts['scheme']) . '://' . strtolower($parts['host']);
+        if (isset($parts['port'])) {
+            $normalized .= ':' . (int)$parts['port'];
+        }
+        return $normalized;
     }
 }

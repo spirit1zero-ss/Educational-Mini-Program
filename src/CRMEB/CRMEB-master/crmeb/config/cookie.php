@@ -21,6 +21,11 @@
 // +----------------------------------------------------------------------
 // | Cookie设置
 // +----------------------------------------------------------------------
+
+use think\facade\Env;
+
+$corsAllowedOrigins = array_values(array_filter(array_map('trim', explode(',', (string)Env::get('cors.allowed_origins', '')))));
+
 return [
     // cookie 保存时间
     'expire'    => 0,
@@ -29,18 +34,18 @@ return [
     // cookie 有效域名
     'domain'    => '',
     // cookie 启用安全传输
-    'secure'    => false,
+    'secure'    => filter_var(Env::get('cookie.secure', false), FILTER_VALIDATE_BOOLEAN),
     // httponly设置
-    'httponly'  => false,
+    'httponly'  => filter_var(Env::get('cookie.httponly', false), FILTER_VALIDATE_BOOLEAN),
     // 是否使用 setcookie
     'setcookie' => true,
-    // 跨域header
+    // 浏览器跨域白名单，多个完整 Origin 使用英文逗号分隔
+    'cors_allowed_origins' => $corsAllowedOrigins,
+    // 跨域header；Origin 和 Credentials 仅在来源通过校验后动态添加
     'header'    => [
-        'Access-Control-Allow-Origin'       => '*',
         'Access-Control-Allow-Headers'      => 'Authori-zation,Authorization, Content-Type, If-Match, If-Modified-Since, If-None-Match, If-Unmodified-Since, X-Requested-With, Form-type, Cb-lang, Invalid-zation',
         'Access-Control-Allow-Methods'      => 'GET,POST,PATCH,PUT,DELETE,OPTIONS,DELETE',
-        'Access-Control-Max-Age'            =>  '1728000',
-        'Access-Control-Allow-Credentials'  => 'true'
+        'Access-Control-Max-Age'            => '1728000',
     ],
     // token名称
     'token_name' => 'Authori-zation',
