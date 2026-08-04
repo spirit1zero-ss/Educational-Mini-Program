@@ -29456,7 +29456,7 @@ CREATE TABLE IF NOT EXISTS `eb_store_service` (
 --
 
 INSERT INTO `eb_store_service` (`id`, `mer_id`, `uid`, `online`, `account`, `password`, `avatar`, `nickname`, `phone`, `add_time`, `status`, `notify`, `customer`, `uniqid`) VALUES
-(1, 0, 1, 0, '13000000000', '$2y$10$0sJdnsv5WgffssRfdBfir.JEiM5y5CG7Jo9S/VFADNnIWeR5h9uvi', '/statics/system_images/default_avatar.jpeg', 'CRMEB', '13000000000', 1642573891, 1, 1, 1, '');
+(1, 0, 1, 0, '13000000000', '$2y$10$0sJdnsv5WgffssRfdBfir.JEiM5y5CG7Jo9S/VFADNnIWeR5h9uvi', '/statics/system_images/default_avatar.jpeg', '训练营客服', '13000000000', 1642573891, 1, 1, 1, '');
 
 -- --------------------------------------------------------
 
@@ -29601,7 +29601,7 @@ CREATE TABLE IF NOT EXISTS `eb_system_admin` (
 --
 
 INSERT INTO `eb_system_admin` (`id`, `account`, `head_pic`, `pwd`, `real_name`, `roles`, `last_ip`, `last_time`, `add_time`, `login_count`, `level`, `status`, `division_id`, `is_del`) VALUES
-(1, 'admin', '/statics/system_images/admin_head_pic.png', '$2y$10$Nw3c1OStH4mrTCir9P.wB.J7oeUSwMDMQRuW.4qNTyhcADean.YeS', 'CRMEB', '1', '124.116.164.158', 1669195280, 1669194971, 1, 0, 1, 0, 0);
+(1, 'admin', '/statics/system_images/admin_head_pic.png', '$2y$10$Nw3c1OStH4mrTCir9P.wB.J7oeUSwMDMQRuW.4qNTyhcADean.YeS', '管理员', '1', '124.116.164.158', 1669195280, 1669194971, 1, 0, 1, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -33802,7 +33802,7 @@ CREATE TABLE IF NOT EXISTS `eb_system_config` (
 --
 
 INSERT INTO `eb_system_config` (`id`, `menu_name`, `type`, `input_type`, `config_tab_id`, `parameter`, `upload_type`, `required`, `width`, `high`, `value`, `info`, `desc`, `sort`, `status`, `level`, `link_id`, `link_value`) VALUES
-(1, 'site_name', 'text', 'input', 1, '', 1, 'required:true', 100, 0, '\"\"', '网站名称', '后台，PC，H5，页面分享，海报上的网站名称等位置使用', 97, 1, 0, 0, 0),
+(1, 'site_name', 'text', 'input', 1, '', 1, 'required:true', 100, 0, '\"自主学习训练营\"', '网站名称', '后台，PC，H5，页面分享，海报上的网站名称等位置使用', 97, 1, 0, 0, 0),
 (2, 'site_url', 'text', 'input', 1, '', 1, 'required:true,url:true', 100, 0, '\"\"', '网站地址', '系统安装时会自动配置；建议不要轻易修改！更换会影响网站访问、接口请求、本地文件储存、支付回调、微信授权、支付、小程序图片访问、部分二维码、官方授权等', 95, 1, 0, 0, 0),
 (3, 'site_logo', 'upload', 'input', 122, '', 1, '', 0, 0, '\"\\/statics\\/system_images\\/admin_logo_big.png\"', '后台大LOGO', '菜单展开左上角logo,建议尺寸[170*50]', 89, 1, 0, 0, 0),
 (4, 'site_phone', 'text', 'input', 1, '', 0, '', 100, 0, '\"\"', '联系电话', '联系电话', 0, 0, 0, 0, 0),
@@ -51808,7 +51808,7 @@ CREATE TABLE IF NOT EXISTS `eb_user` (
 --
 
 INSERT INTO `eb_user` (`uid`, `account`, `pwd`, `real_name`, `birthday`, `card_id`, `mark`, `partner_id`, `group_id`, `nickname`, `avatar`, `phone`, `add_time`, `add_ip`, `last_time`, `last_ip`, `now_money`, `brokerage_price`, `integral`, `exp`, `sign_num`, `status`, `level`, `agent_level`, `spread_open`, `spread_uid`, `spread_time`, `user_type`, `is_promoter`, `pay_count`, `spread_count`, `clean_time`, `addres`, `adminid`, `login_type`, `record_phone`, `is_money_level`, `is_ever_level`, `overdue_time`, `uniqid`, `division_type`, `division_status`, `is_division`, `is_agent`, `is_staff`, `division_id`, `agent_id`, `staff_id`, `division_percent`, `division_change_time`, `division_end_time`, `division_invite`, `is_del`) VALUES
-(1, '', '96e79218965eb72c92a549dd5a330112', 'CRMEB', 0, '', '', 0, 1, 'CRMEB', '/statics/system_images/default_avatar.jpeg', '13000000000', 1642573867, '', 0, '', '0.00', '0.00', 0, '3000.00', 0, 1, 3, 0, 1, 0, 0, 'h5', 1, 0, 0, 0, '', 0, '', '0', 0, 0, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+(1, '', '96e79218965eb72c92a549dd5a330112', '训练营用户', 0, '', '', 0, 1, '训练营用户', '/statics/system_images/default_avatar.jpeg', '13000000000', 1642573867, '', 0, '', '0.00', '0.00', 0, '3000.00', 0, 1, 3, 0, 1, 0, 0, 'h5', 1, 0, 0, 0, '', 0, '', '0', 0, 0, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
 (2, '', '96e79218965eb72c92a549dd5a330112', '客服', 1664208000, '', '', 0, 0, '客服', '/statics/system_images/default_avatar.jpeg', '15088888888', 1664273171, '', 0, '', '0.00', '0.00', 0, '0.00', 0, 1, 0, 0, 1, 0, 0, 'h5', 1, 0, 0, 0, '', 0, '', '0', 0, 0, 0, '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 -- --------------------------------------------------------

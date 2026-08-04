@@ -93,11 +93,11 @@ const themeConfigModule = {
        * 全局网站标题 / 副标题
        */
       // 网站主标题（菜单导航、浏览器当前网页标题）
-      globalTitle: 'crmeb-admin',
+      globalTitle: '自主学习训练营管理后台',
       // 网站副标题（登录页顶部文字）
-      globalViceTitle: '',
+      globalViceTitle: '自主学习训练营',
       // 网站描述（登录页顶部文字）
-      globalViceDes: 'vue2',
+      globalViceDes: '训练营运营管理',
       // 默认初始语言，可选值"<zh-cn|en|zh-tw>"，默认 zh-cn
       globalI18n: 'zh-cn',
       // 默认全局组件大小，可选值"<|medium|small|mini>"，默认 ''

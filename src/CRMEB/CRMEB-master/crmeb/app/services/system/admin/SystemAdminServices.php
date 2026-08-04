@@ -150,7 +150,7 @@ class SystemAdminServices extends BaseServices
             'newOrderAudioLink' => get_file_link(sys_config('new_order_audio_link', '')),
             'queue' => $queue ?? true,
             'timer' => $timer ?? true,
-            'site_name' => sys_config('site_name'),
+            'site_name' => sys_config('site_name') ?: '自主学习训练营',
             'site_func' => sys_config('model_checkbox', ['seckill', 'bargain', 'combination']),
         ];
     }
@@ -167,7 +167,7 @@ class SystemAdminServices extends BaseServices
             'logo_square' => sys_config('site_logo_square'), //透明
             'logo_rectangle' => sys_config('site_logo'), //方形
             'login_logo' => sys_config('login_logo'), //登陆
-            'site_name' => sys_config('site_name'),
+            'site_name' => sys_config('site_name') ?: '自主学习训练营',
             'copyright' => sys_config('nncnL_crmeb_copyright', ''),
             'version' => get_crmeb_version(),
             'key' => $key,

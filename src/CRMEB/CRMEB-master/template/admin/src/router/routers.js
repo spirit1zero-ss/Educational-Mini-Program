@@ -28,7 +28,7 @@ const frameIn = [
   {
     path: '/',
     meta: {
-      title: 'CRMEB',
+      title: '自主学习训练营管理后台',
     },
     redirect: {
       name: 'home_index',
@@ -73,7 +73,7 @@ const frameIn = [
   {
     path: routePre,
     meta: {
-      title: 'CRMEB',
+      title: '自主学习训练营管理后台',
     },
     redirect: {
       name: 'home_index',

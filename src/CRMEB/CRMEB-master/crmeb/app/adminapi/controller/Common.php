@@ -36,7 +36,7 @@ class Common extends AuthController
         return app('json')->success([
             'logo' => sys_config('site_logo'),
             'logo_square' => sys_config('site_logo_square'),
-            'site_name' => sys_config('site_name')
+            'site_name' => sys_config('site_name') ?: '自主学习训练营'
         ]);
     }
 
