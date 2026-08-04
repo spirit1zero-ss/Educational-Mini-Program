@@ -79,7 +79,7 @@ const retiredMiddleware = fs.readFileSync(
   path.join(adminRoot, 'middleware', 'RetiredAdminApiMiddleware.php'),
   'utf8'
 )
-if (!/admin_api_allow_paths[\s\S]*file\/upload/.test(retiredConfig)) {
+if (!/admin_api_allow_paths[\s\S]*file\/upload[\s\S]*file\/upload\/1/.test(retiredConfig)) {
   throw new Error('Authenticated certificate upload must remain allowlisted')
 }
 const allowCheck = retiredMiddleware.indexOf('$this->isAllowedPath($path)')

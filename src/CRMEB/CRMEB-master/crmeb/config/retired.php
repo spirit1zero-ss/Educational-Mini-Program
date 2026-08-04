@@ -40,6 +40,7 @@ return [
     // These paths pass through role checks and the original upload validation.
     'admin_api_allow_paths' => [
         'file/upload',
+        'file/upload/1',
     ],
 
     // Reversible denylist for retired admin API surfaces. Removing a fragment
