@@ -143,9 +143,9 @@
               <view class="subject-row {{item.className}}" wx:for="{{articleBlocks[6].subjectLines}}" wx:key="key">
                 <view class="subject-key">{{item.key}}</view>
                 <view class="subject-text">{{item.text}}</view>
+                <image class="subject-row-art" src="{{item.illustration}}" mode="aspectFit"></image>
               </view>
             </view>
-            <image class="subject-art" src="{{subjectIllustrations}}" mode="aspectFit"></image>
           </view>
 
           <view class="final-copy" wx:for="{{articleBlocks[6].finalLines}}" wx:key="*this">{{item}}</view>

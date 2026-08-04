@@ -509,6 +509,7 @@
 }
 
 .subject-row {
+  position: relative;
   display: flex;
   align-items: center;
   box-sizing: border-box;
@@ -570,12 +571,13 @@
   color: #df6908;
 }
 
-.subject-art {
+.subject-row-art {
   position: absolute;
-  top: 6rpx;
-  right: 8rpx;
-  width: 132rpx;
-  height: 456rpx;
+  top: 50%;
+  right: 16rpx;
+  width: 120rpx;
+  height: 104rpx;
+  transform: translateY(-50%);
 }
 
 .final-copy {
@@ -713,9 +715,10 @@
     padding-right: 128rpx;
   }
 
-  .subject-art {
-    right: 2rpx;
-    width: 112rpx;
+  .subject-row-art {
+    right: 8rpx;
+    width: 104rpx;
+    height: 92rpx;
   }
 
   .screen-divider {

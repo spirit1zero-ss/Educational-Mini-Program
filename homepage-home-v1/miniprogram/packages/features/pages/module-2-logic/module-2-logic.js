@@ -13,7 +13,6 @@ Page({
     englishFrameImage: "/packages/features/assets/module-2-logic/illustrations/english-frame-v3.png",
     mathIllustration: "/packages/features/assets/module-2-logic/illustrations/math-abacus-v2.png",
     closingIllustration: "/packages/features/assets/module-2-logic/illustrations/closing-window-tree-v2.png",
-    subjectIllustrations: "/packages/features/assets/module-2-logic/illustrations/subject-icons-v2.png",
     articleBlocks: [
       {
         id: "pain",
@@ -143,16 +142,19 @@ Page({
           {
             key: "英",
             className: "subject-pill--english",
+            illustration: "/packages/features/assets/module-2-logic/illustrations/subject-english-v2.png",
             text: "英---本质是练“体商”--- 引领孩子勇于表达，展现自信！"
           },
           {
             key: "数",
             className: "subject-pill--math",
+            illustration: "/packages/features/assets/module-2-logic/illustrations/subject-math-v2.png",
             text: "数---本质是练“智商”--- 引领孩子善于思考，注重逻辑！"
           },
           {
             key: "语",
             className: "subject-pill--chinese",
+            illustration: "/packages/features/assets/module-2-logic/illustrations/subject-chinese-v2.png",
             text: "语---本质是练“情商”--- 引领孩子学会共情，提升认知！"
           }
         ],
