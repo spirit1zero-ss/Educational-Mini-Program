@@ -29,6 +29,9 @@ assert.doesNotMatch(client, /CURLOPT_SSL_VERIFYPEER|CURLOPT_SSL_VERIFYHOST|verif
 
 assert.match(client, /\$transferAmount\s*>=\s*200000/)
 assert.match(client, /Rsa::encrypt\(\(string\)\$userName/)
+assert.match(client, /validateSceneReportInfos\(\$transferSceneReportInfos\)/)
+assert.match(client, /isHttpsUrlWithoutQuery\(\$notifyUrl\)/)
+assert.match(client, /\^\[A-Za-z0-9\]\{1,32\}\$/)
 assert.match(legacyClient, /\$transfer_amount\s*>=\s*200000/)
 
 const timestampCheck = client.indexOf('CALLBACK_MAXIMUM_CLOCK_OFFSET')
@@ -44,6 +47,8 @@ assert.match(client, /return response\('',\s*204\)/)
 assert.match(client, /notifyFailure\('商家转账结果处理失败',\s*500\)/)
 
 assert.match(storage, /new OfficialTransferClient\(\$config\)/)
+assert.match(storage, /Env::get\('miniapp\.app_id',\s*''\)/)
+assert.match(storage, /'appid'\s*=>\s*\$miniProgramAppid/)
 assert.match(storage, /\$this->transferClient->setType\(\$type\)->transferBills\(/)
 assert.match(storage, /\$this->transferClient->queryTransferBills\(/)
 assert.match(storage, /\$this->transferClient->handleTransferNotify\(/)

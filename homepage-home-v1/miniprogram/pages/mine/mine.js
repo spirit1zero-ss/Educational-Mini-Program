@@ -9,6 +9,7 @@ const MEMBER_BENEFITS_PATH = '/packages/features/pages/member-benefits/member-be
 const MEMBER_REGISTRATION_PATH = '/packages/features/pages/member-registration/member-registration'
 const PROFILE_EDITOR_PATH = '/packages/features/pages/profile-editor/profile-editor'
 const REFERRAL_RULES_PATH = '/packages/features/pages/referral-rules/referral-rules'
+const AUTH_CONSENT_PATH = '/packages/features/pages/auth-consent/auth-consent'
 const OFFLINE_PATH = '/pages/offline/offline'
 const {
   getMineOverview,
@@ -139,9 +140,32 @@ Page({
   },
 
   onShow() {
-    if (this.data.navStyle && hasAuthToken()) {
+    if (!hasAuthToken()) {
+      this.resetLoggedOutState()
+      return
+    }
+
+    if (this.data.navStyle) {
       this.loadMineOverview({ silent: true })
     }
+  },
+
+  resetLoggedOutState() {
+    this.setData({
+      isMember: false,
+      registrationCompleted: false,
+      registrationCanOpen: false,
+      memberStatusText: '当前未开通会员',
+      memberUid: '',
+      benefitText: '报名后开通会员权益',
+      posterCtaText: '开通后生成推广海报',
+      referralIdentity: null,
+      stats: [
+        { key: 'invited', value: '0人', label: '分销拉新人数' },
+        { key: 'reward', value: '0元', label: '总收入' },
+        { key: 'withdraw', value: '0元', label: '已提现' }
+      ]
+    })
   },
 
   setNavigationMetrics() {
@@ -468,6 +492,13 @@ Page({
           icon: 'none'
         })
       })
+  },
+
+  onOpenLegalCenter() {
+    wx.navigateTo({
+      url: `${AUTH_CONSENT_PATH}?mode=settings`,
+      fail: () => this.showComingSoon('用户协议与隐私')
+    })
   },
 
   onTabTap(e) {

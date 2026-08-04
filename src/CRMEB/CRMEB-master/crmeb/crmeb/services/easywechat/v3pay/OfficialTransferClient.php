@@ -51,28 +51,47 @@ class OfficialTransferClient
     public function transferBills($orderId, $transferSceneId, $openid, $userName, $transferAmount, $transferRemark, $notifyUrl, $userRecvPerception, $transferSceneReportInfos)
     {
         $appid = $this->resolveAppid();
+        $orderId = trim((string)$orderId);
+        $openid = trim((string)$openid);
+        $transferSceneId = trim((string)$transferSceneId);
+        $transferRemark = trim((string)$transferRemark);
+        $notifyUrl = trim((string)$notifyUrl);
+        $transferSceneReportInfos = array_values((array)$transferSceneReportInfos);
         $transferAmount = (int)$transferAmount;
 
-        if (trim((string)$orderId) === '' || trim((string)$openid) === '') {
+        if ($orderId === '' || $openid === '') {
             throw new PayException('商家转账缺少商户单号或用户 OpenID');
+        }
+        if (!preg_match('/^[A-Za-z0-9]{1,32}$/', $orderId)) {
+            throw new PayException('商家转账单号只能包含数字和大小写字母，且不能超过 32 个字符');
+        }
+        if ($transferSceneId === '' || strlen($transferSceneId) > 36) {
+            throw new PayException('请配置有效的商家转账场景 ID');
         }
         if ($transferAmount <= 0) {
             throw new PayException('商家转账金额必须大于 0');
         }
+        if ($transferRemark === '' || mb_strlen($transferRemark, 'UTF-8') > 32) {
+            throw new PayException('商家转账备注不能为空，且不能超过 32 个字符');
+        }
+        if ($notifyUrl !== '' && (!$this->isHttpsUrlWithoutQuery($notifyUrl))) {
+            throw new PayException('商家转账通知地址必须是无参数的公网 HTTPS 地址');
+        }
+        $this->validateSceneReportInfos($transferSceneReportInfos);
         if ($transferAmount >= 200000 && trim((string)$userName) === '') {
             throw new PayException('转账金额大于等于 2000 元时，必须填写收款人姓名');
         }
 
         $data = [
             'appid' => $appid,
-            'out_bill_no' => (string)$orderId,
-            'transfer_scene_id' => (string)$transferSceneId,
-            'openid' => (string)$openid,
+            'out_bill_no' => $orderId,
+            'transfer_scene_id' => $transferSceneId,
+            'openid' => $openid,
             'transfer_amount' => $transferAmount,
-            'transfer_remark' => (string)$transferRemark,
-            'notify_url' => (string)$notifyUrl,
+            'transfer_remark' => $transferRemark,
+            'notify_url' => $notifyUrl,
             'user_recv_perception' => (string)$userRecvPerception,
-            'transfer_scene_report_infos' => (array)$transferSceneReportInfos,
+            'transfer_scene_report_infos' => $transferSceneReportInfos,
         ];
 
         if ($transferAmount >= 200000) {
@@ -251,6 +270,30 @@ class OfficialTransferClient
             throw new PayException('微信支付 APIv3 密钥必须为 32 个字符');
         }
         return $key;
+    }
+
+    protected function validateSceneReportInfos(array $reportInfos): void
+    {
+        if ($reportInfos === []) {
+            throw new PayException('商家转账场景报备信息不能为空');
+        }
+        foreach ($reportInfos as $reportInfo) {
+            $infoType = trim((string)($reportInfo['info_type'] ?? ''));
+            $infoContent = trim((string)($reportInfo['info_content'] ?? ''));
+            if ($infoType === '' || mb_strlen($infoType, 'UTF-8') > 15) {
+                throw new PayException('商家转账报备信息类型不能为空，且不能超过 15 个字符');
+            }
+            if ($infoContent === '' || mb_strlen($infoContent, 'UTF-8') > 32) {
+                throw new PayException('商家转账报备信息内容不能为空，且不能超过 32 个字符');
+            }
+        }
+    }
+
+    protected function isHttpsUrlWithoutQuery(string $url): bool
+    {
+        return filter_var($url, FILTER_VALIDATE_URL) !== false
+            && strtolower((string)parse_url($url, PHP_URL_SCHEME)) === 'https'
+            && parse_url($url, PHP_URL_QUERY) === null;
     }
 
     protected function resolveAppid(): string

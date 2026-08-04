@@ -33,6 +33,27 @@ INSERT INTO `eb_agent_level` (`id`, `name`, `image`, `one_brokerage`, `one_broke
 -- --------------------------------------------------------
 
 --
+-- 表的结构 `eb_miniapp_user_consent`
+--
+
+CREATE TABLE IF NOT EXISTS `eb_miniapp_user_consent` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT 'consent record id',
+  `uid` int unsigned NOT NULL DEFAULT '0' COMMENT 'local user id',
+  `agreement_type` varchar(32) NOT NULL DEFAULT 'login_bundle' COMMENT 'accepted agreement bundle',
+  `agreement_version` varchar(64) NOT NULL DEFAULT '' COMMENT 'frontend agreement version',
+  `privacy_contract_name` varchar(128) NOT NULL DEFAULT '' COMMENT 'wechat privacy contract name shown to user',
+  `source` varchar(32) NOT NULL DEFAULT 'miniapp_login' COMMENT 'consent source',
+  `agreed_at` int unsigned NOT NULL DEFAULT '0' COMMENT 'authoritative server consent time',
+  `add_time` int unsigned NOT NULL DEFAULT '0',
+  `update_time` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_user_consent_version` (`uid`, `agreement_type`, `agreement_version`),
+  KEY `idx_user_consent_time` (`uid`, `agreed_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='miniapp user agreement consent records';
+
+-- --------------------------------------------------------
+
+--
 -- 表的结构 `eb_agent_level_task`
 --
 
@@ -34017,9 +34038,9 @@ INSERT INTO `eb_system_config` (`id`, `menu_name`, `type`, `input_type`, `config
 (478, 'product_type_config', 'checkbox', 'input', 136, '0=>普通商品\n1=>卡密/网盘\n2=>优惠券\n3=>虚拟商品', 1, '', 0, 0, '[\"0\",\"1\",\"2\",\"3\"]', '商品类型配置', '商品类型配置，可以配置添加商品时可选择的商品类型', 1, 1, 0, 0, 0),
 (479, 'weixin_extract_type', 'radio', 'input', 74, '0=>手动线下转账\n1=>自动转账到零钱', 1, '', 0, 0, '0', '微信提现', '微信提现方式：手动线下转账，自动转账到零钱(需开通商家转账到零钱)', 7, 1, 0, 0, 0),
 (480, 'alipay_extract_type', 'radio', 'input', 74, '0=>手动线下转账\n1=>自动转账到余额', 1, '', 0, 0, '0', '支付宝提现', '支付宝提现方式：手动线下转账，自动转账到余额(需开通支付宝转账)', 6, 1, 0, 0, 0),
-(481, 'v3_pay_public_key', 'text', 'input', 4, '', 1, '', 100, 0, '\"\"', 'v3支付公钥', 'v3支付公钥，新版本使用公钥请填写', 0, 1, 0, 0, 0),
-(482, 'v3_pay_public_pem', 'upload', 'input', 4, '', 3, '', 0, 0, '\"\"', 'v3支付公钥证书', 'v3支付公钥证书，使用新版本支付公钥上传此证书', 0, 1, 0, 0, 0),
-(483, 'v3_transfer_scene_id', 'text', 'input', '4', '', '1', '', '0', '0', '\"1000\"', '微信自动提现场景值', '微信自动提现场景值', 0, 1, 0, 0, 0),
+(481, 'v3_pay_public_key', 'text', 'input', 4, '', 1, '', 100, 0, '\"\"', '微信支付公钥ID', '填写商户平台中的微信支付公钥ID，通常以PUB_KEY_ID_开头', 0, 1, 0, 0, 0),
+(482, 'v3_pay_public_pem', 'upload', 'input', 4, '', 3, '', 0, 0, '\"\"', '微信支付公钥文件', '上传与微信支付公钥ID对应的wxp_pub.pem文件', 0, 1, 0, 0, 0),
+(483, 'v3_transfer_scene_id', 'text', 'input', '4', '', '1', '', '100', '0', '\"1000\"', '商家转账场景ID', '填写商户平台已获批的transfer_scene_id；训练营支持1000现金营销或1005佣金报酬', 0, 1, 0, 0, 0),
 (484, 'custom_admin_js', 'textarea', 'input', 123, '', 1, '', 100, 10, '\"\"', '管理端自定义JS', '在管理端加载的自定义JS', 0, 1, 0, 0, 0),
 (485, 'custom_pc_js', 'textarea', 'input', 123, '', 1, '', 100, 10, '\"\"', 'PC端自定义JS', '在PC端加载的自定义JS', 0, 1, 0, 0, 0),
 (486, 'merchant_cert_path', 'upload', 'input', 63, '', 3, '', 0, 0, '\"\"', '应用公钥证书', '支付宝接口加签完成之后下载的应用公钥证书', 0, 1, 1, 489, 1),

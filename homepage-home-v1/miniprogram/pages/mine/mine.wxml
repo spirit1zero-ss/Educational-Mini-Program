@@ -81,6 +81,15 @@
           </view>
         </block>
       </view>
+
+      <view class="legal-center-entry" bindtap="onOpenLegalCenter">
+        <view class="legal-center-mark">隐</view>
+        <view class="legal-center-copy">
+          <view class="legal-center-title">用户协议与隐私</view>
+          <view class="legal-center-desc">查看协议、隐私保护指引和授权状态</view>
+        </view>
+        <view class="legal-center-arrow">›</view>
+      </view>
     </view>
   </scroll-view>
 

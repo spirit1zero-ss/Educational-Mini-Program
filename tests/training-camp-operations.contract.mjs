@@ -103,13 +103,15 @@ assert.doesNotMatch(
   /weixin_extract_type/
 )
 assert.match(userExtractService, /v3_transfer_scene_id', '1000'/)
+assert.match(userExtractService, /Env::get\('miniapp\.app_id',\s*''\)/)
+assert.match(userExtractService, /微信支付公钥 ID/)
 assert.match(userExtractService, /'现金奖励'/)
 assert.match(userExtractService, /'info_type'\s*=>\s*'活动名称'/)
 assert.match(userExtractService, /'info_type'\s*=>\s*'奖励说明'/)
-assert.doesNotMatch(
-  userExtractService.slice(userExtractService.indexOf('public function changeSuccess'), userExtractService.indexOf("if (sys_config('alipay_extract_type")),
-  /'劳务报酬'|'岗位类型'|'报酬说明'/
-)
+assert.match(userExtractService, /\$transferSceneId\s*===\s*'1005'/)
+assert.match(userExtractService, /'劳务报酬'/)
+assert.match(userExtractService, /'info_type'\s*=>\s*'岗位类型'/)
+assert.match(userExtractService, /'info_type'\s*=>\s*'报酬说明'/)
 assert.match(userExtractService, /function syncMerchantTransfer/)
 assert.match(userExtractService, /queryTransferBills/)
 assert.match(payClient, /商家转账查询失败/)

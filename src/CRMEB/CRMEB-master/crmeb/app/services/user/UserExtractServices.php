@@ -28,6 +28,7 @@ use crmeb\services\pay\Pay;
 use crmeb\services\workerman\ChannelService;
 use EasyWeChat\Payment\Order;
 use think\exception\ValidateException;
+use think\facade\Env;
 use think\facade\Route as Url;
 use think\facade\Db;
 
@@ -299,13 +300,19 @@ class UserExtractServices extends BaseServices
                 throw new AdminException('请先启用微信支付 V3，训练营提现不支持旧版企业付款接口');
             }
             if (trim((string)sys_config('v3_pay_public_key', '')) === '') {
-                throw new AdminException('请先配置微信支付平台证书，才能发起商家转账');
+                throw new AdminException('请先配置微信支付公钥 ID，才能发起商家转账');
             }
             if (trim((string)sys_config('pay_weixin_mchid', '')) === '') {
                 throw new AdminException('请先配置微信支付商户号');
             }
-            if ($type === 'mini' && trim((string)sys_config('routine_appId', '')) === '') {
-                throw new AdminException('请先配置微信小程序 AppID');
+            if ($type === 'mini') {
+                $miniProgramAppid = trim((string)Env::get('miniapp.app_id', ''));
+                if ($miniProgramAppid === '') {
+                    $miniProgramAppid = trim((string)sys_config('routine_appId', ''));
+                }
+                if ($miniProgramAppid === '') {
+                    throw new AdminException('请先配置 PHP_MINIAPP_APP_ID 或后台微信小程序 AppID');
+                }
             }
             $siteUrl = rtrim(trim((string)sys_config('site_url', '')), '/');
             if (!filter_var($siteUrl, FILTER_VALIDATE_URL)
@@ -313,27 +320,35 @@ class UserExtractServices extends BaseServices
                 throw new AdminException('请先配置可公网访问的 HTTPS 站点地址，供微信回调转账结果');
             }
 
+            $transferSceneId = trim((string)sys_config('v3_transfer_scene_id', '1000'));
+            if ($transferSceneId === '1000') {
+                $userRecvPerception = '现金奖励';
+                $transferSceneReportInfos = [
+                    ['info_type' => '活动名称', 'info_content' => '21天训练营推广活动'],
+                    ['info_type' => '奖励说明', 'info_content' => '训练营推广奖励提现'],
+                ];
+            } elseif ($transferSceneId === '1005') {
+                $userRecvPerception = '劳务报酬';
+                $transferSceneReportInfos = [
+                    ['info_type' => '岗位类型', 'info_content' => '训练营推广员'],
+                    ['info_type' => '报酬说明', 'info_content' => '训练营推广佣金'],
+                ];
+            } else {
+                throw new AdminException('训练营推广奖励仅支持现金营销场景 1000 或佣金报酬场景 1005');
+            }
+
             $pay = new Pay('v3_wechat_pay');
             $res = $pay->merchantPayNew(
                 $type,
                 $order_id,
-                sys_config('v3_transfer_scene_id', '1000'),
+                $transferSceneId,
                 $openid,
                 $userExtract['real_name'],
                 bcmul($extractNumber, '100', 0),
                 '训练营推广奖励提现',
                 $siteUrl . '/api/transfer/notify/' . $type,
-                '现金奖励',
-                [
-                    [
-                        'info_type' => '活动名称',
-                        'info_content' => '21天训练营推广活动'
-                    ],
-                    [
-                        'info_type' => '奖励说明',
-                        'info_content' => '训练营推广奖励提现'
-                    ],
-                ]
+                $userRecvPerception,
+                $transferSceneReportInfos
             );
             $this->dao->update($id, [
                 'out_bill_no' => $res['out_bill_no'] ?? '',

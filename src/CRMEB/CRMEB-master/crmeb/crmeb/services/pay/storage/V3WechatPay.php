@@ -20,6 +20,7 @@ use crmeb\services\easywechat\v3pay\OfficialTransferClient;
 use crmeb\services\pay\BasePay;
 use crmeb\services\pay\PayInterface;
 use EasyWeChat\Payment\Order;
+use think\facade\Env;
 use think\facade\Event;
 
 /**
@@ -52,6 +53,10 @@ class V3WechatPay extends BasePay implements PayInterface
     protected function initialize(array $config = [])
     {
         $wechatAppid = sys_config('wechat_appid');
+        $miniProgramAppid = trim((string)Env::get('miniapp.app_id', ''));
+        if ($miniProgramAppid === '') {
+            $miniProgramAppid = trim((string)sys_config('routine_appId'));
+        }
         $config = [
             'app' => [
                 'appid' => sys_config('wechat_app_appid'),
@@ -60,7 +65,7 @@ class V3WechatPay extends BasePay implements PayInterface
                 'appid' => $wechatAppid,
             ],
             'miniprog' => [
-                'appid' => sys_config('routine_appId'),
+                'appid' => $miniProgramAppid,
             ],
             'web' => [
                 'appid' => $wechatAppid,

@@ -27,6 +27,7 @@ Route::group(function () {
     ->option(['mark' => 'miniapp_auth', 'mark_name' => 'Miniapp auth']);
 
 Route::group(function () {
+    Route::post('miniapp/auth/consent', 'v1.miniapp.AuthController/consent')->name('miniappAuthConsent')->option(['real_name' => 'Miniapp login consent record']);
     Route::get('miniapp/mine/overview', 'v1.miniapp.MineController/overview')->name('miniappMineOverview')->option(['real_name' => 'Miniapp mine overview']);
     Route::get('miniapp/profile', 'v1.miniapp.MineController/profile')->name('miniappProfile')->option(['real_name' => 'Miniapp profile']);
     Route::post('miniapp/profile', 'v1.miniapp.MineController/updateProfile')->name('miniappProfileUpdate')->option(['real_name' => 'Miniapp profile update']);
