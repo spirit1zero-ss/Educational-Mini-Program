@@ -12,6 +12,7 @@ const backendRoot = path.join(
   'app'
 )
 const adminRoot = path.join(backendRoot, 'adminapi')
+const crmebRoot = path.join(projectRoot, 'src', 'CRMEB', 'CRMEB-master', 'crmeb')
 
 const retiredPaths = [
   'route/marketing.php',
@@ -71,6 +72,23 @@ for (const relativePath of requiredPaths) {
   if (!fs.existsSync(path.join(adminRoot, ...relativePath.split('/')))) {
     throw new Error(`Required backend surface is missing: ${relativePath}`)
   }
+}
+
+const retiredConfig = fs.readFileSync(path.join(crmebRoot, 'config', 'retired.php'), 'utf8')
+const retiredMiddleware = fs.readFileSync(
+  path.join(adminRoot, 'middleware', 'RetiredAdminApiMiddleware.php'),
+  'utf8'
+)
+if (!/admin_api_allow_paths[\s\S]*file\/upload/.test(retiredConfig)) {
+  throw new Error('Authenticated certificate upload must remain allowlisted')
+}
+const allowCheck = retiredMiddleware.indexOf('$this->isAllowedPath($path)')
+const denyCheck = retiredMiddleware.indexOf('foreach ($this->patterns() as $pattern)')
+if (allowCheck < 0 || denyCheck < 0 || allowCheck > denyCheck) {
+  throw new Error('Exact upload allowlist must be checked before the retired API denylist')
+}
+if (!retiredMiddleware.includes('$request->isPost()')) {
+  throw new Error('The upload allowlist must remain limited to POST requests')
 }
 
 const appRoute = fs.readFileSync(path.join(adminRoot, 'route', 'app.php'), 'utf8')

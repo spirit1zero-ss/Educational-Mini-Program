@@ -15,7 +15,7 @@ return [
         'system_out_account', 'system_out_interface', 'pages', 'diy',
         'system_config_logistics', 'freight/', 'shipping_templates',
         'delivery_service', 'delivery-service', 'freight-express',
-        'system-city', 'invoice', 'elec_invoice', 'offline',
+        'system-city', 'invoice', 'elec_invoice',
         'offline_payment', 'offline-pay', 'store_pickup', 'self_pick',
         'self-pick', 'verify_order', 'system_store', 'store-staff',
         'theme', 'micro_page', 'theme_style', 'my_theme', 'mall_theme',
@@ -34,6 +34,12 @@ return [
         'admin-user-grade-card', 'admin-user-grade-record', 'admin-user-grade-right',
         '/user/level', '/user/group', '/user/label', '/user/grade/card',
         '/user/grade/record', '/user/grade/right',
+    ],
+
+    // Exact authenticated endpoints still required by retained admin features.
+    // These paths pass through role checks and the original upload validation.
+    'admin_api_allow_paths' => [
+        'file/upload',
     ],
 
     // Reversible denylist for retired admin API surfaces. Removing a fragment
