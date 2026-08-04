@@ -36,6 +36,7 @@ const [
   trainingCampOrderController,
   trainingCampOrderPage,
   offlineRefundPatch,
+  siteUrlPatch,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/services/miniapp/MiniappServices.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/api/controller/v1/miniapp/MineController.php'),
@@ -68,6 +69,7 @@ const [
   read('src/CRMEB/CRMEB-master/crmeb/app/adminapi/controller/v1/user/member/TrainingCampOrder.php'),
   read('src/CRMEB/CRMEB-master/template/admin/src/pages/user/grade/trainingCampOrders/index.vue'),
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-07-26-training-camp-offline-refund.sql'),
+  read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-08-04-site-url-payment-settings.sql'),
 ])
 
 assert.doesNotMatch(miniService, /\|\| \(int\)\(\$user\['level'\]/, 'legacy user level must not grant training-camp access')
@@ -76,7 +78,7 @@ assert.match(miniService, /function applyWithdrawal/)
 assert.match(miniService, /if \(!\$window\['open'\]\)/)
 assert.match(miniService, /提现申请时间为/)
 assert.match(miniService, /where\('status', 0\)/)
-assert.match(miniService, /Db::transaction\(function \(\) use \(\$uid, \$amount, \$user\)/)
+assert.match(miniService, /Db::transaction\(function \(\) use \(\$uid, \$amount, \$user, \$method, \$bankDetails, \$bankSecurity\)/)
 assert.match(mineController, /function withdrawal/)
 assert.match(mineController, /function applyWithdrawal/)
 assert.match(apiRoutes, /miniapp\/referral\/withdrawal/)
@@ -104,6 +106,8 @@ assert.doesNotMatch(
 )
 assert.match(userExtractService, /v3_transfer_scene_id', '1000'/)
 assert.match(userExtractService, /Env::get\('miniapp\.app_id',\s*''\)/)
+assert.match(userExtractService, /Env::get\('site\.url',\s*''\)/)
+assert.match(userExtractService, /sys_config\('site_url',\s*''\)/)
 assert.match(userExtractService, /微信支付公钥 ID/)
 assert.match(userExtractService, /'现金奖励'/)
 assert.match(userExtractService, /'info_type'\s*=>\s*'活动名称'/)
@@ -192,6 +196,9 @@ assert.match(trainingCampOrderPage, /admin-user-training-camp-order-offline-refu
 assert.match(offlineRefundPatch, /refund_source/)
 assert.match(offlineRefundPatch, /refund_amount_fen/)
 assert.match(offlineRefundPatch, /admin-user-training-camp-order-offline-refund/)
+assert.match(siteUrlPatch, /`config_tab_id`\s*=\s*4/)
+assert.match(siteUrlPatch, /`menu_name`\s*=\s*'site_url'/)
+assert.match(siteUrlPatch, /PHP_SITE_URL/)
 assert.match(virtualPaymentService, /'refund_source'/)
 assert.match(distributionPatch, /refund_account_frozen/)
 

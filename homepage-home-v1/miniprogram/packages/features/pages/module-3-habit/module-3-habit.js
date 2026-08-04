@@ -2,10 +2,10 @@ const MODULE_B_TABLE_PATH = "/packages/features/pages/module-b-table/module-b-ta
 
 Page({
   data: {
-    iconBase: "../../assets/module-2-logic/icons/",
-    dividerImage: "../../assets/module-5-camp/camp-landscape-divider-v2.webp",
-    heroIllustration: "../../assets/module-3-habit/illustrations/habit-hero-v2.webp",
-    sectionIllustration: "../../assets/module-3-habit/illustrations/habit-child-v2.webp",
+    iconBase: "/packages/features/assets/module-2-logic/icons/",
+    dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.webp",
+    heroIllustration: "/packages/features/assets/module-3-habit/illustrations/habit-hero-v2.png",
+    sectionIllustration: "/packages/features/assets/module-3-habit/illustrations/habit-child-v2.png",
     articleBlocks: [
       {
         id: "opening",

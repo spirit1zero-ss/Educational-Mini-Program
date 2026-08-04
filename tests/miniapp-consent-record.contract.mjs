@@ -11,7 +11,10 @@ const [
   consentPatch,
   requestSource,
   consentSource,
-  consentPage,
+  consentComponent,
+  consentView,
+  appConfig,
+  mineConfig,
 ] = await Promise.all([
   read('src/CRMEB/CRMEB-master/crmeb/app/api/route/v1.php'),
   read('src/CRMEB/CRMEB-master/crmeb/app/api/controller/v1/miniapp/AuthController.php'),
@@ -19,7 +22,10 @@ const [
   read('src/CRMEB/CRMEB-master/crmeb/database/patches/2026-08-04-miniapp-user-consent.sql'),
   read('homepage-home-v1/miniprogram/utils/request.js'),
   read('homepage-home-v1/miniprogram/utils/login-consent.js'),
-  read('homepage-home-v1/miniprogram/packages/features/pages/auth-consent/auth-consent.js'),
+  read('homepage-home-v1/miniprogram/components/login-consent-modal/login-consent-modal.js'),
+  read('homepage-home-v1/miniprogram/components/login-consent-modal/login-consent-modal.wxml'),
+  read('homepage-home-v1/miniprogram/app.json'),
+  read('homepage-home-v1/miniprogram/pages/mine/mine.json'),
 ])
 
 const protectedGroupStart = apiRoutes.indexOf("Route::post('miniapp/auth/consent'")
@@ -38,9 +44,15 @@ assert.match(requestSource, /url: '\/api\/miniapp\/auth\/consent'/)
 assert.match(requestSource, /Authorization: authorization/)
 assert.match(requestSource, /agreementVersion: record\.version/)
 assert.match(consentSource, /serverRecordedVersion: LOGIN_CONSENT_VERSION/)
-assert.match(consentPage, /privacyContractName: this\.data\.privacyContractName/)
+assert.match(consentSource, /subscribeLoginConsent/)
+assert.match(consentComponent, /privacyContractName: this\.data\.privacyContractName/)
+assert.match(consentView, /open-type="agreePrivacyAuthorization"/)
+assert.match(consentView, /《用户服务协议》/)
+assert.doesNotMatch(appConfig, /"login-consent-modal"/, 'consent component must not be loaded globally by public pages')
+assert.match(mineConfig, /"login-consent-modal"/)
+assert.doesNotMatch(appConfig, /pages\/auth-consent\/auth-consent/)
 
-for (const source of [requestSource, consentSource, consentPage]) {
+for (const source of [requestSource, consentSource, consentComponent, consentView]) {
   assert.doesNotMatch(source, /getPhoneNumber|phoneCode|手机号一键登录/, 'consent flow must not request a phone number')
 }
 

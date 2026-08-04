@@ -544,7 +544,6 @@ import userDetails from './handle/userDetails';
 import distributionDetails from './handle/distributionDetails';
 import DistributionIdentityDialog from '@/components/distribution/identityDialog';
 import customerInfo from '@/components/customerInfo';
-import { cityList } from '@/api/app';
 import { membershipDataListApi } from '@/api/membershipLevel';
 
 export default {
@@ -589,7 +588,6 @@ export default {
         { type: 'app', name: 'APP' },
       ],
       address: [],
-      addresData: [],
       isShowSend: true,
       modal13: false,
       maxCols: 4,
@@ -669,7 +667,6 @@ export default {
   },
   created() {
     this.getList();
-    this.getCityList();
   },
   mounted() {
     this.userGroup();
@@ -678,11 +675,6 @@ export default {
     // this.groupLists();
   },
   methods: {
-    getCityList() {
-      cityList().then((res) => {
-        this.addresData = res.data;
-      });
-    },
     setUser() {
       let data = this.$refs.userEdit.formItem;
       let ids = [];

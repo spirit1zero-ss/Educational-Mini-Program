@@ -144,3 +144,5 @@
     </view>
   </view>
 </view>
+
+<login-consent-modal></login-consent-modal>

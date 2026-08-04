@@ -175,3 +175,5 @@
     <button class="transfer-confirm-button" data-id="{{pendingTransfer.id}}" bindtap="onConfirmTransfer">确认收款</button>
   </view>
 </view>
+
+<login-consent-modal></login-consent-modal>

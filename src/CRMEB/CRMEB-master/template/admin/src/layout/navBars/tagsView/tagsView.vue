@@ -103,16 +103,9 @@ export default {
     if (!this.$store.state.app.tagNavList.length) {
       this.getTagsViewRoutes();
     }
-    if (this.$refs.tagsViews?.offsetWidth < this.$refs.scrollbarRef.$refs.wrap.scrollWidth) {
-      this.scrollTagIcon = true;
-    }
-    window.addEventListener('resize', () => {
-      if (this.$refs.tagsViews?.offsetWidth < this.$refs.scrollbarRef.$refs.wrap.scrollWidth) {
-        this.scrollTagIcon = true;
-      } else {
-        this.scrollTagIcon = false;
-      }
-    });
+    this._handleTagsResize = this.updateScrollTagIcon;
+    this.$nextTick(this.updateScrollTagIcon);
+    window.addEventListener('resize', this._handleTagsResize);
   },
   methods: {
     ...mapMutations(['setBreadCrumb', 'setTagNavList', 'addTag', 'setLocal', 'setHomeRoute', 'closeTag']),
@@ -138,15 +131,19 @@ export default {
     },
     // 鼠标滚轮滚动
     onHandleScroll(e) {
-      this.$refs.scrollbarRef.$refs.wrap.scrollLeft += e.wheelDelta / 4;
+      const scrollWrap = this.getScrollbarWrap();
+      if (!scrollWrap) return;
+      scrollWrap.scrollLeft += e.wheelDelta / 4;
     },
     scrollTag(production) {
-      let scrollRefs = this.$refs.scrollbarRef.$refs.wrap.scrollWidth;
-      let scrollLeft = this.$refs.scrollbarRef.$refs.wrap.scrollLeft;
+      const scrollWrap = this.getScrollbarWrap();
+      if (!scrollWrap) return;
+      let scrollRefs = scrollWrap.scrollWidth;
+      let scrollLeft = scrollWrap.scrollLeft;
       if (production === 'left') {
-        this.$refs.scrollbarRef.$refs.wrap.scrollLeft = scrollLeft - 300 <= 0 ? 0 : scrollLeft - 300;
+        scrollWrap.scrollLeft = scrollLeft - 300 <= 0 ? 0 : scrollLeft - 300;
       } else {
-        this.$refs.scrollbarRef.$refs.wrap.scrollLeft = scrollLeft + 300 >= scrollRefs ? scrollRefs : scrollLeft + 300;
+        scrollWrap.scrollLeft = scrollLeft + 300 >= scrollRefs ? scrollRefs : scrollLeft + 300;
       }
     },
     // tagsView 横向滚动
@@ -166,7 +163,8 @@ export default {
         // 最后 li
         let liLast = tagsRefs[tagsRefs.length - 1];
         // 当前滚动条的值
-        let scrollRefs = this.$refs.scrollbarRef.$refs.wrap;
+        let scrollRefs = this.getScrollbarWrap();
+        if (!scrollRefs) return;
         // 当前滚动条滚动宽度
         let scrollS = scrollRefs.scrollWidth;
         // 当前滚动条偏移宽度
@@ -205,7 +203,19 @@ export default {
     },
     // 更新滚动条显示
     updateScrollbar() {
-      this.$refs.scrollbarRef.update();
+      const scrollbarRef = this.$refs.scrollbarRef;
+      if (scrollbarRef && typeof scrollbarRef.update === 'function') {
+        scrollbarRef.update();
+      }
+    },
+    getScrollbarWrap() {
+      const scrollbarRef = this.$refs.scrollbarRef;
+      return scrollbarRef && scrollbarRef.$refs ? scrollbarRef.$refs.wrap : null;
+    },
+    updateScrollTagIcon() {
+      const tagsViews = this.$refs.tagsViews;
+      const scrollWrap = this.getScrollbarWrap();
+      this.scrollTagIcon = !!(tagsViews && scrollWrap && tagsViews.offsetWidth < scrollWrap.scrollWidth);
     },
     // 递归查找当前路径下的组件信息
     filterCurrentMenu(arr, currentPath, callback) {
@@ -294,13 +304,7 @@ export default {
       }
     },
     refreshIcon() {
-      this.$nextTick((e) => {
-        if (this.$refs.tagsViews?.offsetWidth < this.$refs.scrollbarRef.$refs.wrap.scrollWidth) {
-          this.scrollTagIcon = true;
-        } else {
-          this.scrollTagIcon = false;
-        }
-      });
+      this.$nextTick(this.updateScrollTagIcon);
     },
     // 1、刷新当前 tagsView：
     refreshCurrentTagsView(path) {
@@ -367,6 +371,9 @@ export default {
   destroyed() {
     // 取消非本页面调用监听（fun/tagsView）
     this.bus.$off('onCurrentContextmenuClick');
+    if (this._handleTagsResize) {
+      window.removeEventListener('resize', this._handleTagsResize);
+    }
   },
 };
 </script>

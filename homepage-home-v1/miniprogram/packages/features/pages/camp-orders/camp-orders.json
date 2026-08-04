@@ -1,3 +1,6 @@
 {
+  "usingComponents": {
+    "login-consent-modal": "/components/login-consent-modal/login-consent-modal"
+  },
   "navigationStyle": "custom"
 }

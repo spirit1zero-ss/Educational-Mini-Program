@@ -9,7 +9,6 @@ const MEMBER_BENEFITS_PATH = '/packages/features/pages/member-benefits/member-be
 const MEMBER_REGISTRATION_PATH = '/packages/features/pages/member-registration/member-registration'
 const PROFILE_EDITOR_PATH = '/packages/features/pages/profile-editor/profile-editor'
 const REFERRAL_RULES_PATH = '/packages/features/pages/referral-rules/referral-rules'
-const AUTH_CONSENT_PATH = '/packages/features/pages/auth-consent/auth-consent'
 const OFFLINE_PATH = '/pages/offline/offline'
 const {
   getMineOverview,
@@ -18,6 +17,7 @@ const {
   useRedeemCode
 } = require('../../api/mine')
 const { hasAuthToken, clearAuth } = require('../../utils/request')
+const { openLoginConsentSettings } = require('../../utils/login-consent')
 
 Page({
   data: {
@@ -495,10 +495,7 @@ Page({
   },
 
   onOpenLegalCenter() {
-    wx.navigateTo({
-      url: `${AUTH_CONSENT_PATH}?mode=settings`,
-      fail: () => this.showComingSoon('用户协议与隐私')
-    })
+    openLoginConsentSettings()
   },
 
   onTabTap(e) {

@@ -5,11 +5,15 @@ const {
 
 const LOGIN_CONSENT_KEY = 'education_login_consent'
 const LOGIN_CONSENT_VERSION = '2026-08-04-v1'
-const LOGIN_CONSENT_PAGE = '/packages/features/pages/auth-consent/auth-consent'
 
 let consentTask = null
 let resolveConsentTask = null
 let rejectConsentTask = null
+let promptState = {
+  visible: false,
+  mode: 'login'
+}
+const promptListeners = []
 
 function getConsentRecord() {
   const record = wx.getStorageSync(LOGIN_CONSENT_KEY)
@@ -32,6 +36,23 @@ function createConsentError(message) {
   return error
 }
 
+function notifyPrompt(state) {
+  promptState = Object.assign({}, promptState, state || {})
+  promptListeners.slice().forEach((listener) => listener(promptState))
+}
+
+function subscribeLoginConsent(listener) {
+  if (typeof listener !== 'function') return () => {}
+
+  promptListeners.push(listener)
+  listener(promptState)
+
+  return () => {
+    const index = promptListeners.indexOf(listener)
+    if (index >= 0) promptListeners.splice(index, 1)
+  }
+}
+
 function settleConsentTask(accepted, error) {
   const resolve = resolveConsentTask
   const reject = rejectConsentTask
@@ -39,6 +60,7 @@ function settleConsentTask(accepted, error) {
   consentTask = null
   resolveConsentTask = null
   rejectConsentTask = null
+  notifyPrompt({ visible: false })
 
   if (accepted && resolve) {
     resolve(getConsentRecord())
@@ -65,14 +87,23 @@ function ensureLoginConsent() {
   })
   consentTask = task
 
-  wx.navigateTo({
-    url: LOGIN_CONSENT_PAGE,
-    fail: () => {
-      settleConsentTask(false, createConsentError('登录授权页面打开失败，请稍后重试'))
-    }
+  notifyPrompt({
+    visible: true,
+    mode: 'login'
   })
 
   return task
+}
+
+function openLoginConsentSettings() {
+  notifyPrompt({
+    visible: true,
+    mode: 'settings'
+  })
+}
+
+function closeLoginConsentSettings() {
+  notifyPrompt({ visible: false })
 }
 
 function acceptLoginConsent(options) {
@@ -106,16 +137,19 @@ function withdrawLoginConsent() {
   wx.removeStorageSync(TOKEN_KEY)
   wx.removeStorageSync(USER_KEY)
   settleConsentTask(false, createConsentError('登录授权已撤回'))
+  notifyPrompt({ visible: false })
 }
 
 module.exports = {
   LOGIN_CONSENT_KEY,
   LOGIN_CONSENT_VERSION,
-  LOGIN_CONSENT_PAGE,
   getConsentRecord,
   hasLoginConsent,
   hasRecordedLoginConsent,
+  subscribeLoginConsent,
   ensureLoginConsent,
+  openLoginConsentSettings,
+  closeLoginConsentSettings,
   acceptLoginConsent,
   markLoginConsentRecorded,
   cancelLoginConsent,

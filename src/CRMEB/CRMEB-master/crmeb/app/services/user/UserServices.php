@@ -690,8 +690,11 @@ class UserServices extends BaseServices
                     : 0;
                 $item['svip_over_day'] = $item['overdue_time'] ? ceil(($item['overdue_time'] - time()) / 86400) : '';
                 $item['svip_overdue_time'] = date('Y-m-d', $item['overdue_time']);
+                $item['avatar'] = (string)($item['avatar'] ?? '');
                 if (strpos($item['avatar'], '/statics/system_images/') !== false) {
                     $item['avatar'] = set_file_url($item['avatar']);
+                } else {
+                    $item['avatar'] = $this->cloudStoragePublicUrl($item['avatar']);
                 }
             }
         }
@@ -2131,6 +2134,25 @@ class UserServices extends BaseServices
         $overdueTime = (int)($user['overdue_time'] ?? 0);
         $isPaidLevel = (int)($user['is_money_level'] ?? 0) > 0 && ($overdueTime === 0 || $overdueTime > time());
         return (int)($user['is_ever_level'] ?? 0) > 0 || $isPaidLevel;
+    }
+
+    /**
+     * Convert a WeChat Cloud Storage file ID to a browser-readable public URL.
+     * Mini program clients can render cloud:// directly, while the web admin cannot.
+     */
+    private function cloudStoragePublicUrl(string $fileId): string
+    {
+        $fileId = trim($fileId);
+        if ($fileId === '' || !preg_match(
+            '#^cloud://[a-zA-Z0-9-]+\.([a-zA-Z0-9-]+)/(.+)$#',
+            $fileId,
+            $matches
+        )) {
+            return $fileId;
+        }
+
+        $path = implode('/', array_map('rawurlencode', explode('/', $matches[2])));
+        return 'https://' . $matches[1] . '.tcb.qcloud.la/' . $path;
     }
 
     public function offMemberLevel($uid, $userInfo = [])

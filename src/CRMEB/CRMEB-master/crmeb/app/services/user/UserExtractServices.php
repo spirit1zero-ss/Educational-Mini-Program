@@ -314,10 +314,14 @@ class UserExtractServices extends BaseServices
                     throw new AdminException('请先配置 PHP_MINIAPP_APP_ID 或后台微信小程序 AppID');
                 }
             }
-            $siteUrl = rtrim(trim((string)sys_config('site_url', '')), '/');
+            $siteUrl = trim((string)Env::get('site.url', ''));
+            if ($siteUrl === '') {
+                $siteUrl = trim((string)sys_config('site_url', ''));
+            }
+            $siteUrl = rtrim($siteUrl, '/');
             if (!filter_var($siteUrl, FILTER_VALIDATE_URL)
                 || strtolower((string)parse_url($siteUrl, PHP_URL_SCHEME)) !== 'https') {
-                throw new AdminException('请先配置可公网访问的 HTTPS 站点地址，供微信回调转账结果');
+                throw new AdminException('请先配置 PHP_SITE_URL，或在后台微信支付配置中填写可公网访问的 HTTPS 站点回调地址');
             }
 
             $transferSceneId = trim((string)sys_config('v3_transfer_scene_id', '1000'));

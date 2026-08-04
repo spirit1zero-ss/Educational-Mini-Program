@@ -17,7 +17,6 @@
         "pages/profile-editor/profile-editor",
         "pages/member-registration/member-registration",
         "pages/legal-document/legal-document",
-        "pages/auth-consent/auth-consent",
         "pages/member-benefits/member-benefits",
         "pages/referral-rules/referral-rules",
         "pages/module-2-logic/module-2-logic",

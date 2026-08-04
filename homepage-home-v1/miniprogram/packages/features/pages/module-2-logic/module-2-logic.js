@@ -3,17 +3,17 @@ const MODULE_A_PATH = "/packages/features/pages/module-a-assessment/module-a-ass
 Page({
   data: {
     assessmentPath: MODULE_A_PATH,
-    iconBase: "../../assets/module-2-logic/icons/",
-    dividerImage: "../../assets/module-5-camp/camp-landscape-divider-v2.webp",
-    heroTreeImage: "../../assets/module-2-logic/illustrations/hero-tree-v3.webp",
-    definitionBookImage: "../../assets/module-2-logic/illustrations/definition-book-v4.webp",
-    stagePosterImage: "../../assets/module-2-logic/illustrations/stage-study-v2.webp",
-    englishIllustration: "../../assets/module-2-logic/illustrations/english-abc-v2.webp",
-    englishBricksImage: "../../assets/module-2-logic/illustrations/english-bricks-v3.webp",
-    englishFrameImage: "../../assets/module-2-logic/illustrations/english-frame-v3.webp",
-    mathIllustration: "../../assets/module-2-logic/illustrations/math-abacus-v2.webp",
-    closingIllustration: "../../assets/module-2-logic/illustrations/closing-window-tree-v2.webp",
-    subjectIllustrations: "../../assets/module-2-logic/illustrations/subject-icons-v2.webp",
+    iconBase: "/packages/features/assets/module-2-logic/icons/",
+    dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.webp",
+    heroTreeImage: "/packages/features/assets/module-2-logic/illustrations/hero-tree-v3.png",
+    definitionBookImage: "/packages/features/assets/module-2-logic/illustrations/definition-book-v4.png",
+    stagePosterImage: "/packages/features/assets/module-2-logic/illustrations/stage-study-v2.png",
+    englishIllustration: "/packages/features/assets/module-2-logic/illustrations/english-abc-v2.png",
+    englishBricksImage: "/packages/features/assets/module-2-logic/illustrations/english-bricks-v3.png",
+    englishFrameImage: "/packages/features/assets/module-2-logic/illustrations/english-frame-v3.png",
+    mathIllustration: "/packages/features/assets/module-2-logic/illustrations/math-abacus-v2.png",
+    closingIllustration: "/packages/features/assets/module-2-logic/illustrations/closing-window-tree-v2.png",
+    subjectIllustrations: "/packages/features/assets/module-2-logic/illustrations/subject-icons-v2.png",
     articleBlocks: [
       {
         id: "pain",

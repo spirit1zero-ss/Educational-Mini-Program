@@ -1,0 +1,87 @@
+<view wx:if="{{visible}}" class="consent-layer" catchtouchmove="onPreventTouch">
+  <view class="consent-mask" bindtap="onClose"></view>
+
+  <view class="consent-dialog" catchtap="onPreventTap">
+    <view class="dialog-head">
+      <view class="brand-mark">
+        <view class="brand-leaf brand-leaf--left"></view>
+        <view class="brand-stem"></view>
+        <view class="brand-leaf brand-leaf--right"></view>
+      </view>
+      <view class="head-copy">
+        <view class="dialog-title">{{mode === 'settings' ? '协议与隐私' : '登录授权'}}</view>
+        <view class="dialog-subtitle">
+          {{mode === 'settings' ? '查看和管理当前授权' : '同意协议后继续使用账号功能'}}
+        </view>
+      </view>
+      <view class="close-button" bindtap="onClose">×</view>
+    </view>
+
+    <view wx:if="{{mode === 'settings' && hasConsent}}" class="status-card">
+      <view class="status-dot"></view>
+      <view>
+        <view class="status-title">当前已同意登录授权</view>
+        <view class="status-desc">会员、订单、报名等账号功能可以正常使用。</view>
+      </view>
+    </view>
+
+    <view wx:else class="privacy-note">
+      仅使用微信临时登录凭证识别账号。本步骤不会获取手机号、头像或孩子资料。
+    </view>
+
+    <view class="agreement-list">
+      <view class="agreement-item" bindtap="onOpenUserAgreement">
+        <view>
+          <view class="agreement-name">用户服务协议</view>
+          <view class="agreement-desc">账号使用、服务规则与未成年人使用说明</view>
+        </view>
+        <view class="agreement-arrow">›</view>
+      </view>
+      <view class="agreement-divider"></view>
+      <view class="agreement-item" bindtap="onOpenPrivacyGuide">
+        <view>
+          <view class="agreement-name">{{privacyContractName}}</view>
+          <view class="agreement-desc">了解信息收集、使用与保护方式</view>
+        </view>
+        <view class="agreement-arrow">›</view>
+      </view>
+    </view>
+
+    <view wx:if="{{!hasConsent}}" class="consent-row" bindtap="onToggleAgreement">
+      <view class="check-box {{agreed ? 'check-box--active' : ''}}">
+        <view wx:if="{{agreed}}" class="check-mark"></view>
+      </view>
+      <view class="consent-copy">
+        我已阅读并同意
+        <text class="consent-link" catchtap="onOpenUserAgreement">《用户服务协议》</text>
+        和
+        <text class="consent-link" catchtap="onOpenPrivacyGuide">《用户隐私保护指引》</text>
+      </view>
+    </view>
+
+    <button
+      wx:if="{{!hasConsent && needPrivacyAuthorization}}"
+      class="primary-button {{!agreed ? 'primary-button--disabled' : ''}}"
+      disabled="{{!agreed || submitting || privacyChecking}}"
+      loading="{{submitting}}"
+      open-type="agreePrivacyAuthorization"
+      bindagreeprivacyauthorization="onAgreePrivacyAuthorization"
+    >同意并继续</button>
+
+    <button
+      wx:elif="{{!hasConsent}}"
+      class="primary-button {{!agreed ? 'primary-button--disabled' : ''}}"
+      disabled="{{!agreed || submitting || privacyChecking}}"
+      loading="{{submitting}}"
+      bindtap="onAgreeAndContinue"
+    >同意并继续</button>
+
+    <button
+      wx:else
+      class="withdraw-button"
+      bindtap="onWithdrawConsent"
+    >撤回登录授权并退出账号</button>
+
+    <view class="helper-text">不同意不会影响首页和本地测评浏览。</view>
+  </view>
+</view>

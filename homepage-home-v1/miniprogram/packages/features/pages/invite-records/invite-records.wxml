@@ -70,3 +70,5 @@
     </view>
   </scroll-view>
 </view>
+
+<login-consent-modal></login-consent-modal>
