@@ -1,11 +1,24 @@
 const MODULE_B_TABLE_PATH = "/packages/features/pages/module-b-table/module-b-table";
+const { applyCloudAssets, restoreLocalAsset } = require("../../utils/cloud-assets");
+
+const LOCAL_ASSETS = {
+  dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.png",
+  heroIllustration: "/packages/features/assets/module-3-habit/illustrations/habit-hero-v2.png",
+  sectionIllustration: "/packages/features/assets/module-3-habit/illustrations/habit-child-v2.png"
+};
+
+const CLOUD_ASSET_FIELDS = {
+  dividerImage: "module5.divider",
+  heroIllustration: "module3.habitHero",
+  sectionIllustration: "module3.habitChild"
+};
 
 Page({
   data: {
     iconBase: "/packages/features/assets/module-2-logic/icons/",
-    dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.webp",
-    heroIllustration: "/packages/features/assets/module-3-habit/illustrations/habit-hero-v2.png",
-    sectionIllustration: "/packages/features/assets/module-3-habit/illustrations/habit-child-v2.png",
+    dividerImage: LOCAL_ASSETS.dividerImage,
+    heroIllustration: LOCAL_ASSETS.heroIllustration,
+    sectionIllustration: LOCAL_ASSETS.sectionIllustration,
     articleBlocks: [
       {
         id: "opening",
@@ -54,6 +67,14 @@ Page({
         ]
       },
     ]
+  },
+
+  onLoad() {
+    applyCloudAssets(this, CLOUD_ASSET_FIELDS);
+  },
+
+  onCloudImageError(event) {
+    restoreLocalAsset(this, event, LOCAL_ASSETS);
   },
 
   onDownloadTap() {

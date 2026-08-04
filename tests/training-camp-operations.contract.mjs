@@ -100,6 +100,8 @@ assert.match(adminApi, /trainingCampRegistrationDelete/)
 assert.match(registrationPage, /deleteRegistration/)
 
 assert.match(miniService, /training_camp_withdraw_enabled/)
+assert.match(miniService, /Env::get\('miniapp\.app_id',\s*''\)/)
+assert.match(miniService, /'appId'\s*=>\s*\$miniProgramAppId/)
 assert.doesNotMatch(
   miniService.slice(miniService.indexOf('public function getWithdrawalOverview'), miniService.indexOf('private function getWithdrawalWindow')),
   /weixin_extract_type/

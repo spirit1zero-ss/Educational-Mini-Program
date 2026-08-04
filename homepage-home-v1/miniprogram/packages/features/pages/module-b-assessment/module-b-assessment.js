@@ -1,10 +1,27 @@
-const { OPTIONS } = require("../../../../utils/module-b-results");
+const { OPTIONS } = require("../../utils/module-b-results");
+const { applyCloudAssets, restoreLocalAsset } = require("../../utils/cloud-assets");
+
+const LOCAL_ASSETS = {
+  heroImage: "../../assets/doc-images/ABC-04.jpg"
+};
+
+const CLOUD_ASSET_FIELDS = {
+  heroImage: "assessment.subjectChildren"
+};
 
 Page({
   data: {
     options: OPTIONS,
     selectedType: "",
-    heroImage: "../../assets/doc-images/ABC-04.jpg"
+    heroImage: LOCAL_ASSETS.heroImage
+  },
+
+  onLoad() {
+    applyCloudAssets(this, CLOUD_ASSET_FIELDS);
+  },
+
+  onCloudImageError(event) {
+    restoreLocalAsset(this, event, LOCAL_ASSETS);
   },
 
   onBack() {

@@ -1,4 +1,4 @@
-const { OPTIONS } = require("../../../../utils/module-a-results");
+const { OPTIONS } = require("../../utils/module-a-results");
 
 Page({
   data: {

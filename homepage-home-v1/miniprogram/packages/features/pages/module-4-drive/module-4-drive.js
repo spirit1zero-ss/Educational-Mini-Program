@@ -1,12 +1,25 @@
 const MODULE_B_PATH = "/packages/features/pages/module-b-inline/module-b-inline";
+const { applyCloudAssets, restoreLocalAsset } = require("../../utils/cloud-assets");
+
+const LOCAL_ASSETS = {
+  dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.png",
+  heroIllustration: "/packages/features/assets/module-4-drive/illustrations/drive-hero-v2.png",
+  sectionIllustration: "/packages/features/assets/module-4-drive/illustrations/drive-family-v2.png"
+};
+
+const CLOUD_ASSET_FIELDS = {
+  dividerImage: "module5.divider",
+  heroIllustration: "module4.driveHero",
+  sectionIllustration: "module4.driveFamily"
+};
 
 Page({
   data: {
     assessmentPath: MODULE_B_PATH,
     iconBase: "/packages/features/assets/module-2-logic/icons/",
-    dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.webp",
-    heroIllustration: "/packages/features/assets/module-4-drive/illustrations/drive-hero-v2.png",
-    sectionIllustration: "/packages/features/assets/module-4-drive/illustrations/drive-family-v2.png",
+    dividerImage: LOCAL_ASSETS.dividerImage,
+    heroIllustration: LOCAL_ASSETS.heroIllustration,
+    sectionIllustration: LOCAL_ASSETS.sectionIllustration,
     articleBlocks: [
       {
         id: "opening",
@@ -59,6 +72,14 @@ Page({
         ]
       },
     ]
+  },
+
+  onLoad() {
+    applyCloudAssets(this, CLOUD_ASSET_FIELDS);
+  },
+
+  onCloudImageError(event) {
+    restoreLocalAsset(this, event, LOCAL_ASSETS);
   },
 
   onStartAssessment() {

@@ -90,6 +90,21 @@
         </view>
         <view class="legal-center-arrow">›</view>
       </view>
+
+      <view
+        wx:if="{{isLoggedIn}}"
+        class="logout-entry"
+        bindtap="onLogoutTap"
+        role="button"
+        aria-label="退出登录"
+      >
+        <view class="logout-mark">退</view>
+        <view class="logout-copy">
+          <view class="logout-title">退出登录</view>
+          <view class="logout-desc">保留用户协议与隐私授权记录</view>
+        </view>
+        <view class="logout-arrow">›</view>
+      </view>
     </view>
   </scroll-view>
 

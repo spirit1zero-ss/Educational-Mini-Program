@@ -5,7 +5,7 @@ const {
   validateAvatarImage,
   uploadAvatarToCloud,
   removeCloudAvatar
-} = require('../../../../utils/profile-avatar')
+} = require('../../utils/profile-avatar')
 
 Page({
   data: {

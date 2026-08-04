@@ -5,7 +5,7 @@
     <view class="logic-long">
       <view class="poster poster--one">
         <view class="hero-poster">
-          <image class="hero-landscape" src="{{dividerImage}}" mode="aspectFill"></image>
+          <image class="hero-landscape" src="{{dividerImage}}" mode="aspectFill" data-cloud-field="dividerImage" binderror="onCloudImageError"></image>
           <view class="hero-copy">
             <view class="hero-title">学科知识的基础逻辑</view>
             <view class="hero-quote">
@@ -14,19 +14,19 @@
               <view class="quote-mark quote-mark--end">”</view>
             </view>
           </view>
-          <image class="hero-tree" src="{{heroTreeImage}}" mode="aspectFit"></image>
+          <image class="hero-tree" src="{{heroTreeImage}}" mode="aspectFit" data-cloud-field="heroTreeImage" binderror="onCloudImageError"></image>
           <view class="hero-definition">
             <image class="hero-definition-icon" src="{{iconBase}}{{articleBlocks[1].icon}}" mode="aspectFit"></image>
             <view class="hero-definition-copy">
               <text>{{articleBlocks[1].prefix}}</text>
               <text class="hero-highlight">{{articleBlocks[1].highlight}}</text>
             </view>
-            <image class="hero-definition-book" src="{{definitionBookImage}}" mode="aspectFit"></image>
+            <image class="hero-definition-book" src="{{definitionBookImage}}" mode="aspectFit" data-cloud-field="definitionBookImage" binderror="onCloudImageError"></image>
           </view>
         </view>
 
         <view class="poster-card english-card">
-          <image class="english-art" src="{{englishIllustration}}" mode="aspectFit"></image>
+          <image class="english-art" src="{{englishIllustration}}" mode="aspectFit" data-cloud-field="englishIllustration" binderror="onCloudImageError"></image>
           <view class="section-heading section-heading--english">
             <view class="section-index">{{articleBlocks[2].index}}</view>
             <view class="section-title">{{articleBlocks[2].title}}</view>
@@ -43,7 +43,7 @@
             <view class="logic-row logic-row--english-{{ruleIndex}}" wx:for="{{articleBlocks[2].list}}" wx:for-index="ruleIndex" wx:key="marker">
               <view class="number-badge">{{item.marker}}</view>
               <view class="logic-text">{{item.text}}</view>
-              <image class="logic-art" src="{{ruleIndex === 0 ? englishBricksImage : englishFrameImage}}" mode="aspectFit"></image>
+              <image class="logic-art" src="{{ruleIndex === 0 ? englishBricksImage : englishFrameImage}}" mode="aspectFit" data-cloud-field="{{ruleIndex === 0 ? 'englishBricksImage' : 'englishFrameImage'}}" binderror="onCloudImageError"></image>
             </view>
           </view>
 
@@ -53,7 +53,7 @@
           </view>
         </view>
 
-        <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+        <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill" data-cloud-field="dividerImage" binderror="onCloudImageError"></image>
       </view>
 
       <view class="poster poster--two">
@@ -64,7 +64,7 @@
           </view>
 
           <view class="paragraph paragraph--lead">{{articleBlocks[3].lines[0]}}</view>
-          <image class="math-art" src="{{mathIllustration}}" mode="aspectFit"></image>
+          <image class="math-art" src="{{mathIllustration}}" mode="aspectFit" data-cloud-field="mathIllustration" binderror="onCloudImageError"></image>
           <view class="paragraph paragraph--lead">{{articleBlocks[3].lines[1]}}</view>
 
           <view class="logic-list">
@@ -88,7 +88,7 @@
             <view class="section-title">{{articleBlocks[4].title}}</view>
           </view>
 
-          <image class="stage-poster-art" src="{{stagePosterImage}}" mode="aspectFit"></image>
+          <image class="stage-poster-art" src="{{stagePosterImage}}" mode="aspectFit" data-cloud-field="stagePosterImage" binderror="onCloudImageError"></image>
 
           <view class="stage-list">
             <view class="stage-row" wx:for="{{articleBlocks[4].stages}}" wx:for-item="stage" wx:for-index="stageIndex" wx:key="key">
@@ -111,7 +111,7 @@
           </view>
         </view>
 
-        <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+        <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill" data-cloud-field="dividerImage" binderror="onCloudImageError"></image>
       </view>
 
       <view class="poster poster--three">
@@ -122,7 +122,7 @@
           </view>
 
           <view class="closing-quote">{{articleBlocks[5].lines[1]}}</view>
-          <image class="closing-art" src="{{closingIllustration}}" mode="aspectFit"></image>
+          <image class="closing-art" src="{{closingIllustration}}" mode="aspectFit" data-cloud-field="closingIllustration" binderror="onCloudImageError"></image>
           <view class="closing-education">
             <text>{{articleBlocks[5].educationParts.prefix}}</text>
             <text class="gold-emphasis">{{articleBlocks[5].educationParts.first}}</text>
@@ -143,7 +143,7 @@
               <view class="subject-row {{item.className}}" wx:for="{{articleBlocks[6].subjectLines}}" wx:key="key">
                 <view class="subject-key">{{item.key}}</view>
                 <view class="subject-text">{{item.text}}</view>
-                <image class="subject-row-art" src="{{item.illustration}}" mode="aspectFit"></image>
+                <image class="subject-row-art" src="{{item.illustration}}" mode="aspectFit" data-cloud-field="{{item.assetField}}" binderror="onCloudImageError"></image>
               </view>
             </view>
           </view>

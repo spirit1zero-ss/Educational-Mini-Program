@@ -29,7 +29,7 @@
           <view class="question-title">先观察三位小朋友</view>
           <view class="question-desc">首先，家长请观察图中三位小朋友，您认为您的孩子更像是哪种类型的孩子？</view>
         </view>
-        <image class="question-image" src="{{heroImage}}" mode="aspectFit"></image>
+        <image class="question-image" src="{{heroImage}}" mode="aspectFit" data-cloud-field="heroImage" binderror="onCloudImageError"></image>
         <view class="question-tip">没有标准答案，按你最了解孩子的感觉选即可。</view>
       </view>
 

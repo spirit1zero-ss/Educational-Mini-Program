@@ -8,11 +8,11 @@ const {
   validateAvatarImage,
   uploadAvatarToCloud,
   removeCloudAvatar
-} = require('../../../../utils/profile-avatar')
+} = require('../../utils/profile-avatar')
 const {
   requestTrainingCampVirtualPayment,
   virtualPaymentErrorMessage
-} = require('../../../../utils/virtual-payment')
+} = require('../../utils/virtual-payment')
 const CAMP_ORDERS_PATH = '/packages/features/pages/camp-orders/camp-orders'
 const MEMBER_REGISTRATION_PATH = '/packages/features/pages/member-registration/member-registration'
 

@@ -1,4 +1,4 @@
-const { RESULT_MAP, SUBJECT_TRAITS } = require("../../../../utils/module-a-results");
+const { RESULT_MAP, SUBJECT_TRAITS } = require("../../utils/module-a-results");
 
 const CAMP_PATH = "/packages/features/pages/module-5-camp/module-5-camp";
 

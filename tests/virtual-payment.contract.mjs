@@ -6,7 +6,7 @@ const root = new URL('../', import.meta.url)
 const read = (path) => readFile(new URL(path, root), 'utf8')
 
 const [client, page, checkout, checkoutView, api, service, lockService, miniappService, mineController, qrcodeService, wechatMiniProgramService, easyWechatQrCode, crontabService, routes, config, schema, easyWechatCollection, profilePage, profileView, miniappManifest, minePage, profileAvatar] = await Promise.all([
-  read('homepage-home-v1/miniprogram/utils/virtual-payment.js'),
+  read('homepage-home-v1/miniprogram/packages/features/utils/virtual-payment.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/camp-orders/camp-orders.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/camp-checkout/camp-checkout.js'),
   read('homepage-home-v1/miniprogram/packages/features/pages/camp-checkout/camp-checkout.wxml'),
@@ -27,7 +27,7 @@ const [client, page, checkout, checkoutView, api, service, lockService, miniappS
   read('homepage-home-v1/miniprogram/packages/features/pages/profile-editor/profile-editor.wxml'),
   read('homepage-home-v1/miniprogram/app.json'),
   read('homepage-home-v1/miniprogram/pages/mine/mine.js'),
-  read('homepage-home-v1/miniprogram/utils/profile-avatar.js')
+  read('homepage-home-v1/miniprogram/packages/features/utils/profile-avatar.js')
 ])
 
 const permanentPlanClients = await Promise.all([

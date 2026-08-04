@@ -1,18 +1,49 @@
 const MODULE_A_PATH = "/packages/features/pages/module-a-assessment/module-a-assessment";
+const { applyCloudAssets, restoreLocalAsset } = require("../../utils/cloud-assets");
+
+const LOCAL_ASSETS = {
+  dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.png",
+  heroTreeImage: "/packages/features/assets/module-2-logic/illustrations/hero-tree-v3.png",
+  definitionBookImage: "/packages/features/assets/module-2-logic/illustrations/definition-book-v4.png",
+  stagePosterImage: "/packages/features/assets/module-2-logic/illustrations/stage-study-v2.png",
+  englishIllustration: "/packages/features/assets/module-2-logic/illustrations/english-abc-v2.png",
+  englishBricksImage: "/packages/features/assets/module-2-logic/illustrations/english-bricks-v3.png",
+  englishFrameImage: "/packages/features/assets/module-2-logic/illustrations/english-frame-v3.png",
+  mathIllustration: "/packages/features/assets/module-2-logic/illustrations/math-abacus-v2.png",
+  closingIllustration: "/packages/features/assets/module-2-logic/illustrations/closing-window-tree-v2.png",
+  "articleBlocks[6].subjectLines[0].illustration": "/packages/features/assets/module-2-logic/illustrations/subject-english-v2.png",
+  "articleBlocks[6].subjectLines[1].illustration": "/packages/features/assets/module-2-logic/illustrations/subject-math-v2.png",
+  "articleBlocks[6].subjectLines[2].illustration": "/packages/features/assets/module-2-logic/illustrations/subject-chinese-v2.png"
+};
+
+const CLOUD_ASSET_FIELDS = {
+  dividerImage: "module5.divider",
+  heroTreeImage: "module2.heroTree",
+  definitionBookImage: "module2.definitionBook",
+  stagePosterImage: "module2.stageStudy",
+  englishIllustration: "module2.englishAbc",
+  englishBricksImage: "module2.englishBricks",
+  englishFrameImage: "module2.englishFrame",
+  mathIllustration: "module2.mathAbacus",
+  closingIllustration: "module2.closingTree",
+  "articleBlocks[6].subjectLines[0].illustration": "module2.subjectEnglish",
+  "articleBlocks[6].subjectLines[1].illustration": "module2.subjectMath",
+  "articleBlocks[6].subjectLines[2].illustration": "module2.subjectChinese"
+};
 
 Page({
   data: {
     assessmentPath: MODULE_A_PATH,
     iconBase: "/packages/features/assets/module-2-logic/icons/",
-    dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.webp",
-    heroTreeImage: "/packages/features/assets/module-2-logic/illustrations/hero-tree-v3.png",
-    definitionBookImage: "/packages/features/assets/module-2-logic/illustrations/definition-book-v4.png",
-    stagePosterImage: "/packages/features/assets/module-2-logic/illustrations/stage-study-v2.png",
-    englishIllustration: "/packages/features/assets/module-2-logic/illustrations/english-abc-v2.png",
-    englishBricksImage: "/packages/features/assets/module-2-logic/illustrations/english-bricks-v3.png",
-    englishFrameImage: "/packages/features/assets/module-2-logic/illustrations/english-frame-v3.png",
-    mathIllustration: "/packages/features/assets/module-2-logic/illustrations/math-abacus-v2.png",
-    closingIllustration: "/packages/features/assets/module-2-logic/illustrations/closing-window-tree-v2.png",
+    dividerImage: LOCAL_ASSETS.dividerImage,
+    heroTreeImage: LOCAL_ASSETS.heroTreeImage,
+    definitionBookImage: LOCAL_ASSETS.definitionBookImage,
+    stagePosterImage: LOCAL_ASSETS.stagePosterImage,
+    englishIllustration: LOCAL_ASSETS.englishIllustration,
+    englishBricksImage: LOCAL_ASSETS.englishBricksImage,
+    englishFrameImage: LOCAL_ASSETS.englishFrameImage,
+    mathIllustration: LOCAL_ASSETS.mathIllustration,
+    closingIllustration: LOCAL_ASSETS.closingIllustration,
     articleBlocks: [
       {
         id: "pain",
@@ -142,18 +173,21 @@ Page({
           {
             key: "英",
             className: "subject-pill--english",
+            assetField: "articleBlocks[6].subjectLines[0].illustration",
             illustration: "/packages/features/assets/module-2-logic/illustrations/subject-english-v2.png",
             text: "英---本质是练“体商”--- 引领孩子勇于表达，展现自信！"
           },
           {
             key: "数",
             className: "subject-pill--math",
+            assetField: "articleBlocks[6].subjectLines[1].illustration",
             illustration: "/packages/features/assets/module-2-logic/illustrations/subject-math-v2.png",
             text: "数---本质是练“智商”--- 引领孩子善于思考，注重逻辑！"
           },
           {
             key: "语",
             className: "subject-pill--chinese",
+            assetField: "articleBlocks[6].subjectLines[2].illustration",
             illustration: "/packages/features/assets/module-2-logic/illustrations/subject-chinese-v2.png",
             text: "语---本质是练“情商”--- 引领孩子学会共情，提升认知！"
           }
@@ -163,6 +197,14 @@ Page({
         ]
       }
     ]
+  },
+
+  onLoad() {
+    applyCloudAssets(this, CLOUD_ASSET_FIELDS);
+  },
+
+  onCloudImageError(event) {
+    restoreLocalAsset(this, event, LOCAL_ASSETS);
   },
 
   onStartAssessment() {

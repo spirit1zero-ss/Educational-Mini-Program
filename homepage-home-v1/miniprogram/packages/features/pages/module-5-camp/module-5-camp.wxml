@@ -9,11 +9,11 @@
           <view class="hero-subtitle">提高孩子自主学习能力的创新型训练系统</view>
         </view>
 
-        <image class="hero-scene" src="{{heroScene}}" mode="aspectFill"></image>
+        <image class="hero-scene" src="{{heroScene}}" mode="aspectFill" data-cloud-field="heroScene" binderror="onCloudImageError"></image>
 
         <view class="intro-card">
           <view class="intro-line" wx:for="{{introLines}}" wx:key="*this">
-            <image class="intro-icon" src="{{campAssetBase}}camp-icon-drive-v2.png" mode="aspectFit"></image>
+            <image class="intro-icon" src="{{introIcon}}" mode="aspectFit" data-cloud-field="introIcon" binderror="onCloudImageError"></image>
             <view class="intro-text">{{item}}</view>
           </view>
         </view>
@@ -34,7 +34,7 @@
           </view>
         </view>
 
-        <image class="landscape-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+        <image class="landscape-divider" src="{{dividerImage}}" mode="aspectFill" data-cloud-field="dividerImage" binderror="onCloudImageError"></image>
       </view>
 
       <view class="camp-screen camp-screen--content">
@@ -48,7 +48,7 @@
 
         <view class="model-list">
           <view class="model-card model-card--{{item.theme}}" wx:for="{{models}}" wx:key="title">
-            <image class="model-icon" src="{{item.iconSrc}}" mode="aspectFit"></image>
+            <image class="model-icon" src="{{item.iconSrc}}" mode="aspectFit" data-cloud-field="{{item.assetField}}" binderror="onCloudImageError"></image>
             <view class="model-copy">
               <view class="model-title">{{item.title}}</view>
               <view class="model-description">{{item.description}}</view>
@@ -74,7 +74,7 @@
         </view>
         <view class="lesson-list">
           <view class="lesson-card" wx:for="{{lessons}}" wx:key="title">
-            <image class="lesson-icon" src="{{item.iconSrc}}" mode="aspectFit"></image>
+            <image class="lesson-icon" src="{{item.iconSrc}}" mode="aspectFit" data-cloud-field="{{item.assetField}}" binderror="onCloudImageError"></image>
             <view class="lesson-copy">
               <view class="lesson-title lesson-title--{{item.theme}}">{{item.title}}</view>
               <view class="lesson-description">{{item.description}}</view>
@@ -82,7 +82,7 @@
           </view>
         </view>
 
-        <image class="landscape-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+        <image class="landscape-divider" src="{{dividerImage}}" mode="aspectFill" data-cloud-field="dividerImage" binderror="onCloudImageError"></image>
       </view>
 
       <view class="camp-screen camp-screen--details">
@@ -93,7 +93,7 @@
 
         <view class="suitable-card">
           <view class="suitable-row" wx:for="{{suitableItems}}" wx:key="text">
-            <image class="suitable-icon" src="{{item.iconSrc}}" mode="aspectFit"></image>
+            <image class="suitable-icon" src="{{item.iconSrc}}" mode="aspectFit" data-cloud-field="{{item.assetField}}" binderror="onCloudImageError"></image>
             <view class="number-badge number-badge--{{index + 1}}">{{index + 1}}</view>
             <view class="suitable-text">{{item.text}}</view>
           </view>
@@ -110,7 +110,7 @@
             <view class="price-now"><text class="price-number">{{memberPrice}}</text><text class="price-unit" wx:if="{{memberPrice !== '--'}}">元</text></view>
           </view>
           <view class="price-note">一次付费 · 21天训练 · 3个月答疑</view>
-          <image class="price-icon" src="{{campAssetBase}}camp-process-house-v2.png" mode="aspectFit"></image>
+          <image class="price-icon" src="{{priceIcon}}" mode="aspectFit" data-cloud-field="priceIcon" binderror="onCloudImageError"></image>
         </view>
 
         <view class="process-card">
@@ -119,14 +119,14 @@
             <view class="process-rail"></view>
             <view class="process-step" wx:for="{{processSteps}}" wx:key="title">
               <view class="process-number process-number--{{item.theme}}">0{{index + 1}}</view>
-              <image class="process-icon" src="{{item.iconSrc}}" mode="aspectFit"></image>
+              <image class="process-icon" src="{{item.iconSrc}}" mode="aspectFit" data-cloud-field="{{item.assetField}}" binderror="onCloudImageError"></image>
               <view class="process-title">{{item.title}}</view>
             </view>
           </view>
         </view>
 
         <view class="closing-card">
-          <image class="closing-illustration" src="{{closingImage}}" mode="aspectFit"></image>
+          <image class="closing-illustration" src="{{closingImage}}" mode="aspectFit" data-cloud-field="closingImage" binderror="onCloudImageError"></image>
           <view class="closing-copy">
             <view class="closing-title">21天，建立受益长久的自主学习系统</view>
             <view class="closing-text">{{closing}}</view>

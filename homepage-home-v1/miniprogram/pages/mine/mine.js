@@ -24,6 +24,7 @@ Page({
     navStyle: '',
     scrollStyle: '',
     overviewLoading: false,
+    isLoggedIn: false,
     isMember: false,
     registrationCompleted: false,
     registrationCanOpen: false,
@@ -135,12 +136,16 @@ Page({
 
   onLoad() {
     this.setNavigationMetrics()
+    this.setData({ isLoggedIn: hasAuthToken() })
     this.loadPublicMemberPlan()
     this.loadMineOverviewIfAuthed()
   },
 
   onShow() {
-    if (!hasAuthToken()) {
+    const isLoggedIn = hasAuthToken()
+    this.setData({ isLoggedIn })
+
+    if (!isLoggedIn) {
       this.resetLoggedOutState()
       return
     }
@@ -152,6 +157,8 @@ Page({
 
   resetLoggedOutState() {
     this.setData({
+      isLoggedIn: false,
+      overviewLoading: false,
       isMember: false,
       registrationCompleted: false,
       registrationCanOpen: false,
@@ -498,6 +505,22 @@ Page({
     openLoginConsentSettings()
   },
 
+  onLogoutTap() {
+    wx.showModal({
+      title: '退出登录',
+      content: '退出后将清除当前账号的本地登录状态，用户协议与隐私授权记录会继续保留。',
+      confirmText: '退出登录',
+      confirmColor: '#b14f3f',
+      success: (result) => {
+        if (!result.confirm) return
+
+        clearAuth()
+        this.resetLoggedOutState()
+        wx.showToast({ title: '已退出登录', icon: 'success' })
+      }
+    })
+  },
+
   onTabTap(e) {
     const item = e.currentTarget.dataset.item
     if (!item || item.key === 'mine') return
@@ -543,6 +566,11 @@ Page({
 
     return getMineOverview()
       .then((response) => {
+        if (!hasAuthToken()) {
+          this.resetLoggedOutState()
+          return
+        }
+
         this.applyOverviewData(response.data || {})
       })
       .catch((error) => {

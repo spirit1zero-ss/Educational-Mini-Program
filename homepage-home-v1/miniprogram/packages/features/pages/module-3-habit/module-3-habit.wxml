@@ -4,8 +4,8 @@
   <scroll-view class="page-scroll" scroll-y enhanced show-scrollbar="{{false}}">
     <view class="module-long">
       <view class="hero-poster">
-        <image class="hero-landscape" src="{{dividerImage}}" mode="aspectFill"></image>
-        <image class="hero-art" src="{{heroIllustration}}" mode="aspectFit"></image>
+        <image class="hero-landscape" src="{{dividerImage}}" mode="aspectFill" data-cloud-field="dividerImage" binderror="onCloudImageError"></image>
+        <image class="hero-art" src="{{heroIllustration}}" mode="aspectFit" data-cloud-field="heroIllustration" binderror="onCloudImageError"></image>
         <view class="hero-copy">
           <view class="hero-title">学习方法比学科知识更重要！</view>
           <view class="hero-quote">
@@ -28,7 +28,7 @@
 
       <view class="poster poster--first">
         <view class="poster-card spotlight-card">
-          <image class="spotlight-art" src="{{sectionIllustration}}" mode="aspectFit"></image>
+          <image class="spotlight-art" src="{{sectionIllustration}}" mode="aspectFit" data-cloud-field="sectionIllustration" binderror="onCloudImageError"></image>
           <view class="section-head section-head--center">
             <view class="section-index">{{articleBlocks[2].index}}</view>
             <view class="section-title">{{articleBlocks[2].title}}</view>
@@ -39,7 +39,7 @@
         </view>
       </view>
 
-      <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+      <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill" data-cloud-field="dividerImage" binderror="onCloudImageError"></image>
 
       <view class="poster poster--second">
         <view class="poster-card">
@@ -53,7 +53,7 @@
         </view>
       </view>
 
-      <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill"></image>
+      <image class="screen-divider" src="{{dividerImage}}" mode="aspectFill" data-cloud-field="dividerImage" binderror="onCloudImageError"></image>
 
       <view class="poster poster--third">
         <view class="poster-card">

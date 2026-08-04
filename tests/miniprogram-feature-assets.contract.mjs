@@ -8,6 +8,7 @@ const files = [
   'packages/features/pages/module-2-logic/module-2-logic.js',
   'packages/features/pages/module-3-habit/module-3-habit.js',
   'packages/features/pages/module-4-drive/module-4-drive.js',
+  'packages/features/pages/module-5-camp/module-5-camp.js',
 ]
 
 for (const file of files) {

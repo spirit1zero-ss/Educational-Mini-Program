@@ -1,0 +1,32 @@
+{
+  "environmentId": "prod-d0ge2jwpgc0db67eb",
+  "storageRoot": "7072-prod-d0ge2jwpgc0db67eb-1453312076",
+  "cloudDirectory": "miniapp-assets/v1",
+  "files": [
+    "module-2/hero-tree-v3.png",
+    "module-2/definition-book-v4.png",
+    "module-2/stage-study-v2.png",
+    "module-2/english-abc-v2.png",
+    "module-2/english-bricks-v3.png",
+    "module-2/english-frame-v3.png",
+    "module-2/math-abacus-v2.png",
+    "module-2/closing-window-tree-v2.png",
+    "module-2/subject-english-v2.png",
+    "module-2/subject-math-v2.png",
+    "module-2/subject-chinese-v2.png",
+    "module-3/habit-hero-v2.png",
+    "module-3/habit-child-v2.png",
+    "module-4/drive-hero-v2.png",
+    "module-4/drive-family-v2.png",
+    "module-5/camp-hero-scene-v2.png",
+    "module-5/camp-landscape-divider-v2.png",
+    "module-5/camp-closing-illustration-v2.png",
+    "module-5/camp-icon-drive-v2.png",
+    "module-5/camp-icon-habit-v2.png",
+    "module-5/camp-icon-subject-v2.png",
+    "module-5/camp-process-form-v2.png",
+    "module-5/camp-process-house-v2.png",
+    "module-5/camp-process-tutor-v2.png",
+    "assessments/ABC-04.jpg"
+  ]
+}

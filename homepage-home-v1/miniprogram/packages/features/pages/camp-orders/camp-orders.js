@@ -8,7 +8,7 @@ const {
 const {
   requestTrainingCampVirtualPayment,
   virtualPaymentErrorMessage
-} = require('../../../../utils/virtual-payment')
+} = require('../../utils/virtual-payment')
 
 Page({
   data: {

@@ -1,9 +1,26 @@
-const { INLINE_OPTIONS } = require("../../../../utils/module-b-results");
+const { INLINE_OPTIONS } = require("../../utils/module-b-results");
+const { applyCloudAssets, restoreLocalAsset } = require("../../utils/cloud-assets");
+
+const LOCAL_ASSETS = {
+  imageSrc: "../../assets/doc-images/ABC-04.jpg"
+};
+
+const CLOUD_ASSET_FIELDS = {
+  imageSrc: "assessment.subjectChildren"
+};
 
 Page({
   data: {
-    imageSrc: "../../assets/doc-images/ABC-04.jpg",
+    imageSrc: LOCAL_ASSETS.imageSrc,
     options: INLINE_OPTIONS
+  },
+
+  onLoad() {
+    applyCloudAssets(this, CLOUD_ASSET_FIELDS);
+  },
+
+  onCloudImageError(event) {
+    restoreLocalAsset(this, event, LOCAL_ASSETS);
   },
 
   onSelect(event) {

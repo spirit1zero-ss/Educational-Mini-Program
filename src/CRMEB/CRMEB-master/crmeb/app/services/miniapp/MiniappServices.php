@@ -20,6 +20,7 @@ use app\services\wechat\WechatUserServices;
 use crmeb\exceptions\ApiException;
 use crmeb\services\CacheService;
 use think\facade\Db;
+use think\facade\Env;
 use think\facade\Log;
 
 class MiniappServices extends BaseServices
@@ -534,7 +535,12 @@ class MiniappServices extends BaseServices
             }
         }
 
-        $list = array_map(function (array $row) {
+        $miniProgramAppId = trim((string)Env::get('miniapp.app_id', ''));
+        if ($miniProgramAppId === '') {
+            $miniProgramAppId = trim((string)sys_config('routine_appId', ''));
+        }
+
+        $list = array_map(function (array $row) use ($miniProgramAppId) {
             $status = (int)($row['status'] ?? 0);
             $state = strtoupper((string)($row['state'] ?? ''));
             $method = (string)($row['extract_type'] ?? 'weixin');
@@ -576,7 +582,7 @@ class MiniappServices extends BaseServices
                 'canConfirm' => $method === 'weixin' && $statusKey === 'confirm',
                 'transfer' => $statusKey === 'confirm' ? [
                     'mchId' => (string)sys_config('pay_weixin_mchid', ''),
-                    'appId' => (string)sys_config('routine_appId', ''),
+                    'appId' => $miniProgramAppId,
                     'package' => (string)$row['package_info'],
                 ] : null,
             ];
