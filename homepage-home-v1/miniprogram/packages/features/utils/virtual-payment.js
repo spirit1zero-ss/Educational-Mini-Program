@@ -1,7 +1,7 @@
 const {
   payTrainingCampMemberOrder,
   confirmTrainingCampMemberOrder
-} = require('../api/mine')
+} = require('../../../api/mine')
 
 const CONFIRM_RETRY_DELAYS = [0, 800, 1500, 2500]
 

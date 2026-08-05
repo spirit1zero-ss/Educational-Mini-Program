@@ -40,6 +40,10 @@ const pageSources = await Promise.all([
   'module-b-result/module-b-result.js',
 ].map((path) => readFile(join(featureRoot, 'pages', path), 'utf8')))
 
+const virtualPaymentSource = await readFile(join(featureRoot, 'utils', 'virtual-payment.js'), 'utf8')
+assert.match(virtualPaymentSource, /require\('\.\.\/\.\.\/\.\.\/api\/mine'\)/)
+assert.doesNotMatch(virtualPaymentSource, /require\('\.\.\/api\/mine'\)/)
+
 for (const source of pageSources) {
   assert.doesNotMatch(source, /\.\.\/\.\.\/\.\.\/\.\.\/utils\/(?:module-[ab]-results|profile-avatar|virtual-payment)/)
 }
