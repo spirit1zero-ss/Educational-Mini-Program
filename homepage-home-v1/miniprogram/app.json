@@ -37,6 +37,9 @@
     "backgroundColor": "#F8FAF4",
     "backgroundTextStyle": "dark"
   },
+  "usingComponents": {
+    "customer-service-float": "/components/customer-service-float/customer-service-float"
+  },
   "lazyCodeLoading": "requiredComponents",
   "style": "v2",
   "sitemapLocation": "sitemap.json"

@@ -1,6 +1,16 @@
 const HOME_PATH = '/pages/home/home'
 const MINE_PATH = '/pages/mine/mine'
 const { getOfflineLocations } = require('../../api/mine')
+const {
+  enableShareMenu,
+  createShareAppMessage,
+  createShareTimeline
+} = require('../../utils/public-share')
+
+const SHARE_OPTIONS = {
+  title: '育心自主学习｜查看线下体验点',
+  path: '/pages/offline/offline'
+}
 
 Page({
   data: {
@@ -35,6 +45,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu()
     this.setNavigationMetrics()
     this.loadStores()
   },
@@ -105,6 +116,14 @@ Page({
     const phone = String(e.currentTarget.dataset.phone || '').trim()
     if (!phone) return
     wx.makePhoneCall({ phoneNumber: phone })
+  },
+
+  onShareAppMessage() {
+    return createShareAppMessage(SHARE_OPTIONS)
+  },
+
+  onShareTimeline() {
+    return createShareTimeline(SHARE_OPTIONS)
   },
 
   onTabTap(e) {

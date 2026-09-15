@@ -52,7 +52,7 @@ class MineController
             ['code', ''],
         ], true);
 
-        return app('json')->success($this->services->useRedeemCode((int)$request->uid(), $code));
+        return app('json')->success('兑换成功', $this->services->useRedeemCode((int)$request->uid(), $code));
     }
 
     public function memberPlans(Request $request)

@@ -109,7 +109,7 @@ class OtherOrder extends BaseModel
                 $query->where('member_type', $value);
             }
         } elseif ($value == 'card') {
-            $query->where('member_type', 'free')->where('code', '<>', '');
+            $query->where('type', 2)->where('code', '<>', '');
         } elseif ($value == 'free') {
             $query->where('member_type', 'free')->where('code', '');
         }

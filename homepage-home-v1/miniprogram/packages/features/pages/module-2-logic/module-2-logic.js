@@ -1,5 +1,16 @@
 const MODULE_A_PATH = "/packages/features/pages/module-a-assessment/module-a-assessment";
 const { applyCloudAssets, restoreLocalAsset } = require("../../utils/cloud-assets");
+const {
+  enableShareMenu,
+  createShareAppMessage,
+  createShareTimeline
+} = require("../../../../utils/public-share");
+
+const SHARE_OPTIONS = {
+  title: "一张图让孩子学科开窍",
+  path: "/packages/features/pages/module-2-logic/module-2-logic",
+  imageUrl: "/packages/features/assets/module-2-logic/illustrations/hero-tree-v3.png"
+};
 
 const LOCAL_ASSETS = {
   dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.png",
@@ -200,6 +211,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu();
     applyCloudAssets(this, CLOUD_ASSET_FIELDS);
   },
 
@@ -211,5 +223,13 @@ Page({
     wx.navigateTo({
       url: this.data.assessmentPath
     });
+  },
+
+  onShareAppMessage() {
+    return createShareAppMessage(SHARE_OPTIONS);
+  },
+
+  onShareTimeline() {
+    return createShareTimeline(SHARE_OPTIONS);
   }
 });

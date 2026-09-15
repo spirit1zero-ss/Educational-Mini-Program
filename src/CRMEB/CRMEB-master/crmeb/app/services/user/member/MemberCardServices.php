@@ -20,6 +20,7 @@ use app\services\user\UserServices;
 use crmeb\exceptions\AdminException;
 use crmeb\exceptions\ApiException;
 use crmeb\services\SystemConfigService;
+use think\facade\Db;
 
 class MemberCardServices extends BaseServices
 {
@@ -83,7 +84,8 @@ class MemberCardServices extends BaseServices
             unset($data['total_num']);
             $res = [];
             for ($i = 0; $i < $num; $i++) {
-                $data['card_number'] = $this->makeRandomNumber("CR", $data['card_batch_id']);
+                // The card number alone is the redemption credential (20 characters).
+                $data['card_number'] = 'CR' . strtoupper(bin2hex(random_bytes(9)));
                 $data['card_password'] = $this->makeRandomNumber();
                 $data['status'] = 1;
                 $data['add_time'] = time();
@@ -131,128 +133,76 @@ class MemberCardServices extends BaseServices
      */
     public function drawMemberCard(array $data, int $uid)
     {
-        if (!$uid || !$data) throw new ApiException('参数错误');
+        if ($uid <= 0) throw new ApiException('请先登录');
         if (!$this->isOpenMemberCard()) throw new ApiException('会员功能暂未开启');
+        $redeemCode = strtoupper(trim($data['code'] ?? $data['member_card_code'] ?? ''));
+        if ($redeemCode === '') throw new ApiException('请输入兑换码');
+        if (!preg_match('/^[A-Z0-9]{1,20}$/D', $redeemCode)) throw new ApiException('兑换码格式错误');
 
-        $redeemCode = trim($data['code'] ?? $data['member_card_code'] ?? '');
-        if (!$redeemCode) throw new ApiException('请输入兑换码');
+        return $this->transaction(function () use ($data, $uid, $redeemCode) {
+            // Serialize different codes for one user, as well as one code for different users.
+            $user = Db::name('user')->where('uid', $uid)->lock(true)->find();
+            if (!$user || !empty($user['is_del']) || (int)$user['status'] !== 1) {
+                throw new ApiException('用户不存在或已停用');
+            }
+            $card = Db::name('member_card')->where('card_number', $redeemCode)->find();
+            if (!$card) throw new ApiException('兑换码不存在');
+            // Batch before card matches the order used when operators disable a batch.
+            $batch = Db::name('member_card_batch')->where('id', (int)$card['card_batch_id'])->lock(true)->find();
+            $cards = Db::name('member_card')->where('card_number', $redeemCode)->limit(2)->lock(true)->select()->toArray();
+            if (count($cards) !== 1) throw new ApiException('兑换码异常，请联系管理员');
+            $card = $cards[0];
+            if (!$batch || (int)$card['card_batch_id'] !== (int)$batch['id']) {
+                throw new ApiException('兑换码批次不存在');
+            }
+            if (!empty($data['member_card_pwd']) && $card['card_password'] !== trim($data['member_card_pwd'])) {
+                throw new ApiException('兑换码密码有误');
+            }
+            if ((int)$card['use_uid'] !== 0 || (int)$card['use_time'] !== 0) {
+                // A lost success response can be retried, but a revoked membership is never restored.
+                if ((int)$card['use_uid'] === $uid && (int)$card['use_time'] > 0 && (int)$user['is_ever_level'] === 1) {
+                    return true;
+                }
+                throw new ApiException('兑换码已使用');
+            }
+            if ((int)$batch['status'] !== 1 || (int)$card['status'] !== 1) {
+                throw new ApiException('兑换码未激活或已停用');
+            }
+            $now = time();
+            if (!empty($batch['expire_time']) && (int)$batch['expire_time'] <= $now) {
+                throw new ApiException('兑换码已过期');
+            }
+            if ((int)$user['is_ever_level'] === 1) {
+                throw new ApiException('您已是永久会员，无需再兑换');
+            }
 
-        $cardInfo = $this->dao->getOneByWhere(['card_number' => $redeemCode]);
-        if (!$cardInfo) throw new ApiException('兑换码不存在');
-
-        /** @var MemberCardBatchServices $memberBatchServices */
-        $memberBatchServices = app()->make(MemberCardBatchServices::class);
-        $batchInfo = $memberBatchServices->getOne($cardInfo['card_batch_id']);
-        if (!$batchInfo || $batchInfo['status'] != 1) throw new ApiException('兑换码未激活，暂无无法使用');
-        if (!empty($batchInfo['expire_time']) && $batchInfo['expire_time'] < time()) throw new ApiException('兑换码已过期');
-        if ($cardInfo['status'] != 1) throw new ApiException('兑换码未激活，暂无无法使用');
-        if ($cardInfo['use_uid'] && $cardInfo['use_time']) throw new ApiException('兑换码已使用');
-        if (!empty($data['member_card_pwd']) && $cardInfo['card_password'] != trim($data['member_card_pwd'])) {
-            throw new ApiException('兑换码密码有误');
-        }
-
-        /** @var UserServices $userServices */
-        $userServices = app()->make(UserServices::class);
-        $userInfo = $userServices->getUserInfo($uid);
-        if (!$userInfo) throw new ApiException('用户不存在');
-        if ($userInfo->is_money_level > 0 && $userInfo->is_ever_level == 1) {
-            throw new ApiException('您已是永久会员，无需再兑换');
-        }
-
-        $this->transaction(function () use ($cardInfo, $userInfo, $batchInfo, $memberBatchServices, $userServices, $data) {
-            $res1 = $this->dao->update($cardInfo->id, ['use_uid' => $userInfo->uid, 'use_time' => time(), 'update_time' => time()], 'id');
-            $res2 = $memberBatchServices->useCardSetInc($batchInfo->id, 'use_num', 1);
-            /** @var OtherOrderServices $otherOrderServices */
-            $otherOrderServices = app()->make(OtherOrderServices::class);
-            /** @var StoreOrderCreateServices $storeOrderCreateService */
-            $storeOrderCreateService = app()->make(StoreOrderCreateServices::class);
-            $recordData = [
-                'uid' => $userInfo->uid,
-                'member_code' => $cardInfo->card_number,
-                'use_day' => 0,
+            $claimed = Db::name('member_card')->where('id', (int)$card['id'])
+                ->where('use_uid', 0)->where('use_time', 0)->where('status', 1)
+                ->update(['use_uid' => $uid, 'use_time' => $now, 'update_time' => $now]);
+            if ($claimed !== 1) throw new ApiException('兑换码已使用，请刷新后重试');
+            $counted = app()->make(MemberCardBatchServices::class)->useCardSetInc((int)$batch['id'], 'use_num', 1);
+            if (!$counted) throw new ApiException('兑换失败，请稍后重试');
+            $record = app()->make(OtherOrderServices::class)->addOtherOrderData([
+                'uid' => $uid,
+                'member_code' => $card['card_number'],
                 'overdue_time' => 0,
-                'order_id' => $storeOrderCreateService->getNewOrderId(),
+                'order_id' => app()->make(StoreOrderCreateServices::class)->getNewOrderId('hy'),
                 'channel_type' => $data['from'] ?? 'h5',
                 'member_type' => 'redeem',
                 'vip_day' => -1,
+                'is_permanent' => 1,
                 'type' => 2,
                 'paid' => 1,
-                'pay_time' => time(),
-            ];
-            $res3 = $otherOrderServices->addOtherOrderData($recordData);
-            $res4 = $userServices->setPermanentMember($userInfo->uid, 2);
-            return $res1 && $res2 && $res3 && $res4;
-        });
-
-        return true;
-        if (!$uid || !$data) throw new ApiException('参数错误');
-        $isOpenMember = $this->isOpenMemberCard();
-        if (!$isOpenMember) throw new ApiException('会员功能暂未开启');
-        if (!isset($data['member_card_code']) || !$data['member_card_code']) throw new ApiException('请输入会员卡号');
-        if (!isset($data['member_card_code']) || !$data['member_card_pwd']) throw new ApiException('请输入领取卡密');
-        $card_info = $this->dao->getOneByWhere(['card_number' => trim($data['member_card_code'])]);
-        if (!$card_info) throw new ApiException('会员卡不存在');
-        /** @var MemberCardBatchServices $memberBatchServices */
-        $memberBatchServices = app()->make(MemberCardBatchServices::class);
-        $batch_info = $memberBatchServices->getOne($card_info['card_batch_id']);
-        if (!$batch_info) throw new ApiException('会员卡未激活，暂无法使用');
-        if ($batch_info->status != 1) throw new ApiException('会员卡未激活，暂无法使用');
-        if ($card_info['status'] == 0) throw new ApiException('会员卡未激活，暂无法使用');
-        if ($card_info['card_password'] != trim($data['member_card_pwd'])) throw new ApiException('会员卡密码有误');
-        if ($card_info['use_uid'] && $card_info['use_time']) throw new ApiException('会员卡已使用');
-        /** @var UserServices $userServices */
-        $userServices = app()->make(UserServices::class);
-        $user_info = $userServices->getUserInfo($uid);
-        if (!$user_info) throw new ApiException('用户不存在');
-        if ($user_info->is_money_level > 0 && $user_info->is_ever_level == 1) throw new ApiException('您已是永久会员，无需再领取，可以将此卡转送亲朋好友，一起享受优惠');
-
-
-        /**
-         * 批次卡具体使用期限，业务需要打开即可，勿删。
-         */
-        if ($card_info->status != 1) throw new ApiException('会员卡未激活，暂无法使用');
-        $this->transaction(function () use ($card_info, $user_info, $batch_info, $memberBatchServices, $userServices, $data) {
-            $res1 = $this->dao->update($card_info->id, ['use_uid' => $user_info->uid, 'use_time' => time(), 'update_time' => time()], 'id');
-            if ($res1) {
-                $res2 = $memberBatchServices->useCardSetInc($batch_info->id, 'use_num', 1);
-                $overdue_time = 0;
-                switch ($user_info->is_money_level) {
-                    case 1:
-                    case 2:
-                    case 3:
-                        $overdue_time = bcadd(bcmul($batch_info->use_day, 86400, 0), $user_info->overdue_time, 0);
-                        $overdue_time = mktime(date('H'), date('i'), date('s'), date('m', $overdue_time), date('d', $overdue_time), date('Y', $overdue_time));
-                        break;
-                    case 0:
-                        $overdue_time = bcadd(bcmul($batch_info->use_day, 86400, 0), time(), 0);
-                        break;
-                }
-                $channel_type = $data['from'];
-                /** @var OtherOrderServices $OtherOrderServices */
-                $OtherOrderServices = app()->make(OtherOrderServices::class);
-                $storeOrderCreateService = app()->make(StoreOrderCreateServices::class);
-                $record_data['uid'] = $user_info->uid;
-                $record_data['member_code'] = $card_info->card_number;
-                $record_data['use_day'] = $batch_info->use_day;
-                $record_data['overdue_time'] = $overdue_time;
-                $record_data['order_id'] = $storeOrderCreateService->getNewOrderId();
-                $record_data['channel_type'] = $channel_type;
-                $record_data['member_type'] = "free";
-                $record_data['vip_day'] = $batch_info->use_day;
-                $record_data['type'] = 2;
-                $record_data['paid'] = 1;
-                $record_data['pay_time'] = time();
-                $res3 = $OtherOrderServices->addOtherOrderData($record_data);
-                //if ($res3) $res4 = $userServices->update($user_info->uid, ['level' => 1, 'overdue_time' => $overdue_time, 'is_permanent' => 0], 'uid');
-                /** @var UserServices $userServices */
-                $userServices = app()->make(UserServices::class);
-                $res4 = $userServices->setMemberOverdueTime($batch_info->use_day, $user_info->uid, 2, $record_data['member_type']);
-                $res5 = $res1 && $res2 && $res3 && $res4;
-                return $res5;
+                'pay_price' => 0,
+                'pay_time' => $now,
+            ]);
+            if (!$record) throw new ApiException('兑换记录保存失败，请稍后重试');
+            // Keep the existing permanent-member and pending-referrer binding semantics.
+            if (!app()->make(UserServices::class)->setPermanentMember($uid, 2)) {
+                throw new ApiException('会员开通失败，请稍后重试');
             }
+            return true;
         });
-
-
     }
 
     /**  验证是否存在此类型会员卡

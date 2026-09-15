@@ -93,3 +93,5 @@
     </view>
   </scroll-view>
 </view>
+
+<customer-service-float></customer-service-float>

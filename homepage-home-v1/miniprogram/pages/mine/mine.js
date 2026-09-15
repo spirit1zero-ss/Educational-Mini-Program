@@ -1,3 +1,4 @@
+const { enableShareMenu, createShareAppMessage } = require('../../utils/public-share')
 const CAMP_PATH = '/packages/features/pages/module-5-camp/module-5-camp'
 const DISTRIBUTION_CENTER_PATH = '/packages/features/pages/distribution-center/distribution-center'
 const PROMO_POSTER_PATH = '/packages/features/pages/promo-poster/promo-poster'
@@ -10,6 +11,7 @@ const MEMBER_REGISTRATION_PATH = '/packages/features/pages/member-registration/m
 const PROFILE_EDITOR_PATH = '/packages/features/pages/profile-editor/profile-editor'
 const REFERRAL_RULES_PATH = '/packages/features/pages/referral-rules/referral-rules'
 const OFFLINE_PATH = '/pages/offline/offline'
+const CUSTOMER_SERVICE_PHONE = '18203672103'
 const {
   getMineOverview,
   getMemberPlans,
@@ -20,6 +22,10 @@ const { hasAuthToken, clearAuth } = require('../../utils/request')
 const { openLoginConsentSettings } = require('../../utils/login-consent')
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     navStyle: '',
     scrollStyle: '',
@@ -86,15 +92,21 @@ Page({
       {
         key: 'registration',
         title: '会员登记表',
-        desc: '填写孩子信息与主要问题',
+        desc: '填写孩子信息、主要问题和联系电话',
         icon: '../../assets/mine/icon-member-status.svg',
-        hidden: true
+        memberOnly: true
       },
       {
         key: 'order',
         title: '训练营订单',
         desc: '查看报名与支付状态',
         icon: '../../assets/mine/icon-camp-order.svg'
+      },
+      {
+        key: 'redeem',
+        title: '兑换码',
+        desc: '输入兑换码开通权益',
+        icon: '../../assets/mine/icon-redeem-code.svg'
       },
       {
         key: 'benefit',
@@ -107,6 +119,12 @@ Page({
         title: '分销规则',
         desc: '了解邀请奖励说明',
         icon: '../../assets/mine/icon-referral.svg'
+      },
+      {
+        key: 'customer-service',
+        title: '客服电话',
+        desc: CUSTOMER_SERVICE_PHONE,
+        icon: '../../assets/mine/icon-customer-service.svg'
       }
     ],
     tabs: [
@@ -135,6 +153,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu({ timeline: false })
     this.setNavigationMetrics()
     this.setData({ isLoggedIn: hasAuthToken() })
     this.loadPublicMemberPlan()
@@ -362,6 +381,10 @@ Page({
 
   onListTap(e) {
     const key = e.currentTarget.dataset.key
+    if (key === 'customer-service') {
+      wx.makePhoneCall({ phoneNumber: CUSTOMER_SERVICE_PHONE })
+      return
+    }
     const labels = {
       profile: '个人资料',
       redeem: '兑换码',
@@ -381,9 +404,9 @@ Page({
     }
 
     if (key === 'registration') {
-      if (!hasAuthToken() || !this.data.registrationCanOpen) {
+      if (!hasAuthToken() || (!this.data.isMember && !this.data.registrationCanOpen)) {
         wx.showToast({
-          title: '支付成功后填写登记表',
+          title: '开通会员后填写登记表',
           icon: 'none'
         })
         wx.navigateTo({
@@ -475,6 +498,7 @@ Page({
         const member = payload.member
 
         this.setData({
+          isLoggedIn: hasAuthToken(),
           redeemSubmitting: false,
           showRedeemModal: false,
           redeemCode: ''
@@ -486,11 +510,26 @@ Page({
           this.applyMemberData(member)
         }
 
-        wx.showToast({
-          title: response.msg || '兑换成功',
-          icon: 'success'
+        this.loadMineOverview({ silent: true }).then(() => {
+          if (!hasAuthToken()) return
+          if (this.data.registrationCompleted) {
+            wx.showToast({ title: response.msg || '兑换成功', icon: 'success' })
+            return
+          }
+          wx.showModal({
+            title: '兑换成功',
+            content: '会员权益已开通，请填写孩子信息和联系电话，方便老师后续跟进。也可以稍后在“我的 → 会员登记表”补填。',
+            confirmText: '去填写',
+            cancelText: '稍后',
+            success: (result) => {
+              if (!result.confirm) return
+              wx.navigateTo({
+                url: `${MEMBER_REGISTRATION_PATH}?from=redeem_success`,
+                fail: () => wx.showToast({ title: '请在“我的”打开会员登记表', icon: 'none' })
+              })
+            }
+          })
         })
-        this.loadMineOverview({ silent: true })
       })
       .catch((error) => {
         this.setData({ redeemSubmitting: false })

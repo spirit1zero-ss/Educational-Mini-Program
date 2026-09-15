@@ -1,7 +1,12 @@
+const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const INVITE_RECORDS_PATH = '/packages/features/pages/invite-records/invite-records'
 const { getIncomeRecords, getWithdrawalOverview, applyWithdrawal } = require('../../../../api/mine')
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     navStyle: '',
     scrollStyle: '',
@@ -39,6 +44,7 @@ Page({
   },
 
   onLoad(options) {
+    enableShareMenu({ timeline: false })
     this.setNavigationMetrics()
 
     if (options && options.uid) {

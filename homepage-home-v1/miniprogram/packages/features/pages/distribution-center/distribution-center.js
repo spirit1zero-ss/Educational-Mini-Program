@@ -1,3 +1,4 @@
+const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const PROMO_POSTER_PATH = '/packages/features/pages/promo-poster/promo-poster'
 const INVITE_RECORDS_PATH = '/packages/features/pages/invite-records/invite-records'
 const MY_INCOME_PATH = '/packages/features/pages/my-income/my-income'
@@ -11,6 +12,10 @@ const {
 } = require('../../../../api/mine')
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     navStyle: '',
     scrollStyle: '',
@@ -53,6 +58,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu({ timeline: false })
     this.setNavigationMetrics()
   },
 

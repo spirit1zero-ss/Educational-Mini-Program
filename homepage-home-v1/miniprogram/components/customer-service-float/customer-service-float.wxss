@@ -1,0 +1,39 @@
+.customer-service-float.customer-service-float {
+  position: fixed;
+  right: 18rpx;
+  bottom: calc(240rpx + env(safe-area-inset-bottom));
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 80rpx;
+  height: 80rpx;
+  min-width: 0;
+  min-height: 0;
+  max-width: 80rpx;
+  max-height: 80rpx;
+  margin: 0;
+  padding: 0;
+  border: 1rpx solid rgba(47, 107, 67, 0.18);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #2f6b43;
+  box-shadow: 0 4rpx 14rpx rgba(31, 62, 42, 0.12);
+  overflow: hidden;
+  font-size: 0;
+  line-height: 1;
+}
+
+.customer-service-float::after {
+  border: 0;
+}
+
+.customer-service-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.customer-service-float.customer-service-float--pressed {
+  background: #edf5eb;
+}

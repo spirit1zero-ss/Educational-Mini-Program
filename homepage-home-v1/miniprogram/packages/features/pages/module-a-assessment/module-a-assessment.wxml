@@ -45,3 +45,5 @@
     bind:primary="onViewResult"
   ></sticky-action>
 </view>
+
+<customer-service-float></customer-service-float>

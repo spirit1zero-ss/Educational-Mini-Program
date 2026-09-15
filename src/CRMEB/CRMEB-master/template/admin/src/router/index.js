@@ -95,6 +95,9 @@ export function delayNProgressDone(time = 300) {
  * 权限验证
  */
 
+// This marker is intentionally not persisted: refresh menus before rendering
+// the first protected page after every reload, even when Vuex restores a cache.
+let refreshedMenuToken = '';
 router.beforeEach(async (to, from, next) => {
   // PrevLoading.start();
   keepAliveSplice(to);
@@ -104,6 +107,15 @@ router.beforeEach(async (to, from, next) => {
     // 这里依据 token 判断是否登录，可视情况修改
     const token = getCookies('token');
     if (token && token !== 'undefined') {
+      if (refreshedMenuToken !== token) {
+        try {
+          await store.dispatch('menus/getMenusNavList');
+          refreshedMenuToken = token;
+        } catch (error) {
+          // Existing request handling reports API errors; retain the cached
+          // navigation for transient failures and retry on the next route.
+        }
+      }
       const access = store.state.userInfo.uniqueAuth;
       const isPermission = includeArray(to.meta.auth, access); //  判断是否有权限  TODO
       if (access.length) {
@@ -128,6 +140,7 @@ router.beforeEach(async (to, from, next) => {
       }
       // next();
     } else {
+      refreshedMenuToken = '';
       // 没有登录的时候跳转到登录界面
       // 携带上登录成功之后需要跳转的页面完整路径
       next({

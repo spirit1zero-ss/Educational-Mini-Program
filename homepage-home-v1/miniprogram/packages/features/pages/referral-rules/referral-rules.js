@@ -1,3 +1,15 @@
+const {
+  enableShareMenu,
+  createShareAppMessage,
+  createShareTimeline
+} = require('../../../../utils/public-share')
+
+const SHARE_OPTIONS = {
+  title: '训练营邀请与奖励规则',
+  path: '/packages/features/pages/referral-rules/referral-rules',
+  imageUrl: '/packages/features/assets/promo-poster/promo-poster-bg.jpg'
+}
+
 Page({
   data: {
     heroIcon: "/assets/mine/icon-referral.svg",
@@ -45,6 +57,10 @@ Page({
     ]
   },
 
+  onLoad() {
+    enableShareMenu()
+  },
+
   onPosterTap() {
     wx.navigateTo({
       url: "/packages/features/pages/promo-poster/promo-poster",
@@ -55,5 +71,13 @@ Page({
         });
       }
     });
+  },
+
+  onShareAppMessage() {
+    return createShareAppMessage(SHARE_OPTIONS)
+  },
+
+  onShareTimeline() {
+    return createShareTimeline(SHARE_OPTIONS)
   }
 });

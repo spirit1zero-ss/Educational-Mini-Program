@@ -146,3 +146,5 @@
     <button class="signup-button" bindtap="onJoinTap">{{memberPrice === '--' ? '立即报名' : '立即报名 ' + memberPrice + '元'}}</button>
   </view>
 </view>
+
+<customer-service-float></customer-service-float>

@@ -1,0 +1,13 @@
+<button
+  class="customer-service-float"
+  size="mini"
+  open-type="contact"
+  show-message-card
+  send-message-title="育心自主学习｜联系客服"
+  send-message-path="/pages/home/home"
+  send-message-img="/assets/home/homepage-background-clean.jpg"
+  aria-label="联系在线客服"
+  hover-class="customer-service-float--pressed"
+>
+  <image class="customer-service-icon" src="/assets/mine/icon-customer-service.svg" mode="aspectFit"></image>
+</button>

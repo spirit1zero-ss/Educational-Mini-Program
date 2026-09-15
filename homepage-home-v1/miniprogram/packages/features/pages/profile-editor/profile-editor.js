@@ -1,3 +1,4 @@
+const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const DEFAULT_AVATAR = '/assets/mine/default-wechat-avatar.svg'
 const { getMiniappProfile, saveMiniappProfile } = require('../../../../api/mine')
 const { USER_KEY } = require('../../../../utils/request')
@@ -8,6 +9,10 @@ const {
 } = require('../../utils/profile-avatar')
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     loading: true,
     submitting: false,
@@ -21,6 +26,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu({ timeline: false })
     const cachedUser = wx.getStorageSync(USER_KEY) || {}
     this.applyProfile(cachedUser, false)
     this.loadProfile()

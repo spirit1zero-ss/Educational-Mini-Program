@@ -35,7 +35,20 @@
   "condition": {},
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "reference"
+      },
+      {
+        "type": "file",
+        "value": "design-qa.md"
+      },
+      {
+        "type": "file",
+        "value": "homepage-design-spec.md"
+      }
+    ],
     "include": []
   },
   "editorSetting": {}

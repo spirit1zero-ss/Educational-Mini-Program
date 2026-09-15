@@ -1,5 +1,16 @@
 const MODULE_B_TABLE_PATH = "/packages/features/pages/module-b-table/module-b-table";
 const { applyCloudAssets, restoreLocalAsset } = require("../../utils/cloud-assets");
+const {
+  enableShareMenu,
+  createShareAppMessage,
+  createShareTimeline
+} = require("../../../../utils/public-share");
+
+const SHARE_OPTIONS = {
+  title: "一张图养成作业好习惯",
+  path: "/packages/features/pages/module-3-habit/module-3-habit",
+  imageUrl: "/packages/features/assets/module-3-habit/illustrations/habit-hero-v2.png"
+};
 
 const LOCAL_ASSETS = {
   dividerImage: "/packages/features/assets/module-5-camp/camp-landscape-divider-v2.png",
@@ -70,6 +81,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu();
     applyCloudAssets(this, CLOUD_ASSET_FIELDS);
   },
 
@@ -81,5 +93,13 @@ Page({
     wx.navigateTo({
       url: MODULE_B_TABLE_PATH
     });
+  },
+
+  onShareAppMessage() {
+    return createShareAppMessage(SHARE_OPTIONS);
+  },
+
+  onShareTimeline() {
+    return createShareTimeline(SHARE_OPTIONS);
   }
 });

@@ -1,3 +1,4 @@
+const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const CAMP_PATH = '/packages/features/pages/module-5-camp/module-5-camp'
 const REGISTRATION_PATH = '/packages/features/pages/member-registration/member-registration'
 const { hasAuthToken } = require('../../../../utils/request')
@@ -11,6 +12,10 @@ const {
 } = require('../../utils/virtual-payment')
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     navStyle: '',
     scrollStyle: '',
@@ -33,6 +38,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu({ timeline: false })
     this.setNavigationMetrics()
     this.loadTrainingCampOrders()
   },

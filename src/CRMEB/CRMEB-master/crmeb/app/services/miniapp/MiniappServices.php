@@ -332,11 +332,12 @@ class MiniappServices extends BaseServices
     public function useRedeemCode(int $uid, string $code): array
     {
         $this->requireUser($uid);
-        if (trim($code) === '') {
-            throw new ApiException('Missing redeem code');
-        }
+        app()->make(MemberCardServices::class)->drawMemberCard([
+            'code' => $code,
+            'from' => 'routine',
+        ], $uid);
 
-        throw new ApiException('Redeem code backend is not configured yet');
+        return ['member' => $this->formatMember($this->requireUser($uid))];
     }
 
     public function getInviteRecords(int $uid, int $grade = 0, string $sort = '', string $keyword = ''): array

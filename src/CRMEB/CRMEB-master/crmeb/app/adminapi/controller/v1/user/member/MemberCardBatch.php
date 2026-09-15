@@ -83,6 +83,7 @@ class MemberCardBatch extends AuthController
         $data = $this->request->getMore([
             ['value', ''],
             ['field', ''],
+            ['remark', null],
         ]);
         $this->services->setValue($id, $data);
         return app('json')->success('修改成功');

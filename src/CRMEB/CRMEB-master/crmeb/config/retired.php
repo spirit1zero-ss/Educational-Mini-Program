@@ -31,9 +31,9 @@ return [
         'system/file', 'file/', 'upload', 'video_upload', 'online_upload',
         '/education', 'education/', 'education-assessment', 'admin-education',
         'user-user-level', 'user-user-group', 'user-user-label',
-        'admin-user-grade-card', 'admin-user-grade-record', 'admin-user-grade-right',
-        '/user/level', '/user/group', '/user/label', '/user/grade/card',
-        '/user/grade/record', '/user/grade/right',
+        'admin-user-grade-right',
+        '/user/level', '/user/group', '/user/label',
+        '/user/grade/right',
     ],
 
     // Exact authenticated endpoints still required by retained admin features.

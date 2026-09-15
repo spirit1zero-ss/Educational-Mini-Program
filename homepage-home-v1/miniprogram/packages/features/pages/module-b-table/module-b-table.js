@@ -1,3 +1,14 @@
+const {
+  enableShareMenu,
+  createShareAppMessage,
+  createShareTimeline
+} = require("../../../../utils/public-share");
+
+const SHARE_OPTIONS = {
+  title: "SOP高效作业表格｜下载孩子的学习规划工具",
+  path: "/packages/features/pages/module-b-table/module-b-table"
+};
+
 const TABLE_CACHE_VERSION = "v1";
 const TABLE_CACHE_PATH = `${wx.env.USER_DATA_PATH}/sop-homework-table-${TABLE_CACHE_VERSION}.docx`;
 
@@ -55,7 +66,16 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu();
     this.refreshCacheState();
+  },
+
+  onShareAppMessage() {
+    return createShareAppMessage(SHARE_OPTIONS);
+  },
+
+  onShareTimeline() {
+    return createShareTimeline(SHARE_OPTIONS);
   },
 
   onDownloadTable() {

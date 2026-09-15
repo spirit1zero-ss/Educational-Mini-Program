@@ -1,14 +1,20 @@
+const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const { RESULT_MAP, SUBJECT_TRAITS } = require("../../utils/module-a-results");
 
 const CAMP_PATH = "/packages/features/pages/module-5-camp/module-5-camp";
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     result: RESULT_MAP.A,
     subjectTraits: SUBJECT_TRAITS
   },
 
   onLoad(options) {
+    enableShareMenu({ timeline: false })
     const type = options && options.type ? String(options.type).toUpperCase() : "A";
     this.setData({
       result: RESULT_MAP[type] || RESULT_MAP.A

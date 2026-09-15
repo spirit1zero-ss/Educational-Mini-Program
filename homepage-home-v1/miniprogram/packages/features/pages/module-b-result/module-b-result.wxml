@@ -48,3 +48,5 @@
     bind:secondary="onRestart"
   ></sticky-action>
 </view>
+
+<customer-service-float></customer-service-float>

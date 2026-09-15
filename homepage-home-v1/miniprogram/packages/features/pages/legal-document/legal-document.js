@@ -1,3 +1,4 @@
+const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const { getMiniappAgreements } = require('../../../../api/mine')
 
 const FALLBACKS = {
@@ -20,6 +21,10 @@ const FALLBACKS = {
 }
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     key: 'service',
     title: '协议说明',
@@ -28,6 +33,7 @@ Page({
   },
 
   onLoad(options) {
+    enableShareMenu({ timeline: false })
     const key = FALLBACKS[options && options.key] ? options.key : 'service'
     const fallback = FALLBACKS[key]
     this.setData({ key, title: fallback.title })

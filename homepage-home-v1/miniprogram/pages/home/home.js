@@ -1,3 +1,15 @@
+const {
+  enableShareMenu,
+  createShareAppMessage,
+  createShareTimeline
+} = require('../../utils/public-share')
+
+const SHARE_OPTIONS = {
+  title: '育心自主学习｜陪孩子找到适合自己的学习方法',
+  path: '/pages/home/home',
+  imageUrl: '/assets/home/homepage-background-clean.jpg'
+}
+
 Page({
   data: {
     safeTopStyle: 'height: 88px;',
@@ -104,6 +116,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu()
     this.setSafeAreaMetrics()
   },
 
@@ -171,5 +184,13 @@ Page({
 
     if (!item || item.key === 'home') return
     this.openPath(item.path, true)
+  },
+
+  onShareAppMessage() {
+    return createShareAppMessage(SHARE_OPTIONS)
+  },
+
+  onShareTimeline() {
+    return createShareTimeline(SHARE_OPTIONS)
   }
 })

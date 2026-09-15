@@ -75,3 +75,5 @@
 </view>
 
 <login-consent-modal></login-consent-modal>
+
+<customer-service-float></customer-service-float>

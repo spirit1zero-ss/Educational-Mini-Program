@@ -7,13 +7,13 @@
         <view class="hero-title">完善报名信息</view>
         <view class="hero-desc">用于老师了解孩子情况，后续可在“我的”里修改。</view>
         <view class="status-chip {{completed ? 'status-chip--done' : ''}}">
-          {{completed ? '已填写，可继续修改' : (canRegister ? '待填写' : '支付成功后填写')}}
+          {{completed ? '已填写，可继续修改' : (canRegister ? '待填写' : '开通会员后填写')}}
         </view>
       </view>
 
       <view class="access-card" wx:if="{{!loading && !canRegister}}">
-        <view class="access-title">完成支付后填写</view>
-        <view class="access-desc">登记表用于已报名训练营的会员。请先完成订单支付，再回来填写孩子信息。</view>
+        <view class="access-title">开通会员后填写</view>
+        <view class="access-desc">支付或使用兑换码开通训练营会员后，即可填写孩子信息和联系电话。</view>
         <button class="access-button" bindtap="onGoOrders">查看训练营订单</button>
       </view>
 
@@ -126,3 +126,5 @@
 </view>
 
 <login-consent-modal></login-consent-modal>
+
+<customer-service-float></customer-service-float>

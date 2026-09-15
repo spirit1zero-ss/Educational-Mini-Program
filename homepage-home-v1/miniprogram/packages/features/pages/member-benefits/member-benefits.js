@@ -1,4 +1,15 @@
 const { getMemberPlans } = require('../../../../api/mine')
+const {
+  enableShareMenu,
+  createShareAppMessage,
+  createShareTimeline
+} = require('../../../../utils/public-share')
+
+const SHARE_OPTIONS = {
+  title: '21天自主学习训练营会员权益',
+  path: '/packages/features/pages/member-benefits/member-benefits',
+  imageUrl: '/assets/mine/mine-hero-training-camp.jpg'
+}
 
 Page({
   data: {
@@ -34,6 +45,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu()
     getMemberPlans()
       .then((response) => {
         const plans = Array.isArray(response.data) ? response.data : []
@@ -70,5 +82,13 @@ Page({
         });
       }
     });
+  },
+
+  onShareAppMessage() {
+    return createShareAppMessage(SHARE_OPTIONS)
+  },
+
+  onShareTimeline() {
+    return createShareTimeline(SHARE_OPTIONS)
   }
 });

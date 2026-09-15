@@ -1,8 +1,13 @@
+const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const PROMO_POSTER_PATH = '/packages/features/pages/promo-poster/promo-poster'
 const DEFAULT_TEAM_AVATAR = '/assets/mine/default-wechat-avatar.svg'
 const { getInviteRecords } = require('../../../../api/mine')
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     navStyle: '',
     scrollStyle: '',
@@ -23,6 +28,7 @@ Page({
   },
 
   onLoad(options) {
+    enableShareMenu({ timeline: false })
     this.setNavigationMetrics()
 
     if (options && options.uid) {

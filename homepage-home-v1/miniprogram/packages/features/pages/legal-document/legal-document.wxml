@@ -8,3 +8,5 @@
     <view class="safe-spacer"></view>
   </scroll-view>
 </view>
+
+<customer-service-float></customer-service-float>

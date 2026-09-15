@@ -1,3 +1,4 @@
+const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const {
   getTrainingCampRegistration,
   saveTrainingCampRegistration
@@ -13,6 +14,10 @@ const DEFAULT_FORM = {
 }
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     loading: false,
     submitting: false,
@@ -36,6 +41,7 @@ Page({
   },
 
   onLoad(options) {
+    enableShareMenu({ timeline: false })
     this.setData({
       from: (options && options.from) || ''
     })

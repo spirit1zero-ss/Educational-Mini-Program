@@ -12,7 +12,7 @@
           <view class="poster-content">
             <view class="invite-badge">会员专属邀请</view>
             <view class="poster-title">21天自主学习训练营</view>
-            <view class="poster-value">让孩子从被催着学，到主动会学</view>
+            <view class="poster-value">{{posterTagline}}</view>
             <view class="poster-subtitle">直播课 + 打卡陪跑 + 答疑服务</view>
 
             <view class="benefit-panel">
@@ -73,3 +73,5 @@
 </view>
 
 <login-consent-modal></login-consent-modal>
+
+<customer-service-float></customer-service-float>

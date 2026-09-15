@@ -19,7 +19,8 @@
       </div>
     </el-card>
     <el-card :bordered="false" shadow="never" class="mt16">
-      <el-button type="primary" v-db-click @click="addBatch">添加批次</el-button>
+      <el-alert class="mb14" title="兑换码用于免费开通永久会员。生成后，在小程序「我的 → 兑换码」输入卡号即可兑换，无需输入密码。" type="info" :closable="false" show-icon />
+      <el-button type="primary" v-db-click @click="addBatch">添加兑换码</el-button>
       <el-button v-db-click @click="getMemberScan">卡密使用页面二维码</el-button>
       <el-table
         class="mt14"
@@ -88,7 +89,7 @@
               <span class="el-dropdown-link">更多<i class="el-icon-arrow-down el-icon--right"></i> </span>
               <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item command="1">编辑批次名</el-dropdown-item>
-                <el-dropdown-item command="2">查看卡列表</el-dropdown-item>
+                <el-dropdown-item command="2">查看兑换码</el-dropdown-item>
                 <el-dropdown-item command="3">导出</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
@@ -105,7 +106,7 @@
         />
       </div>
     </el-card>
-    <el-dialog :visible.sync="modal" width="540px" :title="`${formValidate.id ? '编辑' : '添加'}批次`">
+    <el-dialog :visible.sync="modal" width="540px" :title="formValidate.id ? '编辑批次' : '添加兑换码'">
       <!-- <form-create v-model="fapi" :rule="rule" @submit="onSubmit"></form-create> -->
       <el-form ref="formValidate" :model="formValidate" label-width="80px" @submit.native.prevent>
         <el-form-item label="批次名称：">
@@ -115,13 +116,13 @@
           <el-input type="textarea" placeholder="请输入备注" v-model="formValidate.remark" class="w100" />
         </el-form-item>
         <template v-if="!formValidate.id">
-          <el-form-item label="制卡数量：">
+          <el-form-item label="生成数量：">
             <el-input-number
               :controls="false"
               placeholder="请输入制卡数量"
               element-id="sort"
               :precision="0"
-              :max="100000"
+              :max="6000"
               :min="1"
               v-model="formValidate.total_num"
               class="perW10"
@@ -149,10 +150,10 @@
       </el-form>
       <div class="acea-row row-right">
         <el-button v-db-click @click="modal = false">取消</el-button>
-        <el-button type="primary" v-db-click @click="onSubmit()">提交</el-button>
+        <el-button type="primary" :loading="submitting" v-db-click @click="onSubmit()">提交</el-button>
       </div>
     </el-dialog>
-    <el-dialog :visible.sync="cardModal" title="卡列表" width="1000px">
+    <el-dialog :visible.sync="cardModal" title="兑换码列表" width="1000px">
       <cardList v-if="cardModal" :id="id"></cardList>
     </el-dialog>
     <el-dialog :visible.sync="modal3" title="二维码" width="540px">
@@ -208,6 +209,7 @@ export default {
         limit: 15,
       },
       loading: false,
+      submitting: false,
       modal: false,
 
       formValidate: {
@@ -295,6 +297,7 @@ export default {
         case '1':
           this.formValidate.id = row.id;
           this.formValidate.title = row.title;
+          this.formValidate.remark = row.remark || '';
           this.modal = true;
           break;
         case '2':
@@ -308,14 +311,21 @@ export default {
     },
     // 添加批次弹窗
     addBatch() {
-      // this.fapi.resetFields();
       this.modal = true;
-      this.formValidate.id = 0;
-      this.formValidate.title = '';
-      this.formValidate.expire_time = '';
+      this.formValidate = { id: 0, title: '', total_num: 1, use_day: 0, expire_time: '', status: 1, remark: '' };
     },
     // 提交批次
     onSubmit() {
+      if (this.submitting) return;
+      this.formValidate.title = this.formValidate.title.trim();
+      if (!this.formValidate.title) return this.$message.error('请填写批次名称');
+      if (!this.formValidate.id) {
+        const count = this.formValidate.total_num;
+        if (!Number.isInteger(count) || count < 1 || count > 6000) return this.$message.error('生成数量须为 1 至 6000 的整数');
+        const expires = new Date((this.formValidate.expire_time || '').replace(/-/g, '/')).getTime();
+        if (!Number.isFinite(expires) || expires <= Date.now()) return this.$message.error('请选择晚于当前时间的兑换截止时间');
+      }
+      this.submitting = true;
       if (this.formValidate.id) {
         memberBatchSetValue(this.formValidate.id, {
           field: 'title',
@@ -329,7 +339,8 @@ export default {
           })
           .catch((err) => {
             this.$message.error(err.msg);
-          });
+          })
+          .finally(() => { this.submitting = false; });
       } else {
         memberBatchSave(this.formValidate.id, this.formValidate)
           .then((res) => {
@@ -339,7 +350,8 @@ export default {
           })
           .catch((err) => {
             this.$message.error(err.msg);
-          });
+          })
+          .finally(() => { this.submitting = false; });
       }
     },
     onSubmit2(formData) {},

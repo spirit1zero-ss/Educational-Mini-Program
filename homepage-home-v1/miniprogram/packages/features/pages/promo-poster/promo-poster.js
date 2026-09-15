@@ -1,4 +1,6 @@
 const POSTER_CANVAS_ID = 'promoPosterCanvas'
+const POSTER_SHARE_TITLE = '与孩子同成长'
+const POSTER_TAGLINE = '让学习开心！开窍！开悟！'
 const CANVAS_WIDTH = 670
 const CANVAS_HEIGHT = 1110
 const CANVAS_PIXEL_RATIO = 2
@@ -179,6 +181,7 @@ Page({
     navStyle: '',
     scrollStyle: '',
     posterBg: POSTER_BG,
+    posterTagline: POSTER_TAGLINE,
     codeImage: '',
     codeError: '',
     sharePath: '',
@@ -442,7 +445,7 @@ Page({
     drawText(ctx, '会员专属邀请', 56, 53, 22, '#9a6f22')
 
     drawText(ctx, '21天自主学习训练营', 34, 114, 54, '#183327')
-    drawText(ctx, '让孩子从被催着学，到主动会学', 34, 198, 34, '#245c4a')
+    drawText(ctx, POSTER_TAGLINE, 34, 198, 34, '#245c4a')
     drawText(ctx, '直播课 + 打卡陪跑 + 答疑服务', 34, 254, 25, '#647168')
 
     this.drawBenefitPanel(ctx)
@@ -575,7 +578,7 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: '21天自主学习训练营',
+      title: POSTER_SHARE_TITLE,
       path: this.data.sharePath || `/pages/home/home?ref=${encodeURIComponent(this.data.memberUid)}`,
       imageUrl: this.data.shareImagePath || this.data.posterBg
     }
@@ -583,7 +586,7 @@ Page({
 
   onShareTimeline() {
     return {
-      title: '21天自主学习训练营',
+      title: POSTER_SHARE_TITLE,
       query: `ref=${encodeURIComponent(this.data.memberUid)}`,
       imageUrl: this.data.shareImagePath || this.data.posterBg
     }

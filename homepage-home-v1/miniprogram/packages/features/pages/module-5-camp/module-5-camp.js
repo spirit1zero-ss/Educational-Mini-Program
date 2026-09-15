@@ -1,5 +1,16 @@
 const { getMemberPlans } = require('../../../../api/mine')
 const { applyCloudAssets, restoreLocalAsset } = require('../../utils/cloud-assets')
+const {
+  enableShareMenu,
+  createShareAppMessage,
+  createShareTimeline
+} = require('../../../../utils/public-share')
+
+const SHARE_OPTIONS = {
+  title: '21天自主学习训练营',
+  path: '/packages/features/pages/module-5-camp/module-5-camp',
+  imageUrl: '/packages/features/assets/module-5-camp/camp-hero-scene-v2.png'
+}
 
 const CAMP_ASSET_ROOT = '/packages/features/assets/module-5-camp/'
 const ICON_ROOT = '/packages/features/assets/module-2-logic/icons/'
@@ -159,6 +170,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu()
     applyCloudAssets(this, CLOUD_ASSET_FIELDS)
 
     getMemberPlans()
@@ -194,5 +206,13 @@ Page({
         });
       }
     });
+  },
+
+  onShareAppMessage() {
+    return createShareAppMessage(SHARE_OPTIONS)
+  },
+
+  onShareTimeline() {
+    return createShareTimeline(SHARE_OPTIONS)
   }
 });

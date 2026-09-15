@@ -118,8 +118,26 @@ class MemberCardBatchServices extends BaseServices
     {
         if (!is_numeric($id) || !$id) throw new AdminException('参数错误');
         if (!isset($data['field']) || !isset($data['value']) || !$data['field']) throw new AdminException('参数错误');
-        $this->dao->update($id, [$data['field'] => $data['value']]);
-        app()->make(MemberCardServices::class)->update(['card_batch_id' => $id], ['status' => $data['value']]);
+        if (!in_array($data['field'], ['title', 'status'], true)) throw new AdminException('不支持修改该字段');
+        if ($data['field'] === 'title') {
+            $data['value'] = trim((string)$data['value']);
+            if ($data['value'] === '') throw new AdminException('请填写批次名称');
+        } elseif (!in_array($data['value'], [0, 1, '0', '1'], true)) {
+            throw new AdminException('状态参数错误');
+        }
+        $this->transaction(function () use ($id, $data) {
+            // Use the same batch-then-card lock order as redemption.
+            $batch = \think\facade\Db::name('member_card_batch')->where('id', $id)->lock(true)->find();
+            if (!$batch) throw new AdminException('兑换码批次不存在');
+            $update = [$data['field'] => $data['value']];
+            if ($data['field'] === 'title' && isset($data['remark'])) $update['remark'] = (string)$data['remark'];
+            if ($this->dao->update($id, $update) === false) throw new AdminException('批次更新失败');
+            if ($data['field'] === 'status') {
+                if (app()->make(MemberCardServices::class)->update(['card_batch_id' => $id], ['status' => (int)$data['value']]) === false) {
+                    throw new AdminException('兑换码状态更新失败');
+                }
+            }
+        });
     }
 
 

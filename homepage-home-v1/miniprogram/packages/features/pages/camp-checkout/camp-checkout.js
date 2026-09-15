@@ -1,3 +1,4 @@
+const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const {
   getMemberPlans,
   saveMiniappProfile,
@@ -17,6 +18,10 @@ const CAMP_ORDERS_PATH = '/packages/features/pages/camp-orders/camp-orders'
 const MEMBER_REGISTRATION_PATH = '/packages/features/pages/member-registration/member-registration'
 
 Page({
+  onShareAppMessage() {
+    return createShareAppMessage()
+  },
+
   data: {
     submitting: false,
     profileVisible: false,
@@ -65,6 +70,7 @@ Page({
   },
 
   onLoad() {
+    enableShareMenu({ timeline: false })
     this.loadMemberPlan()
   },
 

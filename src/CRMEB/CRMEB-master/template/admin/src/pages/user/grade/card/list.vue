@@ -8,8 +8,8 @@
       inline
       @submit.native.prevent
     >
-      <el-form-item label="卡号：">
-        <el-input v-model="table.card_number" placeholder="请输入卡号" class="form_content_width" />
+      <el-form-item label="兑换码：">
+        <el-input v-model="table.card_number" placeholder="请输入兑换码" class="form_content_width" />
       </el-form-item>
       <el-form-item label="手机号：">
         <el-input v-model="table.phone" placeholder="请输入手机号" class="form_content_width" />
@@ -37,7 +37,7 @@
           <span>{{ scope.row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="卡号" min-width="100">
+      <el-table-column label="兑换码（卡号）" min-width="220">
         <template slot-scope="scope">
           <span>{{ scope.row.card_number }}</span>
         </template>

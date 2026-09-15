@@ -33,3 +33,5 @@
     <view class="assessment-arrow" wx:else>›</view>
   </view>
 </view>
+
+<customer-service-float></customer-service-float>
