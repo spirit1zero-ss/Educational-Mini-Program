@@ -129,6 +129,11 @@ class MineController
         return app('json')->success($this->services->getWithdrawalOverview((int)$request->uid()));
     }
 
+    public function withdrawalRules()
+    {
+        return app('json')->success($this->services->getWithdrawalRules());
+    }
+
     public function applyWithdrawal(Request $request)
     {
         $data = $request->postMore([

@@ -14,6 +14,9 @@
         </view>
       </view>
 
+      <withdrawal-rules rules="{{withdrawalRules}}" error="{{withdrawalRulesError}}" bind:retry="loadWithdrawalRules"></withdrawal-rules>
+      <button class="withdrawal-entry" bindtap="onIncomeTap">查看可提现余额与申请进度</button>
+
       <view class="section-card">
         <view class="section-title">推广流程</view>
         <view class="step-list">

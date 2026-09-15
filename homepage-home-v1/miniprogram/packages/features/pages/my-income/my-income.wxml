@@ -40,6 +40,8 @@
         <view class="withdraw-window-tip" wx:if="{{withdrawal}}">{{withdrawal.windowNotice}}</view>
       </view>
 
+      <withdrawal-rules rules="{{withdrawalRules}}" error="{{withdrawalRulesError}}" bind:retry="loadWithdrawalRules"></withdrawal-rules>
+
       <view class="status-tabs">
         <view
           class="status-tab {{activeStatus === item.key ? 'status-tab--active' : ''}}"
@@ -160,6 +162,7 @@
         <input class="withdraw-input" type="digit" value="{{withdrawalAmount}}" bindinput="onWithdrawalAmountInput" placeholder="请输入提现金额" />
       </view>
       <view class="withdraw-fee" wx:if="{{withdrawal.feeRate > 0}}">提现手续费：{{withdrawal.feeRate}}%</view>
+      <withdrawal-rules rules="{{withdrawalRules}}" compact="{{true}}"></withdrawal-rules>
       <view class="withdraw-actions">
         <button class="withdraw-cancel" bindtap="closeWithdrawal">取消</button>
         <button class="withdraw-submit" loading="{{withdrawalSubmitting}}" bindtap="submitWithdrawal">提交审核</button>

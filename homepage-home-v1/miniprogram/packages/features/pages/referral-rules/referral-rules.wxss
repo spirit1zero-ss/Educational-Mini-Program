@@ -1,5 +1,8 @@
 @import "../member-benefits/member-benefits.wxss";
 
+.withdrawal-entry { margin: 16rpx 0 24rpx; padding: 18rpx; color: #245c4a; background: #e9f3eb; border-radius: 18rpx; font-size: 25rpx; line-height: 38rpx; font-weight: 700; }
+.withdrawal-entry::after { border: 0; }
+
 .summary-card::after {
   background: rgba(47, 107, 67, 0.1);
 }

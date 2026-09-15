@@ -1,6 +1,7 @@
 const { enableShareMenu, createShareAppMessage } = require('../../../../utils/public-share')
 const INVITE_RECORDS_PATH = '/packages/features/pages/invite-records/invite-records'
-const { getIncomeRecords, getWithdrawalOverview, applyWithdrawal } = require('../../../../api/mine')
+const { getIncomeRecords, getWithdrawalOverview, getWithdrawalRules, applyWithdrawal } = require('../../../../api/mine')
+const { buildWithdrawalRules } = require('../../utils/withdrawal-rules')
 
 Page({
   onShareAppMessage() {
@@ -30,6 +31,8 @@ Page({
     records: [],
     filteredRecords: [],
     withdrawal: null,
+    withdrawalRules: buildWithdrawalRules(null),
+    withdrawalRulesError: false,
     pendingTransfer: null,
     withdrawalVisible: false,
     withdrawalAmount: '',
@@ -46,12 +49,28 @@ Page({
   onLoad(options) {
     enableShareMenu({ timeline: false })
     this.setNavigationMetrics()
+    this.loadWithdrawalRules()
 
     if (options && options.uid) {
       this.setData({ memberUid: options.uid })
     }
 
     this.loadIncomeRecords().then(() => this.loadWithdrawalOverview())
+  },
+
+  loadWithdrawalRules() {
+    return getWithdrawalRules().then((response) => {
+      const config = response && response.data
+      if (!config || !config.windowLabel || config.minAmount == null || config.feeRate == null) {
+        throw new Error('提现规则加载失败')
+      }
+      this.setData({
+        withdrawalRules: buildWithdrawalRules(this.data.withdrawal || config),
+        withdrawalRulesError: false
+      })
+    }).catch(() => {
+      this.setData({ withdrawalRulesError: !this.data.withdrawal })
+    })
   },
 
   loadWithdrawalOverview() {
@@ -75,6 +94,8 @@ Page({
         const records = incomeRecords.concat(withdrawalRecords)
         this.setData({
           withdrawal,
+          withdrawalRules: buildWithdrawalRules(withdrawal),
+          withdrawalRulesError: false,
           pendingTransfer: (withdrawal.list || []).find((item) => item.canConfirm) || null,
           bankWithdrawalEnabled: !!(withdrawal.methods && withdrawal.methods.bank && withdrawal.methods.bank.enabled),
           debtAmount: withdrawal.debtAmount || '0.00',

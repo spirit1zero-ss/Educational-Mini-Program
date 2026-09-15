@@ -10,8 +10,13 @@ const SHARE_OPTIONS = {
   imageUrl: '/packages/features/assets/promo-poster/promo-poster-bg.jpg'
 }
 
+const { getWithdrawalRules } = require('../../../../api/mine')
+const { buildWithdrawalRules } = require('../../utils/withdrawal-rules')
+
 Page({
   data: {
+    withdrawalRules: buildWithdrawalRules(null),
+    withdrawalRulesError: false,
     heroIcon: "/assets/mine/icon-referral.svg",
     steps: [
       {
@@ -53,12 +58,27 @@ Page({
       "终端客户统一在线支付399元，订单款进入公司账户，推广人只获得对应返佣。",
       "退款、异常订单、无效邀请会撤销对应团队人数和佣金，并在收益明细中显示退款扣回记录。",
       "佣金已提现后发生退款，会形成待抵扣佣金，后续返佣优先抵扣，清零后才能再次提现。",
-      "提现手续费按申请金额的0.6%计算，已提现展示实际到账净额。"
+      "提现手续费按上方提现规则显示的当前费率计算，已提现展示实际到账净额。"
     ]
   },
 
   onLoad() {
     enableShareMenu()
+    this.loadWithdrawalRules()
+  },
+
+  loadWithdrawalRules() {
+    return getWithdrawalRules().then((response) => {
+      const config = response && response.data
+      if (!config || !config.windowLabel || config.minAmount == null || config.feeRate == null) {
+        throw new Error('提现规则加载失败')
+      }
+      this.setData({ withdrawalRules: buildWithdrawalRules(config), withdrawalRulesError: false })
+    }).catch(() => this.setData({ withdrawalRulesError: true }))
+  },
+
+  onIncomeTap() {
+    wx.navigateTo({ url: '/packages/features/pages/my-income/my-income' })
   },
 
   onPosterTap() {

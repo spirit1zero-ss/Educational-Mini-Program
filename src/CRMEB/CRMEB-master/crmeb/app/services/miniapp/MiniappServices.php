@@ -700,6 +700,22 @@ class MiniappServices extends BaseServices
         return $this->getWithdrawalOverview($uid);
     }
 
+    /** Public policy only; never include a user's balance or withdrawal records. */
+    public function getWithdrawalRules(): array
+    {
+        $window = $this->getWithdrawalWindow();
+        $minimum = (string)sys_config('user_extract_min_price', '0.10');
+        if (!is_numeric($minimum) || bccomp($minimum, '0.10', 2) < 0) {
+            $minimum = '0.10';
+        }
+        return [
+            'minAmount' => $this->formatAmount($minimum),
+            'feeRate' => (string)sys_config('withdrawal_fee', 0),
+            'windowLabel' => $window['label'],
+            'windowNotice' => $window['notice'],
+        ];
+    }
+
     private function getWithdrawalWindow(): array
     {
         $startDay = max(1, min(31, (int)sys_config('miniapp_withdraw_start_day', 1)));

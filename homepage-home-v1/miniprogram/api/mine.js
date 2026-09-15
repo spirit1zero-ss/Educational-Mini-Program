@@ -62,6 +62,10 @@ function getWithdrawalOverview() {
   return get('/api/miniapp/referral/withdrawal')
 }
 
+function getWithdrawalRules() {
+  return get('/api/miniapp/referral/withdrawal-rules', {}, { noAuth: true })
+}
+
 function applyWithdrawal(data) {
   return post('/api/miniapp/referral/withdrawal', data || {})
 }
@@ -94,6 +98,7 @@ module.exports = {
   getInviteRecords,
   getIncomeRecords,
   getWithdrawalOverview,
+  getWithdrawalRules,
   applyWithdrawal,
   getTrainingCampOrders,
   getTrainingCampRegistration,

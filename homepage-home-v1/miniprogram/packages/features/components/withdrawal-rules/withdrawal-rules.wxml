@@ -1,0 +1,8 @@
+<view class="withdrawal-rules {{compact ? 'withdrawal-rules--compact' : ''}}">
+  <view class="rules-title">提现规则</view>
+  <view class="rules-row" wx:for="{{rules}}" wx:key="title">
+    <view class="rules-label">{{item.title}}</view>
+    <view class="rules-description">{{item.desc}}</view>
+  </view>
+  <button wx:if="{{error}}" class="rules-retry" bindtap="retry">金额及开放日期加载失败，点击重试</button>
+</view>
