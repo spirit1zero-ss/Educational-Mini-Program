@@ -22,3 +22,35 @@ src/CRMEB/CRMEB-master/crmeb/runtime/
 src/CRMEB/CRMEB-master/crmeb/supervisord.log
 src/CRMEB/CRMEB-master/crmeb/vendor/workerman/workerman.log
 src/CRMEB/CRMEB-master/help/docker/mysql/
+
+# Additional public-release exclusions
+src/CRMEB/CRMEB-master/crmeb/vendor/
+homepage-home-v1/project.private.config.json
+homepage-home-v1/tmp/
+# Open-source preparation: local/private material is never a public deliverable.
+/.tmp/
+/.codex/
+/.agents/
+/local-backup/
+/runtime-backup/
+/handoff/
+/docs/history/
+/docs/deliverables/
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.key
+*.jks
+*.keystore
+*.dump
+*.rdb
+*.sqlite
+*.sqlite3
+*.sql.gz
+*.bak
+*.log
+*.zip
+*.7z
+**/storefile/
+**/uploads/
