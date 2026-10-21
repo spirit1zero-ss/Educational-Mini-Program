@@ -9,7 +9,7 @@
 - 后备方案直接在当前 Dockerfile 内构建官方 PHP 源码，不依赖预先构建/上传自定义基础镜像，也不以旧版 PHP runtime 假冒修复。
 - 上游： https://github.com/docker-library/php/tree/e3eaff845f7a9f7259c31da54dce0320b47a3bbd/8.3/bookworm/apache
 - 保留的上游构建文件：`php-8.3.36/Dockerfile.upstream`，辅助脚本及 MIT LICENSE 同目录。
-- Dockerfile 的第一阶段仅对上游的 stage 名与三处 COPY 源路径作适配。保留上游 SHA-256 与 GPG 签名验证，未关闭任何校验。
+- Dockerfile 的第一阶段对上游的 stage 名与三处 COPY 源路径作适配，并移除不再使用的 PECL channel 在线刷新。保留上游 SHA-256 与 GPG 签名验证，未关闭任何校验。
 - PHP 源码：https://www.php.net/distributions/php-8.3.36.tar.xz
 - SHA-256：`dd54693aa334c5c4d72e9aee96b082c2473750a18a6c1d105789c93a3b1692fd`。已经下载官方归档并核对摘要一致。
 
@@ -27,7 +27,7 @@ sh deploy/cloudrun/test-php-security.sh education-php-security:local
 
 脚本执行本地构建、PHP CLI/扩展检查、Apache 配置检查以及无外网的 mod_php HTTP 测试。HTTP 测试挂载独立临时 PHP 文件，不启动 CRMEB 业务、不连接数据库/Redis、不访问线上域名、不执行漏洞利用。它只验证 runtime，不代替业务验收。
 
-构建需要访问 Debian 包仓库、php.net、Ubuntu GPG keyserver 和 PECL。源码编译比现有基础镜像构建耗时更长；上游默认并行编译，云托管资源较少时可能需要另行评估构建资源。网络、GPG 或编译失败应停止，不得跳过校验或退回旧 runtime。
+构建需要访问 Debian 包仓库、php.net、Ubuntu GPG keyserver ；Redis 扩展源码已随仓库提供，不再在线访问 PECL。源码编译比现有基础镜像构建耗时更长；上游默认并行编译，云托管资源较少时可能需要另行评估构建资源。网络、GPG 或编译失败应停止，不得跳过校验或退回旧 runtime。
 
 当前执行环境没有 Docker、Podman、Buildah、BuildKit 或 PHP。已做文件完整性、脚本语法、Dockerfile 与官方源逐项对照及应用段保留检查；实际镜像构建、CLI 执行、Apache HTTP 测试和业务兼容性测试均未执行。不能据此宣称线上已安全。
 
@@ -47,3 +47,9 @@ sh deploy/cloudrun/test-php-security.sh education-php-security:local
 ## 独立 Actions 测试
 
 `.github/workflows/php-security-build-test.yml` 只响应 `security/php-8.3.36-build-test` 的 push，使用标准 ubuntu-24.04、contents: read、固定 checkout SHA、45 分钟超时和同分支取消旧运行。不使用生产凭据，不上传镜像、artifact 或 cache。后台文件只校验镜像中的已有打包产物，不重建前端。工作流通过仅代表列出的 runtime 检查，不是完整业务验收或生产发布。
+
+## 腾讯云构建失败的修复（Redis 下载 HTTP 500）
+
+首次隔离 Actions 构建已通过：https://github.com/spirit1zero-ss/Educational-Mini-Program/actions/runs/39635039199 。随后腾讯云版本 crmeb-api-075 在下载 PECL redis-6.0.2.tgz 时收到 HTTP 500，尚未进入 Redis 扩展编译。
+
+现将 phpredis 官方 6.0.2 对应提交的源码归档保存到 redis-6.0.2/，构建时先校验 SHA256，再按官方 phpize/configure/make/install 流程离线编译扩展。没有升级 Redis 版本，没有新增 Redis 服务，也没有变更业务缓存、会话、队列或环境变量。原 Dockerfile 已安装和加载 Redis 6.0.2 扩展；保留它并不代表把业务切换到 Redis。完整来源与摘要见 redis-6.0.2/README.md。

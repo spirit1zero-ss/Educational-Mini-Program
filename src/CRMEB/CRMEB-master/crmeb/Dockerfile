@@ -281,8 +281,7 @@ RUN set -eux; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false; \
 	rm -rf /var/lib/apt/lists/*; \
 	\
-# update pecl channel definitions https://github.com/docker-library/php/issues/443
-	pecl update-channels; \
+# Extensions are built from verified local source; no PECL channel refresh is needed.
 	rm -rf /tmp/pear ~/.pearrc; \
 	\
 # smoke test
@@ -329,10 +328,23 @@ RUN apt-get update \
         pdo_mysql \
         zip
 
-RUN pecl install redis-6.0.2 \
-    && docker-php-ext-enable redis \
-    && a2enmod rewrite headers expires \
-    && rm -rf /var/lib/apt/lists/* /tmp/pear
+# Keep the existing Redis extension version without depending on PECL availability.
+# This installs the PHP client extension only; it does not start Redis or change app drivers.
+COPY deploy/cloudrun/redis-6.0.2/phpredis-6.0.2.tar.gz /tmp/phpredis-6.0.2.tar.gz
+RUN set -eux; \
+    echo '5db21869c88b61bf0e6db07863602353f02506f4a2b38f60c8fc9ba9c15050b4  /tmp/phpredis-6.0.2.tar.gz' | sha256sum -c -; \
+    mkdir -p /tmp/phpredis; \
+    tar -xzf /tmp/phpredis-6.0.2.tar.gz -C /tmp/phpredis --strip-components=1; \
+    cd /tmp/phpredis; \
+    phpize; \
+    ./configure --enable-redis; \
+    make -j1; \
+    make install; \
+    docker-php-ext-enable redis; \
+    cd /; \
+    rm -rf /tmp/phpredis /tmp/phpredis-6.0.2.tar.gz; \
+    a2enmod rewrite headers expires; \
+    rm -rf /var/lib/apt/lists/* /tmp/pear
 
 # Fail closed: never publish a build with an unexpected PHP runtime or missing extensions.
 COPY deploy/cloudrun/verify-php-runtime.php /usr/local/bin/verify-php-runtime.php

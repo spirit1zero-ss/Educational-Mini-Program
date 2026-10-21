@@ -31,6 +31,7 @@ jobs:
         run: |
           set -euo pipefail
           (cd deploy/cloudrun/php-8.3.36 && sha256sum -c SHA256SUMS)
+          (cd deploy/cloudrun/redis-6.0.2 && sha256sum -c SHA256SUMS)
           sh -n deploy/cloudrun/test-php-security.sh
           test -s public/admin/index.html
       - name: Build and test isolated PHP and Apache runtime
