@@ -1,0 +1,48 @@
+name: PHP security isolated build test
+
+on:
+  push:
+    branches:
+      - security/php-8.3.36-build-test
+
+permissions:
+  contents: read
+
+concurrency:
+  group: php-security-isolated-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime-smoke:
+    if: github.repository == 'spirit1zero-ss/Educational-Mini-Program' && github.ref == 'refs/heads/security/php-8.3.36-build-test'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+        working-directory: src/CRMEB/CRMEB-master/crmeb
+    steps:
+      - name: Check out exact test commit
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Check vendored source checksums and script syntax
+        run: |
+          set -euo pipefail
+          (cd deploy/cloudrun/php-8.3.36 && sha256sum -c SHA256SUMS)
+          sh -n deploy/cloudrun/test-php-security.sh
+          test -s public/admin/index.html
+      - name: Build and test isolated PHP and Apache runtime
+        run: sh deploy/cloudrun/test-php-security.sh education-php-security:local
+      - name: Confirm packaged admin files are unchanged
+        run: |
+          set -euo pipefail
+          expected=$(sha256sum public/admin/index.html | cut -d ' ' -f1)
+          actual=$(docker run --rm --network none education-php-security:local sha256sum /var/www/html/public/admin/index.html | cut -d ' ' -f1)
+          test "$expected" = "$actual"
+          docker run --rm --network none education-php-security:local sh -ec 'test -s /var/www/html/public/admin/index.html; test -d /var/www/html/public/admin; test "$(find /var/www/html/public/admin -type f | wc -l)" -gt 1'
+      - name: Record bounded verification result
+        run: |
+          printf '%s\n' 'PASS: PHP 8.3.36, required extensions, Apache mod_php HTTP smoke, packaged admin files.' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' 'No image/artifact/cache upload or deployment. Not tested: CRMEB login, payment, database/Redis, uploads or production health.' >> "$GITHUB_STEP_SUMMARY"
