@@ -38,8 +38,8 @@ jobs:
       - name: Confirm packaged admin files are unchanged
         run: |
           set -euo pipefail
-          expected=$(sha256sum public/admin/index.html | cut -d ' ' -f1)
-          actual=$(docker run --rm --network none education-php-security:local sha256sum /var/www/html/public/admin/index.html | cut -d ' ' -f1)
+          expected=$(cd public/admin && find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f1)
+          actual=$(docker run --rm --network none education-php-security:local sh -ec 'cd /var/www/html/public/admin; find . -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum' | cut -d ' ' -f1)
           test "$expected" = "$actual"
           docker run --rm --network none education-php-security:local sh -ec 'test -s /var/www/html/public/admin/index.html; test -d /var/www/html/public/admin; test "$(find /var/www/html/public/admin -type f | wc -l)" -gt 1'
       - name: Record bounded verification result
