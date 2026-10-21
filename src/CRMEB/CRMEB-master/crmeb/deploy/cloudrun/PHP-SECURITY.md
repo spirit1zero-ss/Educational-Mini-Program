@@ -1,55 +1,45 @@
-# PHP 8.3.36 安全修复（待构建验证，未发布）
+# PHP 8.3.36 安全修复
 
-## 范围与来源
+## 当前方案
 
-- 修复 CVE-2026-109618 / CVE-2026-109619，仍使用 PHP 8.3、Debian Bookworm、Apache mod_php、80 端口。
-- PHP 官方公告：https://www.php.net/archive/2026.php#2026-10-21-5
-- 基线：Educational-Mini-Program 的 dev3，`911074fce6ceb6e421f7c75ff1eac48be959070d`。
-- 2026-10-21 16:17 UTC 实查 `php:8.3.36-apache-bookworm` OCI index 的 `manifests` 为空，因此不能依赖此标签直接构建。index digest：`sha256:eb37f58646a901dc7727cf448cae36daaefaba79de33b5058dab79aa4c04aefb`。
-- 后备方案直接在当前 Dockerfile 内构建官方 PHP 源码，不依赖预先构建/上传自定义基础镜像，也不以旧版 PHP runtime 假冒修复。
-- 上游： https://github.com/docker-library/php/tree/e3eaff845f7a9f7259c31da54dce0320b47a3bbd/8.3/bookworm/apache
-- 保留的上游构建文件：`php-8.3.36/Dockerfile.upstream`，辅助脚本及 MIT LICENSE 同目录。
-- Dockerfile 的第一阶段对上游的 stage 名与三处 COPY 源路径作适配，并移除不再使用的 PECL channel 在线刷新。保留上游 SHA-256 与 GPG 签名验证，未关闭任何校验。
-- PHP 源码：https://www.php.net/distributions/php-8.3.36.tar.xz
-- SHA-256：`dd54693aa334c5c4d72e9aee96b082c2473750a18a6c1d105789c93a3b1692fd`。已经下载官方归档并核对摘要一致。
+保持 PHP 8.3、Debian Bookworm、Apache mod_php、80 端口；使用已可用的官方修复镜像并固定 digest：
 
-应用阶段保持现有扩展配置与 redis-6.0.2，不更改 Composer 依赖、业务逻辑、数据库、凭据、前端产物、端口、Apache 虚拟主机或 php.ini。额外加入 PHP 精确版本和扩展存在性检查，不符合则构建失败。
+```
+php:8.3.36-apache-bookworm@sha256:3bf3200166b7c3236ee7b33243c794f72c650980161bfb3c9ede9d94e2b04615
+```
 
-## 构建和验证
+2026-10-21 17:22 UTC 直接核查 Docker Hub registry：
 
-微信云托管保持原配置：GitHub 源、dev3 分支、构建目录 `src/CRMEB/CRMEB-master/crmeb`、Dockerfile、端口 80。该目录已包含所有需要的构建辅助文件。
+- linux/amd64 manifest：sha256:6c7f5be7c3ca808b110da2175165f3c230c7c48d757494d03cb2cc057572d13f
+- linux/arm64/v8 manifest：sha256:04959633f910b273cdc2c93e9b374acc425aeba991513c128be98e313fd13582
+- 两个平台 config 均为 PHP_VERSION=8.3.36，PHP_SHA256=dd54693aa334c5c4d72e9aee96b082c2473750a18a6c1d105789c93a3b1692fd。
 
-在隔离的、具有 Docker 的环境内，从上述构建目录运行：
+PHP 官方公告：https://www.php.net/archive/2026.php#2026-10-21-5
+
+8.3.36 修复 CVE-2026-109618 / CVE-2026-109619。早先官方 tag 的 manifest 列表为空，因此使用官方源码构建后备流程；如今镜像真实可用，已移除现场 PHP 源码编译及公钥服务器依赖。这不是跳过源码校验，而是改用固定内容摘要的官方预构建 runtime，并继续在最终镜像中检查精确版本和所需扩展。
+
+保留 Redis 6.0.2 官方源码归档及 SHA256 验证，本地编译该扩展，避免此前 PECL 下载 HTTP 500。来源与摘要见 redis-6.0.2/README.md。原始 Dockerfile 就安装/加载此 PHP 客户端扩展；本修复不安装或启动 Redis 服务，不改变业务缓存、会话、队列、环境变量、凭据、数据库或前端产物。
+
+## 构建与隔离验证
+
+微信云托管保持原配置：GitHub 源、dev3 分支、构建目录 src/CRMEB/CRMEB-master/crmeb、Dockerfile、端口 80。
+
+在具有 Docker 的隔离环境运行：
 
 ```sh
 sh deploy/cloudrun/test-php-security.sh education-php-security:local
 ```
 
-脚本执行本地构建、PHP CLI/扩展检查、Apache 配置检查以及无外网的 mod_php HTTP 测试。HTTP 测试挂载独立临时 PHP 文件，不启动 CRMEB 业务、不连接数据库/Redis、不访问线上域名、不执行漏洞利用。它只验证 runtime，不代替业务验收。
+脚本执行完整构建、PHP 8.3.36/扩展/Redis 6.0.2 检查、Apache 配置和模块检查、无网络的 HTTP mod_php 测试。HTTP 测试使用临时文件，不启动 CRMEB 业务、不连接 DB/Redis、不访问线上域名、不执行漏洞利用。
 
-构建需要访问 Debian 包仓库、php.net、Ubuntu GPG keyserver ；Redis 扩展源码已随仓库提供，不再在线访问 PECL。源码编译比现有基础镜像构建耗时更长；上游默认并行编译，云托管资源较少时可能需要另行评估构建资源。网络、GPG 或编译失败应停止，不得跳过校验或退回旧 runtime。
+.github/workflows/php-security-build-test.yml 仅响应 security/php-8.3.36-build-test 分支 push，使用标准 ubuntu-24.04、contents: read、固定 checkout SHA、45 分钟超时及同分支取消旧运行。额外逐文件校验全部 public/admin 静态产物，不重建前端。不使用生产凭据，不上传镜像、artifact 或 cache。
 
-当前执行环境没有 Docker、Podman、Buildah、BuildKit 或 PHP。已做文件完整性、脚本语法、Dockerfile 与官方源逐项对照及应用段保留检查；实际镜像构建、CLI 执行、Apache HTTP 测试和业务兼容性测试均未执行。不能据此宣称线上已安全。
+官方镜像方案仍需要镜像仓库和 Debian 包源可访问；最终镜像上传腾讯仓库也仍依赖网络。不能承诺它解决所有网络故障。校验失败必须停止，不得回退旧 PHP 或关闭校验。
 
-## 发布前后检查（需要另行授权）
+## 发布与验收边界
 
-1. 确认上述本地/隔离构建测试通过。为避免生产自动触发，先安排独立测试环境与测试数据。不能直接把生产 dev3 push 当作测试。
-2. 保存当前可回滚的云托管版本/镜像标识与配置，不复制或改动凭据。
-3. 微信云托管已开启 dev3 push 自动构建发布，因此推送 dev3 属于发布动作。用户仅授权 security/php-8.3.36-build-test 独立测试分支提交/推送与标准 Ubuntu Actions 隔离测试；不包含 dev3/master、PR、部署、镜像或 artifact/cache 上传。
-4. 在测试环境验证登录、后台页面、必要 API、上传、数据库/Redis 和健康检查。测试支付等有副作用业务必须使用获批测试数据/沙箱。
-5. 授权发布后，在新容器内运行 `php /usr/local/bin/verify-php-runtime.php`，检查构建日志和 `/api/index` 健康状态；确认旧容器/旧 Apache worker 全部退出，并进行获批线上冒烟验证。
-6. 只有版本、扩展、Apache、健康检查和必要业务验收全部通过，才能报告发布完成。回滚到旧镜像会重新暴露本次漏洞；若回滚必要，应同步限制访问并尽快恢复修复版本。
+用户已授权本次 PHP 安全修复发布及可恢复构建故障修复。每次代码修复先在独立测试分支验证；成功后确认 dev3 没有其他新改动，再非强制推进到同一已测试提交。不要更改 master、凭据、权限、数据库或网络安全设置。
 
-## 后续简化
+推送 dev3 会触发现有云托管流水线。GitHub 推送和 Actions 成功不等于腾讯云构建、镜像上传、发布和服务健康成功。应在云托管确认最新提交、版本构建/发布状态、实际 PHP 8.3.36 及健康检查，再进行获批的登录、必要 API、上传等业务冒烟；支付等有副作用测试需使用沙箱。无 DB/Redis 测试不能称为完整业务验收。
 
-待官方 `php:8.3.36-apache-bookworm`（或另行验证的更高安全补丁版）真实包含目标平台 manifest 后，可核查其 config `PHP_VERSION`，再将源码阶段替换为经验证的标签加 digest。仅标签存在或 HTTP 200 不算镜像可用。保持精确版本检查同步，重新完成构建和兼容性验证；不要自动放宽成浮动 `php:8.3`。
-
-## 独立 Actions 测试
-
-`.github/workflows/php-security-build-test.yml` 只响应 `security/php-8.3.36-build-test` 的 push，使用标准 ubuntu-24.04、contents: read、固定 checkout SHA、45 分钟超时和同分支取消旧运行。不使用生产凭据，不上传镜像、artifact 或 cache。后台文件只校验镜像中的已有打包产物，不重建前端。工作流通过仅代表列出的 runtime 检查，不是完整业务验收或生产发布。
-
-## 腾讯云构建失败的修复（Redis 下载 HTTP 500）
-
-首次隔离 Actions 构建已通过：https://github.com/spirit1zero-ss/Educational-Mini-Program/actions/runs/39635039199 。随后腾讯云版本 crmeb-api-075 在下载 PECL redis-6.0.2.tgz 时收到 HTTP 500，尚未进入 Redis 扩展编译。
-
-现将 phpredis 官方 6.0.2 对应提交的源码归档保存到 redis-6.0.2/，构建时先校验 SHA256，再按官方 phpize/configure/make/install 流程离线编译扩展。没有升级 Redis 版本，没有新增 Redis 服务，也没有变更业务缓存、会话、队列或环境变量。原 Dockerfile 已安装和加载 Redis 6.0.2 扩展；保留它并不代表把业务切换到 Redis。完整来源与摘要见 redis-6.0.2/README.md。
+如构建失败，检查最新任务对应的提交及真正的前置错误，不要用旧失败版本重复部署旧代码。旧镜像可能包含本次漏洞，回滚须同时评估安全风险。

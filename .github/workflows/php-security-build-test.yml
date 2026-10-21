@@ -27,10 +27,9 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
-      - name: Check vendored source checksums and script syntax
+      - name: Check Redis source checksum and script syntax
         run: |
           set -euo pipefail
-          (cd deploy/cloudrun/php-8.3.36 && sha256sum -c SHA256SUMS)
           (cd deploy/cloudrun/redis-6.0.2 && sha256sum -c SHA256SUMS)
           sh -n deploy/cloudrun/test-php-security.sh
           test -s public/admin/index.html
